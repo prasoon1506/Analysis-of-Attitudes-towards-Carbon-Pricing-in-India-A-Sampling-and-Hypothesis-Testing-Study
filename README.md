@@ -1,2 +1,2 @@
-# Poject Summary
+# Project Summary
 This project aimed to analyze attitudes toward carbon pricing using survey data. The data contained 118 legitimate entries and the analysis included investigating the distribution of attitudes, the representativeness of the sample, and conducting two-sample tests to compare attitudes between groups. The analysis also included evaluating the significance, number of observations, and power of the tests. The statistical tools used in this project included normal approximation, Stantcheva (2022), two-sample tests, and hypothesis testing,programming language R was used to perform more advanced statistical analysis and hypothesis testing, and Excel was used to perform basic data cleaning and descriptive statistics
