@@ -53,8 +53,17 @@ def transform_data(df):
 
 def plot_district_graph(df, district_names, benchmark_brands, desired_diff):
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
+    
+    def sort_key(x):
+        months = 'June July August September October November December January February March April May'.split()
+        if 'W-' in x:
+            week, month = x.split()
+            return (months.index(month), int(week.split('-')[1]))
+        else:
+            return (months.index(x), 0)
+
     week_names = sorted(list(set([col.split(' (')[1].split(')')[0] for col in df.columns if '(' in col])),
-                        key=lambda x: ('June July August September October November December January February March April May'.split().index(x.split()[-1]), int(x.split('-')[1]) if '-' in x else 0))
+                        key=sort_key)
 
     for district_name in district_names:
         fig, ax = plt.subplots(figsize=(12, 8))
