@@ -1,4 +1,4 @@
-pip install -r requirements.txt
+
 import openpyxl
 import streamlit as st
 import pandas as pd
