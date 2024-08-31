@@ -157,7 +157,7 @@ def plot_district_graph(df, district_names, benchmark_brands, desired_diff):
 
                 text_str += brand_text + "\n"
 
-        plt.figtext(0.5, -0.17, text_str, ha='center', va='center', bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.5'))
+        plt.figtext(0.5, -0.2, text_str, ha='center', va='center', bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.5'))
         st.pyplot(fig)
 
         # Display stats and predictions
