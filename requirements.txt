@@ -3,3 +3,8 @@ streamlit
 numpy
 pandas
 xgboost
+matplotlib
+sklearn
+scipy
+tqdm
+ipywidgets
