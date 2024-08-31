@@ -66,7 +66,7 @@ def plot_district_graph(df, district_names, benchmark_brands, desired_diff):
                         key=sort_key)
 
     for district_name in district_names:
-        fig, ax = plt.subplots(figsize=(12, 8))
+        fig, ax = plt.subplots(figsize=(12, 10))
         district_df = df[df["Dist Name"] == district_name]
         price_diffs = []
         stats_table_data = {}
@@ -157,7 +157,8 @@ def plot_district_graph(df, district_names, benchmark_brands, desired_diff):
 
                 text_str += brand_text + "\n"
 
-        plt.figtext(0.5, -0.2, text_str, ha='center', va='center', bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.5'))
+        plt.figtext(0.5,0.01, text_str, ha='center', va='center', bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.5'))
+        plt.subplots_adjust(bottom=0.3)
         st.pyplot(fig)
 
         # Display stats and predictions
