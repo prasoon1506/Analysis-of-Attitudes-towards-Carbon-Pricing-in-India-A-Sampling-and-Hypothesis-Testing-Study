@@ -131,7 +131,7 @@ def plot_district_graph(df, district_names, benchmark_brands, desired_diff):
         ax.set_xlabel('Month/Week', weight='bold')
         ax.set_ylabel('Whole Sale Price (in Rs.)', weight='bold')
         ax.set_title(f"{district_name} - Brands Price Trend", weight='bold')
-        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.10), ncol=6, prop={'weight': 'bold'})
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=6, prop={'weight': 'bold'})
         plt.xticks(rotation=45)
         plt.tight_layout()
 
@@ -157,7 +157,7 @@ def plot_district_graph(df, district_names, benchmark_brands, desired_diff):
 
                 text_str += brand_text + "\n"
 
-        plt.figtext(0.5, -0.2, text_str, ha='center', va='center', bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.5'))
+        plt.figtext(0.5, -0.17, text_str, ha='center', va='center', bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.5'))
         st.pyplot(fig)
 
         # Display stats and predictions
