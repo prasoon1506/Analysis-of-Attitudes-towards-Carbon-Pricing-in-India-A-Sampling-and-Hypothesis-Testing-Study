@@ -11,8 +11,6 @@ from scipy import stats
 
 # Set page title and favicon
 st.set_page_config(page_title="Brand Price Trend Analysis", page_icon=":chart_with_upwards_trend:")
-df = None
-desired_diff_input = {}
 # --- Data Transformation Function ---
 def transform_data(df):
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
