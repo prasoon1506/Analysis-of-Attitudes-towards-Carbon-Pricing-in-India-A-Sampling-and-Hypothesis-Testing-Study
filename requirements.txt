@@ -1,2 +1,5 @@
 IPython
-Streamlit
+streamlit
+numpy
+pandas
+xgboost
