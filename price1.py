@@ -242,7 +242,7 @@ uploaded_file = st.file_uploader("Upload Excel File", type="xlsx")
 
 if uploaded_file is not None:
     try:
-        df = openpxyl.read_excel(uploaded_file, skiprows=2)
+        df = pd.read_excel(uploaded_file, skiprows=2)
         df = transform_data(df)
 
         zone_names = df["Zone"].unique().tolist()
