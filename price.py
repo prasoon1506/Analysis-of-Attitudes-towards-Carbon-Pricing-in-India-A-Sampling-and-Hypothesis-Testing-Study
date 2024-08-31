@@ -1,4 +1,4 @@
-pip install -r requirements.txt
+
 from IPython import get_ipython
 from IPython.display import display
 
