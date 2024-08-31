@@ -8,3 +8,4 @@ scikit-learn
 scipy
 tqdm
 ipywidgets
+openpyxl
