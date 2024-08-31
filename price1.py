@@ -1,4 +1,5 @@
-
+from signal import signal, SIGPIPE, SIG_DFL  
+signal(SIGPIPE,SIG_DFL)
 import openpyxl
 import streamlit as st
 import pandas as pd
