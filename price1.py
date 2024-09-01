@@ -149,7 +149,7 @@ def plot_district_graph(df, district_names, benchmark_brands, desired_diff):
                             actual_diff = jklc_prices[i] - benchmark_prices[i]
                             break
 
-                brand_text = f"{benchmark_brand}:\n"
+                brand_text = f"{benchmark_brand}\n"
                 brand_text += f"Actual Diff: {actual_diff:+.2f} Rs.\n"
                 if benchmark_brand in desired_diff and desired_diff[benchmark_brand] is not None:
                     brand_desired_diff = desired_diff[benchmark_brand]
