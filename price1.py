@@ -26,21 +26,22 @@ def read_headers(file):
     sub_headers = df_headers.iloc[1].tolist()
     
     week_headers = []
+    current_header = ""
     for header, sub_header in zip(headers, sub_headers):
-        if pd.notna(header) and 'GAP' not in str(header):
-            week_headers.append(str(header))
-        elif pd.notna(sub_header):
-            week_headers.append(sub_header)
+        if pd.notna(header) and 'GAP' not in str(header) and header != 'Calculated Price':
+            current_header = str(header)
+        if pd.notna(sub_header) and sub_header in ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']:
+            week_headers.append(f"{current_header} {sub_header}")
     
     return week_headers
 
 def transform_data(df, selected_weeks):
-    brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
-    transformed_df = df[['Zone', 'REGION', 'Dist Code', 'Dist Name']].copy()
+    base_columns = ['Zone', 'REGION', 'Dist Code', 'Dist Name']
+    transformed_df = df[base_columns].copy()
     
     for week in selected_weeks:
-        week_data = df[[f"{week} {brand}" for brand in brands]]
-        week_data = week_data.rename(columns={f"{week} {brand}": f"{brand} ({week})" for brand in brands})
+        week_data = df[[week]]
+        week_data = week_data.rename(columns={week: f"{week.split()[-1]} ({week.rsplit(' ', 1)[0]})"})
         week_data.replace(0, np.nan, inplace=True)
         transformed_df = pd.merge(transformed_df, week_data, left_index=True, right_index=True)
 
@@ -165,7 +166,6 @@ def generate_pdf(figs):
         pdf.savefig(fig)
     pdf.close()
     return pdf_buffer
-
 def main():
     st.title("Brand Price Analysis")
 
