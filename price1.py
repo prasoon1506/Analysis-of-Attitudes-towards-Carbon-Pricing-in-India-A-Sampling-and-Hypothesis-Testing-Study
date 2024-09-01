@@ -18,17 +18,24 @@ if 'df' not in st.session_state:
 if 'district_benchmarks' not in st.session_state:
     st.session_state.district_benchmarks = {}
 
+def inspect_excel(file):
+    # Read the first few rows of the Excel file
+    df = pd.read_excel(file, header=None, nrows=5)
+    return df
+
 def transform_data(df):
-    # Identify the row with brand names
+    # Identify the row with brand names (usually the second row)
     brand_row = df.iloc[1]
-    brands = brand_row.dropna().unique().tolist()
+    brands = [brand for brand in brand_row.dropna().unique() if isinstance(brand, str)]
 
     # Extract week/month names from the first row
-    week_month_names = df.iloc[0].dropna().tolist()[4:]  # Assuming first 4 columns are not date-related
+    week_month_row = df.iloc[0]
+    week_month_names = [name for name in week_month_row.dropna().unique() if isinstance(name, str) and name not in brands]
 
-    # Identify the columns for Zone, REGION, Dist Code, and Dist Name
+    # Identify the metadata columns
     metadata_columns = df.columns[:4].tolist()
 
+    # Create the transformed dataframe
     transformed_df = df.iloc[2:].copy()  # Start from the third row
     transformed_df.columns = metadata_columns + [f"{brand} ({week_month})" for week_month in week_month_names for brand in brands]
     
@@ -137,9 +144,20 @@ def main():
     uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
     if uploaded_file is not None:
         try:
-            df = pd.read_excel(uploaded_file, header=None)
-            st.session_state.df, week_month_names, brands, metadata_columns = transform_data(df)
-            st.success("File uploaded successfully!")
+            # Inspect the Excel file
+            inspect_df = inspect_excel(uploaded_file)
+            st.write("Preview of the first few rows:")
+            st.dataframe(inspect_df)
+
+            # Ask user to confirm the structure
+            if st.button("Confirm and Process Data"):
+                st.session_state.df, week_month_names, brands, metadata_columns = transform_data(inspect_df)
+                st.success("File processed successfully!")
+                
+                # Display the processed dataframe
+                st.write("Processed Data Preview:")
+                st.dataframe(st.session_state.df.head())
+
         except Exception as e:
             st.error(f"Error reading file: {str(e)}. Please ensure it is a valid Excel file.")
             return
