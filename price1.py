@@ -22,31 +22,26 @@ def read_excel_with_merged_cells(uploaded_file):
     # Read the Excel file
     xls = pd.ExcelFile(uploaded_file)
     
-    # Read the first sheet
-    df = pd.read_excel(xls, sheet_name=0, header=None)
-    
-    # Extract the header information
-    header_row = df.iloc[0]
-    brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
-    
-    # Initialize new column names
-    new_columns = []
-    current_month = None
-    
-    # Process the header row
-    for i, value in enumerate(header_row):
-        if isinstance(value, str) and any(month in value for month in ['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May']):
-            current_month = value.split("'")[0]  # Extract month name
-        if i >= 4:  # Skip the first 4 columns
-            if current_month:
-                for brand in brands:
-                    new_columns.append(f"{brand} ({current_month})")
-    
-    # Add the first 4 column names
-    new_columns = ['Zone', 'REGION', 'Dist Code', 'Dist Name'] + new_columns
+    # Read the first two rows
+    df_header = pd.read_excel(xls, sheet_name=0, header=None, nrows=2)
     
     # Read the data, skipping the first two rows
     df = pd.read_excel(xls, sheet_name=0, skiprows=2, header=None)
+    
+    # Extract the header information
+    header_row1 = df_header.iloc[0]
+    header_row2 = df_header.iloc[1]
+    
+    # Initialize new column names
+    new_columns = ['Zone', 'REGION', 'Dist Code', 'Dist Name']
+    
+    # Process the header rows
+    for i in range(4, len(header_row1)):
+        if pd.notna(header_row1[i]):
+            current_month = header_row1[i].split("'")[0] if "'" in header_row1[i] else header_row1[i]
+        if pd.notna(header_row2[i]):
+            brand = header_row2[i]
+            new_columns.append(f"{brand} ({current_month})")
     
     # Assign the new column names
     df.columns = new_columns[:len(df.columns)]
@@ -54,14 +49,7 @@ def read_excel_with_merged_cells(uploaded_file):
     return df
 
 def transform_data(df):
-    brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
-    transformed_df = df[['Zone', 'REGION', 'Dist Code', 'Dist Name']].copy()
-    
-    for col in df.columns[4:]:
-        if any(brand in col for brand in brands):
-            transformed_df[col] = df[col]
-    
-    return transformed_df
+    return df
 
 def plot_district_graph(df, district_name, benchmark_brands, desired_diff, selected_months):
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
@@ -183,6 +171,8 @@ def main():
             df = read_excel_with_merged_cells(uploaded_file)
             st.session_state.df = transform_data(df)
             st.success("File uploaded successfully!")
+            st.write(df.head())  # Display the first few rows of the dataframe
+            st.write(df.columns)  # Display the column names
         except Exception as e:
             st.error(f"Error reading file: {e}. Please ensure it is a valid Excel file.")
             return
