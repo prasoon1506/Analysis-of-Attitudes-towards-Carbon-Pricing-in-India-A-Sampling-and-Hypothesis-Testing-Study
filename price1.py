@@ -137,7 +137,7 @@ def plot_district_graph(df, district_names, benchmark_brands, desired_diff):
 
         # Benchmark brand information on the right side
         ax2.axis('off')
-        text_str = 'Benchmark Brands:\n\n'
+        text_str = 'Benchmark Brands:'
         if benchmark_brands:
             for benchmark_brand in benchmark_brands:
                 jklc_prices = [district_df[f"JKLC ({week})"].iloc[0] for week in week_names if f"JKLC ({week})" in district_df.columns]
