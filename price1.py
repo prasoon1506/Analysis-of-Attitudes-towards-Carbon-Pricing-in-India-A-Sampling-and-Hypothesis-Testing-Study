@@ -19,7 +19,37 @@ if 'district_benchmarks' not in st.session_state:
     st.session_state.district_benchmarks = {}
 
 def transform_data(df):
-    # ... (Keep the transform_data function as it was) ...
+    brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
+    transformed_df = df[['Zone', 'REGION', 'Dist Code', 'Dist Name']].copy()
+    brand_columns = [col for col in df.columns if any(brand in col for brand in brands)]
+    num_weeks = len(brand_columns) // len(brands)
+    month_names = ['June', 'July', 'August', 'September', 'October', 'November', 'December',
+                   'January', 'February', 'March', 'April', 'May']
+    month_index = 0
+    week_counter = 1
+
+    for i in range(num_weeks):
+        start_idx = i * len(brands)
+        end_idx = (i + 1) * len(brands)
+        week_data = df[brand_columns[start_idx:end_idx]]
+        if i == 0:
+            week_name = month_names[month_index]
+            month_index += 1
+        elif i == 1:
+            week_name = month_names[month_index]
+            month_index += 1
+        else:
+            week_name = f"W-{week_counter} {month_names[month_index]}"
+            if week_counter == 4:
+                week_counter = 1
+                month_index += 1
+            else:
+                week_counter += 1
+        week_data = week_data.rename(columns={col: f"{brand} ({week_name})" for brand, col in zip(brands, week_data.columns)})
+        week_data.replace(0, np.nan, inplace=True)
+        transformed_df = pd.merge(transformed_df, week_data, left_index=True, right_index=True)
+
+    return transformed_df
 
 def plot_district_graph(df, district_name, benchmark_brands, desired_diff):
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
