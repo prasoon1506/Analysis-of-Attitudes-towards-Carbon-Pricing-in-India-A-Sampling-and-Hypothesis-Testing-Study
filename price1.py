@@ -19,28 +19,28 @@ if 'district_benchmarks' not in st.session_state:
     st.session_state.district_benchmarks = {}
 
 def transform_data(df):
-    brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
-    transformed_df = df[['Zone', 'REGION', 'Dist Code', 'Dist Name']].copy()
-    
-    # Extract week/month names from the first row
-    week_month_names = df.iloc[0].dropna().tolist()[4:]  # Skip the first 4 columns
-    
-    # Process brand columns
-    for i, week_month in enumerate(week_month_names):
-        start_idx = 4 + i * len(brands)
-        end_idx = 4 + (i + 1) * len(brands)
-        week_data = df.iloc[2:, start_idx:end_idx].copy()  # Start from the third row
-        week_data.columns = [f"{brand} ({week_month})" for brand in brands]
-        week_data = week_data.apply(pd.to_numeric, errors='coerce')
-        transformed_df = pd.concat([transformed_df, week_data], axis=1)
-    
-    return transformed_df, week_month_names
+    # Identify the row with brand names
+    brand_row = df.iloc[1]
+    brands = brand_row.dropna().unique().tolist()
 
-def plot_district_graph(df, district_name, benchmark_brands, desired_diff, selected_week_month):
-    brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
+    # Extract week/month names from the first row
+    week_month_names = df.iloc[0].dropna().tolist()[4:]  # Assuming first 4 columns are not date-related
+
+    # Identify the columns for Zone, REGION, Dist Code, and Dist Name
+    metadata_columns = df.columns[:4].tolist()
+
+    transformed_df = df.iloc[2:].copy()  # Start from the third row
+    transformed_df.columns = metadata_columns + [f"{brand} ({week_month})" for week_month in week_month_names for brand in brands]
     
+    # Convert price columns to numeric, replacing any non-numeric values with NaN
+    price_columns = transformed_df.columns[4:]  # Assuming first 4 columns are metadata
+    transformed_df[price_columns] = transformed_df[price_columns].apply(pd.to_numeric, errors='coerce')
+
+    return transformed_df, week_month_names, brands, metadata_columns
+
+def plot_district_graph(df, district_name, benchmark_brands, desired_diff, selected_week_month, brands, metadata_columns):
     fig, (ax, ax2) = plt.subplots(1, 2, figsize=(20, 10), gridspec_kw={'width_ratios': [3, 1]})
-    district_df = df[df["Dist Name"] == district_name]
+    district_df = df[df[metadata_columns[3]] == district_name]  # Assuming Dist Name is the 4th column
     
     for brand in brands:
         brand_price = district_df[f"{brand} ({selected_week_month})"].iloc[0]
@@ -76,9 +76,8 @@ def plot_district_graph(df, district_name, benchmark_brands, desired_diff, selec
     plt.tight_layout()
     return fig
 
-def calculate_stats_and_predictions(df, district_name):
-    brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
-    district_df = df[df["Dist Name"] == district_name]
+def calculate_stats_and_predictions(df, district_name, brands, metadata_columns):
+    district_df = df[df[metadata_columns[3]] == district_name]  # Assuming Dist Name is the 4th column
     
     stats_table_data = {}
     predictions = {}
@@ -138,11 +137,11 @@ def main():
     uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
     if uploaded_file is not None:
         try:
-            df = pd.read_excel(uploaded_file)
-            st.session_state.df, week_month_names = transform_data(df)
+            df = pd.read_excel(uploaded_file, header=None)
+            st.session_state.df, week_month_names, brands, metadata_columns = transform_data(df)
             st.success("File uploaded successfully!")
         except Exception as e:
-            st.error(f"Error reading file: {e}. Please ensure it is a valid Excel file.")
+            st.error(f"Error reading file: {str(e)}. Please ensure it is a valid Excel file.")
             return
 
     if st.session_state.df is not None:
@@ -150,16 +149,16 @@ def main():
         
         col1, col2, col3 = st.columns(3)
         with col1:
-            zone = st.selectbox("Select Zone", options=df["Zone"].unique())
+            zone = st.selectbox("Select Zone", options=df[metadata_columns[0]].unique())
         with col2:
-            region = st.selectbox("Select Region", options=df[df["Zone"] == zone]["REGION"].unique())
+            region = st.selectbox("Select Region", options=df[df[metadata_columns[0]] == zone][metadata_columns[1]].unique())
         with col3:
             selected_week_month = st.selectbox("Select Week/Month for Plot", options=week_month_names)
 
-        districts = df[(df["Zone"] == zone) & (df["REGION"] == region)]["Dist Name"].unique()
+        districts = df[(df[metadata_columns[0]] == zone) & (df[metadata_columns[1]] == region)][metadata_columns[3]].unique()
         selected_districts = st.multiselect("Select Districts", options=districts)
 
-        benchmark_brands = ['UTCL', 'JKS', 'Ambuja', 'Wonder', 'Shree']
+        benchmark_brands = brands[1:]  # Exclude JKLC as it's the reference brand
 
         # Create a form for each selected district
         for district in selected_districts:
@@ -167,7 +166,7 @@ def main():
                 st.session_state.district_benchmarks[district] = {}
                 selected_benchmarks = st.multiselect(f"Select Benchmark Brands for {district}", options=benchmark_brands)
                 for brand in selected_benchmarks:
-                    st.session_state.district_benchmarks[district][brand] = st.number_input(f"Desired Diff for {brand} in {district}", value=0)
+                    st.session_state.district_benchmarks[district][brand] = st.number_input(f"Desired Diff for {brand} in {district}", value=0.0)
 
         if st.button("Generate Analysis"):
             if selected_districts:
@@ -180,12 +179,14 @@ def main():
                         district, 
                         st.session_state.district_benchmarks[district].keys(),
                         st.session_state.district_benchmarks[district],
-                        selected_week_month
+                        selected_week_month,
+                        brands,
+                        metadata_columns
                     )
                     st.pyplot(fig)
                     
                     # Calculate stats and predictions based on all dates
-                    stats, predictions = calculate_stats_and_predictions(df, district)
+                    stats, predictions = calculate_stats_and_predictions(df, district, brands, metadata_columns)
                     
                     st.write("#### Descriptive Statistics (based on all dates)")
                     st.dataframe(pd.DataFrame(stats).transpose().round(2))
