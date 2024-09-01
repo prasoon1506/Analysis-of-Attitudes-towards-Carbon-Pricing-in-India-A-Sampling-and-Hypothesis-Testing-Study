@@ -21,17 +21,19 @@ if 'district_benchmarks' not in st.session_state:
     st.session_state.district_benchmarks = {}
 
 def read_headers(file):
-    df_headers = pd.read_excel(file, nrows=2)
-    headers = df_headers.iloc[0].tolist()
-    sub_headers = df_headers.iloc[1].tolist()
+    df = pd.read_excel(file, nrows=0)  # Read only the header row
+    columns = df.columns.tolist()
     
     week_headers = []
-    current_header = ""
-    for header, sub_header in zip(headers, sub_headers):
-        if pd.notna(header) and 'GAP' not in str(header) and header != 'Calculated Price':
-            current_header = str(header)
-        if pd.notna(sub_header) and sub_header in ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']:
-            week_headers.append(f"{current_header} {sub_header}")
+    brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
+    
+    for column in columns:
+        for brand in brands:
+            if brand in column:
+                week = column.replace(brand, '').strip()
+                if week and week not in week_headers:
+                    week_headers.append(week)
+                break
     
     return week_headers
 
@@ -39,14 +41,16 @@ def transform_data(df, selected_weeks):
     base_columns = ['Zone', 'REGION', 'Dist Code', 'Dist Name']
     transformed_df = df[base_columns].copy()
     
+    brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
+    
     for week in selected_weeks:
-        week_data = df[[week]]
-        week_data = week_data.rename(columns={week: f"{week.split()[-1]} ({week.rsplit(' ', 1)[0]})"})
-        week_data.replace(0, np.nan, inplace=True)
-        transformed_df = pd.merge(transformed_df, week_data, left_index=True, right_index=True)
-
+        for brand in brands:
+            column_name = f"{week} {brand}"
+            if column_name in df.columns:
+                transformed_df[f"{brand} ({week})"] = df[column_name]
+    
+    transformed_df = transformed_df.replace(0, np.nan)
     return transformed_df
-
 def plot_district_graph(df, district_name, benchmark_brands, desired_diff):
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
     
@@ -173,7 +177,7 @@ def main():
     if uploaded_file is not None:
         try:
             st.session_state.headers = read_headers(uploaded_file)
-            df = pd.read_excel(uploaded_file, skiprows=2)
+            df = pd.read_excel(uploaded_file)
             st.success("File uploaded successfully!")
             
             # Add dropdown for selecting weeks/months
