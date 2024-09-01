@@ -15,42 +15,42 @@ st.set_page_config(page_title="Brand Price Analysis", layout="wide")
 # Initialize session state
 if 'df' not in st.session_state:
     st.session_state.df = None
-if 'headers' not in st.session_state:
-    st.session_state.headers = None
 if 'district_benchmarks' not in st.session_state:
     st.session_state.district_benchmarks = {}
 
-def read_headers(file):
-    df = pd.read_excel(file, nrows=0)  # Read only the header row
-    columns = df.columns.tolist()
-    
-    week_headers = []
+def transform_data(df):
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
-    
-    for column in columns:
-        for brand in brands:
-            if brand in column:
-                week = column.replace(brand, '').strip()
-                if week and week not in week_headers:
-                    week_headers.append(week)
-                break
-    
-    return week_headers
+    transformed_df = df[['Zone', 'REGION', 'Dist Code', 'Dist Name']].copy()
+    brand_columns = [col for col in df.columns if any(brand in col for brand in brands)]
+    num_weeks = len(brand_columns) // len(brands)
+    month_names = ['June', 'July', 'August', 'September', 'October', 'November', 'December',
+                   'January', 'February', 'March', 'April', 'May']
+    month_index = 0
+    week_counter = 1
 
-def transform_data(df, selected_weeks):
-    base_columns = ['Zone', 'REGION', 'Dist Code', 'Dist Name']
-    transformed_df = df[base_columns].copy()
-    
-    brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
-    
-    for week in selected_weeks:
-        for brand in brands:
-            column_name = f"{week} {brand}"
-            if column_name in df.columns:
-                transformed_df[f"{brand} ({week})"] = df[column_name]
-    
-    transformed_df = transformed_df.replace(0, np.nan)
+    for i in range(num_weeks):
+        start_idx = i * len(brands)
+        end_idx = (i + 1) * len(brands)
+        week_data = df[brand_columns[start_idx:end_idx]]
+        if i == 0:
+            week_name = month_names[month_index]
+            month_index += 1
+        elif i == 1:
+            week_name = month_names[month_index]
+            month_index += 1
+        else:
+            week_name = f"W-{week_counter} {month_names[month_index]}"
+            if week_counter == 4:
+                week_counter = 1
+                month_index += 1
+            else:
+                week_counter += 1
+        week_data = week_data.rename(columns={col: f"{brand} ({week_name})" for brand, col in zip(brands, week_data.columns)})
+        week_data.replace(0, np.nan, inplace=True)
+        transformed_df = pd.merge(transformed_df, week_data, left_index=True, right_index=True)
+
     return transformed_df
+
 def plot_district_graph(df, district_name, benchmark_brands, desired_diff):
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
     
@@ -170,24 +170,16 @@ def generate_pdf(figs):
         pdf.savefig(fig)
     pdf.close()
     return pdf_buffer
+
 def main():
     st.title("Brand Price Analysis")
 
     uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
     if uploaded_file is not None:
         try:
-            st.session_state.headers = read_headers(uploaded_file)
-            df = pd.read_excel(uploaded_file)
+            df = pd.read_excel(uploaded_file, skiprows=2)
+            st.session_state.df = transform_data(df)
             st.success("File uploaded successfully!")
-            
-            # Add dropdown for selecting weeks/months
-            selected_weeks = st.multiselect("Select Weeks/Months for Analysis", options=st.session_state.headers)
-            
-            if selected_weeks:
-                st.session_state.df = transform_data(df, selected_weeks)
-            else:
-                st.warning("Please select at least one week/month for analysis.")
-                return
         except Exception as e:
             st.error(f"Error reading file: {e}. Please ensure it is a valid Excel file.")
             return
