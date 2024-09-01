@@ -66,7 +66,7 @@ def plot_district_graph(df, district_names, benchmark_brands, desired_diff):
                         key=sort_key)
 
     for district_name in district_names:
-        fig, ax = plt.subplots(figsize=(12, 10))
+        fig, (ax, ax2) = plt.subplots(1, 2, figsize=(20, 10), gridspec_kw={'width_ratios': [3, 1]})
         district_df = df[df["Dist Name"] == district_name]
         price_diffs = []
         stats_table_data = {}
@@ -132,10 +132,11 @@ def plot_district_graph(df, district_names, benchmark_brands, desired_diff):
         ax.set_ylabel('Whole Sale Price (in Rs.)', weight='bold')
         ax.set_title(f"{district_name} - Brands Price Trend", weight='bold')
         ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=6, prop={'weight': 'bold'})
-        plt.xticks(rotation=45)
-        plt.tight_layout()
+        plt.setp(ax.get_xticklabels(), rotation=45)
 
-        text_str = ''
+        # Benchmark brand information on the right side
+        ax2.axis('off')
+        text_str = 'Benchmark Brands:\n\n'
         if benchmark_brands:
             for benchmark_brand in benchmark_brands:
                 jklc_prices = [district_df[f"JKLC ({week})"].iloc[0] for week in week_names if f"JKLC ({week})" in district_df.columns]
@@ -147,19 +148,23 @@ def plot_district_graph(df, district_names, benchmark_brands, desired_diff):
                             actual_diff = jklc_prices[i] - benchmark_prices[i]
                             break
 
-                brand_text = f"•Benchmark Brand: {benchmark_brand} → "
-                brand_text += f"Actual Diff: {actual_diff:+.2f} Rs.|"
+                brand_text = f"{benchmark_brand}:\n"
+                brand_text += f"Actual Diff: {actual_diff:+.2f} Rs.\n"
                 if benchmark_brand in desired_diff and desired_diff[benchmark_brand] is not None:
                     brand_desired_diff = desired_diff[benchmark_brand]
-                    brand_text += f"Desired Diff: {brand_desired_diff:+.2f} Rs.| "
+                    brand_text += f"Desired Diff: {brand_desired_diff:+.2f} Rs.\n"
                     required_increase_decrease = brand_desired_diff - actual_diff
-                    brand_text += f"Required Increase/Decrease in Price: {required_increase_decrease:+.2f} Rs."
+                    brand_text += f"Required Change: {required_increase_decrease:+.2f} Rs.\n"
 
                 text_str += brand_text + "\n"
 
-        plt.figtext(0.5,-0.3, text_str, ha='center', va='center', bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.5'))
-        plt.subplots_adjust(bottom=0.3)
+        ax2.text(0, 0.95, text_str, va='top', ha='left', transform=ax2.transAxes)
+
+        plt.tight_layout()
         st.pyplot(fig)
+
+        # Download buttons
+        download_buttons(fig, district_name)
 
         # Display stats and predictions
         st.write(f"### Statistics for {district_name}")
@@ -167,6 +172,23 @@ def plot_district_graph(df, district_names, benchmark_brands, desired_diff):
 
         st.write(f"### Predictions for {district_name}")
         st.dataframe(pd.DataFrame(predictions).transpose())
+
+def download_buttons(fig, district_name):
+    # Function to create a download link
+    def get_image_download_link(img, filename, text):
+        buffered = BytesIO()
+        img.savefig(buffered, format="png", dpi=300, bbox_inches="tight")
+        img_str = base64.b64encode(buffered.getvalue()).decode()
+        href = f'<a href="data:file/png;base64,{img_str}" download="{filename}">{text}</a>'
+        return href
+
+    # PNG download button
+    png_link = get_image_download_link(fig, f"{district_name}_plot.png", "Download as PNG")
+    st.markdown(png_link, unsafe_allow_html=True)
+
+    # PDF download button
+    pdf_link = get_image_download_link(fig, f"{district_name}_plot.pdf", "Download as PDF")
+    st.markdown(pdf_link, unsafe_allow_html=True)
 
 def main():
     st.title("Brand Price Analysis")
@@ -207,5 +229,4 @@ def main():
                 st.warning("Please select at least one district and one benchmark brand.")
 
 if __name__ == "__main__":
-    main()   
- 
+    main()
