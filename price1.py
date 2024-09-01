@@ -18,53 +18,54 @@ if 'df' not in st.session_state:
 if 'district_benchmarks' not in st.session_state:
     st.session_state.district_benchmarks = {}
 
+def read_excel_with_merged_cells(uploaded_file):
+    # Read the Excel file
+    xls = pd.ExcelFile(uploaded_file)
+    
+    # Read the first sheet
+    df = pd.read_excel(xls, sheet_name=0, header=None)
+    
+    # Extract the header information
+    header_row = df.iloc[0]
+    brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
+    
+    # Initialize new column names
+    new_columns = []
+    current_month = None
+    
+    # Process the header row
+    for i, value in enumerate(header_row):
+        if isinstance(value, str) and any(month in value for month in ['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May']):
+            current_month = value.split("'")[0]  # Extract month name
+        if i >= 4:  # Skip the first 4 columns
+            if current_month:
+                for brand in brands:
+                    new_columns.append(f"{brand} ({current_month})")
+    
+    # Add the first 4 column names
+    new_columns = ['Zone', 'REGION', 'Dist Code', 'Dist Name'] + new_columns
+    
+    # Read the data, skipping the first two rows
+    df = pd.read_excel(xls, sheet_name=0, skiprows=2, header=None)
+    
+    # Assign the new column names
+    df.columns = new_columns[:len(df.columns)]
+    
+    return df
+
 def transform_data(df):
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
     transformed_df = df[['Zone', 'REGION', 'Dist Code', 'Dist Name']].copy()
-    brand_columns = [col for col in df.columns if any(brand in col for brand in brands)]
-    num_weeks = len(brand_columns) // len(brands)
-    month_names = ['June', 'July', 'August', 'September', 'October', 'November', 'December',
-                   'January', 'February', 'March', 'April', 'May']
-    month_index = 0
-    week_counter = 1
-
-    for i in range(num_weeks):
-        start_idx = i * len(brands)
-        end_idx = (i + 1) * len(brands)
-        week_data = df[brand_columns[start_idx:end_idx]]
-        if i == 0:
-            week_name = month_names[month_index]
-            month_index += 1
-        elif i == 1:
-            week_name = month_names[month_index]
-            month_index += 1
-        else:
-            week_name = f"W-{week_counter} {month_names[month_index]}"
-            if week_counter == 4:
-                week_counter = 1
-                month_index += 1
-            else:
-                week_counter += 1
-        week_data = week_data.rename(columns={col: f"{brand} ({week_name})" for brand, col in zip(brands, week_data.columns)})
-        week_data.replace(0, np.nan, inplace=True)
-        transformed_df = pd.merge(transformed_df, week_data, left_index=True, right_index=True)
-
+    
+    for col in df.columns[4:]:
+        if any(brand in col for brand in brands):
+            transformed_df[col] = df[col]
+    
     return transformed_df
 
-def plot_district_graph(df, district_name, benchmark_brands, desired_diff):
+def plot_district_graph(df, district_name, benchmark_brands, desired_diff, selected_months):
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
     
-    def sort_key(x):
-        months = 'June July August September October November December January February March April May'.split()
-        if 'W-' in x:
-            week, month = x.split()
-            return (months.index(month), int(week.split('-')[1]))
-        else:
-            return (months.index(x), 0)
-
-    week_names = sorted(list(set([col.split(' (')[1].split(')')[0] for col in df.columns if '(' in col])),
-                        key=sort_key)
-
     fig, (ax, ax2) = plt.subplots(1, 2, figsize=(20, 10), gridspec_kw={'width_ratios': [3, 1]})
     district_df = df[df["Dist Name"] == district_name]
     price_diffs = []
@@ -72,21 +73,16 @@ def plot_district_graph(df, district_name, benchmark_brands, desired_diff):
     predictions = {}
 
     for brand in brands:
-        brand_prices = [district_df[f"{brand} ({week})"].iloc[0] if f"{brand} ({week})" in district_df.columns else np.nan for week in week_names]
-
+        brand_prices = [district_df[col].iloc[0] for col in district_df.columns if brand in col and any(month in col for month in selected_months)]
         valid_prices = [p for p in brand_prices if not np.isnan(p)]
+        
         if valid_prices:
             price_diff = valid_prices[-1] - valid_prices[0]
-        else:
-            price_diff = np.nan
-        price_diffs.append(price_diff)
-        line, = ax.plot(week_names, brand_prices, marker='o', linestyle='-', label=f"{brand} ({price_diff:.0f})")
-
-        for week, price in zip(week_names, brand_prices):
-            if not np.isnan(price):
-                ax.text(week, price, str(round(price)), fontsize=8)
-
-        if valid_prices:
+            line, = ax.plot(selected_months, valid_prices, marker='o', linestyle='-', label=f"{brand} ({price_diff:.0f})")
+            
+            for month, price in zip(selected_months, valid_prices):
+                ax.text(month, price, str(round(price)), fontsize=8)
+            
             stats_table_data[brand] = {
                 'Min': np.min(valid_prices),
                 'Max': np.max(valid_prices),
@@ -98,48 +94,55 @@ def plot_district_graph(df, district_name, benchmark_brands, desired_diff):
                 'Skewness': pd.Series(valid_prices).skew(),
                 'Kurtosis': pd.Series(valid_prices).kurtosis()
             }
+            
+            # Prediction using XGBoost
+            if len(valid_prices) > 2:
+                train_data = np.array(range(len(valid_prices))).reshape(-1, 1)
+                train_labels = np.array(valid_prices)
+                model = xgb.XGBRegressor(objective='reg:squarederror')
+                model.fit(train_data, train_labels)
+                next_week = len(valid_prices)
+                prediction = model.predict(np.array([[next_week]]))
+
+                errors = abs(model.predict(train_data) - train_labels)
+                confidence = 0.95
+                n = len(valid_prices)
+                t_crit = stats.t.ppf((1 + confidence) / 2, n - 1)
+                margin_of_error = t_crit * errors.std() / np.sqrt(n)
+                confidence_interval = (prediction - margin_of_error, prediction + margin_of_error)
+
+                predictions[brand] = {
+                    'Prediction': prediction[0],
+                    'Confidence Interval': confidence_interval
+                }
+            else:
+                predictions[brand] = {
+                    'Prediction': np.nan,
+                    'Confidence Interval': (np.nan, np.nan)
+                }
         else:
+            price_diff = np.nan
             stats_table_data[brand] = {stat: np.nan for stat in ['Min', 'Max', 'Average', 'Median', 'First Quartile', 'Third Quartile', 'Variance', 'Skewness', 'Kurtosis']}
-
-        # Prediction using XGBoost
-        if len(valid_prices) > 2:
-            train_data = np.array(range(len(valid_prices))).reshape(-1, 1)
-            train_labels = np.array(valid_prices)
-            model = xgb.XGBRegressor(objective='reg:squarederror')
-            model.fit(train_data, train_labels)
-            next_week = len(valid_prices)
-            prediction = model.predict(np.array([[next_week]]))
-
-            errors = abs(model.predict(train_data) - train_labels)
-            confidence = 0.95
-            n = len(valid_prices)
-            t_crit = stats.t.ppf((1 + confidence) / 2, n - 1)
-            margin_of_error = t_crit * errors.std() / np.sqrt(n)
-            confidence_interval = (prediction - margin_of_error, prediction + margin_of_error)
-
-            predictions[brand] = {
-                'Prediction': prediction[0],
-                'Confidence Interval': confidence_interval
-            }
-        else:
             predictions[brand] = {
                 'Prediction': np.nan,
                 'Confidence Interval': (np.nan, np.nan)
             }
+        
+        price_diffs.append(price_diff)
 
-    ax.set_xlabel('Month/Week', weight='bold')
+    ax.set_xlabel('Month', weight='bold')
     ax.set_ylabel('Whole Sale Price (in Rs.)', weight='bold')
     ax.set_title(f"{district_name} - Brands Price Trend", weight='bold')
     ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=6, prop={'weight': 'bold'})
     plt.setp(ax.get_xticklabels(), rotation=45)
 
-    # Benchmark brand information on the right side with improved styling
+    # Benchmark brand information
     ax2.axis('off')
     text_str = 'Benchmark Brands:\n\n'
     if benchmark_brands:
         for benchmark_brand in benchmark_brands:
-            jklc_prices = [district_df[f"JKLC ({week})"].iloc[0] for week in week_names if f"JKLC ({week})" in district_df.columns]
-            benchmark_prices = [district_df[f"{benchmark_brand} ({week})"].iloc[0] for week in week_names if f"{benchmark_brand} ({week})" in district_df.columns]
+            jklc_prices = [district_df[col].iloc[0] for col in district_df.columns if 'JKLC' in col and any(month in col for month in selected_months)]
+            benchmark_prices = [district_df[col].iloc[0] for col in district_df.columns if benchmark_brand in col and any(month in col for month in selected_months)]
             actual_diff = np.nan
             if jklc_prices and benchmark_prices:
                 for i in range(len(jklc_prices) - 1, -1, -1):
@@ -177,7 +180,7 @@ def main():
     uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
     if uploaded_file is not None:
         try:
-            df = pd.read_excel(uploaded_file, skiprows=2)
+            df = read_excel_with_merged_cells(uploaded_file)
             st.session_state.df = transform_data(df)
             st.success("File uploaded successfully!")
         except Exception as e:
@@ -196,6 +199,10 @@ def main():
         districts = df[(df["Zone"] == zone) & (df["REGION"] == region)]["Dist Name"].unique()
         selected_districts = st.multiselect("Select Districts", options=districts)
 
+        # Get all available months from the dataframe
+        all_months = sorted(list(set([col.split(' (')[1].split(')')[0] for col in df.columns if '(' in col])))
+        selected_months = st.multiselect("Select Months/Weeks for Analysis", options=all_months, default=all_months)
+
         benchmark_brands = ['UTCL', 'JKS', 'Ambuja', 'Wonder', 'Shree']
 
         # Create a form for each selected district
@@ -207,7 +214,7 @@ def main():
                     st.session_state.district_benchmarks[district][brand] = st.number_input(f"Desired Diff for {brand} in {district}", value=0)
 
         if st.button("Generate Analysis"):
-            if selected_districts:
+            if selected_districts and selected_months:
                 figs = []
                 all_stats = {}
                 all_predictions = {}
@@ -216,7 +223,8 @@ def main():
                         df, 
                         district, 
                         st.session_state.district_benchmarks[district].keys(),
-                        st.session_state.district_benchmarks[district]
+                        st.session_state.district_benchmarks[district],
+                        selected_months
                     )
                     figs.append(fig)
                     all_stats[district] = stats
@@ -256,7 +264,7 @@ def main():
                     st.dataframe(pd.DataFrame(all_predictions[district]).transpose())
 
             else:
-                st.warning("Please select at least one district.")
+                st.warning("Please select at least one district and one month/week.")
 
 if __name__ == "__main__":
     main()
