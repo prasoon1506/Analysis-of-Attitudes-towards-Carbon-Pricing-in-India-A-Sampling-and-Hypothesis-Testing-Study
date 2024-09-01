@@ -8,6 +8,7 @@ from sklearn.metrics import mean_squared_error
 from scipy import stats
 from io import BytesIO
 import base64
+import matplotlib.backends.backend_pdf
 
 # Set page config
 st.set_page_config(page_title="Brand Price Analysis", layout="wide")
@@ -174,20 +175,30 @@ def plot_district_graph(df, district_names, benchmark_brands, desired_diff):
         st.dataframe(pd.DataFrame(predictions).transpose())
 
 def download_buttons(fig, district_name):
-    # Function to create a download link
-    def get_image_download_link(img, filename, text):
+    # Function to create a download link for PNG
+    def get_png_download_link(img, filename, text):
         buffered = BytesIO()
         img.savefig(buffered, format="png", dpi=300, bbox_inches="tight")
         img_str = base64.b64encode(buffered.getvalue()).decode()
         href = f'<a href="data:file/png;base64,{img_str}" download="{filename}">{text}</a>'
         return href
 
+    # Function to create a download link for PDF
+    def get_pdf_download_link(img, filename, text):
+        buffered = BytesIO()
+        pdf = matplotlib.backends.backend_pdf.PdfPages(buffered)
+        pdf.savefig(img, bbox_inches="tight")
+        pdf.close()
+        pdf_str = base64.b64encode(buffered.getvalue()).decode()
+        href = f'<a href="data:application/pdf;base64,{pdf_str}" download="{filename}">{text}</a>'
+        return href
+
     # PNG download button
-    png_link = get_image_download_link(fig, f"{district_name}_plot.png", "Download as PNG")
+    png_link = get_png_download_link(fig, f"{district_name}_plot.png", "Download as PNG")
     st.markdown(png_link, unsafe_allow_html=True)
 
     # PDF download button
-    pdf_link = get_image_download_link(fig, f"{district_name}_plot.pdf", "Download as PDF")
+    pdf_link = get_pdf_download_link(fig, f"{district_name}_plot.pdf", "Download as PDF")
     st.markdown(pdf_link, unsafe_allow_html=True)
 
 def main():
