@@ -37,7 +37,7 @@ if 'district_benchmarks' not in st.session_state:
     st.session_state.district_benchmarks = {} 
 
  
-
+@st.cache_data
 def transform_data(df): 
 
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree'] 
@@ -103,7 +103,7 @@ def transform_data(df):
     return transformed_df 
 
  
-
+@st.cache_data
 def plot_district_graph(df, district_name, benchmark_brands, desired_diff): 
 
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree'] 
@@ -305,7 +305,7 @@ def plot_district_graph(df, district_name, benchmark_brands, desired_diff):
                 brand_desired_diff = desired_diff[benchmark_brand] 
 
                 
-                brand_text = f"╔══ {benchmark_brand}({brand_desired_diff:+.0f}) ══╗\n"
+                brand_text = f"╔══ {benchmark_brand}({brand_desired_diff:+.0f}Rs.) ══╗\n"
                 
             brand_text += f"║ Actual Diff: {actual_diff:+.2f} Rs. ║\n" 
             brand_text += "╚" + "═" * (len(benchmark_brand) + 6) + "╝\n\n" 
