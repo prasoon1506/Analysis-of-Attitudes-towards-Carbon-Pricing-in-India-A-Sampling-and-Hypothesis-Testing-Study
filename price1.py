@@ -152,9 +152,9 @@ def plot_district_graph(df, district_name, benchmark_brands, desired_diff):
 
         valid_prices = [p for p in brand_prices if not np.isnan(p)] 
 
-        if valid_prices: 
+        if len(valid_prices)>=2: 
 
-            price_diff = valid_prices[-1] - valid_prices[0] 
+            price_diff = valid_prices[-1] - valid_prices[1] 
 
         else: 
 
@@ -304,12 +304,10 @@ def plot_district_graph(df, district_name, benchmark_brands, desired_diff):
 
                 brand_desired_diff = desired_diff[benchmark_brand] 
 
-                brand_text += f"║ Desired Diff: {brand_desired_diff:+.2f} Rs. ║\n" 
-
-                required_increase_decrease = brand_desired_diff - actual_diff 
-
-                brand_text += f"║ Required Change: {required_increase_decrease:+.2f} Rs. ║\n" 
-
+                
+                brand_text = f"╔══ {benchmark_brand}({brand_desired_diff:+.0f}) ══╗\n"
+                
+            brand_text += f"║ Actual Diff: {actual_diff:+.2f} Rs. ║\n" 
             brand_text += "╚" + "═" * (len(benchmark_brand) + 6) + "╝\n\n" 
 
  
