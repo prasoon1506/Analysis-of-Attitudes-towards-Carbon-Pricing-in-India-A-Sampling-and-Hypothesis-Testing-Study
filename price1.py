@@ -162,7 +162,7 @@ def plot_district_graph(df, district_name, benchmark_brands, desired_diff):
 
     plt.tight_layout()
     return fig, stats_table_data, predictions
-@st.cache(allow_output_mutation=True)  # Allow modifications to the dictionary
+ # Allow modifications to the dictionary
 def generate_pdf(figs):
     pdf_buffer = BytesIO()
     pdf = matplotlib.backends.backend_pdf.PdfPages(pdf_buffer)
