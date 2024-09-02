@@ -168,7 +168,7 @@ def plot_district_graph(df, district_names, benchmark_brands, desired_diff):
         href = f'<a href="data:image/png;base64,{b64_data}" download="district_plot_{district_name}.png">Download Plot as PNG</a>'
         st.markdown(href, unsafe_allow_html=True)
         st.pyplot(fig)
-
+df = pd.DataFrame()
 def on_button_click(uploaded_file):
     if uploaded_file:
         try:
