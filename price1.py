@@ -128,7 +128,7 @@ def plot_district_graph(df, district_name, _benchmark_brands, desired_diff):
 
  
 
-    fig, (ax, ax2) = plt.subplots(1, 2, figsize=(20, 10), gridspec_kw={'width_ratios': [3, 1]}) 
+    fig, (ax, ax2) = plt.subplots(1, 2, figsize=(10, 6), gridspec_kw={'width_ratios': [3, 1]}) 
 
     district_df = df[df["Dist Name"] == district_name] 
 
