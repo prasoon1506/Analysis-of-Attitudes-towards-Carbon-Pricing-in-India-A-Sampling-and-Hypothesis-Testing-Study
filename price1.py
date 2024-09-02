@@ -103,7 +103,7 @@ def transform_data(df):
     return transformed_df 
 
  
-@st.cache_data
+
 def plot_district_graph(df, district_name, _benchmark_brands, desired_diff): 
 
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree'] 
