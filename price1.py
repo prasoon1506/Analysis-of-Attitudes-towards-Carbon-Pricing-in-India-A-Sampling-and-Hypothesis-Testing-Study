@@ -17,7 +17,7 @@ if 'df' not in st.session_state:
     st.session_state.df = None
 if 'district_benchmarks' not in st.session_state:
     st.session_state.district_benchmarks = {}
-@st.cache(allow_output_mutation=True)
+
 def transform_data(df):
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
     transformed_df = df[['Zone', 'REGION', 'Dist Code', 'Dist Name']].copy()
