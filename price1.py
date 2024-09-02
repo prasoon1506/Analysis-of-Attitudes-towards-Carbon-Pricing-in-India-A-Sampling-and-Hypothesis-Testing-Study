@@ -164,12 +164,24 @@ def plot_district_graph(df, district_name, benchmark_brands, desired_diff):
     return fig, stats_table_data, predictions
 
 def generate_pdf(figs):
-    pdf_buffer = BytesIO()
-    pdf = matplotlib.backends.backend_pdf.PdfPages(pdf_buffer)
-    for fig in figs:
-        pdf.savefig(fig)
-    pdf.close()
-    return pdf_buffer
+  pdf_buffer = BytesIO()
+  pdf = matplotlib.backends.backend_pdf.PdfPages(pdf_buffer)
+
+  # Iterate in pairs of districts
+  for i in range(0, len(figs), 2):
+    if i + 1 < len(figs):
+      # Create a new figure with GridSpec for two districts
+      fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20, 10))
+      ax1.imshow(figs[i])  # Assuming your plots are images
+      ax2.imshow(figs[i + 1])
+      fig.suptitle(f"District {i+1} & {i+2} Plots")  # Add a title
+      pdf.savefig(fig)
+    else:
+      # If there's an odd number of districts, save the last one alone
+      pdf.savefig(figs[i])
+
+  pdf.close()
+  return pdf_buffer
 
 def main():
     st.title("Brand Price Analysis")
