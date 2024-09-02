@@ -218,15 +218,15 @@ def create_interactive_plot(df):
 # Streamlit app layout
 st.title("District-wise Brand Price Trend Analysis")
 
-
+uploaded_file = st.file_uploader("Upload Excel", type=['xlsx'])
+if uploaded_file is not None:
+    on_button_click(uploaded_file)
 
 zone_dropdown = st.selectbox("Select Zone", [])
 region_dropdown = st.selectbox("Select Region", [])
 district_dropdown = st.multiselect("Select District", [])
 benchmark_dropdown = st.multiselect("Select Benchmark Brands", [])
-uploaded_file = st.file_uploader("Upload Excel", type=['xlsx'])
-if uploaded_file is not None:
-    on_button_click(uploaded_file)
+
 if zone_dropdown:
     on_zone_change(zone_dropdown)
 if region_dropdown:
