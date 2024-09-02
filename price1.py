@@ -197,8 +197,8 @@ def generate_pdf(figs):
         else:
             # If there's an odd number of figures, add the last one to a new page
             pdf.savefig(figs[i])
-    pdf.close()
-    return pdf_buffer
+     pdf.close()
+     return pdf_buffer
 def main():
      st.title("Brand Price Analysis")
 
