@@ -80,7 +80,8 @@ def plot_district_graph(df, district_name, benchmark_brands, desired_diff):
         else:
             price_diff = np.nan
         price_diffs.append(price_diff)
-        line, = ax.plot(week_names, brand_prices, marker='o', linestyle='-', label=f"{brand} ({price_diff:.0f})")
+        x_indices = np.arange(len(week_names))
+        line, = ax.plot(x_indices, brand_prices, marker='o', linestyle='-', label=f"{brand} ({price_diff:.0f})")
 
         for week, price in zip(week_names, brand_prices):
             if not np.isnan(price):
@@ -126,12 +127,13 @@ def plot_district_graph(df, district_name, benchmark_brands, desired_diff):
                 'Prediction': np.nan,
                 'Confidence Interval': (np.nan, np.nan)
             }
-
+    ax.set_xticks(x_indices)
+    ax.set_xticklabels(week_names)
     ax.set_xlabel('Month/Week', weight='bold')
     ax.set_ylabel('Whole Sale Price (in Rs.)', weight='bold')
     ax.set_title(f"{district_name} - Brands Price Trend", weight='bold')
     ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=6, prop={'weight': 'bold'})
-    plt.setp(ax.get_xticklabels(), rotation=45)
+    plt.setp(ax.get_xticklabels())
 
     # Benchmark brand information on the right side with improved styling
     ax2.axis('off')
