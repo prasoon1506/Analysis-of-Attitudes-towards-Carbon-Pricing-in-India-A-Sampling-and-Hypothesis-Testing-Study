@@ -163,7 +163,7 @@ def plot_district_graph(df, district_name, benchmark_brands, desired_diff):
     plt.tight_layout()
     return fig, stats_table_data, predictions
 
-    def generate_pdf(figs):
+def generate_pdf(figs):
      pdf_buffer = BytesIO()
      pdf = PdfPages(pdf_buffer)
     
@@ -199,7 +199,7 @@ def plot_district_graph(df, district_name, benchmark_brands, desired_diff):
             pdf.savefig(figs[i])
     pdf.close()
     return pdf_buffer
-    def main():
+def main():
      st.title("Brand Price Analysis")
 
      uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
