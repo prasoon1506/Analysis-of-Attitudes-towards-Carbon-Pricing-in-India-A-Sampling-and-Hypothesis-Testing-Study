@@ -133,7 +133,7 @@ def plot_district_graph(df, district_name, benchmark_brands, desired_diff):
     ax.set_ylabel('Whole Sale Price (in Rs.)', weight='bold')
     ax.set_title(f"{district_name} - Brands Price Trend", weight='bold')
     ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=6, prop={'weight': 'bold'})
-    plt.setp(ax.get_xticklabels())
+
 
     # Benchmark brand information on the right side with improved styling
     ax2.axis('off')
