@@ -7,7 +7,7 @@ from sklearn.metrics import mean_squared_error
 from scipy import stats
 from io import BytesIO
 import base64
-import matplotlib.backends.backend_pdf
+from matplotlib.backends.backend_pdf import PdfPages
 
 # Set page config
 st.set_page_config(page_title="Brand Price Analysis", layout="wide")
@@ -65,7 +65,7 @@ def plot_district_graph(df, district_name, benchmark_brands, desired_diff):
     week_names = sorted(list(set([col.split(' (')[1].split(')')[0] for col in df.columns if '(' in col])),
                         key=sort_key)
 
-    fig, (ax, ax2) = plt.subplots(1, 2, figsize=(20, 10), gridspec_kw={'width_ratios': [3, 1]})
+    fig, (ax, ax2) = plt.subplots(1, 2, figsize=(10, 5), gridspec_kw={'width_ratios': [3, 1]})
     district_df = df[df["Dist Name"] == district_name]
     price_diffs = []
     stats_table_data = {}
@@ -163,19 +163,47 @@ def plot_district_graph(df, district_name, benchmark_brands, desired_diff):
     plt.tight_layout()
     return fig, stats_table_data, predictions
 
-def generate_pdf(figs):
-    pdf_buffer = BytesIO()
-    pdf = matplotlib.backends.backend_pdf.PdfPages(pdf_buffer)
-    for fig in figs:
-        pdf.savefig(fig)
+    def generate_pdf(figs):
+     pdf_buffer = BytesIO()
+     pdf = PdfPages(pdf_buffer)
+    
+    # Change 1: Iterate over figures in pairs
+     for i in range(0, len(figs), 2):
+        if i + 1 < len(figs):
+            # Combine two figures into one page
+            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11.69, 8.27))  # A4 size
+
+            # Remove extra whitespace around the plots
+            fig.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1, wspace=0.4)
+
+            # Plot the first figure on the left subplot
+            for ax in figs[i].axes:
+                ax.remove()
+                for item in ax.get_children():
+                    item.set_clip_on(False)
+                ax1.add_artist(item)
+
+            # Plot the second figure on the right subplot
+            for ax in figs[i + 1].axes:
+                ax.remove()
+                for item in ax.get_children():
+                    item.set_clip_on(False)
+                ax2.add_artist(item)
+
+            # Adjust the layout and save the combined figure
+            ax1.set_position([0.125, 0.15, 0.35, 0.75])
+            ax2.set_position([0.575, 0.15, 0.35, 0.75])
+            pdf.savefig(fig)
+        else:
+            # If there's an odd number of figures, add the last one to a new page
+            pdf.savefig(figs[i])
     pdf.close()
     return pdf_buffer
+    def main():
+     st.title("Brand Price Analysis")
 
-def main():
-    st.title("Brand Price Analysis")
-
-    uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
-    if uploaded_file is not None:
+     uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
+     if uploaded_file is not None:
         try:
             df = pd.read_excel(uploaded_file, skiprows=2)
             st.session_state.df = transform_data(df)
@@ -184,7 +212,7 @@ def main():
             st.error(f"Error reading file: {e}. Please ensure it is a valid Excel file.")
             return
 
-    if st.session_state.df is not None:
+     if st.session_state.df is not None:
         df = st.session_state.df
         
         col1, col2 = st.columns(2)
