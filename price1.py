@@ -264,7 +264,7 @@ def plot_district_graph(df, district_name, benchmark_brands, desired_diff):
 
     ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=6, prop={'weight': 'bold'}) 
 
-    plt.setp(ax.get_xticklabels(), rotation=45) 
+    plt.setp(ax.get_xticklabels())
 
  
 
