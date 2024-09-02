@@ -166,20 +166,15 @@ def plot_district_graph(df, district_name, benchmark_brands, desired_diff):
 def generate_pdf(figs):
     pdf_buffer = BytesIO()
     pdf = PdfPages(pdf_buffer)
-    
+
     for i in range(0, len(figs), 2):
         if i + 1 < len(figs):
-            # Combine two figures into one page
             fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11.69, 8.27))  # A4 size
-
-            # Remove extra whitespace around the plots
             fig.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1, wspace=0.4)
 
-            # Copy elements from the first figure to the left subplot
-            for ax in figs[i].axes:
+            for j, ax in enumerate(figs[i].axes):
                 for item in ax.get_children():
                     if hasattr(item, 'get_xaxis'):
-                        # For axes, copy the elements instead of moving
                         ax1.plot(*item.get_data(), marker='o', linestyle='-', label=item.get_label())
                         ax1.set_xlabel(item.get_xlabel())
                         ax1.set_ylabel(item.get_ylabel())
@@ -187,15 +182,15 @@ def generate_pdf(figs):
                         ax1.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=6, prop={'weight': 'bold'})
                         plt.setp(ax1.get_xticklabels(), rotation=45)
                     else:
-                        # For other artists, copy them directly
-                        item.set_clip_on(False)
-                        ax1.add_artist(item)
+                        if item.__class__.__name__ == 'Text':
+                            ax1.text(item.get_position()[0], item.get_position()[1], item.get_text(), 
+                                     transform=ax1.transAxes, fontsize=item.get_fontsize(), 
+                                     verticalalignment=item.get_verticalalignment(), 
+                                     horizontalalignment=item.get_horizontalalignment())
 
-            # Copy elements from the second figure to the right subplot
-            for ax in figs[i + 1].axes:
+            for j, ax in enumerate(figs[i+1].axes):
                 for item in ax.get_children():
                     if hasattr(item, 'get_xaxis'):
-                        # For axes, copy the elements instead of moving
                         ax2.plot(*item.get_data(), marker='o', linestyle='-', label=item.get_label())
                         ax2.set_xlabel(item.get_xlabel())
                         ax2.set_ylabel(item.get_ylabel())
@@ -203,17 +198,17 @@ def generate_pdf(figs):
                         ax2.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=6, prop={'weight': 'bold'})
                         plt.setp(ax2.get_xticklabels(), rotation=45)
                     else:
-                        # For other artists, copy them directly
-                        item.set_clip_on(False)
-                        ax2.add_artist(item)
+                        if item.__class__.__name__ == 'Text':
+                            ax2.text(item.get_position()[0], item.get_position()[1], item.get_text(), 
+                                     transform=ax2.transAxes, fontsize=item.get_fontsize(), 
+                                     verticalalignment=item.get_verticalalignment(), 
+                                     horizontalalignment=item.get_horizontalalignment())
 
-            # Adjust the layout
             ax1.set_position([0.125, 0.15, 0.35, 0.75])
             ax2.set_position([0.575, 0.15, 0.35, 0.75])
-            
+
             pdf.savefig(fig)
         else:
-            # If there's an odd number of figures, add the last one to a new page
             pdf.savefig(figs[i])
     pdf.close()
     return pdf_buffer
