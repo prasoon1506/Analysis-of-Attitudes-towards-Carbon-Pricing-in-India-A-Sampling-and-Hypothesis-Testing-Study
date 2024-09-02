@@ -164,11 +164,10 @@ def plot_district_graph(df, district_name, benchmark_brands, desired_diff):
     return fig, stats_table_data, predictions
 
 def generate_pdf(figs):
-     pdf_buffer = BytesIO()
-     pdf = PdfPages(pdf_buffer)
+    pdf_buffer = BytesIO()
+    pdf = PdfPages(pdf_buffer)
     
-    # Change 1: Iterate over figures in pairs
-     for i in range(0, len(figs), 2):
+    for i in range(0, len(figs), 2):
         if i + 1 < len(figs):
             # Combine two figures into one page
             fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11.69, 8.27))  # A4 size
@@ -176,29 +175,48 @@ def generate_pdf(figs):
             # Remove extra whitespace around the plots
             fig.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1, wspace=0.4)
 
-            # Plot the first figure on the left subplot
+            # Copy elements from the first figure to the left subplot
             for ax in figs[i].axes:
-                ax.remove()
                 for item in ax.get_children():
-                    item.set_clip_on(False)
-                ax1.add_artist(item)
+                    if hasattr(item, 'get_xaxis'):
+                        # For axes, copy the elements instead of moving
+                        ax1.plot(*item.get_data(), marker='o', linestyle='-', label=item.get_label())
+                        ax1.set_xlabel(item.get_xlabel())
+                        ax1.set_ylabel(item.get_ylabel())
+                        ax1.set_title(item.get_title())
+                        ax1.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=6, prop={'weight': 'bold'})
+                        plt.setp(ax1.get_xticklabels(), rotation=45)
+                    else:
+                        # For other artists, copy them directly
+                        item.set_clip_on(False)
+                        ax1.add_artist(item)
 
-            # Plot the second figure on the right subplot
+            # Copy elements from the second figure to the right subplot
             for ax in figs[i + 1].axes:
-                ax.remove()
                 for item in ax.get_children():
-                    item.set_clip_on(False)
-                ax2.add_artist(item)
+                    if hasattr(item, 'get_xaxis'):
+                        # For axes, copy the elements instead of moving
+                        ax2.plot(*item.get_data(), marker='o', linestyle='-', label=item.get_label())
+                        ax2.set_xlabel(item.get_xlabel())
+                        ax2.set_ylabel(item.get_ylabel())
+                        ax2.set_title(item.get_title())
+                        ax2.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=6, prop={'weight': 'bold'})
+                        plt.setp(ax2.get_xticklabels(), rotation=45)
+                    else:
+                        # For other artists, copy them directly
+                        item.set_clip_on(False)
+                        ax2.add_artist(item)
 
-            # Adjust the layout and save the combined figure
+            # Adjust the layout
             ax1.set_position([0.125, 0.15, 0.35, 0.75])
             ax2.set_position([0.575, 0.15, 0.35, 0.75])
+            
             pdf.savefig(fig)
         else:
             # If there's an odd number of figures, add the last one to a new page
             pdf.savefig(figs[i])
-     pdf.close()
-     return pdf_buffer
+    pdf.close()
+    return pdf_buffer
 def main():
      st.title("Brand Price Analysis")
 
