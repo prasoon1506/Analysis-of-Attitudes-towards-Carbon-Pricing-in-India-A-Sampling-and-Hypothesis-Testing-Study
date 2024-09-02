@@ -7,7 +7,7 @@ from sklearn.metrics import mean_squared_error
 from scipy import stats
 from io import BytesIO
 import base64
-from matplotlib.backends.backend_pdf import PdfPages
+import matplotlib.backends.backend_pdf
 
 # Set page config
 st.set_page_config(page_title="Brand Price Analysis", layout="wide")
@@ -65,7 +65,7 @@ def plot_district_graph(df, district_name, benchmark_brands, desired_diff):
     week_names = sorted(list(set([col.split(' (')[1].split(')')[0] for col in df.columns if '(' in col])),
                         key=sort_key)
 
-    fig, (ax, ax2) = plt.subplots(1, 2, figsize=(10, 5), gridspec_kw={'width_ratios': [3, 1]})
+    fig, (ax, ax2) = plt.subplots(1, 2, figsize=(20, 10), gridspec_kw={'width_ratios': [3, 1]})
     district_df = df[df["Dist Name"] == district_name]
     price_diffs = []
     stats_table_data = {}
@@ -80,8 +80,7 @@ def plot_district_graph(df, district_name, benchmark_brands, desired_diff):
         else:
             price_diff = np.nan
         price_diffs.append(price_diff)
-        x_indices = np.arange(len(week_names))
-        line, = ax.plot(x_indices, brand_prices, marker='o', linestyle='-', label=f"{brand} ({price_diff:.0f})")
+        line, = ax.plot(week_names, brand_prices, marker='o', linestyle='-', label=f"{brand} ({price_diff:.0f})")
 
         for week, price in zip(week_names, brand_prices):
             if not np.isnan(price):
@@ -127,13 +126,12 @@ def plot_district_graph(df, district_name, benchmark_brands, desired_diff):
                 'Prediction': np.nan,
                 'Confidence Interval': (np.nan, np.nan)
             }
-    ax.set_xticks(x_indices)
-    ax.set_xticklabels(week_names)
+
     ax.set_xlabel('Month/Week', weight='bold')
     ax.set_ylabel('Whole Sale Price (in Rs.)', weight='bold')
     ax.set_title(f"{district_name} - Brands Price Trend", weight='bold')
     ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=6, prop={'weight': 'bold'})
-
+    plt.setp(ax.get_xticklabels(), rotation=45)
 
     # Benchmark brand information on the right side with improved styling
     ax2.axis('off')
@@ -167,58 +165,17 @@ def plot_district_graph(df, district_name, benchmark_brands, desired_diff):
 
 def generate_pdf(figs):
     pdf_buffer = BytesIO()
-    pdf = PdfPages(pdf_buffer)
-
-    for i in range(0, len(figs), 2):
-        if i + 1 < len(figs):
-            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11.69, 8.27))  # A4 size
-            fig.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1, wspace=0.4)
-
-            for j, ax in enumerate(figs[i].axes):
-                for item in ax.get_children():
-                    if hasattr(item, 'get_xaxis'):
-                        ax1.plot(*item.get_data(), marker='o', linestyle='-', label=item.get_label())
-                        ax1.set_xlabel(item.get_xlabel())
-                        ax1.set_ylabel(item.get_ylabel())
-                        ax1.set_title(item.get_title())
-                        ax1.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=6, prop={'weight': 'bold'})
-                        plt.setp(ax1.get_xticklabels(), rotation=45)
-                    else:
-                        if item.__class__.__name__ == 'Text':
-                            ax1.text(item.get_position()[0], item.get_position()[1], item.get_text(), 
-                                     transform=ax1.transAxes, fontsize=item.get_fontsize(), 
-                                     verticalalignment=item.get_verticalalignment(), 
-                                     horizontalalignment=item.get_horizontalalignment())
-
-            for j, ax in enumerate(figs[i+1].axes):
-                for item in ax.get_children():
-                    if hasattr(item, 'get_xaxis'):
-                        ax2.plot(*item.get_data(), marker='o', linestyle='-', label=item.get_label())
-                        ax2.set_xlabel(item.get_xlabel())
-                        ax2.set_ylabel(item.get_ylabel())
-                        ax2.set_title(item.get_title())
-                        ax2.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=6, prop={'weight': 'bold'})
-                        plt.setp(ax2.get_xticklabels(), rotation=45)
-                    else:
-                        if item.__class__.__name__ == 'Text':
-                            ax2.text(item.get_position()[0], item.get_position()[1], item.get_text(), 
-                                     transform=ax2.transAxes, fontsize=item.get_fontsize(), 
-                                     verticalalignment=item.get_verticalalignment(), 
-                                     horizontalalignment=item.get_horizontalalignment())
-
-            ax1.set_position([0.125, 0.15, 0.35, 0.75])
-            ax2.set_position([0.575, 0.15, 0.35, 0.75])
-
-            pdf.savefig(fig)
-        else:
-            pdf.savefig(figs[i])
+    pdf = matplotlib.backends.backend_pdf.PdfPages(pdf_buffer)
+    for fig in figs:
+        pdf.savefig(fig)
     pdf.close()
     return pdf_buffer
-def main():
-     st.title("Brand Price Analysis")
 
-     uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
-     if uploaded_file is not None:
+def main():
+    st.title("Brand Price Analysis")
+
+    uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
+    if uploaded_file is not None:
         try:
             df = pd.read_excel(uploaded_file, skiprows=2)
             st.session_state.df = transform_data(df)
@@ -227,7 +184,7 @@ def main():
             st.error(f"Error reading file: {e}. Please ensure it is a valid Excel file.")
             return
 
-     if st.session_state.df is not None:
+    if st.session_state.df is not None:
         df = st.session_state.df
         
         col1, col2 = st.columns(2)
