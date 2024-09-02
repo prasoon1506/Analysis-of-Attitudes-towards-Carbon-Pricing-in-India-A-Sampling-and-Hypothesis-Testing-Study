@@ -1,11 +1,7 @@
 import streamlit as st 
-
 import pandas as pd 
-
 import numpy as np 
-
 import matplotlib.pyplot as plt 
-
 import xgboost as xgb 
 
 from sklearn.metrics import mean_squared_error 
@@ -103,8 +99,8 @@ def transform_data(df):
     return transformed_df 
 
  
-
-def plot_district_graph(df, district_name, benchmark_brands, desired_diff): 
+@st.cache_data
+def plot_district_graph(df, district_name, _benchmark_brands, desired_diff): 
 
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree'] 
 
@@ -274,9 +270,9 @@ def plot_district_graph(df, district_name, benchmark_brands, desired_diff):
 
     text_str = 'Benchmark Brands:\n\n' 
 
-    if benchmark_brands: 
+    if _benchmark_brands: 
 
-        for benchmark_brand in benchmark_brands: 
+        for benchmark_brand in _benchmark_brands: 
 
             jklc_prices = [district_df[f"JKLC ({week})"].iloc[0] for week in week_names if f"JKLC ({week})" in district_df.columns] 
 
