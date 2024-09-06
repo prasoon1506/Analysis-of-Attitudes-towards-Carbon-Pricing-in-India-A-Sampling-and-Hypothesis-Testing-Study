@@ -122,7 +122,7 @@ def plot_district_graph(df, district_names, benchmark_brands, desired_diff, week
                     if not np.isnan(price):
                         ax.text(week, price, str(round(price)), fontsize=10)
             
-            if valid_prices:
+            """if valid_prices:
                 stats_table_data[brand] = {
                     'Min': np.min(valid_prices),
                     'Max': np.max(valid_prices),
@@ -152,7 +152,7 @@ def plot_district_graph(df, district_names, benchmark_brands, desired_diff, week
                 confidence_interval = (prediction - margin_of_error, prediction + margin_of_error)
                 predictions[brand] = {'Prediction': prediction[0], 'Confidence Interval': confidence_interval}
             else:
-                predictions[brand] = {'Prediction': np.nan, 'Confidence Interval': (np.nan, np.nan)}
+                predictions[brand] = {'Prediction': np.nan, 'Confidence Interval': (np.nan, np.nan)}"""
 
         if not valid_data:
             st.warning(f"No valid data to plot for district: {district_name}")
@@ -173,7 +173,7 @@ def plot_district_graph(df, district_names, benchmark_brands, desired_diff, week
         plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=6, prop={'weight': 'bold'})
         plt.tight_layout()
         
-        if stats_table_data:
+        """if stats_table_data:
             stats_table = pd.DataFrame(stats_table_data).transpose().round(2)
         else:
             stats_table = pd.DataFrame()
@@ -183,7 +183,7 @@ def plot_district_graph(df, district_names, benchmark_brands, desired_diff, week
             predictions_df = pd.DataFrame(predictions).transpose()
         else:
             predictions_df = pd.DataFrame()
-        all_predictions.append(predictions_df)
+        all_predictions.append(predictions_df)"""
         
         text_str = ''
         if benchmark_brands:
@@ -277,7 +277,7 @@ def main():
             
             diff_week = st.slider("Diff Week", min_value=0, max_value=len(st.session_state.week_names)-1, value=1, key='diff_week')
             
-            if st.button("Generate Plots"):
+            """if st.button("Generate Plots"):
                 all_stats, all_predictions = plot_district_graph(filtered_df, selected_districts, selected_benchmark_brands, desired_diff, st.session_state.week_names, diff_week)
                 
                 if st.button("Download Stats"):
@@ -292,7 +292,7 @@ def main():
                         csv = predictions.to_csv(index=True)
                         b64 = base64.b64encode(csv.encode()).decode()
                         href = f'<a href="data:file/csv;base64,{b64}" download="predictions_{district}.csv">Download {district} Predictions CSV</a>'
-                        st.markdown(href, unsafe_allow_html=True)
+                        st.markdown(href, unsafe_allow_html=True)"""
 
 if __name__ == "__main__":
     main()
