@@ -2,8 +2,8 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from io import BytesIO
 import base64
+from io import BytesIO
 from tqdm import tqdm
 import xgboost as xgb
 from sklearn.model_selection import train_test_split
@@ -11,118 +11,99 @@ from sklearn.metrics import mean_squared_error
 from scipy import stats
 import matplotlib.backends.backend_pdf
 
-# Global variables
-df = None
-desired_diff_input = {}
-week_names = []
-
+# Function to transform data
 def transform_data(df, week_names_input):
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
     transformed_df = df[['Zone', 'REGION', 'Dist Code', 'Dist Name']].copy()
-    
-    # Region name replacements
-    region_replacements = {
-        '12_Madhya Pradesh(west)': 'Madhya Pradesh(West)',
-        '20_Rajasthan': 'Rajasthan', '50_Rajasthan III': 'Rajasthan', '80_Rajasthan II': 'Rajasthan',
-        '33_Chhattisgarh(2)': 'Chhattisgarh', '38_Chhattisgarh(3)': 'Chhattisgarh', '39_Chhattisgarh(1)': 'Chhattisgarh',
-        '07_Haryana 1': 'Haryana', '07_Haryana 2': 'Haryana',
-        '06_Gujarat 1': 'Gujarat', '66_Gujarat 2': 'Gujarat', '67_Gujarat 3': 'Gujarat', '68_Gujarat 4': 'Gujarat', '69_Gujarat 5': 'Gujarat',
-        '13_Maharashtra': 'Maharashtra(West)',
-        '24_Uttar Pradesh': 'Uttar Pradesh(West)',
-        '35_Uttarakhand': 'Uttarakhand',
-        '83_UP East Varanasi Region': 'Varanasi',
-        '83_UP East Lucknow Region': 'Lucknow',
-        '30_Delhi': 'Delhi',
-        '19_Punjab': 'Punjab',
-        '09_Jammu&Kashmir': 'Jammu&Kashmir',
-        '08_Himachal Pradesh': 'Himachal Pradesh',
-        '82_Maharashtra(East)': 'Maharashtra(East)',
-        '81_Madhya Pradesh': 'Madhya Pradesh(East)',
-        '34_Jharkhand': 'Jharkhand',
-        '18_ODISHA': 'Odisha',
-        '04_Bihar': 'Bihar',
-        '27_Chandigarh': 'Chandigarh',
-        '82_Maharashtra (East)': 'Maharashtra(East)',
-        '25_West Bengal': 'West Bengal'
-    }
-    
-    transformed_df['REGION'] = transformed_df['REGION'].replace(region_replacements)
+    transformed_df['REGION'] = transformed_df['REGION'].str.replace('12_Madhya Pradesh(west)', 'Madhya Pradesh(West)')
+    transformed_df['REGION'] = transformed_df['REGION'].replace(['20_Rajasthan', '50_Rajasthan III', '80_Rajasthan II'], 'Rajasthan')
+    transformed_df['REGION'] = transformed_df['REGION'].replace(['33_Chhattisgarh(2)', '38_Chhattisgarh(3)', '39_Chhattisgarh(1)'], 'Chhattisgarh')
+    transformed_df['REGION'] = transformed_df['REGION'].replace(['07_Haryana 1', '07_Haryana 2'], 'Haryana')
+    transformed_df['REGION'] = transformed_df['REGION'].replace(['06_Gujarat 1', '66_Gujarat 2', '67_Gujarat 3','68_Gujarat 4','69_Gujarat 5'], 'Gujarat')
+    transformed_df['REGION'] = transformed_df['REGION'].str.replace('13_Maharashtra', 'Maharashtra(West)')
+    transformed_df['REGION'] = transformed_df['REGION'].str.replace('24_Uttar Pradesh', 'Uttar Pradesh(West)')
+    transformed_df['REGION'] = transformed_df['REGION'].str.replace('35_Uttarakhand', 'Uttarakhand')
+    transformed_df['REGION'] = transformed_df['REGION'].str.replace('83_UP East Varanasi Region', 'Varanasi')
+    transformed_df['REGION'] = transformed_df['REGION'].str.replace('83_UP East Lucknow Region', 'Lucknow')
+    transformed_df['REGION'] = transformed_df['REGION'].str.replace('30_Delhi', 'Delhi')
+    transformed_df['REGION'] = transformed_df['REGION'].str.replace('19_Punjab', 'Punjab')
+    transformed_df['REGION'] = transformed_df['REGION'].str.replace('09_Jammu&Kashmir', 'Jammu&Kashmir')
+    transformed_df['REGION'] = transformed_df['REGION'].str.replace('08_Himachal Pradesh', 'Himachal Pradesh')
+    transformed_df['REGION'] = transformed_df['REGION'].str.replace('82_Maharashtra(East)', 'Maharashtra(East)')
+    transformed_df['REGION'] = transformed_df['REGION'].str.replace('81_Madhya Pradesh', 'Madhya Pradesh(East)')
+    transformed_df['REGION'] = transformed_df['REGION'].str.replace('34_Jharkhand', 'Jharkhand')
+    transformed_df['REGION'] = transformed_df['REGION'].str.replace('18_ODISHA', 'Odisha')
+    transformed_df['REGION'] = transformed_df['REGION'].str.replace('04_Bihar', 'Bihar')
+    transformed_df['REGION'] = transformed_df['REGION'].str.replace('27_Chandigarh', 'Chandigarh')
+    transformed_df['REGION'] = transformed_df['REGION'].str.replace('82_Maharashtra (East)', 'Maharashtra(East)')
+    transformed_df['REGION'] = transformed_df['REGION'].str.replace('25_West Bengal', 'West Bengal')
     transformed_df['REGION'] = transformed_df['REGION'].replace(['Delhi', 'Haryana', 'Punjab'], 'North-I')
+    transformed_df['REGION'] = transformed_df['REGION'].replace(['Uttar Pradesh(West)','Uttarakhand'], 'North-II')
     
-    # Zone name replacements
-    zone_replacements = {
-        'EZ_East Zone': 'East Zone',
-        'CZ_Central Zone': 'Central Zone',
-        'NZ_North Zone': 'North Zone',
-        'UPEZ_UP East Zone': 'UP East Zone',
-        'upWZ_up West Zone': 'UP West Zone',
-        'WZ_West Zone': 'West Zone'
-    }
-    
-    transformed_df['Zone'] = transformed_df['Zone'].replace(zone_replacements)
-    
+    transformed_df['Zone'] = transformed_df['Zone'].str.replace('EZ_East Zone', 'East Zone')
+    transformed_df['Zone'] = transformed_df['Zone'].str.replace('CZ_Central Zone', 'Central Zone')
+    transformed_df['Zone'] = transformed_df['Zone'].str.replace('NZ_North Zone', 'North Zone')
+    transformed_df['Zone'] = transformed_df['Zone'].str.replace('UPEZ_UP East Zone', 'UP East Zone')
+    transformed_df['Zone'] = transformed_df['Zone'].str.replace('upWZ_up West Zone', 'UP West Zone')
+    transformed_df['Zone'] = transformed_df['Zone'].str.replace('WZ_West Zone', 'West Zone')
     brand_columns = [col for col in df.columns if any(brand in col for brand in brands)]
     num_weeks = len(brand_columns) // len(brands)
-    
-    for i in range(num_weeks):
+    for i in tqdm(range(num_weeks), desc='Transforming data'):
         start_idx = i * len(brands)
         end_idx = (i + 1) * len(brands)
         week_data = df[brand_columns[start_idx:end_idx]]
-        week_name = week_names_input[i]
+        week_name = week_names_input[i]  # Use week name from user input
         week_data = week_data.rename(columns={
             col: f"{brand} ({week_name})"
             for brand, col in zip(brands, week_data.columns)
         })
         week_data.replace(0, np.nan, inplace=True)
-        transformed_df = pd.merge(transformed_df, week_data, left_index=True, right_index=True)
-    
+        transformed_df = pd.merge(transformed_df,
+                                  week_data,
+                                  left_index=True,
+                                  right_index=True)
     return transformed_df
 
-def plot_district_graph(df, district_names, benchmark_brands, desired_diff, week_names, diff_week=1):
+# Function to plot district graph
+def plot_district_graph(df, district_names, benchmark_brands, desired_diff, week_names, download_stats=False, download_predictions=False, download_pdf=False, diff_week=1):
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
     num_weeks = len(df.columns[4:]) // len(brands)
     
     all_stats_table = []
     all_predictions = []
-    
-    for district_name in district_names:
-        fig, ax = plt.subplots(figsize=(10, 8))
+    if download_pdf:
+        pdf = matplotlib.backends.backend_pdf.PdfPages("district_plots.pdf")
+    for i, district_name in enumerate(district_names):
+        plt.figure(figsize=(10, 8))
         district_df = df[df["Dist Name"] == district_name]
         price_diffs = []
         stats_table_data = {}
         predictions = {}
 
-        valid_data = False
-        min_price, max_price = float('inf'), float('-inf')
-
         for brand in brands:
             brand_prices = []
-            for week_name in week_names:
+            for week_name in week_names:  # Use week_names directly
                 column_name = f"{brand} ({week_name})"
                 if column_name in district_df.columns:
                     price = district_df[column_name].iloc[0]
                     brand_prices.append(price)
-                    if not np.isnan(price):
-                        min_price = min(min_price, price)
-                        max_price = max(max_price, price)
-                        valid_data = True
                 else:
                     brand_prices.append(np.nan)
-            
             valid_prices = [p for p in brand_prices if not np.isnan(p)]
             if len(valid_prices) > diff_week:
                 price_diff = valid_prices[-1] - valid_prices[diff_week]
             else:
                 price_diff = np.nan
             price_diffs.append(price_diff)
-            
+            line, = plt.plot(week_names,  # Use week_names directly
+                             brand_prices,
+                             marker='o',
+                             linestyle='-',
+                             label=f"{brand} ({price_diff:.0f})")
+            for week, price in zip(week_names, brand_prices):  # Use week_names directly
+                if not np.isnan(price):
+                    plt.text(week, price, str(round(price)), fontsize=10)
             if valid_prices:
-                line, = ax.plot(week_names, brand_prices, marker='o', linestyle='-', label=f"{brand} ({price_diff:.0f})")
-                for week, price in zip(week_names, brand_prices):
-                    if not np.isnan(price):
-                        ax.text(week, price, str(round(price)), fontsize=10)
-            
-            """if valid_prices:
                 stats_table_data[brand] = {
                     'Min': np.min(valid_prices),
                     'Max': np.max(valid_prices),
@@ -135,11 +116,20 @@ def plot_district_graph(df, district_names, benchmark_brands, desired_diff, week
                     'Kurtosis': pd.Series(valid_prices).kurtosis()
                 }
             else:
-                stats_table_data[brand] = {key: np.nan for key in ['Min', 'Max', 'Average', 'Median', 'First Quartile', 'Third Quartile', 'Variance', 'Skewness', 'Kurtosis']}
-            
+                stats_table_data[brand] = {
+                    'Min': np.nan,
+                    'Max': np.nan,
+                    'Average': np.nan,
+                    'Median': np.nan,
+                    'First Quartile': np.nan,
+                    'Third Quartile': np.nan,
+                    'Variance': np.nan,
+                    'Skewness': np.nan,
+                    'Kurtosis': np.nan
+                }
             if len(valid_prices) > 2:
                 train_data = np.array(range(len(valid_prices))).reshape(-1, 1)
-                train_labels = np.array(valid_prices)
+                train_labels= np.array(valid_prices)
                 model = xgb.XGBRegressor(objective='reg:squarederror')
                 model.fit(train_data, train_labels)
                 next_week = len(valid_prices)
@@ -152,47 +142,41 @@ def plot_district_graph(df, district_names, benchmark_brands, desired_diff, week
                 confidence_interval = (prediction - margin_of_error, prediction + margin_of_error)
                 predictions[brand] = {'Prediction': prediction[0], 'Confidence Interval': confidence_interval}
             else:
-                predictions[brand] = {'Prediction': np.nan, 'Confidence Interval': (np.nan, np.nan)}"""
-
-        if not valid_data:
-            st.warning(f"No valid data to plot for district: {district_name}")
-            continue
-
-        # Adjust y-axis limits
-        y_range = max_price - min_price
-        ax.set_ylim(min_price - 0.1 * y_range, max_price + 0.1 * y_range)
-
-        ax.grid(False)
-        ax.set_xlabel('Month/Week', weight='bold')
-        ax.set_ylabel('Whole Sale Price(in Rs.)', weight='bold')
+                predictions[brand] = {'Prediction': np.nan, 'Confidence Interval': (np.nan, np.nan)}
+        plt.grid(False)
+        plt.xlabel('Month/Week', weight='bold')
+        plt.ylabel('Whole Sale Price(in Rs.)', weight='bold')
         region_name = district_df['REGION'].iloc[0]
         
-        plt.text(0.5, 1.1, region_name, ha='center', va='center', transform=ax.transAxes, weight='bold', fontsize=16)
-        plt.title(f"{district_name} - Brands Price Trend", weight='bold')
+        # Add region name above the title only for the first district
+        if i == 0:
+            plt.text(0.5, 1.1, region_name, ha='center', va='center', transform=plt.gca().transAxes, weight='bold', fontsize=16)  # Added region name using plt.text
+            plt.title(f"{district_name} - Brands Price Trend", weight='bold') # Keep the original title without region name
+        else:
+            plt.title(f"{district_name} - Brands Price Trend", weight='bold')
         
         plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=6, prop={'weight': 'bold'})
         plt.tight_layout()
-        
-        """if stats_table_data:
+        if stats_table_data:
             stats_table = pd.DataFrame(stats_table_data).transpose().round(2)
         else:
-            stats_table = pd.DataFrame()
+            stats_table = pd.DataFrame()  # Create an empty DataFrame if stats_table_data is empty
+        st.write(stats_table)
         all_stats_table.append(stats_table)
-        
         if predictions:
             predictions_df = pd.DataFrame(predictions).transpose()
         else:
-            predictions_df = pd.DataFrame()
-        all_predictions.append(predictions_df)"""
-        
+            predictions_df = pd.DataFrame()  # Create an empty DataFrame if predictions is empty
+        st.write(predictions_df)
+        all_predictions.append(predictions_df)
         text_str = ''
         if benchmark_brands:
             brand_texts = []
-            max_left_length = 0
+            max_left_length = 0  # Store text for each brand separately
             for benchmark_brand in benchmark_brands:
                 jklc_prices = [district_df[f"JKLC ({week})"].iloc[0] for week in week_names if f"JKLC ({week})" in district_df.columns]
                 benchmark_prices = [district_df[f"{benchmark_brand} ({week})"].iloc[0] for week in week_names if f"{benchmark_brand} ({week})" in district_df.columns]
-                actual_diff = np.nan
+                actual_diff = np.nan  # Initialize actual_diff with NaN
                 if jklc_prices and benchmark_prices:
                     for i in range(len(jklc_prices) - 1, -1, -1):
                         if not np.isnan(jklc_prices[i]) and not np.isnan(benchmark_prices[i]):
@@ -202,7 +186,6 @@ def plot_district_graph(df, district_names, benchmark_brands, desired_diff, week
                 brand_text = [f"Benchmark Brand: {benchmark_brand}{desired_diff_str}", f"Actual Diff: {actual_diff:+.2f} Rs."]
                 brand_texts.append(brand_text)
                 max_left_length = max(max_left_length, len(brand_text[0]))
-            
             num_brands = len(brand_texts)
             if num_brands == 1:
                 text_str = "\n".join(brand_texts[0])
@@ -216,85 +199,61 @@ def plot_district_graph(df, district_names, benchmark_brands, desired_diff, week
                     right_text = right_side[0][i] if i < len(right_side[0]) else ""
                     lines.append(f"{left_text.ljust(max_left_length)} \u2502 {right_text.rjust(max_left_length)}")
                 text_str = "\n".join(lines)
-        
-        plt.text(0.5, -0.3, text_str, weight='bold', ha='center', va='center', transform=ax.transAxes, bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.5'))
+        plt.text(0.5, -0.3, text_str, weight='bold', ha='center', va='center', transform=plt.gca().transAxes, bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.5'))
         plt.subplots_adjust(bottom=0.25)
-        
-        st.pyplot(fig)
-        st.write(f"Stats for {district_name}:")
-        st.dataframe(stats_table)
-        st.write(f"Predictions for {district_name}:")
-        st.dataframe(predictions_df)
-    
-    return all_stats_table, all_predictions
-def main():
-    st.title("Data Analysis and Visualization App")
-    
-    if 'df' not in st.session_state:
-        st.session_state.df = None
-    if 'week_names' not in st.session_state:
-        st.session_state.week_names = []
-    if 'df_transformed' not in st.session_state:
-        st.session_state.df_transformed = None
+        if download_pdf:
+            pdf.savefig()
+        buf = BytesIO()
+        plt.savefig(buf, format='png', bbox_inches='tight')
+        buf.seek(0)
+        b64_data = base64.b64encode(buf.getvalue()).decode()
+        st.markdown(f'<a download="district_plot_{district_name}.png" href="data:image/png;base64,{b64_data}">Download Plot as PNG</a>', unsafe_allow_html=True)
+        st.pyplot()
+    if download_pdf:
+       pdf.close()
+       with open("district_plots.pdf", "rb") as f:
+           pdf_data = f.read()
+       b64_pdf = base64.b64encode(pdf_data).decode()
+       st.markdown(f'<a download="{region_name}.pdf" href="data:application/pdf;base64,{b64_pdf}">Download All Plots as PDF</a>', unsafe_allow_html=True)   
+    if download_stats:
+        all_stats_df = pd.concat(all_stats_table, keys=district_names)
+        for district_name in district_names:
+            district_stats_df = all_stats_df.loc[district_name]
+            stats_excel_path = f'stats_{district_name}.xlsx'
+            district_stats_df.to_excel(stats_excel_path)
+            excel_data = open(stats_excel_path, "rb").read()
+            b64 = base64.b64encode(excel_data)
+            payload = b64.decode        st.markdown(f'<a download="{district_name}_stats.xlsx" href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64}">Download {district_name} Stats as Excel File</a>', unsafe_allow_html=True)
+    if download_predictions:
+        all_predictions_df = pd.concat(all_predictions, keys=district_names)
+        for district_name in district_names:
+            district_predictions_df = all_predictions_df.loc[district_name]
+            predictions_excel_path = f'predictions_{district_name}.xlsx'
+            district_predictions_df.to_excel(predictions_excel_path)
+            excel_data = open(predictions_excel_path, "rb").read()
+            b64 = base64.b64encode(excel_data)
+            payload = b64.decode()
+        st.markdown(f'<a download="{district_name}_predictions.xlsx" href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64}">Download {district_name} Predictions as Excel File</a>', unsafe_allow_html=True)
 
-    uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
-    
-    if uploaded_file is not None:
-        if st.session_state.df is None:
-            st.session_state.df = pd.read_excel(uploaded_file, skiprows=2)
-            brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
-            brand_columns = [col for col in st.session_state.df.columns if any(brand in col for brand in brands)]
-            num_weeks = len(brand_columns) // 6
-            st.session_state.week_names = [f"Week {i+1}" for i in range(num_weeks)]
+# Load the data
+df = pd.read_excel("weekwise_data.xlsx")
 
-        st.write("Enter week names:")
-        for i in range(len(st.session_state.week_names)):
-            st.session_state.week_names[i] = st.text_input(f"Week {i+1} name:", st.session_state.week_names[i])
-        
-        if st.button("Process Data"):
-            st.session_state.df_transformed = transform_data(st.session_state.df, st.session_state.week_names)
-            st.success("Data processed successfully!")
+# Get the week names from user input
+week_names_input = st.text_input("Enter week names separated by comma", "Week 1, Week 2, Week 3").split(", ")
 
-        if st.session_state.df_transformed is not None:
-            zone_names = st.session_state.df_transformed["Zone"].unique().tolist()
-            selected_zone = st.selectbox("Select Zone", zone_names, key='zone')
-            
-            filtered_df = st.session_state.df_transformed[st.session_state.df_transformed["Zone"] == selected_zone]
-            region_names = filtered_df["REGION"].unique().tolist()
-            selected_region = st.selectbox("Select Region", region_names, key='region')
-            
-            filtered_df = filtered_df[filtered_df["REGION"] == selected_region]
-            district_names = filtered_df["Dist Name"].unique().tolist()
-            selected_districts = st.multiselect("Select Districts", district_names, key='districts')
-            
-            all_brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
-            benchmark_brands = [brand for brand in all_brands if brand != 'JKLC']
-            selected_benchmark_brands = st.multiselect("Select Benchmark Brands", benchmark_brands, key='benchmark_brands')
-            
-            desired_diff = {}
-            for brand in selected_benchmark_brands:
-                desired_diff[brand] = st.number_input(f"Desired Diff for {brand}:", value=0, key=f'diff_{brand}')
-            
-            diff_week = st.slider("Diff Week", min_value=0, max_value=len(st.session_state.week_names)-1, value=1, key='diff_week')
-            
-            if st.button("Generate Plots"):
-                all_stats, all_predictions = plot_district_graph(filtered_df, selected_districts, selected_benchmark_brands, desired_diff, st.session_state.week_names, diff_week)
-                
-                if st.button("Download Stats"):
-                    for district, stats in zip(selected_districts, all_stats):
-                        csv = stats.to_csv(index=True)
-                        b64 = base64.b64encode(csv.encode()).decode()
-                        href = f'<a href="data:file/csv;base64,{b64}" download="stats_{district}.csv">Download {district} Stats CSV</a>'
-                        st.markdown(href, unsafe_allow_html=True)
+# Transform data based on week names input
+transformed_df = transform_data(df, week_names_input)
 
-                if st.button("Download Predictions"):
-                    for district, predictions in zip(selected_districts, all_predictions):
-                        csv = predictions.to_csv(index=True)
-                        b64 = base64.b64encode(csv.encode()).decode()
-                        href = f'<a href="data:file/csv;base64,{b64}" download="predictions_{district}.csv">Download {district} Predictions CSV</a>'
-                        st.markdown(href, unsafe_allow_html=True)
+# Get unique district names
+district_names = transformed_df['Dist Name'].unique()
 
-if __name__ == "__main__":
-    main()
+# Select districts and benchmark brands for plotting
+selected_districts = st.multiselect("Select districts", district_names)
+benchmark_brands = st.multiselect("Select benchmark brands", brands)
 
+# Get the desired price difference from user input
+desired_diff = {brand: st.number_input(f"Enter desired price difference for {brand} (in Rs.)", value=1000) for brand in benchmark_brands}
+
+# Plot district graphs based on user input
+plot_district_graph(transformed_df, selected_districts, benchmark_brands, desired_diff, week_names_input, download_stats=True, download_predictions=True, download_pdf=True)To run this code as a Streamlit app, follow these steps:
 
