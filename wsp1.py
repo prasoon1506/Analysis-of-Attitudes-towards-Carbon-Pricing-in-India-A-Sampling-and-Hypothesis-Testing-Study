@@ -213,49 +213,56 @@ def plot_district_graph(df, district_names, benchmark_brands, desired_diff, week
 def main():
     st.title("Data Analysis and Visualization App")
     
+    if 'df' not in st.session_state:
+        st.session_state.df = None
+    if 'week_names' not in st.session_state:
+        st.session_state.week_names = []
+    if 'df_transformed' not in st.session_state:
+        st.session_state.df_transformed = None
+
     uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
     
     if uploaded_file is not None:
-        df = pd.read_excel(uploaded_file, skiprows=2)
-        
-        brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
-        brand_columns = [col for col in df.columns if any(brand in col for brand in brands)]
-        num_weeks = len(brand_columns) // 6
-        
-        global week_names
-        week_names = []
-        for i in range(num_weeks):
-            week_name = st.text_input(f"Week {i+1} name:", f"Week {i+1}")
-            week_names.append(week_name)
+        if st.session_state.df is None:
+            st.session_state.df = pd.read_excel(uploaded_file, skiprows=2)
+            brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
+            brand_columns = [col for col in st.session_state.df.columns if any(brand in col for brand in brands)]
+            num_weeks = len(brand_columns) // 6
+            st.session_state.week_names = [f"Week {i+1}" for i in range(num_weeks)]
+
+        st.write("Enter week names:")
+        for i in range(len(st.session_state.week_names)):
+            st.session_state.week_names[i] = st.text_input(f"Week {i+1} name:", st.session_state.week_names[i])
         
         if st.button("Process Data"):
-            df_transformed = transform_data(df, week_names)
+            st.session_state.df_transformed = transform_data(st.session_state.df, st.session_state.week_names)
+            st.success("Data processed successfully!")
+
+        if st.session_state.df_transformed is not None:
+            zone_names = st.session_state.df_transformed["Zone"].unique().tolist()
+            selected_zone = st.selectbox("Select Zone", zone_names, key='zone')
             
-            zone_names = df_transformed["Zone"].unique().tolist()
-            selected_zone = st.selectbox("Select Zone", zone_names)
-            
-            filtered_df = df_transformed[df_transformed["Zone"] == selected_zone]
+            filtered_df = st.session_state.df_transformed[st.session_state.df_transformed["Zone"] == selected_zone]
             region_names = filtered_df["REGION"].unique().tolist()
-            selected_region = st.selectbox("Select Region", region_names)
+            selected_region = st.selectbox("Select Region", region_names, key='region')
             
             filtered_df = filtered_df[filtered_df["REGION"] == selected_region]
             district_names = filtered_df["Dist Name"].unique().tolist()
-            selected_districts = st.multiselect("Select Districts", district_names)
+            selected_districts = st.multiselect("Select Districts", district_names, key='districts')
             
             all_brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
             benchmark_brands = [brand for brand in all_brands if brand != 'JKLC']
-            selected_benchmark_brands = st.multiselect("Select Benchmark Brands", benchmark_brands)
+            selected_benchmark_brands = st.multiselect("Select Benchmark Brands", benchmark_brands, key='benchmark_brands')
             
             desired_diff = {}
             for brand in selected_benchmark_brands:
-                desired_diff[brand] = st.number_input(f"Desired Diff for {brand}:", value=0)
+                desired_diff[brand] = st.number_input(f"Desired Diff for {brand}:", value=0, key=f'diff_{brand}')
             
-            diff_week = st.slider("Diff Week", min_value=0, max_value=num_weeks-1, value=1)
+            diff_week = st.slider("Diff Week", min_value=0, max_value=len(st.session_state.week_names)-1, value=1, key='diff_week')
             
             if st.button("Generate Plots"):
-                all_stats, all_predictions = plot_district_graph(filtered_df, selected_districts, selected_benchmark_brands, desired_diff, week_names, diff_week)
+                all_stats, all_predictions = plot_district_graph(filtered_df, selected_districts, selected_benchmark_brands, desired_diff, st.session_state.week_names, diff_week)
                 
-                # Offer downloads
                 if st.button("Download Stats"):
                     for district, stats in zip(selected_districts, all_stats):
                         csv = stats.to_csv(index=True)
@@ -272,3 +279,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
