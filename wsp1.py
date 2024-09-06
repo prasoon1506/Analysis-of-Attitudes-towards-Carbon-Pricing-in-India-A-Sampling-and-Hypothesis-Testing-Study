@@ -256,5 +256,5 @@ benchmark_brands = st.multiselect("Select benchmark brands", brands)
 desired_diff = {brand: st.number_input(f"Enter desired price difference for {brand} (in Rs.)", value=1000) for brand in benchmark_brands}
 
 # Plot district graphs based on user input
-plot_district_graph(transformed_df, selected_districts, benchmark_brands, desired_diff, week_names_input, download_stats=True, download_predictions=True, download_pdf=True)To run this code as a Streamlit app, follow these steps:
+plot_district_graph(transformed_df, selected_districts, benchmark_brands, desired_diff, week_names_input, download_stats=True, download_predictions=True, download_pdf=True)
 
