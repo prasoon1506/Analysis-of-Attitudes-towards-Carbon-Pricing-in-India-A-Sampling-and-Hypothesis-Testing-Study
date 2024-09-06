@@ -277,7 +277,7 @@ def main():
             
             diff_week = st.slider("Diff Week", min_value=0, max_value=len(st.session_state.week_names)-1, value=1, key='diff_week')
             
-            """if st.button("Generate Plots"):
+            if st.button("Generate Plots"):
                 all_stats, all_predictions = plot_district_graph(filtered_df, selected_districts, selected_benchmark_brands, desired_diff, st.session_state.week_names, diff_week)
                 
                 if st.button("Download Stats"):
@@ -292,7 +292,7 @@ def main():
                         csv = predictions.to_csv(index=True)
                         b64 = base64.b64encode(csv.encode()).decode()
                         href = f'<a href="data:file/csv;base64,{b64}" download="predictions_{district}.csv">Download {district} Predictions CSV</a>'
-                        st.markdown(href, unsafe_allow_html=True)"""
+                        st.markdown(href, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
