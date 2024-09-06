@@ -223,7 +223,8 @@ def plot_district_graph(df, district_names, benchmark_brands, desired_diff, week
             district_stats_df.to_excel(stats_excel_path)
             excel_data = open(stats_excel_path, "rb").read()
             b64 = base64.b64encode(excel_data)
-            payload = b64.decode        st.markdown(f'<a download="{district_name}_stats.xlsx" href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64}">Download {district_name} Stats as Excel File</a>', unsafe_allow_html=True)
+            payload = b64.decode        
+        st.markdown(f'<a download="{district_name}_stats.xlsx" href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64}">Download {district_name} Stats as Excel File</a>', unsafe_allow_html=True)
     if download_predictions:
         all_predictions_df = pd.concat(all_predictions, keys=district_names)
         for district_name in district_names:
