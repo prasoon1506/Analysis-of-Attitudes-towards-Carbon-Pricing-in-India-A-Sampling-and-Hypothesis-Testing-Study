@@ -92,6 +92,9 @@ def plot_district_graph(df, district_names, benchmark_brands, desired_diff, week
         stats_table_data = {}
         predictions = {}
 
+        valid_data = False
+        min_price, max_price = float('inf'), float('-inf')
+
         for brand in brands:
             brand_prices = []
             for week_name in week_names:
@@ -99,18 +102,25 @@ def plot_district_graph(df, district_names, benchmark_brands, desired_diff, week
                 if column_name in district_df.columns:
                     price = district_df[column_name].iloc[0]
                     brand_prices.append(price)
+                    if not np.isnan(price):
+                        min_price = min(min_price, price)
+                        max_price = max(max_price, price)
+                        valid_data = True
                 else:
                     brand_prices.append(np.nan)
+            
             valid_prices = [p for p in brand_prices if not np.isnan(p)]
             if len(valid_prices) > diff_week:
                 price_diff = valid_prices[-1] - valid_prices[diff_week]
             else:
                 price_diff = np.nan
             price_diffs.append(price_diff)
-            line, = ax.plot(week_names, brand_prices, marker='o', linestyle='-', label=f"{brand} ({price_diff:.0f})")
-            for week, price in zip(week_names, brand_prices):
-                if not np.isnan(price):
-                    ax.text(week, price, str(round(price)), fontsize=10)
+            
+            if valid_prices:
+                line, = ax.plot(week_names, brand_prices, marker='o', linestyle='-', label=f"{brand} ({price_diff:.0f})")
+                for week, price in zip(week_names, brand_prices):
+                    if not np.isnan(price):
+                        ax.text(week, price, str(round(price)), fontsize=10)
             
             if valid_prices:
                 stats_table_data[brand] = {
@@ -143,7 +153,15 @@ def plot_district_graph(df, district_names, benchmark_brands, desired_diff, week
                 predictions[brand] = {'Prediction': prediction[0], 'Confidence Interval': confidence_interval}
             else:
                 predictions[brand] = {'Prediction': np.nan, 'Confidence Interval': (np.nan, np.nan)}
-        
+
+        if not valid_data:
+            st.warning(f"No valid data to plot for district: {district_name}")
+            continue
+
+        # Adjust y-axis limits
+        y_range = max_price - min_price
+        ax.set_ylim(min_price - 0.1 * y_range, max_price + 0.1 * y_range)
+
         ax.grid(False)
         ax.set_xlabel('Month/Week', weight='bold')
         ax.set_ylabel('Whole Sale Price(in Rs.)', weight='bold')
@@ -209,7 +227,6 @@ def plot_district_graph(df, district_names, benchmark_brands, desired_diff, week
         st.dataframe(predictions_df)
     
     return all_stats_table, all_predictions
-
 def main():
     st.title("Data Analysis and Visualization App")
     
