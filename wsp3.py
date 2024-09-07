@@ -95,7 +95,8 @@ def transform_data(df, week_names_input):
         transformed_df = pd.merge(transformed_df, week_data, left_index=True, right_index=True)
     return transformed_df
 
-def plot_district_graph(df, district_names, benchmark_brands, desired_diff, week_names, diff_week, download_pdf=False):
+
+def plot_district_graph(df, district_names, benchmark_brands_dict, desired_diff_dict, week_names, diff_week, download_pdf=False):
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
     num_weeks = len(df.columns[4:]) // len(brands)
     if download_pdf:
@@ -139,10 +140,10 @@ def plot_district_graph(df, district_names, benchmark_brands, desired_diff, week
         plt.tight_layout()
 
         text_str = ''
-        if benchmark_brands:
+        if district_name in benchmark_brands_dict:
             brand_texts = []
             max_left_length = 0
-            for benchmark_brand in benchmark_brands:
+            for benchmark_brand in benchmark_brands_dict[district_name]:
                 jklc_prices = [district_df[f"JKLC ({week})"].iloc[0] for week in week_names if f"JKLC ({week})" in district_df.columns]
                 benchmark_prices = [district_df[f"{benchmark_brand} ({week})"].iloc[0] for week in week_names if f"{benchmark_brand} ({week})" in district_df.columns]
                 actual_diff = np.nan
@@ -151,7 +152,7 @@ def plot_district_graph(df, district_names, benchmark_brands, desired_diff, week
                         if not np.isnan(jklc_prices[i]) and not np.isnan(benchmark_prices[i]):
                             actual_diff = jklc_prices[i] - benchmark_prices[i]
                             break
-                desired_diff_str = f" ({desired_diff[benchmark_brand]:.0f} Rs.)" if benchmark_brand in desired_diff and desired_diff[benchmark_brand] is not None else ""
+                desired_diff_str = f" ({desired_diff_dict[district_name][benchmark_brand]:.0f} Rs.)" if district_name in desired_diff_dict and benchmark_brand in desired_diff_dict[district_name] else ""
                 brand_text = [f"Benchmark Brand: {benchmark_brand}{desired_diff_str}", f"Actual Diff: {actual_diff:+.2f} Rs."]
                 brand_texts.append(brand_text)
                 max_left_length = max(max_left_length, len(brand_text[0]))
@@ -187,6 +188,7 @@ def plot_district_graph(df, district_names, benchmark_brands, desired_diff, week
         b64_pdf = base64.b64encode(pdf_data).decode()
         st.markdown(f'<a download="{region_name}.pdf" href="data:application/pdf;base64,{b64_pdf}">Download All Plots as PDF</a>', unsafe_allow_html=True)
 
+
 def process_file():
     st.session_state.file_processed = True
 
@@ -218,7 +220,6 @@ def main():
     if st.session_state.file_processed:
         st.session_state.df = transform_data(st.session_state.df, st.session_state.week_names_input)
         
-        # Move the diff_week slider here
         st.session_state.diff_week = st.slider("Select Week for Difference Calculation", 
                                                min_value=0, 
                                                max_value=len(st.session_state.week_names_input) - 1, 
@@ -238,16 +239,22 @@ def main():
         
         brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
         benchmark_brands = [brand for brand in brands if brand != 'JKLC']
-        benchmark_brands = st.multiselect("Select Benchmark Brands", benchmark_brands, key="benchmark_select")
         
-        if selected_districts and benchmark_brands:
-            for benchmark_brand in benchmark_brands:
-                st.session_state.desired_diff_input[benchmark_brand] = st.number_input(f"Desired Difference for {benchmark_brand}", min_value=-100.00, step=0.1, format="%.2f", key=benchmark_brand)
+        benchmark_brands_dict = {}
+        desired_diff_dict = {}
+        
+        if selected_districts:
+            for district in selected_districts:
+                st.subheader(f"Settings for {district}")
+                benchmark_brands_dict[district] = st.multiselect(f"Select Benchmark Brands for {district}", benchmark_brands, key=f"benchmark_select_{district}")
+                desired_diff_dict[district] = {}
+                for brand in benchmark_brands_dict[district]:
+                    desired_diff_dict[district][brand] = st.number_input(f"Desired Difference for {brand} in {district}", min_value=-100.00, step=0.1, format="%.2f", key=f"{district}_{brand}")
             
             download_pdf = st.checkbox("Download Plots as PDF")
             if st.button('Generate Plots'):
-                plot_district_graph(filtered_df, selected_districts, benchmark_brands, 
-                                    st.session_state.desired_diff_input, 
+                plot_district_graph(filtered_df, selected_districts, benchmark_brands_dict, 
+                                    desired_diff_dict, 
                                     st.session_state.week_names_input, 
                                     st.session_state.diff_week, 
                                     download_pdf)
