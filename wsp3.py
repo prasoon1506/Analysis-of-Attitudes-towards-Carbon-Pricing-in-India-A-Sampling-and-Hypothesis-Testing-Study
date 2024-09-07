@@ -244,12 +244,22 @@ def main():
         desired_diff_dict = {}
         
         if selected_districts:
-            for district in selected_districts:
-                st.subheader(f"Settings for {district}")
-                benchmark_brands_dict[district] = st.multiselect(f"Select Benchmark Brands for {district}", benchmark_brands, key=f"benchmark_select_{district}")
-                desired_diff_dict[district] = {}
-                for brand in benchmark_brands_dict[district]:
-                    desired_diff_dict[district][brand] = st.number_input(f"Desired Difference for {brand} in {district}", min_value=-100.00, step=0.1, format="%.2f", key=f"{district}_{brand}")
+            use_same_benchmarks = st.checkbox("Use same benchmarks for all districts", value=True)
+            
+            if use_same_benchmarks:
+                selected_benchmarks = st.multiselect("Select Benchmark Brands for all districts", benchmark_brands, key="unified_benchmark_select")
+                for district in selected_districts:
+                    benchmark_brands_dict[district] = selected_benchmarks
+                    desired_diff_dict[district] = {}
+                    for brand in selected_benchmarks:
+                        desired_diff_dict[district][brand] = st.number_input(f"Desired Difference for {brand} (all districts)", min_value=-100.00, step=0.1, format="%.2f", key=f"unified_{brand}")
+            else:
+                for district in selected_districts:
+                    st.subheader(f"Settings for {district}")
+                    benchmark_brands_dict[district] = st.multiselect(f"Select Benchmark Brands for {district}", benchmark_brands, key=f"benchmark_select_{district}")
+                    desired_diff_dict[district] = {}
+                    for brand in benchmark_brands_dict[district]:
+                        desired_diff_dict[district][brand] = st.number_input(f"Desired Difference for {brand} in {district}", min_value=-100.00, step=0.1, format="%.2f", key=f"{district}_{brand}")
             
             download_pdf = st.checkbox("Download Plots as PDF")
             if st.button('Generate Plots'):
