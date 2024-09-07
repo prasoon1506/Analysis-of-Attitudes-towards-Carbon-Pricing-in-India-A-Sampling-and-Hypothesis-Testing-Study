@@ -154,7 +154,7 @@ def main():
 
             num_weeks = len(brand_columns) // len(brands)
             st.session_state.week_names_input = [st.text_input(f'Week {i+1}', key=f'week_{i}') for i in range(num_weeks)]
-            st.session_state.diff_week = st.slider("Select Week for Difference Calculation", min_value=0, max_value=len(st.session_state.week_names_input) - 1, value=0, key="diff_week_slider")
+            #st.session_state.diff_week = st.slider("Select Week for Difference Calculation", min_value=0, max_value=len(st.session_state.week_names_input) - 1, value=0, key="diff_week_slider")
             st.button('Confirm Week Names', on_click=process_file)
 
         except Exception as e:
@@ -180,7 +180,7 @@ def main():
         if selected_districts and benchmark_brands:
             for benchmark_brand in benchmark_brands:
                 st.session_state.desired_diff_input[benchmark_brand] = st.number_input(f"Desired Difference for {benchmark_brand}", min_value=-100.00, step=0.1, format="%.2f", key=benchmark_brand)
-            
+                st.session_state.diff_week = st.slider("Select Week for Difference Calculation", min_value=0, max_value=len(st.session_state.week_names_input) - 1, value=0, key="diff_week_slider")
             download_pdf = st.checkbox("Download Plots as PDF")
             if st.button('Generate Plots'):
                 plot_district_graph(filtered_df, selected_districts, benchmark_brands, st.session_state.desired_diff_input, st.session_state.week_names_input, download_pdf)
