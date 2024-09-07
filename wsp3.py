@@ -179,7 +179,7 @@ def main():
         
         if selected_districts and benchmark_brands:
             for benchmark_brand in benchmark_brands:
-                st.session_state.desired_diff_input[benchmark_brand] = st.number_input(f"Desired Difference for {benchmark_brand}", min_value=-100, step=0.1, format="%.2f", key=benchmark_brand)
+                st.session_state.desired_diff_input[benchmark_brand] = st.number_input(f"Desired Difference for {benchmark_brand}", min_value=-100.00, step=0.1, format="%.2f", key=benchmark_brand)
             
             download_pdf = st.checkbox("Download Plots as PDF")
             if st.button('Generate Plots'):
