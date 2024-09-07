@@ -37,11 +37,10 @@ def transform_data(df, week_names_input):
         week_data.replace(0, np.nan, inplace=True)
         transformed_df = pd.merge(transformed_df, week_data, left_index=True, right_index=True)
     return transformed_df
-#diff_week=st.session_state.diff_week = st.slider("Select Week for Difference Calculation", min_value=0, max_value=len(st.session_state.week_names_input) - 1, value=0, key="diff_week_slider")
+diff_week=st.session_state.diff_week = st.slider("Select Week for Difference Calculation", min_value=0, max_value=len(st.session_state.week_names_input) - 1, value=0, key="diff_week_slider")
 def plot_district_graph(df, district_names, benchmark_brands, desired_diff, week_names, download_pdf=False,diff_week):
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
     num_weeks = len(df.columns[4:]) // len(brands)
-    #st.session_state.diff_week = st.slider("Select Week for Difference Calculation", min_value=0, max_value=len(st.session_state.week_names_input) - 1, value=0, key="diff_week_slider")
     if download_pdf:
         pdf = matplotlib.backends.backend_pdf.PdfPages("district_plots.pdf")
     
@@ -180,7 +179,7 @@ def main():
         if selected_districts and benchmark_brands:
             for benchmark_brand in benchmark_brands:
                 st.session_state.desired_diff_input[benchmark_brand] = st.number_input(f"Desired Difference for {benchmark_brand}", min_value=-100.00, step=0.1, format="%.2f", key=benchmark_brand)
-            #st.session_state.diff_week = st.slider("Select Week for Difference Calculation", min_value=0, max_value=len(st.session_state.week_names_input) - 1, value=0, key="diff_week_slider")
+            
             download_pdf = st.checkbox("Download Plots as PDF")
             if st.button('Generate Plots'):
                 plot_district_graph(filtered_df, selected_districts, benchmark_brands, st.session_state.desired_diff_input, st.session_state.week_names_input, download_pdf)
