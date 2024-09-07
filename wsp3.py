@@ -144,26 +144,28 @@ def main():
             brand_columns = [col for col in df.columns if any(brand in col for brand in brands)]
 
             num_weeks = len(brand_columns) // len(brands)
-            week_names_input = [st.text_input(f'Week {i+1}') for i in range(num_weeks)]
+            week_names_input = [st.text_input(f'Week {i+1}', key=f'week_{i}') for i in range(num_weeks)]
 
             if st.button('Confirm Week Names'):
                 df = transform_data(df, week_names_input)
                 zone_names = df["Zone"].unique().tolist()
-                selected_zone = st.selectbox("Select Zone", zone_names)
+                selected_zone = st.selectbox("Select Zone", zone_names, key="zone_select")
                 filtered_df = df[df["Zone"] == selected_zone]
+                
                 region_names = filtered_df["REGION"].unique().tolist()
-                selected_region = st.selectbox("Select Region", region_names)
+                selected_region = st.selectbox("Select Region", region_names, key="region_select")
                 filtered_df = filtered_df[filtered_df["REGION"] == selected_region]
+                
                 district_names = filtered_df["Dist Name"].unique().tolist()
-                selected_districts = st.multiselect("Select District", district_names)
+                selected_districts = st.multiselect("Select District", district_names, key="district_select")
+                
                 benchmark_brands = [brand for brand in brands if brand != 'JKLC']
-
-                if selected_districts:
-                    desired_diff_input = {}
+                benchmark_brands = st.multiselect("Select Benchmark Brands", benchmark_brands, key="benchmark_select")
+                
+                if selected_districts and benchmark_brands:
                     for benchmark_brand in benchmark_brands:
-                        diff = st.number_input(f"Desired Difference for {benchmark_brand}", min_value=0.0, step=0.1, format="%.2f", key=benchmark_brand)
-                        desired_diff_input[benchmark_brand] = diff
-
+                        desired_diff_input[benchmark_brand] = st.number_input(f"Desired Difference for {benchmark_brand}", min_value=0.0, step=0.1, format="%.2f", key=benchmark_brand)
+                    
                     download_pdf = st.checkbox("Download Plots as PDF")
                     if st.button('Generate Plots'):
                         plot_district_graph(filtered_df, selected_districts, benchmark_brands, desired_diff_input, week_names_input, download_pdf)
@@ -173,4 +175,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
