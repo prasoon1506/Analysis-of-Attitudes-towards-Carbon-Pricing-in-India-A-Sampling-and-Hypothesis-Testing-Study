@@ -9,27 +9,51 @@ import matplotlib.backends.backend_pdf
 
 st.set_page_config(page_title="District Price Trend Analysis", layout="wide")
 
-# Custom CSS
 st.markdown("""
 <style>
     .stApp {
-        max-width=1200px;
-        margin: 0 auto;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     }
     .main .block-container {
         padding-top: 2rem;
+        background: rgba(255, 255, 255, 0.8);
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
     h1 {
         color: #2c3e50;
+        text-align: center;
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 5px;
+        margin-bottom: 2rem;
     }
     .stSelectbox, .stMultiSelect {
+        background: white;
+        border-radius: 5px;
         margin-bottom: 1rem;
     }
     .stButton > button {
         width: 100%;
+        border-radius: 5px;
+        background-color: #3498db;
+        color: white;
+    }
+    .stButton > button:hover {
+        background-color: #2980b9;
     }
     .stSlider > div > div > div {
         background-color: #3498db;
+    }
+    .stCheckbox > label {
+        color: #2c3e50;
+    }
+    .stSubheader {
+        color: #34495e;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 0.5rem;
+        border-radius: 5px;
+        margin-top: 1rem;
     }
 </style>
 """, unsafe_allow_html=True)
