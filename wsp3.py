@@ -13,7 +13,7 @@ st.set_page_config(page_title="District Price Trend Analysis", layout="wide")
 st.markdown("""
 <style>
     .stApp {
-        max-width: 1200px;
+        max-width: 120px;
         margin: 0 auto;
     }
     .main .block-container {
