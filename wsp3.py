@@ -37,7 +37,7 @@ def transform_data(df, week_names_input):
         week_data.replace(0, np.nan, inplace=True)
         transformed_df = pd.merge(transformed_df, week_data, left_index=True, right_index=True)
     return transformed_df
-st.session_state.diff_week = st.slider("Select Week for Difference Calculation", min_value=0, max_value=len(st.session_state.week_names_input) - 1, value=0, key="diff_week_slider")
+diff_week=st.session_state.diff_week = st.slider("Select Week for Difference Calculation", min_value=0, max_value=len(st.session_state.week_names_input) - 1, value=0, key="diff_week_slider")
 def plot_district_graph(df, district_names, benchmark_brands, desired_diff, week_names, download_pdf=False,diff_week):
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
     num_weeks = len(df.columns[4:]) // len(brands)
