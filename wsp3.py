@@ -131,6 +131,9 @@ def plot_district_graph(df, district_names, benchmark_brands, desired_diff, week
         b64_pdf = base64.b64encode(pdf_data).decode()
         st.markdown(f'<a download="district_plots.pdf" href="data:application/pdf;base64,{b64_pdf}">Download All Plots as PDF</a>', unsafe_allow_html=True)
 
+def process_file():
+    st.session_state.file_processed = True
+
 def main():
     st.title("District Price Trend Analysis")
 
@@ -152,9 +155,7 @@ def main():
             num_weeks = len(brand_columns) // len(brands)
             st.session_state.week_names_input = [st.text_input(f'Week {i+1}', key=f'week_{i}') for i in range(num_weeks)]
 
-            if st.button('Confirm Week Names'):
-                st.session_state.file_processed = True
-                st.experimental_rerun()
+            st.button('Confirm Week Names', on_click=process_file)
 
         except Exception as e:
             st.error(f"Error processing file: {e}")
@@ -183,8 +184,6 @@ def main():
             download_pdf = st.checkbox("Download Plots as PDF")
             if st.button('Generate Plots'):
                 plot_district_graph(filtered_df, selected_districts, benchmark_brands, st.session_state.desired_diff_input, st.session_state.week_names_input, download_pdf)
-
-
 
 if __name__ == "__main__":
     main()
