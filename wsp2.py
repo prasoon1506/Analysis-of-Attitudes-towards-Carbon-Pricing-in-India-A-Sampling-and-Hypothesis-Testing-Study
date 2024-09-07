@@ -42,7 +42,7 @@ def transform_data(df, week_names_input):
     return transformed_df
 
 
-def plot_district_graph(df, district_names, benchmark_brands, desired_diff, week_names, download_stats=False, download_predictions=False, download_pdf=False, diff_week=1):
+def plot_district_graph(df, district_names, benchmark_brands, desired_diff, week_names, download_pdf=False, diff_week=1):
     clear_output(wait=True)
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
     num_weeks = len(df.columns[4:]) // len(brands)
