@@ -38,7 +38,7 @@ def transform_data(df, week_names_input):
         transformed_df = pd.merge(transformed_df, week_data, left_index=True, right_index=True)
     return transformed_df
 
-def plot_district_graph(df, district_names, benchmark_brands, desired_diff, week_names, download_pdf=False, diff_week=1):
+def plot_district_graph(df, district_names, benchmark_brands, desired_diff, week_names, download_pdf=False,diff_week):
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
     num_weeks = len(df.columns[4:]) // len(brands)
     
