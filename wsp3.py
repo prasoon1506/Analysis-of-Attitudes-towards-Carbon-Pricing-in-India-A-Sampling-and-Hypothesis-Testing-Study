@@ -128,8 +128,8 @@ def main():
 
     st.title("District Price Trend Analysis")
 
+    # File Upload
     uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx"])
-
     if uploaded_file:
         try:
             file_content = uploaded_file.read()
@@ -148,27 +148,36 @@ def main():
 
             if st.button('Confirm Week Names'):
                 df = transform_data(df, week_names_input)
+
+                # Zone Selection
                 zone_names = df["Zone"].unique().tolist()
                 selected_zone = st.selectbox("Select Zone", zone_names, key="zone_select")
                 filtered_df = df[df["Zone"] == selected_zone]
-                
+
+                # Region Selection
                 region_names = filtered_df["REGION"].unique().tolist()
                 selected_region = st.selectbox("Select Region", region_names, key="region_select")
                 filtered_df = filtered_df[filtered_df["REGION"] == selected_region]
-                
+
+                # District Selection
                 district_names = filtered_df["Dist Name"].unique().tolist()
                 selected_districts = st.multiselect("Select District", district_names, key="district_select")
-                
-                benchmark_brands = [brand for brand in brands if brand != 'JKLC']
-                benchmark_brands = st.multiselect("Select Benchmark Brands", benchmark_brands, key="benchmark_select")
-                
-                if selected_districts and benchmark_brands:
-                    for benchmark_brand in benchmark_brands:
-                        desired_diff_input[benchmark_brand] = st.number_input(f"Desired Difference for {benchmark_brand}", min_value=0.0, step=0.1, format="%.2f", key=benchmark_brand)
-                    
-                    download_pdf = st.checkbox("Download Plots as PDF")
-                    if st.button('Generate Plots'):
-                        plot_district_graph(filtered_df, selected_districts, benchmark_brands, desired_diff_input, week_names_input, download_pdf)
+
+                if selected_districts:
+                    # Benchmark Brand Selection
+                    all_brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
+                    benchmark_brands = [brand for brand in all_brands if brand != 'JKLC']
+                    benchmark_brands = st.multiselect("Select Benchmark Brands", benchmark_brands, key="benchmark_select")
+
+                    if selected_districts and benchmark_brands:
+                        for benchmark_brand in benchmark_brands:
+                            desired_diff_input[benchmark_brand] = st.number_input(f"Desired Difference for {benchmark_brand}", min_value=0.0, step=0.1, format="%.2f", key=f'diff_{benchmark_brand}')
+
+                        download_pdf = st.checkbox("Download Plots as PDF")
+                        diff_week = st.slider("Select Week for Difference Calculation", min_value=0, max_value=len(week_names_input) - 1, value=0)
+
+                        if st.button('Generate Plots'):
+                            plot_district_graph(filtered_df, selected_districts, benchmark_brands, desired_diff_input, week_names_input, download_pdf, diff_week)
 
         except Exception as e:
             st.error(f"Error processing file: {e}")
