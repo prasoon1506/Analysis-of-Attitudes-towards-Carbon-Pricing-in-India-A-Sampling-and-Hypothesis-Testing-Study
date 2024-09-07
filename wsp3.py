@@ -52,20 +52,34 @@ if 'district_benchmark_brands' not in st.session_state:
 def transform_data(df, week_names_input):
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
     transformed_df = df[['Zone', 'REGION', 'Dist Code', 'Dist Name']].copy()
+    
     brand_columns = [col for col in df.columns if any(brand in col for brand in brands)]
     num_weeks = len(brand_columns) // len(brands)
+    
     for i in range(num_weeks):
         start_idx = i * len(brands)
         end_idx = (i + 1) * len(brands)
         week_data = df[brand_columns[start_idx:end_idx]]
         week_name = week_names_input[i]
-        week_data = week_data.rename(columns={
+        
+        # Renaming columns with a unique suffix
+        week_data.rename(columns={
             col: f"{brand} ({week_name})"
             for brand, col in zip(brands, week_data.columns)
-        })
+        }, inplace=True)
+        
         week_data.replace(0, np.nan, inplace=True)
+        
+        # Checking if columns already exist in the transformed_df
+        existing_columns = set(transformed_df.columns)
+        new_columns = set(week_data.columns)
+        if existing_columns & new_columns:
+            raise ValueError("Duplicate columns detected after renaming.")
+
         transformed_df = pd.merge(transformed_df, week_data, left_index=True, right_index=True)
+
     return transformed_df
+
 
 def plot_district_graph(df, district_name, benchmark_brands, desired_diff, week_names, diff_week, download_pdf=False):
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
