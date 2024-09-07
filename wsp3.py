@@ -90,12 +90,12 @@ def plot_district_graph(df, district_names, benchmark_brands, desired_diff, week
 
         text_str = ''
         if benchmark_brands:
-    brand_texts = []
-    max_left_length = 0  # Store text for each brand separately
-    for benchmark_brand in benchmark_brands:
-        jklc_prices = [district_df[f"JKLC ({week})"].iloc[0] for week in week_names if f"JKLC ({week})" in district_df.columns]
-        benchmark_prices = [district_df[f"{benchmark_brand} ({week})"].iloc[0] for week in week_names if f"{benchmark_brand} ({week})" in district_df.columns]
-        actual_diff = np.nan  # Initialize actual_diff with NaN
+           brand_texts = []
+           max_left_length = 0  # Store text for each brand separately
+           for benchmark_brand in benchmark_brands:
+               jklc_prices = [district_df[f"JKLC ({week})"].iloc[0] for week in week_names if f"JKLC ({week})" in district_df.columns]
+               benchmark_prices = [district_df[f"{benchmark_brand} ({week})"].iloc[0] for week in week_names if f"{benchmark_brand} ({week})" in district_df.columns]
+               actual_diff = np.nan  # Initialize actual_diff with NaN
         if jklc_prices and benchmark_prices:
             for i in range(len(jklc_prices) - 1, -1, -1):
                 if not np.isnan(jklc_prices[i]) and not np.isnan(benchmark_prices[i]):
