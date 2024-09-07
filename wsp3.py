@@ -6,12 +6,26 @@ import base64
 from io import BytesIO
 from tqdm import tqdm
 import matplotlib.backends.backend_pdf
+import openpyxl
 
 # Initialize session state variables
 if 'df' not in st.session_state:
     st.session_state.df = None
 if 'week_names' not in st.session_state:
     st.session_state.week_names = []
+
+def read_excel_excluding_hidden_columns(file):
+    # Load the workbook and select the active worksheet
+    wb = openpyxl.load_workbook(file, read_only=True)
+    ws = wb.active
+
+    # Get the indices of hidden columns
+    hidden_cols = [i for i, col in enumerate(ws.column_dimensions.values(), 1) if col.hidden]
+
+    # Read the Excel file with pandas, skipping hidden columns
+    df = pd.read_excel(file, skiprows=2, usecols=lambda x: x+1 not in hidden_cols)
+
+    return df
 
 def transform_data(df, week_names_input):
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
@@ -126,7 +140,7 @@ def main():
     uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
     if uploaded_file is not None:
         try:
-            df = pd.read_excel(uploaded_file, skiprows=2)
+            df = read_excel_excluding_hidden_columns(uploaded_file)
             st.session_state.df = df
 
             brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
