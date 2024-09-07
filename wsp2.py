@@ -46,18 +46,12 @@ def plot_district_graph(df, district_names, benchmark_brands, desired_diff, week
     clear_output(wait=True)
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
     num_weeks = len(df.columns[4:]) // len(brands)
-    
-    all_stats_table = []
-    all_predictions = []
     if download_pdf:
         pdf = matplotlib.backends.backend_pdf.PdfPages("district_plots.pdf")
     for i, district_name in enumerate(district_names):
         plt.figure(figsize=(10, 8))
         district_df = df[df["Dist Name"] == district_name]
         price_diffs = []
-        stats_table_data = {}
-        predictions = {}
-
         for brand in brands:
             brand_prices = []
             for week_name in week_names:  # Use week_names directly
