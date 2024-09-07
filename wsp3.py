@@ -8,9 +8,6 @@ import base64
 import matplotlib.backends.backend_pdf
 
 # Global variables
-df = None
-week_names_input = []
-desired_diff_input = {}
 if 'df' not in st.session_state:
     st.session_state.df = None
 if 'week_names_input' not in st.session_state:
@@ -19,6 +16,8 @@ if 'desired_diff_input' not in st.session_state:
     st.session_state.desired_diff_input = {}
 if 'file_processed' not in st.session_state:
     st.session_state.file_processed = False
+if 'diff_week' not in st.session_state:
+    st.session_state.diff_week = 0
 
 def transform_data(df, week_names_input):
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
@@ -37,8 +36,8 @@ def transform_data(df, week_names_input):
         week_data.replace(0, np.nan, inplace=True)
         transformed_df = pd.merge(transformed_df, week_data, left_index=True, right_index=True)
     return transformed_df
-diff_week=st.session_state.diff_week = st.slider("Select Week for Difference Calculation", min_value=0, max_value=len(st.session_state.week_names_input) - 1, value=0, key="diff_week_slider")
-def plot_district_graph(df, district_names, benchmark_brands, desired_diff, week_names, download_pdf=False,diff_week):
+
+def plot_district_graph(df, district_names, benchmark_brands, desired_diff, week_names, diff_week, download_pdf=False):
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
     num_weeks = len(df.columns[4:]) // len(brands)
     if download_pdf:
@@ -153,7 +152,6 @@ def main():
 
             num_weeks = len(brand_columns) // len(brands)
             st.session_state.week_names_input = [st.text_input(f'Week {i+1}', key=f'week_{i}') for i in range(num_weeks)]
-            #st.session_state.diff_week = st.slider("Select Week for Difference Calculation", min_value=0, max_value=len(st.session_state.week_names_input) - 1, value=0, key="diff_week_slider")
             st.button('Confirm Week Names', on_click=process_file)
 
         except Exception as e:
@@ -161,6 +159,14 @@ def main():
 
     if st.session_state.file_processed:
         st.session_state.df = transform_data(st.session_state.df, st.session_state.week_names_input)
+        
+        # Move the diff_week slider here
+        st.session_state.diff_week = st.slider("Select Week for Difference Calculation", 
+                                               min_value=0, 
+                                               max_value=len(st.session_state.week_names_input) - 1, 
+                                               value=st.session_state.diff_week, 
+                                               key="diff_week_slider")
+        
         zone_names = st.session_state.df["Zone"].unique().tolist()
         selected_zone = st.selectbox("Select Zone", zone_names, key="zone_select")
         filtered_df = st.session_state.df[st.session_state.df["Zone"] == selected_zone]
@@ -182,7 +188,11 @@ def main():
             
             download_pdf = st.checkbox("Download Plots as PDF")
             if st.button('Generate Plots'):
-                plot_district_graph(filtered_df, selected_districts, benchmark_brands, st.session_state.desired_diff_input, st.session_state.week_names_input, download_pdf)
+                plot_district_graph(filtered_df, selected_districts, benchmark_brands, 
+                                    st.session_state.desired_diff_input, 
+                                    st.session_state.week_names_input, 
+                                    st.session_state.diff_week, 
+                                    download_pdf)
 
 if __name__ == "__main__":
     main()
