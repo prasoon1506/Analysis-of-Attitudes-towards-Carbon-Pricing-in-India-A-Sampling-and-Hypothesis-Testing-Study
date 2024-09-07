@@ -81,46 +81,6 @@ def plot_district_graph(df, district_names, benchmark_brands, desired_diff, week
             for week, price in zip(week_names, brand_prices):  # Use week_names directly
                 if not np.isnan(price):
                     plt.text(week, price, str(round(price)), fontsize=10)
-            if valid_prices:
-                stats_table_data[brand] = {
-                    'Min': np.min(valid_prices),
-                    'Max': np.max(valid_prices),
-                    'Average': np.mean(valid_prices),
-                    'Median': np.median(valid_prices),
-                    'First Quartile': np.percentile(valid_prices, 25),
-                    'Third Quartile': np.percentile(valid_prices, 75),
-                    'Variance': np.var(valid_prices),
-                    'Skewness': pd.Series(valid_prices).skew(),
-                    'Kurtosis': pd.Series(valid_prices).kurtosis()
-                }
-            else:
-                stats_table_data[brand] = {
-                    'Min': np.nan,
-                    'Max': np.nan,
-                    'Average': np.nan,
-                    'Median': np.nan,
-                    'First Quartile': np.nan,
-                    'Third Quartile': np.nan,
-                    'Variance': np.nan,
-                    'Skewness': np.nan,
-                    'Kurtosis': np.nan
-                }
-            if len(valid_prices) > 2:
-                train_data = np.array(range(len(valid_prices))).reshape(-1, 1)
-                train_labels= np.array(valid_prices)
-                model = xgb.XGBRegressor(objective='reg:squarederror')
-                model.fit(train_data, train_labels)
-                next_week = len(valid_prices)
-                prediction = model.predict(np.array([[next_week]]))
-                errors = abs(model.predict(train_data) - train_labels)
-                confidence = 0.95
-                n = len(valid_prices)
-                t_crit = stats.t.ppf((1 + confidence) / 2, n - 1)
-                margin_of_error = t_crit * errors.std() / np.sqrt(n)
-                confidence_interval = (prediction - margin_of_error, prediction + margin_of_error)
-                predictions[brand] = {'Prediction': prediction[0], 'Confidence Interval': confidence_interval}
-            else:
-                predictions[brand] = {'Prediction': np.nan, 'Confidence Interval': (np.nan, np.nan)}
         plt.grid(False)
         plt.xlabel('Month/Week', weight='bold')
         plt.ylabel('Whole Sale Price(in Rs.)', weight='bold')
@@ -136,18 +96,7 @@ def plot_district_graph(df, district_names, benchmark_brands, desired_diff, week
         
         plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=6, prop={'weight': 'bold'})
         plt.tight_layout()
-        if stats_table_data:
-            stats_table = pd.DataFrame(stats_table_data).transpose().round(2)
-        else:
-            stats_table = pd.DataFrame()  # Create an empty DataFrame if stats_table_data is empty
-        display(stats_table)
-        all_stats_table.append(stats_table)
-        if predictions:
-            predictions_df = pd.DataFrame(predictions).transpose()
-        else:
-            predictions_df = pd.DataFrame()  # Create an empty DataFrame if predictions is empty
-        display(predictions_df)
-        all_predictions.append(predictions_df)
+
         text_str = ''
         if benchmark_brands:
             brand_texts = []
@@ -197,46 +146,6 @@ def plot_district_graph(df, district_names, benchmark_brands, desired_diff, week
            pdf_data = f.read()
        b64_pdf = base64.b64encode(pdf_data).decode()
        display(HTML(f'<a download="{region_name}.pdf" href="data:application/pdf;base64,{b64_pdf}">Download All Plots as PDF</a>'))   
-    if download_stats:
-        all_stats_df = pd.concat(all_stats_table, keys=district_names)
-        for district_name in district_names:
-            district_stats_df = all_stats_df.loc[district_name]
-            stats_excel_path = f'stats_{district_name}.xlsx'
-            district_stats_df.to_excel(stats_excel_path)
-            excel_data = open(stats_excel_path, "rb").read()
-            b64 = base64.b64encode(excel_data)
-            payload = b64.decode()
-            html = '<a download="{filename}" href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{payload}" target="_blank">{text}</a>'
-            html = html.format(payload=payload, filename=stats_excel_path, text=f"Download stats for {district_name} (Excel)")
-            display(HTML(html))
-            stats_csv_path = f'stats_{district_name}.csv'
-            district_stats_df.to_csv(stats_csv_path)
-            csv_data = open(stats_csv_path, "rb").read()
-            b64 = base64.b64encode(csv_data)
-            payload = b64.decode()
-            html = '<a download="{filename}" href="data:text/csv;base64,{payload}" target="_blank">{text}</a>'
-            html = html.format(payload=payload, filename=stats_csv_path, text=f"Download stats for {district_name} (CSV)")
-            display(HTML(html))
-    if download_predictions:
-        all_predictions_df = pd.concat(all_predictions, keys=district_names)
-        for district_name in district_names:
-            district_predictions_df = all_predictions_df.loc[district_name]
-            predictions_excel_path = f'predictions_{district_name}.xlsx'
-            district_predictions_df.to_excel(predictions_excel_path)
-            excel_data = open(predictions_excel_path, "rb").read()
-            b64 = base64.b64encode(excel_data)
-            payload = b64.decode()
-            html = '<a download="{filename}" href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{payload}" target="_blank">{text}</a>'
-            html = html.format(payload=payload, filename=predictions_excel_path, text=f"Download predictions for {district_name} (Excel)")
-            display(HTML(html))
-            predictions_csv_path = f'predictions_{district_name}.csv'
-            district_predictions_df.to_csv(predictions_csv_path)
-            csv_data = open(predictions_csv_path, "rb").read()
-            b64 = base64.b64encode(csv_data)
-            payload = b64.decode()
-            html = '<a download="{filename}" href="data:text/csv;base64,{payload}" target="_blank">{text}</a>'
-            html = html.format(payload=payload, filename=predictions_csv_path, text=f"Download predictions for {district_name} (CSV)")
-            display(HTML(html))
 
 def on_button_click(change):
     global week_name_widgets, confirm_button # Access global variables
@@ -327,29 +236,16 @@ def create_interactive_plot(df, week_names_input):
                     benchmark_brands=benchmark_dropdown,
                     desired_diff=fixed(desired_diff_copy),
                     week_names=fixed(week_names_input),
-                    download_stats=False,
-                    download_predictions=False,
                     download_pdf=False,diff_week=diff_week_slider)
     for brand, diff_input in desired_diff_copy.items():
         w.children += (diff_input,)
-    download_stats_button = Button(description='Download Stats')
-    download_predictions_button = Button(description='Download Predictions')
+
     download_pdf_button = Button(description='Download PDF')
-
-    def on_download_stats_button_clicked(b):
-        w.kwargs['download_stats'] = True
-        w.update()
-
-    def on_download_predictions_button_clicked(b):
-        w.kwargs['download_predictions'] = True
-        w.update()
 
     def on_download_pdf_button_clicked(b):
         w.kwargs['download_pdf'] = True
         w.update()
 
-    download_stats_button.on_click(on_download_stats_button_clicked)
-    download_predictions_button.on_click(on_download_predictions_button_clicked)
     download_pdf_button.on_click(on_download_pdf_button_clicked)
     w.children[-7].description = "Run Interact"
     display(w)
