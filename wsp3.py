@@ -1,4 +1,4 @@
-"""import streamlit as st
+import streamlit as st
 import openpyxl
 import pandas as pd
 import numpy as np
@@ -6,6 +6,33 @@ import matplotlib.pyplot as plt
 from io import BytesIO
 import base64
 import matplotlib.backends.backend_pdf
+
+st.set_page_config(page_title="District Price Trend Analysis", layout="wide")
+
+# Custom CSS
+st.markdown("""
+<style>
+    .stApp {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .main .block-container {
+        padding-top: 2rem;
+    }
+    h1 {
+        color: #2c3e50;
+    }
+    .stSelectbox, .stMultiSelect {
+        margin-bottom: 1rem;
+    }
+    .stButton > button {
+        width: 100%;
+    }
+    .stSlider > div > div > div {
+        background-color: #3498db;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # Global variables
 if 'df' not in st.session_state:
@@ -226,8 +253,8 @@ def main():
                                     download_pdf)
 
 if __name__ == "__main__":
-    main()"""
-import streamlit as st
+    main()
+"""import streamlit as st
 import openpyxl
 import pandas as pd
 import numpy as np
@@ -490,4 +517,4 @@ def main():
                 st.markdown(f'<a download="district_plots.pdf" href="data:application/pdf;base64,{b64_pdf}">Download All Plots as PDF</a>', unsafe_allow_html=True)
 
 if __name__ == "__main__":
-    main()
+    main()"""
