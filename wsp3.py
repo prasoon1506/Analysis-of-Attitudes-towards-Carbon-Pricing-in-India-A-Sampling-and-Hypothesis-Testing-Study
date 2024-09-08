@@ -15,45 +15,70 @@ st.markdown("""
         background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     }
     .main .block-container {
-        padding-top: 2rem;
-        background: rgba(255, 255, 255, 0.8);
-        border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 15px;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
     }
     h1 {
         color: #2c3e50;
         text-align: center;
-        padding: 1rem;
-        background: rgba(255, 255, 255, 0.9);
-        border-radius: 5px;
+        padding: 1.5rem;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 10px;
         margin-bottom: 2rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
     .stSelectbox, .stMultiSelect {
         background: white;
-        border-radius: 5px;
-        margin-bottom: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
     .stButton > button {
         width: 100%;
-        border-radius: 5px;
+        border-radius: 8px;
         background-color: #3498db;
         color: white;
+        font-weight: bold;
+        transition: all 0.3s ease;
     }
     .stButton > button:hover {
         background-color: #2980b9;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
     .stSlider > div > div > div {
         background-color: #3498db;
     }
     .stCheckbox > label {
         color: #2c3e50;
+        font-weight: 500;
     }
     .stSubheader {
         color: #34495e;
         background: rgba(255, 255, 255, 0.9);
-        padding: 0.5rem;
-        border-radius: 5px;
-        margin-top: 1rem;
+        padding: 0.8rem;
+        border-radius: 8px;
+        margin-top: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .uploadedFile {
+        background-color: #e8f0fe;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .dataframe {
+        font-size: 0.8em;
+    }
+    .dataframe thead tr th {
+        background-color: #3498db;
+        color: white;
+    }
+    .dataframe tbody tr:nth-child(even) {
+        background-color: #f2f2f2;
     }
 </style>
 """, unsafe_allow_html=True)
