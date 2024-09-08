@@ -498,8 +498,8 @@ def main():
     app_mode = st.sidebar.selectbox("Contents",
         ["Tutorial", "WSP Analysis Dashboard "])
     
-    if app_mode == "Home":
-        home()
+    if app_mode == "Tutorial":
+        Tutorial()
     elif app_mode == "WSP Analysis Dashboard":
         wsp_analysis_dashboard()
 
