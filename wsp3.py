@@ -9,6 +9,7 @@ import matplotlib.backends.backend_pdf
 
 st.set_page_config(page_title="WSP Analysis", layout="wide")
 
+# Custom CSS for the entire app
 st.markdown("""
 <style>
     .stApp {
@@ -94,6 +95,7 @@ if 'file_processed' not in st.session_state:
     st.session_state.file_processed = False
 if 'diff_week' not in st.session_state:
     st.session_state.diff_week = 0
+
 def transform_data(df, week_names_input):
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
     transformed_df = df[['Zone', 'REGION', 'Dist Code', 'Dist Name']].copy()
@@ -160,9 +162,6 @@ def transform_data(df, week_names_input):
     transformed_df = transformed_df.loc[:, ~transformed_df.columns.str.contains('_\d+$')]
     
     return transformed_df
-
-
-
 
 def plot_district_graph(df, district_names, benchmark_brands_dict, desired_diff_dict, week_names, diff_week, download_pdf=False):
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
@@ -256,9 +255,9 @@ def plot_district_graph(df, district_names, benchmark_brands_dict, desired_diff_
         b64_pdf = base64.b64encode(pdf_data).decode()
         st.markdown(f'<a download="{region_name}.pdf" href="data:application/pdf;base64,{b64_pdf}">Download All Plots as PDF</a>', unsafe_allow_html=True)
 
-
 def process_file():
     st.session_state.file_processed = True
+
 def update_week_name(index):
     def callback():
         if index < len(st.session_state.week_names_input):
@@ -269,119 +268,41 @@ def update_week_name(index):
             process_file()
     return callback
 
-
-def main():
-    # Custom CSS for the entire app
+def home():
+    st.markdown("# Welcome to the WSP Analysis Dashboard")
     st.markdown("""
-    <style>
-    /* Main app styling */
-    .stApp {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    }
-    .main .block-container {
-        padding: 3rem;
-        background: rgba(255, 255, 255, 0.95);
-        border-radius: 20px;
-        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-    }
-    
-    /* Title styling */
-    .title {
-        font-size: 50px;
-        font-weight: bold;
-        color: #3366cc;
-        text-align: center;
-        padding: 20px;
-        border-radius: 15px;
-        background: linear-gradient(to right, #f0f8ff, #e6f3ff);
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        margin-bottom: 30px;
-        font-family: 'Arial', sans-serif;
-    }
-    .title span {
-        background: linear-gradient(45deg, #3366cc, #6699ff);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-    
-    /* Section headers */
-    h3 {
-        color: #2c3e50;
-        border-bottom: 2px solid #3498db;
-        padding-bottom: 10px;
-        margin-top: 30px;
-        margin-bottom: 20px;
-    }
-    
-    /* Input fields and buttons */
-    .stSelectbox, .stMultiSelect, .stSlider {
-        background-color: white;
-        border-radius: 10px;
-        padding: 10px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-    .stButton > button {
-        border-radius: 10px;
-        background-color: #3498db;
-        color: white;
-        font-weight: bold;
-        padding: 10px 20px;
-        transition: all 0.3s ease;
-    }
-    .stButton > button:hover {
-        background-color: #2980b9;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    }
-    
-    /* File uploader */
-    .uploadedFile {
-        background-color: #e8f0fe;
-        border-radius: 10px;
-        padding: 15px;
-        margin-bottom: 20px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-    
-    /* Checkbox */
-    .stCheckbox > label {
-        color: #2c3e50;
-        font-weight: 500;
-    }
-    .stCheckbox > label > div[role="checkbox"] {
-        border-radius: 5px;
-    }
-    
-    /* Plots */
-    .stPlot {
-        background-color: white;
-        border-radius: 15px;
-        padding: 20px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-    </style>
-    """, unsafe_allow_html=True)
+    This app helps you analyze Whole Sale Price (WSP) data for various brands across different regions and districts.
 
-    # Display the stylized title
+    ## How to use this app:
+
+    1. **Navigate to the WSP Analysis Dashboard tab** using the dropdown menu at the top of the sidebar.
+
+    2. **Upload your Excel file** containing the WSP data.
+
+    3. **Enter the week names** for each column in your data.
+
+    4. **Select your analysis settings**:
+        - Choose the zone and region you want to analyze
+        - Select one or more districts
+        - Set the week for difference calculation
+        - Choose whether to download plots as PDF
+
+    5. **Set benchmark brands and desired differences**:
+        - You can set the same benchmarks for all districts or customize for each
+        - For each benchmark brand, set the desired price difference
+
+    6. **Generate plots** by clicking the 'Generate Plots' button
+
+    7. **View and download** the generated plots
+
+    Remember, you can always return to this page for a refresher on how to use the app.
+
+    Happy analyzing!
+    """)
+
+def wsp_analysis_dashboard():
     st.markdown('<div class="title"><span>WSP Analysis Dashboard</span></div>', unsafe_allow_html=True)
 
-    # Add a subtle animation effect using CSS
-    st.markdown("""
-    <style>
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
-    .fade-in {
-        animation: fadeIn 1s ease-in;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-    # Wrap the main content in a div with the fade-in class
-    st.markdown('<div class="fade-in">', unsafe_allow_html=True)
-
-    # File uploader with custom styling
     uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx"])
     if uploaded_file:
         st.markdown(f'<div class="uploadedFile">File uploaded: {uploaded_file.name}</div>', unsafe_allow_html=True)
@@ -443,7 +364,6 @@ def main():
         
         download_pdf = st.checkbox("Download Plots as PDF")
         
-        # Use columns for a more compact layout
         col1, col2 = st.columns(2)
         with col1:
             zone_names = st.session_state.df["Zone"].unique().tolist()
@@ -457,7 +377,6 @@ def main():
         district_names = filtered_df["Dist Name"].unique().tolist()
         selected_districts = st.multiselect("Select District(s)", district_names, key="district_select")
 
-        
         brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
         benchmark_brands = [brand for brand in brands if brand != 'JKLC']
         
@@ -516,7 +435,6 @@ def main():
                     else:
                         st.warning(f"No benchmark brands selected for {district}.")
         
-        # Generate Analysis section
         st.markdown("### Generate Analysis")
         
         if st.button('Generate Plots', key='generate_plots', use_container_width=True):
@@ -528,9 +446,15 @@ def main():
                                     download_pdf)
                 st.success('Plots generated successfully!')
 
-    # Close the fade-in div
-    st.markdown('</div>', unsafe_allow_html=True)
+def main():
+    st.sidebar.title("Navigation")
+    app_mode = st.sidebar.selectbox("Choose the app mode",
+        ["Home", "WSP Analysis Dashboard"])
+    
+    if app_mode == "Home":
+        home()
+    elif app_mode == "WSP Analysis Dashboard":
+        wsp_analysis_dashboard()
 
 if __name__ == "__main__":
     main()
-    
