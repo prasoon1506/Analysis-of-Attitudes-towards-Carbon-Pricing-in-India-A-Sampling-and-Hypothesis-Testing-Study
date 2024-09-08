@@ -240,11 +240,16 @@ def plot_district_graph(df, district_names, benchmark_brands_dict, desired_diff_
 
 def process_file():
     st.session_state.file_processed = True
+def update_week_name(index):
+    def callback():
+        st.session_state.week_names_input[index] = st.session_state[f'week_{index}']
+        if all(st.session_state.week_names_input):
+            process_file()
+    return callback
 def main():
     st.title("WSP Analysis Dashboard")
 
     uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx"])
-
     if uploaded_file and not st.session_state.file_processed:
         try:
             file_content = uploaded_file.read()
@@ -263,18 +268,23 @@ def main():
             if num_weeks > 0:
                 st.markdown("### Enter Week Names")
                 week_cols = st.columns(num_weeks)
-                st.session_state.week_names_input = st.session_state.get('week_names_input', [''] * num_weeks)
+                if 'week_names_input' not in st.session_state:
+                    st.session_state.week_names_input = [''] * num_weeks
                 for i in range(num_weeks):
                     with week_cols[i]:
-                        week_name = st.text_input(f'Week {i+1}', value=st.session_state.week_names_input[i], key=f'week_{i}')
-                        st.session_state.week_names_input[i] = week_name
+                        st.text_input(
+                            f'Week {i+1}', 
+                            value=st.session_state.week_names_input[i], 
+                            key=f'week_{i}',
+                            on_change=update_week_name(i)
+                        )
             else:
                 st.warning("No weeks detected in the uploaded file. Please check the file content.")
-            
-            st.button('Confirm Week Names', on_click=process_file)
 
         except Exception as e:
             st.error(f"Error processing file: {e}")
+
+    
     if st.session_state.file_processed:
         st.session_state.df = transform_data(st.session_state.df, st.session_state.week_names_input)
         
