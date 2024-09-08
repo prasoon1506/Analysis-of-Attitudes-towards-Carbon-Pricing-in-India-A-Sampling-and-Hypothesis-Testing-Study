@@ -370,10 +370,10 @@ def main():
                                    key=f"unified_{brand}")
                   for district in selected_districts:
                     desired_diff_dict[district][brand] = value
-    else:
-        st.warning("Please select at least one benchmark brand.")
-
             else:
+                 st.warning("Please select at least one benchmark brand.")
+
+        else:
                 for district in selected_districts:
                     st.subheader(f"Settings for {district}")
                     benchmark_brands_dict[district] = st.multiselect(
