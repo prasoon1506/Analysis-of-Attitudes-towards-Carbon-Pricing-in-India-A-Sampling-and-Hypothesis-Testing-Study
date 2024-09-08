@@ -240,7 +240,7 @@ def plot_district_graph(df, district_names, benchmark_brands_dict, desired_diff_
         plt.text(0.5, -0.3, text_str, weight='bold', ha='center', va='center', transform=plt.gca().transAxes, bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.5'))
         plt.subplots_adjust(bottom=0.25)
         if download_pdf:
-            pdf.savefig()
+            pdf.savefig(fig, bbox_inches='tight')
         st.pyplot(fig)
         buf = BytesIO()
         plt.savefig(buf, format='png', bbox_inches='tight')
