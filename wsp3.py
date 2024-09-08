@@ -399,10 +399,10 @@ def main():
         
         # Generate Analysis section
         st.markdown("### Generate Analysis")
-        col1, col2 = st.columns(2)
-        with col1:
+        row1, row2 = st.columns(2)
+        with row1:
             download_pdf = st.checkbox("Download Plots as PDF")
-        with col2:
+        with row2:
             if st.button('Generate Plots', key='generate_plots'):
                 with st.spinner('Generating plots...'):
                     plot_district_graph(filtered_df, selected_districts, benchmark_brands_dict, 
