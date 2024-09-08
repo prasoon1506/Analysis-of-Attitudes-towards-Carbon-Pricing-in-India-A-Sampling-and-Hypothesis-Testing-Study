@@ -240,7 +240,6 @@ def plot_district_graph(df, district_names, benchmark_brands_dict, desired_diff_
 
 def process_file():
     st.session_state.file_processed = True
-
 def main():
     st.title("WSP Analysis Dashboard")
 
@@ -261,23 +260,21 @@ def main():
 
             num_weeks = len(brand_columns) // len(brands)
             
-            st.markdown("### Enter Week Names")
-            week_cols = st.columns(num_weeks)
-            for i in range(num_weeks):
-                st.session_state.week_names_input = st.session_state.get('week_names_input', [])
-                with week_cols[i]:
-                    week_name = st.text_input(f'Week {i+1}', key=f'week_{i}')
-                    if week_name:
-                        if i < len(st.session_state.week_names_input):
-                            st.session_state.week_names_input[i] = week_name
-                        else:
-                            st.session_state.week_names_input.append(week_name)
+            if num_weeks > 0:
+                st.markdown("### Enter Week Names")
+                week_cols = st.columns(num_weeks)
+                st.session_state.week_names_input = st.session_state.get('week_names_input', [''] * num_weeks)
+                for i in range(num_weeks):
+                    with week_cols[i]:
+                        week_name = st.text_input(f'Week {i+1}', value=st.session_state.week_names_input[i], key=f'week_{i}')
+                        st.session_state.week_names_input[i] = week_name
+            else:
+                st.warning("No weeks detected in the uploaded file. Please check the file content.")
             
             st.button('Confirm Week Names', on_click=process_file)
 
         except Exception as e:
             st.error(f"Error processing file: {e}")
-
     if st.session_state.file_processed:
         st.session_state.df = transform_data(st.session_state.df, st.session_state.week_names_input)
         
