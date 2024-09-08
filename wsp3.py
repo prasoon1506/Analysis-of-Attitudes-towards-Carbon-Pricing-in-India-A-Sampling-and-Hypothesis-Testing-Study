@@ -242,7 +242,10 @@ def process_file():
     st.session_state.file_processed = True
 def update_week_name(index):
     def callback():
-        st.session_state.week_names_input[index] = st.session_state[f'week_{index}']
+        if index < len(st.session_state.week_names_input):
+            st.session_state.week_names_input[index] = st.session_state[f'week_{index}']
+        else:
+            st.warning(f"Attempted to update week {index + 1}, but only {len(st.session_state.week_names_input)} weeks are available.")
         if all(st.session_state.week_names_input):
             process_file()
     return callback
@@ -251,54 +254,60 @@ def main():
 
     uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx"])
     if uploaded_file and not st.session_state.file_processed:
-     try:
-        file_content = uploaded_file.read()
-        wb = openpyxl.load_workbook(BytesIO(file_content))
-        ws = wb.active
-        
-        # Debug: Print all column names
-        st.write("All column names:", [cell.value for cell in ws[1]])
-        
-        hidden_cols = [idx for idx, col in enumerate(ws.column_dimensions, 1) if ws.column_dimensions[col].hidden]
-        
-        st.session_state.df = pd.read_excel(BytesIO(file_content), skiprows=2)
-        
-        # Debug: Print dataframe info
-        st.write("Dataframe info:")
-        st.write(st.session_state.df.info())
-        
-        if st.session_state.df.empty:
-            st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
-        else:
-            st.session_state.df.drop(st.session_state.df.columns[hidden_cols], axis=1, inplace=True)
-
-            brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
-            brand_columns = [col for col in st.session_state.df.columns if any(brand in col for brand in brands)]
+        try:
+            file_content = uploaded_file.read()
+            wb = openpyxl.load_workbook(BytesIO(file_content))
+            ws = wb.active
             
-            # Debug: Print found brand columns
-            st.write("Found brand columns:", brand_columns)
-
-            num_weeks = len(brand_columns) // len(brands)
+            # Debug: Print all column names
+            st.write("All column names:", [cell.value for cell in ws[1]])
             
-            if num_weeks > 0:
-                st.markdown("### Enter Week Names")
-                week_cols = st.columns(num_weeks)
-                if 'week_names_input' not in st.session_state:
-                    st.session_state.week_names_input = [''] * num_weeks
-                for i in range(num_weeks):
-                    with week_cols[i]:
-                        st.text_input(
-                            f'Week {i+1}', 
-                            value=st.session_state.week_names_input[i], 
-                            key=f'week_{i}',
-                            on_change=update_week_name(i)
-                        )
+            hidden_cols = [idx for idx, col in enumerate(ws.column_dimensions, 1) if ws.column_dimensions[col].hidden]
+            
+            st.session_state.df = pd.read_excel(BytesIO(file_content), skiprows=2)
+            
+            # Debug: Print dataframe info
+            st.write("Dataframe info:")
+            st.write(st.session_state.df.info())
+            
+            if st.session_state.df.empty:
+                st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
             else:
-                st.warning("No weeks detected in the uploaded file. Please check the file content.")
+                st.session_state.df.drop(st.session_state.df.columns[hidden_cols], axis=1, inplace=True)
 
-     except Exception as e:
-        st.error(f"Error processing file: {e}")
-        st.exception(e)  # This will print the full traceback
+                brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
+                brand_columns = [col for col in st.session_state.df.columns if any(brand in col for brand in brands)]
+                
+                # Debug: Print found brand columns
+                st.write("Found brand columns:", brand_columns)
+
+                num_weeks = len(brand_columns) // len(brands)
+                st.write(f"Number of weeks detected: {num_weeks}")
+                
+                if num_weeks > 0:
+                    st.markdown("### Enter Week Names")
+                    week_cols = st.columns(num_weeks)
+                    
+                    # Ensure week_names_input is initialized with the correct length
+                    if 'week_names_input' not in st.session_state or len(st.session_state.week_names_input) != num_weeks:
+                        st.session_state.week_names_input = [''] * num_weeks
+                    
+                    for i in range(num_weeks):
+                        with week_cols[i]:
+                            st.text_input(
+                                f'Week {i+1}', 
+                                value=st.session_state.week_names_input[i] if i < len(st.session_state.week_names_input) else '',
+                                key=f'week_{i}',
+                                on_change=update_week_name(i)
+                            )
+                else:
+                    st.warning("No weeks detected in the uploaded file. Please check the file content.")
+
+        except Exception as e:
+            st.error(f"Error processing file: {e}")
+            st.exception(e)  # This will print the full traceback
+
+    # ... rest of the main function ...
 
     
     if st.session_state.file_processed:
