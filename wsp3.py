@@ -269,7 +269,30 @@ def update_week_name(index):
     return callback
 
 def home():
-    st.markdown("# Welcome to the WSP Analysis Dashboard")
+    st.markdown("""
+    <style>
+    .title {
+        font-size: 50px;
+        font-weight: bold;
+        color: #3366cc;
+        text-align: center;
+        padding: 20px;
+        border-radius: 10px;
+        background: linear-gradient(to right, #f0f8ff, #e6f3ff);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+        font-family: 'Arial', sans-serif;
+    }
+    .title span {
+        background: linear-gradient(45deg, #3366cc, #6699ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    st.markdown('<div class="title"><span>WSP Analysis Dashboard</span></div>', unsafe_allow_html=True)
+
+    
     st.markdown("""
     This app helps you analyze Whole Sale Price (WSP) data for various brands across different regions and districts.
 
