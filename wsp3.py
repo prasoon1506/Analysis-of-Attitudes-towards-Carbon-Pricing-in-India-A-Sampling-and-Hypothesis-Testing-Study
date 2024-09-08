@@ -259,16 +259,9 @@ def main():
             wb = openpyxl.load_workbook(BytesIO(file_content))
             ws = wb.active
             
-            # Debug: Print all column names
-            st.write("All column names:", [cell.value for cell in ws[1]])
-            
             hidden_cols = [idx for idx, col in enumerate(ws.column_dimensions, 1) if ws.column_dimensions[col].hidden]
             
             st.session_state.df = pd.read_excel(BytesIO(file_content), skiprows=2)
-            
-            # Debug: Print dataframe info
-            st.write("Dataframe info:")
-            st.write(st.session_state.df.info())
             
             if st.session_state.df.empty:
                 st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
@@ -277,12 +270,8 @@ def main():
 
                 brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
                 brand_columns = [col for col in st.session_state.df.columns if any(brand in col for brand in brands)]
-                
-                # Debug: Print found brand columns
-                st.write("Found brand columns:", brand_columns)
 
                 num_weeks = len(brand_columns) // len(brands)
-                st.write(f"Number of weeks detected: {num_weeks}")
                 
                 if num_weeks > 0:
                     st.markdown("### Enter Week Names")
@@ -308,6 +297,7 @@ def main():
             st.exception(e)  # This will print the full traceback
 
     # ... rest of the main function ...
+
 
     
     if st.session_state.file_processed:
