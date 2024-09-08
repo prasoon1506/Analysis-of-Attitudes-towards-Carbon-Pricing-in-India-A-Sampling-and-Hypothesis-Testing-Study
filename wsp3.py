@@ -336,16 +336,22 @@ def main():
                         key=f"benchmark_select_{district}"
                     )
                     desired_diff_dict[district] = {}
-                    diff_cols = st.columns(len(benchmark_brands_dict[district]))
-                    for i, brand in enumerate(benchmark_brands_dict[district]):
-                        with diff_cols[i]:
-                            desired_diff_dict[district][brand] = st.number_input(
-                                f"{brand}",
-                                min_value=-100.00,
-                                step=0.1,
-                                format="%.2f",
-                                key=f"{district}_{brand}"
-                            )
+                    
+                    # Check if any benchmark brands are selected
+                    if benchmark_brands_dict[district]:
+                        num_cols = min(len(benchmark_brands_dict[district]), 3)  # Limit to max 3 columns
+                        diff_cols = st.columns(num_cols)
+                        for i, brand in enumerate(benchmark_brands_dict[district]):
+                            with diff_cols[i % num_cols]:
+                                desired_diff_dict[district][brand] = st.number_input(
+                                    f"{brand}",
+                                    min_value=-100.00,
+                                    step=0.1,
+                                    format="%.2f",
+                                    key=f"{district}_{brand}"
+                                )
+                    else:
+                        st.warning(f"No benchmark brands selected for {district}.")
             
             with col2:
                 download_pdf = st.checkbox("Download Plots as PDF")
