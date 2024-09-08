@@ -250,7 +250,7 @@ def main():
     st.title("WSP Analysis Dashboard")
 
     uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx"])
-   if uploaded_file and not st.session_state.file_processed:
+    if uploaded_file and not st.session_state.file_processed:
     try:
         file_content = uploaded_file.read()
         wb = openpyxl.load_workbook(BytesIO(file_content))
