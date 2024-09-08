@@ -403,7 +403,7 @@ def main():
         with row1:
             download_pdf = st.checkbox("Download Plots as PDF")
         with row2:
-            if st.button('Generate Plots', key='generate_plots'):
+            if st.button('Generate Plots', key='generate_plots',use_container_width=True):
                 with st.spinner('Generating plots...'):
                     plot_district_graph(filtered_df, selected_districts, benchmark_brands_dict, 
                                         desired_diff_dict, 
