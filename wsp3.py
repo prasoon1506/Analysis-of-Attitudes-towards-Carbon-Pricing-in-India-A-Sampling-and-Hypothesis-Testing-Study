@@ -296,7 +296,7 @@ def main():
             else:
                 st.warning("No weeks detected in the uploaded file. Please check the file content.")
 
-    except Exception as e:
+     except Exception as e:
         st.error(f"Error processing file: {e}")
         st.exception(e)  # This will print the full traceback
 
