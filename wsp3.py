@@ -410,7 +410,7 @@ def main():
                                         st.session_state.week_names_input, 
                                         st.session_state.diff_week, 
                                         download_pdf)
-                st.success('Plots generated successfully!')
+                         st.success('Plots generated successfully!')
 
 if __name__ == "__main__":
     main()
