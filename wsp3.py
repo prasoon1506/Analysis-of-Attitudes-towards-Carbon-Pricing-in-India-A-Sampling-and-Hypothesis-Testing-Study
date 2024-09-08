@@ -290,7 +290,7 @@ def home():
     }
     </style>
     """, unsafe_allow_html=True)
-    st.markdown('<div class="title"><span>WSP Analysis Dashboard</span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="title"><span>Welcome to the WSP Analysis Dashboard</span></div>', unsafe_allow_html=True)
 
     
     st.markdown("""
