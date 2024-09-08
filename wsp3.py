@@ -294,14 +294,16 @@ def main():
                 
                 if num_weeks > 0:
                     st.markdown("### Enter Week Names")
-                    week_cols = st.columns(num_weeks)
+                    # Ensure we have at least one column
+                    num_columns = max(1, num_weeks)
+                    week_cols = st.columns(num_columns)
                     
                     # Ensure week_names_input is initialized with the correct length
                     if 'week_names_input' not in st.session_state or len(st.session_state.week_names_input) != num_weeks:
                         st.session_state.week_names_input = [''] * num_weeks
                     
                     for i in range(num_weeks):
-                        with week_cols[i]:
+                        with week_cols[i % num_columns]:
                             st.text_input(
                                 f'Week {i+1}', 
                                 value=st.session_state.week_names_input[i] if i < len(st.session_state.week_names_input) else '',
@@ -310,15 +312,11 @@ def main():
                             )
                 else:
                     st.warning("No weeks detected in the uploaded file. Please check the file content.")
+                    st.session_state.week_names_input = []
 
         except Exception as e:
             st.error(f"Error processing file: {e}")
             st.exception(e)  # This will print the full traceback
-
-    # ... rest of the main function ...
-
-
-    
     if st.session_state.file_processed:
         st.session_state.df = transform_data(st.session_state.df, st.session_state.week_names_input)
         
