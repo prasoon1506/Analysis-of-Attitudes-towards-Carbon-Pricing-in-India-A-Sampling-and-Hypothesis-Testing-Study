@@ -402,10 +402,10 @@ def main():
         with col2:
                 download_pdf = st.checkbox("Download Plots as PDF")
             
-            st.markdown("### Generate Analysis")
-            if st.button('Generate Plots', key='generate_plots'):
-                with st.spinner('Generating plots...'):
-                    plot_district_graph(filtered_df, selected_districts, benchmark_brands_dict, 
+                st.markdown("### Generate Analysis")
+                if st.button('Generate Plots', key='generate_plots'):
+                    with st.spinner('Generating plots...'):
+                         plot_district_graph(filtered_df, selected_districts, benchmark_brands_dict, 
                                         desired_diff_dict, 
                                         st.session_state.week_names_input, 
                                         st.session_state.diff_week, 
