@@ -269,7 +269,31 @@ def update_week_name(index):
             process_file()
     return callback
 def main():
-    st.title("WSP Analysis Dashboard")
+    st.markdown("""
+    <style>
+    .title {
+        font-size: 50px;
+        font-weight: bold;
+        color: #3366cc;
+        text-align: center;
+        padding: 20px;
+        border-radius: 10px;
+        background: linear-gradient(to right, #f0f8ff, #e6f3ff);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+        font-family: 'Arial', sans-serif;
+    }
+    .title span {
+        background: linear-gradient(45deg, #3366cc, #6699ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # Display the stylized title
+    st.markdown('<div class="title"><span>WSP Analysis Dashboard</span></div>', unsafe_allow_html=True)
+    
 
     uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx"])
     if uploaded_file and not st.session_state.file_processed:
