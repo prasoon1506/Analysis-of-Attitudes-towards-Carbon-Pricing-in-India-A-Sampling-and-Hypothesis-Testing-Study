@@ -268,7 +268,7 @@ def update_week_name(index):
             process_file()
     return callback
 
-def home():
+def Tutorial():
     st.markdown("""
     <style>
     .title {
