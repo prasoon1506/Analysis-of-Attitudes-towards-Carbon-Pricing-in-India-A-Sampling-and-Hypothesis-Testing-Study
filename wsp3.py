@@ -495,8 +495,8 @@ def wsp_analysis_dashboard():
 
 def main():
     st.sidebar.title("Navigation")
-    app_mode = st.sidebar.selectbox("Choose the app mode",
-        ["Home", "WSP Analysis Dashboard"])
+    app_mode = st.sidebar.selectbox("Contents",
+        ["Tutorial", "WSP Analysis Dashboard "])
     
     if app_mode == "Home":
         home()
