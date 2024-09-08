@@ -7,7 +7,7 @@ from io import BytesIO
 import base64
 import matplotlib.backends.backend_pdf
 
-st.set_page_config(page_title="District Price Trend Analysis", layout="wide")
+st.set_page_config(page_title="WSP Analysis", layout="wide")
 
 st.markdown("""
 <style>
