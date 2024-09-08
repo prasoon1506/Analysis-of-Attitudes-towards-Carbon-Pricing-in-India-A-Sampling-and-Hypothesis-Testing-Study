@@ -241,7 +241,7 @@ def plot_district_graph(df, district_names, benchmark_brands_dict, desired_diff_
         plt.subplots_adjust(bottom=0.25)
         if download_pdf:
             pdf.savefig()
-        st.pyplot(plt.gcf())
+        st.pyplot()
         buf = BytesIO()
         plt.savefig(buf, format='png', bbox_inches='tight')
         buf.seek(0)
