@@ -351,24 +351,28 @@ def main():
             use_same_benchmarks = st.checkbox("Use same benchmarks for all districts", value=True)
             
             if use_same_benchmarks:
-                selected_benchmarks = st.multiselect("Select Benchmark Brands for all districts", benchmark_brands, key="unified_benchmark_select")
-                for district in selected_districts:
+               selected_benchmarks = st.multiselect("Select Benchmark Brands for all districts", benchmark_brands, key="unified_benchmark_select")
+               for district in selected_districts:
                     benchmark_brands_dict[district] = selected_benchmarks
                     desired_diff_dict[district] = {}
-                
-                st.markdown("#### Desired Differences")
-                diff_cols = st.columns(len(selected_benchmarks))
-                for i, brand in enumerate(selected_benchmarks):
-                    with diff_cols[i]:
-                        value = st.number_input(
-                            f"{brand}",
-                            min_value=-100.00,
-                            step=0.1,
-                            format="%.2f",
-                            key=f"unified_{brand}"
-                        )
-                        for district in selected_districts:
-                            desired_diff_dict[district][brand] = value
+    
+               if selected_benchmarks:  # Only create columns if benchmarks are selected
+                  st.markdown("#### Desired Differences")
+                  num_cols = min(len(selected_benchmarks), 3)  # Limit to max 3 columns
+                  diff_cols = st.columns(num_cols)
+                  for i, brand in enumerate(selected_benchmarks):
+                      with diff_cols[i % num_cols]:
+                           value = st.number_input(
+                                   f"{brand}",
+                                   min_value=-100.00,
+                                   step=0.1,
+                                   format="%.2f",
+                                   key=f"unified_{brand}")
+                  for district in selected_districts:
+                    desired_diff_dict[district][brand] = value
+    else:
+        st.warning("Please select at least one benchmark brand.")
+
             else:
                 for district in selected_districts:
                     st.subheader(f"Settings for {district}")
