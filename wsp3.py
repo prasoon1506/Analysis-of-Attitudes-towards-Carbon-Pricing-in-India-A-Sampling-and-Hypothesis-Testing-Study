@@ -242,7 +242,7 @@ def process_file():
     st.session_state.file_processed = True
 
 def main():
-    st.title("WSP Analysis")
+    st.title("WSP Analysis Dashboard")
 
     uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx"])
 
@@ -260,7 +260,19 @@ def main():
             brand_columns = [col for col in st.session_state.df.columns if any(brand in col for brand in brands)]
 
             num_weeks = len(brand_columns) // len(brands)
-            st.session_state.week_names_input = [st.text_input(f'Week {i+1}', key=f'week_{i}') for i in range(num_weeks)]
+            
+            st.markdown("### Enter Week Names")
+            week_cols = st.columns(num_weeks)
+            for i in range(num_weeks):
+                st.session_state.week_names_input = st.session_state.get('week_names_input', [])
+                with week_cols[i]:
+                    week_name = st.text_input(f'Week {i+1}', key=f'week_{i}')
+                    if week_name:
+                        if i < len(st.session_state.week_names_input):
+                            st.session_state.week_names_input[i] = week_name
+                        else:
+                            st.session_state.week_names_input.append(week_name)
+            
             st.button('Confirm Week Names', on_click=process_file)
 
         except Exception as e:
@@ -269,6 +281,7 @@ def main():
     if st.session_state.file_processed:
         st.session_state.df = transform_data(st.session_state.df, st.session_state.week_names_input)
         
+        st.markdown("### Analysis Settings")
         col1, col2 = st.columns(2)
         with col1:
             st.session_state.diff_week = st.slider("Select Week for Difference Calculation", 
@@ -286,7 +299,7 @@ def main():
         filtered_df = filtered_df[filtered_df["REGION"] == selected_region]
         
         district_names = filtered_df["Dist Name"].unique().tolist()
-        selected_districts = st.multiselect("Select District", district_names, key="district_select")
+        selected_districts = st.multiselect("Select District(s)", district_names, key="district_select")
         
         brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
         benchmark_brands = [brand for brand in brands if brand != 'JKLC']
@@ -295,6 +308,7 @@ def main():
         desired_diff_dict = {}
         
         if selected_districts:
+            st.markdown("### Benchmark Settings")
             use_same_benchmarks = st.checkbox("Use same benchmarks for all districts", value=True)
             
             if use_same_benchmarks:
@@ -303,18 +317,19 @@ def main():
                     benchmark_brands_dict[district] = selected_benchmarks
                     desired_diff_dict[district] = {}
                 
-                # Use a single set of inputs for all districts
-                for brand in selected_benchmarks:
-                    value = st.number_input(
-                        f"Desired Difference for {brand} (all districts)",
-                        min_value=-100.00,
-                        step=0.1,
-                        format="%.2f",
-                        key=f"unified_{brand}"
-                    )
-                    # Apply the same value to all districts
-                    for district in selected_districts:
-                        desired_diff_dict[district][brand] = value
+                st.markdown("#### Desired Differences")
+                diff_cols = st.columns(len(selected_benchmarks))
+                for i, brand in enumerate(selected_benchmarks):
+                    with diff_cols[i]:
+                        value = st.number_input(
+                            f"{brand}",
+                            min_value=-100.00,
+                            step=0.1,
+                            format="%.2f",
+                            key=f"unified_{brand}"
+                        )
+                        for district in selected_districts:
+                            desired_diff_dict[district][brand] = value
             else:
                 for district in selected_districts:
                     st.subheader(f"Settings for {district}")
@@ -324,23 +339,29 @@ def main():
                         key=f"benchmark_select_{district}"
                     )
                     desired_diff_dict[district] = {}
-                    for brand in benchmark_brands_dict[district]:
-                        desired_diff_dict[district][brand] = st.number_input(
-                            f"Desired Difference for {brand} in {district}",
-                            min_value=-100.00,
-                            step=0.1,
-                            format="%.2f",
-                            key=f"{district}_{brand}"
-                        )
+                    diff_cols = st.columns(len(benchmark_brands_dict[district]))
+                    for i, brand in enumerate(benchmark_brands_dict[district]):
+                        with diff_cols[i]:
+                            desired_diff_dict[district][brand] = st.number_input(
+                                f"{brand}",
+                                min_value=-100.00,
+                                step=0.1,
+                                format="%.2f",
+                                key=f"{district}_{brand}"
+                            )
             
             with col2:
                 download_pdf = st.checkbox("Download Plots as PDF")
-            if st.button('Generate Plots'):
-                plot_district_graph(filtered_df, selected_districts, benchmark_brands_dict, 
-                                    desired_diff_dict, 
-                                    st.session_state.week_names_input, 
-                                    st.session_state.diff_week, 
-                                    download_pdf)
+            
+            st.markdown("### Generate Analysis")
+            if st.button('Generate Plots', key='generate_plots'):
+                with st.spinner('Generating plots...'):
+                    plot_district_graph(filtered_df, selected_districts, benchmark_brands_dict, 
+                                        desired_diff_dict, 
+                                        st.session_state.week_names_input, 
+                                        st.session_state.diff_week, 
+                                        download_pdf)
+                st.success('Plots generated successfully!')
 
 if __name__ == "__main__":
     main()
