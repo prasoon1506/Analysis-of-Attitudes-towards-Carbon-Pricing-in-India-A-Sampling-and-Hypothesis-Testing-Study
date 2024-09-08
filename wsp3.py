@@ -171,7 +171,7 @@ def plot_district_graph(df, district_names, benchmark_brands_dict, desired_diff_
         pdf = matplotlib.backends.backend_pdf.PdfPages("district_plots.pdf")
     
     for i, district_name in enumerate(district_names):
-        plt.figure(figsize=(10, 8))
+        fig,ax=plt.subplots(figsize=(10, 8))
         district_df = df[df["Dist Name"] == district_name]
         price_diffs = []
         for brand in brands:
