@@ -294,11 +294,9 @@ def main():
                 
                 if num_weeks > 0:
                     st.markdown("### Enter Week Names")
-                    # Ensure we have at least one column
                     num_columns = max(1, num_weeks)
                     week_cols = st.columns(num_columns)
                     
-                    # Ensure week_names_input is initialized with the correct length
                     if 'week_names_input' not in st.session_state or len(st.session_state.week_names_input) != num_weeks:
                         st.session_state.week_names_input = [''] * num_weeks
                     
@@ -316,7 +314,8 @@ def main():
 
         except Exception as e:
             st.error(f"Error processing file: {e}")
-            st.exception(e)  # This will print the full traceback
+            st.exception(e)
+
     if st.session_state.file_processed:
         st.session_state.df = transform_data(st.session_state.df, st.session_state.week_names_input)
         
@@ -351,29 +350,29 @@ def main():
             use_same_benchmarks = st.checkbox("Use same benchmarks for all districts", value=True)
             
             if use_same_benchmarks:
-               selected_benchmarks = st.multiselect("Select Benchmark Brands for all districts", benchmark_brands, key="unified_benchmark_select")
-               for district in selected_districts:
+                selected_benchmarks = st.multiselect("Select Benchmark Brands for all districts", benchmark_brands, key="unified_benchmark_select")
+                for district in selected_districts:
                     benchmark_brands_dict[district] = selected_benchmarks
                     desired_diff_dict[district] = {}
     
-               if selected_benchmarks:  # Only create columns if benchmarks are selected
-                  st.markdown("#### Desired Differences")
-                  num_cols = min(len(selected_benchmarks), 3)  # Limit to max 3 columns
-                  diff_cols = st.columns(num_cols)
-                  for i, brand in enumerate(selected_benchmarks):
-                      with diff_cols[i % num_cols]:
-                           value = st.number_input(
-                                   f"{brand}",
-                                   min_value=-100.00,
-                                   step=0.1,
-                                   format="%.2f",
-                                   key=f"unified_{brand}")
-                  for district in selected_districts:
-                    desired_diff_dict[district][brand] = value
+                if selected_benchmarks:
+                    st.markdown("#### Desired Differences")
+                    num_cols = min(len(selected_benchmarks), 3)
+                    diff_cols = st.columns(num_cols)
+                    for i, brand in enumerate(selected_benchmarks):
+                        with diff_cols[i % num_cols]:
+                            value = st.number_input(
+                                f"{brand}",
+                                min_value=-100.00,
+                                step=0.1,
+                                format="%.2f",
+                                key=f"unified_{brand}"
+                            )
+                            for district in selected_districts:
+                                desired_diff_dict[district][brand] = value
+                else:
+                    st.warning("Please select at least one benchmark brand.")
             else:
-                 st.warning("Please select at least one benchmark brand.")
-
-        else:
                 for district in selected_districts:
                     st.subheader(f"Settings for {district}")
                     benchmark_brands_dict[district] = st.multiselect(
@@ -383,9 +382,8 @@ def main():
                     )
                     desired_diff_dict[district] = {}
                     
-                    # Check if any benchmark brands are selected
                     if benchmark_brands_dict[district]:
-                        num_cols = min(len(benchmark_brands_dict[district]), 3)  # Limit to max 3 columns
+                        num_cols = min(len(benchmark_brands_dict[district]), 3)
                         diff_cols = st.columns(num_cols)
                         for i, brand in enumerate(benchmark_brands_dict[district]):
                             with diff_cols[i % num_cols]:
@@ -398,19 +396,21 @@ def main():
                                 )
                     else:
                         st.warning(f"No benchmark brands selected for {district}.")
-            
+        
+        # Generate Analysis section
+        st.markdown("### Generate Analysis")
+        col1, col2 = st.columns(2)
+        with col1:
+            download_pdf = st.checkbox("Download Plots as PDF")
         with col2:
-                download_pdf = st.checkbox("Download Plots as PDF")
-            
-                st.markdown("### Generate Analysis")
-                if st.button('Generate Plots', key='generate_plots'):
-                    with st.spinner('Generating plots...'):
-                         plot_district_graph(filtered_df, selected_districts, benchmark_brands_dict, 
+            if st.button('Generate Plots', key='generate_plots'):
+                with st.spinner('Generating plots...'):
+                    plot_district_graph(filtered_df, selected_districts, benchmark_brands_dict, 
                                         desired_diff_dict, 
                                         st.session_state.week_names_input, 
                                         st.session_state.diff_week, 
                                         download_pdf)
-                         st.success('Plots generated successfully!')
+                    st.success('Plots generated successfully!')
 
 if __name__ == "__main__":
     main()
