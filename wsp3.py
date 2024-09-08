@@ -244,11 +244,13 @@ def main():
     if st.session_state.file_processed:
         st.session_state.df = transform_data(st.session_state.df, st.session_state.week_names_input)
         
-        st.session_state.diff_week = st.slider("Select Week for Difference Calculation", 
-                                               min_value=0, 
-                                               max_value=len(st.session_state.week_names_input) - 1, 
-                                               value=st.session_state.diff_week, 
-                                               key="diff_week_slider")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.session_state.diff_week = st.slider("Select Week for Difference Calculation", 
+                                                   min_value=0, 
+                                                   max_value=len(st.session_state.week_names_input) - 1, 
+                                                   value=st.session_state.diff_week, 
+                                                   key="diff_week_slider")
         
         zone_names = st.session_state.df["Zone"].unique().tolist()
         selected_zone = st.selectbox("Select Zone", zone_names, key="zone_select")
@@ -275,17 +277,39 @@ def main():
                 for district in selected_districts:
                     benchmark_brands_dict[district] = selected_benchmarks
                     desired_diff_dict[district] = {}
-                    for brand in selected_benchmarks:
-                        desired_diff_dict[district][brand] = st.number_input(f"Desired Difference for {brand} (all districts)", min_value=-100.00, step=0.1, format="%.2f", key=f"unified_{brand}")
+                
+                # Use a single set of inputs for all districts
+                for brand in selected_benchmarks:
+                    value = st.number_input(
+                        f"Desired Difference for {brand} (all districts)",
+                        min_value=-100.00,
+                        step=0.1,
+                        format="%.2f",
+                        key=f"unified_{brand}"
+                    )
+                    # Apply the same value to all districts
+                    for district in selected_districts:
+                        desired_diff_dict[district][brand] = value
             else:
                 for district in selected_districts:
                     st.subheader(f"Settings for {district}")
-                    benchmark_brands_dict[district] = st.multiselect(f"Select Benchmark Brands for {district}", benchmark_brands, key=f"benchmark_select_{district}")
+                    benchmark_brands_dict[district] = st.multiselect(
+                        f"Select Benchmark Brands for {district}",
+                        benchmark_brands,
+                        key=f"benchmark_select_{district}"
+                    )
                     desired_diff_dict[district] = {}
                     for brand in benchmark_brands_dict[district]:
-                        desired_diff_dict[district][brand] = st.number_input(f"Desired Difference for {brand} in {district}", min_value=-100.00, step=0.1, format="%.2f", key=f"{district}_{brand}")
+                        desired_diff_dict[district][brand] = st.number_input(
+                            f"Desired Difference for {brand} in {district}",
+                            min_value=-100.00,
+                            step=0.1,
+                            format="%.2f",
+                            key=f"{district}_{brand}"
+                        )
             
-            download_pdf = st.checkbox("Download Plots as PDF")
+            with col2:
+                download_pdf = st.checkbox("Download Plots as PDF")
             if st.button('Generate Plots'):
                 plot_district_graph(filtered_df, selected_districts, benchmark_brands_dict, 
                                     desired_diff_dict, 
