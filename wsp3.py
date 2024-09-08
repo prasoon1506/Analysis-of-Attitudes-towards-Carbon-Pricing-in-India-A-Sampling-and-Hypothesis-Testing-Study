@@ -315,18 +315,19 @@ def main():
         except Exception as e:
             st.error(f"Error processing file: {e}")
             st.exception(e)
-
     if st.session_state.file_processed:
         st.session_state.df = transform_data(st.session_state.df, st.session_state.week_names_input)
         
         st.markdown("### Analysis Settings")
-        col1, col2 = st.columns(2)
-        with col1:
-            st.session_state.diff_week = st.slider("Select Week for Difference Calculation", 
-                                                   min_value=0, 
-                                                   max_value=len(st.session_state.week_names_input) - 1, 
-                                                   value=st.session_state.diff_week, 
-                                                   key="diff_week_slider")
+        
+        st.session_state.diff_week = st.slider("Select Week for Difference Calculation", 
+                                               min_value=0, 
+                                               max_value=len(st.session_state.week_names_input) - 1, 
+                                               value=st.session_state.diff_week, 
+                                               key="diff_week_slider")
+        
+        # Moved the "Download Plots as PDF" checkbox here
+        download_pdf = st.checkbox("Download Plots as PDF")
         
         zone_names = st.session_state.df["Zone"].unique().tolist()
         selected_zone = st.selectbox("Select Zone", zone_names, key="zone_select")
@@ -399,18 +400,17 @@ def main():
         
         # Generate Analysis section
         st.markdown("### Generate Analysis")
-        row1, row2 = st.columns(2)
-        with row1:
-            download_pdf = st.checkbox("Download Plots as PDF")
-        with row2:
-            if st.button('Generate Plots', key='generate_plots',use_container_width=True):
-                with st.spinner('Generating plots...'):
-                    plot_district_graph(filtered_df, selected_districts, benchmark_brands_dict, 
-                                        desired_diff_dict, 
-                                        st.session_state.week_names_input, 
-                                        st.session_state.diff_week, 
-                                        download_pdf)
-                    st.success('Plots generated successfully!')
+        
+        # Place the Generate Plots button here, below the Generate Analysis header
+        if st.button('Generate Plots', key='generate_plots', use_container_width=True):
+            with st.spinner('Generating plots...'):
+                plot_district_graph(filtered_df, selected_districts, benchmark_brands_dict, 
+                                    desired_diff_dict, 
+                                    st.session_state.week_names_input, 
+                                    st.session_state.diff_week, 
+                                    download_pdf)
+                st.success('Plots generated successfully!')
 
 if __name__ == "__main__":
     main()
+    
