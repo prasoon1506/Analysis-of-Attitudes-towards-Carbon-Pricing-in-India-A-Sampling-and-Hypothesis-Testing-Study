@@ -217,7 +217,7 @@ def process_file():
     st.session_state.file_processed = True
 
 def main():
-    st.title("District Price Trend Analysis")
+    st.title("WSP Analysis")
 
     uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx"])
 
