@@ -399,7 +399,7 @@ def main():
                     else:
                         st.warning(f"No benchmark brands selected for {district}.")
             
-            with col2:
+       with col2:
                 download_pdf = st.checkbox("Download Plots as PDF")
             
             st.markdown("### Generate Analysis")
