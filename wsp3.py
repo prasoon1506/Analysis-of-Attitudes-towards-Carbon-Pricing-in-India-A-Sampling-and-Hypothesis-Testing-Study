@@ -359,29 +359,17 @@ def wsp_analysis_dashboard():
             wb = openpyxl.load_workbook(BytesIO(file_content))
             ws = wb.active
             
-            # Identify hidden columns
-            hidden_cols = set(ws._hidden_cols)
+            hidden_cols = [idx for idx, col in enumerate(ws.column_dimensions, 1) if ws.column_dimensions[col].hidden]
             
-            # Read all columns from the Excel file
-            df = pd.read_excel(BytesIO(file_content), skiprows=2)
+            st.session_state.df = pd.read_excel(BytesIO(file_content), skiprows=2)
             
-            if df.empty:
+            if st.session_state.df.empty:
                 st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
             else:
-                # Filter out hidden columns
-                visible_cols = [col for idx, col in enumerate(df.columns) if idx+1 not in hidden_cols]
-                df = df[visible_cols]
-                
-                # Remove empty columns
-                df = df.dropna(axis=1, how='all')
-                
-                # Remove columns where all values are 0
-                df = df.loc[:, (df != 0).any(axis=0)]
-                
-                st.session_state.df = df
+                st.session_state.df.drop(st.session_state.df.columns[hidden_cols], axis=1, inplace=True)
 
                 brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
-                brand_columns = [col for col in st.session_state.df.columns if any(brand in str(col) for brand in brands)]
+                brand_columns = [col for col in st.session_state.df.columns if any(brand in col for brand in brands)]
 
                 num_weeks = len(brand_columns) // len(brands)
                 
@@ -408,6 +396,7 @@ def wsp_analysis_dashboard():
         except Exception as e:
             st.error(f"Error processing file: {e}")
             st.exception(e)
+    
    
     
     
