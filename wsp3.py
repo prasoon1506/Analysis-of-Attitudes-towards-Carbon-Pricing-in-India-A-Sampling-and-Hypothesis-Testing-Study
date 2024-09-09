@@ -359,20 +359,15 @@ def wsp_analysis_dashboard():
             wb = openpyxl.load_workbook(BytesIO(file_content))
             ws = wb.active
             
-            # Get hidden columns
-            hidden_cols = [col for col, dimension in ws.column_dimensions.items() if dimension.hidden]
+            # Identify visible columns
+            visible_cols = [col for col in ws.column_dimensions if not ws.column_dimensions[col].hidden]
             
-            # Read the Excel file
-            df = pd.read_excel(BytesIO(file_content), skiprows=2)
+            # Read the Excel file, using only visible columns
+            df = pd.read_excel(BytesIO(file_content), skiprows=2, usecols=visible_cols)
             
             if df.empty:
                 st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
             else:
-                # Drop hidden columns that exist in the dataframe
-                df_columns = df.columns.tolist()
-                hidden_cols_to_drop = [col for col in hidden_cols if col in df_columns]
-                df = df.drop(columns=hidden_cols_to_drop)
-                
                 # Remove empty columns
                 df = df.dropna(axis=1, how='all')
                 
@@ -409,6 +404,7 @@ def wsp_analysis_dashboard():
         except Exception as e:
             st.error(f"Error processing file: {e}")
             st.exception(e)
+    
     if st.session_state.file_processed:
         st.session_state.df = transform_data(st.session_state.df, st.session_state.week_names_input)
         
