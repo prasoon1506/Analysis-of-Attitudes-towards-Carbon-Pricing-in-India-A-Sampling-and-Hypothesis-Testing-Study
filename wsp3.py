@@ -368,6 +368,7 @@ def wsp_analysis_dashboard():
                 st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
             else:
                 st.session_state.df.drop(st.session_state.df.columns[hidden_cols], axis=1, inplace=True)
+                df = df.dropna(axis=1, how='all')
 
                 brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
                 brand_columns = [col for col in st.session_state.df.columns if any(brand in col for brand in brands)]
