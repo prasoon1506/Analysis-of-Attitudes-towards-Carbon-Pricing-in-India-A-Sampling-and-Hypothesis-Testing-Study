@@ -493,7 +493,7 @@ def wsp_analysis_dashboard():
                     else:
                         st.warning(f"No benchmark brands selected for {district}.")
         
-        st.markdown("### Generate Analysis")
+    st.markdown("### Generate Analysis")
         
         if st.button('Generate Plots', key='generate_plots', use_container_width=True):
             with st.spinner('Generating plots...'):
