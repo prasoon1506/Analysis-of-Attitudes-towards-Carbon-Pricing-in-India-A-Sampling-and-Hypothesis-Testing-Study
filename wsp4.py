@@ -786,7 +786,7 @@ def folder_menu():
 def main():
     st.sidebar.title("Menu")
     app_mode = st.sidebar.selectbox("Contents",
-        ["Home", "WSP Analysis Dashboard", "Descriptive Statistics and Prediction","File Management"])
+        ["Home", "WSP Analysis Dashboard", "Descriptive Statistics and Prediction","File Managemer"])
     
     if app_mode == "Home":
         Home()
@@ -794,7 +794,7 @@ def main():
         wsp_analysis_dashboard()
     elif app_mode == "Descriptive Statistics and Prediction":
         descriptive_statistics_and_prediction()
-    elif app_mode == "File Management":
+    elif app_mode == "File Managemer":
         folder_menu()
 
 if __name__ == "__main__":
