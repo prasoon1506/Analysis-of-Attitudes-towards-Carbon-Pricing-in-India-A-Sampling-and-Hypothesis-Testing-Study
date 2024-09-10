@@ -581,17 +581,13 @@ def descriptive_statistics_and_prediction():
                         'Median': [np.median(brand_data)],
                         'Std Dev': [np.std(brand_data)],
                         'Min': [np.min(brand_data)],
-                        'Max': [np.max(brand_data)]
-                    })
-                    st.dataframe(basic_stats)
-                    
-                    advanced_stats = pd.DataFrame({
-                        'Skewness': [stats.skew(brand_data)],
+                        'Max': [np.max(brand_data),                        'Skewness': [stats.skew(brand_data)],
                         'Kurtosis': [stats.kurtosis(brand_data)],
                         'Range': [np.ptp(brand_data)],
                         'IQR': [np.percentile(brand_data, 75) - np.percentile(brand_data, 25)]
                     })
-                    st.dataframe(advanced_stats)
+                    st.dataframe(basic_stats)
+
                     
                     # ARIMA prediction for next week
                     if len(brand_data) > 2:  # Need at least 3 data points for ARIMA
