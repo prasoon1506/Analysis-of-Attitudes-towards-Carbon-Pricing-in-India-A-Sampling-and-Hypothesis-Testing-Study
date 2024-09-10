@@ -741,6 +741,7 @@ def get_online_editor_url(file_extension):
     }
     return extension_mapping.get(file_extension.lower(), 'https://www.google.com/drive/')
 
+
 def folder_menu():
     st.markdown("""
     <style>
@@ -781,7 +782,6 @@ def folder_menu():
     if uploaded_file is not None:
         file_details = {"FileName": uploaded_file.name, "FileType": uploaded_file.type, "FileSize": uploaded_file.size}
         
-        
         # Save the uploaded file
         with open(os.path.join("uploaded_files", uploaded_file.name), "wb") as f:
             f.write(uploaded_file.getbuffer())
@@ -789,6 +789,11 @@ def folder_menu():
 
     # Display uploaded files
     st.subheader("Uploaded Files")
+    
+    # Use session state to track file deletion
+    if 'files_to_delete' not in st.session_state:
+        st.session_state.files_to_delete = set()
+
     for filename in os.listdir("uploaded_files"):
         file_path = os.path.join("uploaded_files", filename)
         file_stats = os.stat(file_path)
@@ -805,14 +810,28 @@ def folder_menu():
                     st.markdown(href, unsafe_allow_html=True)
         with col3:
             if st.button(f"Delete {filename}"):
-                os.remove(file_path)
-                st.warning(f"{filename} has been deleted.")
-                st.rerun()
+                st.session_state.files_to_delete.add(filename)
         with col4:
             file_extension = os.path.splitext(filename)[1]
             editor_url = get_online_editor_url(file_extension)
             shareable_link = generate_shareable_link(file_path)
             st.markdown(f"[Open Online]({editor_url})")
+
+    # Process file deletion
+    files_deleted = False
+    for filename in st.session_state.files_to_delete:
+        file_path = os.path.join("uploaded_files", filename)
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            st.warning(f"{filename} has been deleted.")
+            files_deleted = True
+    
+    # Clear the set of files to delete
+    st.session_state.files_to_delete.clear()
+
+    # Rerun the app if any files were deleted
+    if files_deleted:
+        st.rerun()
 
     st.info("Note: The 'Open Online' links will redirect you to the appropriate online editor. You may need to manually open your file once there.")
 def main():
