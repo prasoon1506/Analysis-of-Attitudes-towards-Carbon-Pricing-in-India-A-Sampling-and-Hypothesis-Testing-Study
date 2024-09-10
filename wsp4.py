@@ -717,6 +717,30 @@ def descriptive_statistics_and_prediction():
                 )
 
 
+
+from urllib.parse import quote
+
+def generate_shareable_link(file_path):
+    """Generate a shareable link for the file."""
+    # In a real-world scenario, you would upload the file to a cloud storage service
+    # and generate a shareable link. For this example, we'll create a dummy link.
+    file_name = os.path.basename(file_path)
+    encoded_file_name = quote(file_name)
+    return f"https://your-file-sharing-service.com/files/{encoded_file_name}"
+
+def get_online_editor_url(file_extension):
+    """Get the appropriate online editor URL based on file extension."""
+    extension_mapping = {
+        '.xlsx': 'https://www.office.com/launch/excel?auth=2',
+        '.xls': 'https://www.office.com/launch/excel?auth=2',
+        '.doc': 'https://www.office.com/launch/word?auth=2',
+        '.docx': 'https://www.office.com/launch/word?auth=2',
+        '.ppt': 'https://www.office.com/launch/powerpoint?auth=2',
+        '.pptx': 'https://www.office.com/launch/powerpoint?auth=2',
+        '.pdf': 'https://documentcloud.adobe.com/link/home/'
+    }
+    return extension_mapping.get(file_extension.lower(), 'https://www.google.com/drive/')
+
 def folder_menu():
     st.markdown("""
     <style>
@@ -753,7 +777,7 @@ def folder_menu():
         os.makedirs("uploaded_files")
 
     # File uploader
-    uploaded_file = st.file_uploader("Upload a file", type=["xlsx", "xls", "doc", "docx", "pdf"])
+    uploaded_file = st.file_uploader("Upload a file", type=["xlsx", "xls", "doc", "docx", "pdf", "ppt", "pptx"])
     if uploaded_file is not None:
         file_details = {"FileName": uploaded_file.name, "FileType": uploaded_file.type, "FileSize": uploaded_file.size}
         st.write(file_details)
@@ -785,13 +809,12 @@ def folder_menu():
                 st.warning(f"{filename} has been deleted.")
                 st.rerun()
         with col4:
-            file_extension = os.path.splitext(filename)[1].lower()
-            if file_extension in ['.xlsx', '.xls']:
-                st.markdown(f"[Open in Excel Online](https://www.office.com/launch/excel?auth=2)")
-            elif file_extension in ['.doc', '.docx']:
-                st.markdown(f"[Open in Word Online](https://www.office.com/launch/word?auth=2)")
-            else:
-                st.write("No web link")
+            file_extension = os.path.splitext(filename)[1]
+            editor_url = get_online_editor_url(file_extension)
+            shareable_link = generate_shareable_link(file_path)
+            st.markdown(f"[Open Online]({editor_url})")
+
+    st.info("Note: The 'Open Online' links will redirect you to the appropriate online editor. You may need to manually open your file once there.")
 def main():
     st.sidebar.title("Menu")
     app_mode = st.sidebar.selectbox("Contents",
