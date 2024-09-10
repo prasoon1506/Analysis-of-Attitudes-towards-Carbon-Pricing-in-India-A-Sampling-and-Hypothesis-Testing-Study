@@ -14,73 +14,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import Paragraph
-def folder_menu():
-    st.markdown("""
-    <style>
-    .title {
-        font-size: 50px;
-        font-weight: bold;
-        color: #3366cc;
-        text-align: center;
-        padding: 20px;
-        border-radius: 10px;
-        background: linear-gradient(to right, #f0f8ff, #e6f3ff);
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        margin-bottom: 30px;
-        font-family: 'Arial', sans-serif;
-    }
-    .title span {
-        background: linear-gradient(45deg, #3366cc, #6699ff);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-    .file-box {
-        border: 1px solid #ddd;
-        padding: 10px;
-        margin: 10px 0;
-        border-radius: 5px;
-    }
-    </style>
-    """, unsafe_allow_html=True)
 
-    st.markdown('<div class="title"><span>File Management</span></div>', unsafe_allow_html=True)
-
-    # Create a folder to store uploaded files if it doesn't exist
-    if not os.path.exists("uploaded_files"):
-        os.makedirs("uploaded_files")
-
-    # File uploader
-    uploaded_file = st.file_uploader("Upload a file", type=["xlsx", "xls", "doc", "docx", "pdf"])
-    if uploaded_file is not None:
-        file_details = {"FileName": uploaded_file.name, "FileType": uploaded_file.type, "FileSize": uploaded_file.size}
-        st.write(file_details)
-        
-        # Save the uploaded file
-        with open(os.path.join("uploaded_files", uploaded_file.name), "wb") as f:
-            f.write(uploaded_file.getbuffer())
-        st.success(f"File {uploaded_file.name} saved successfully!")
-
-    # Display uploaded files
-    st.subheader("Uploaded Files")
-    for filename in os.listdir("uploaded_files"):
-        file_path = os.path.join("uploaded_files", filename)
-        file_stats = os.stat(file_path)
-        
-        col1, col2, col3 = st.columns([3, 1, 1])
-        with col1:
-            st.markdown(f"<div class='file-box'>{filename}</div>", unsafe_allow_html=True)
-        with col2:
-            if st.button(f"Download {filename}"):
-                with open(file_path, "rb") as file:
-                    file_content = file.read()
-                    b64 = base64.b64encode(file_content).decode()
-                    href = f'<a href="data:application/octet-stream;base64,{b64}" download="{filename}">Click to download</a>'
-                    st.markdown(href, unsafe_allow_html=True)
-        with col3:
-            if st.button(f"Delete {filename}"):
-                os.remove(file_path)
-                st.warning(f"{filename} has been deleted.")
-                st.experimental_rerun()
 def create_stats_pdf(stats_data, district):
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
@@ -781,7 +715,73 @@ def descriptive_statistics_and_prediction():
                     mime="application/pdf"
                 )
 
+def folder_menu():
+    st.markdown("""
+    <style>
+    .title {
+        font-size: 50px;
+        font-weight: bold;
+        color: #3366cc;
+        text-align: center;
+        padding: 20px;
+        border-radius: 10px;
+        background: linear-gradient(to right, #f0f8ff, #e6f3ff);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+        font-family: 'Arial', sans-serif;
+    }
+    .title span {
+        background: linear-gradient(45deg, #3366cc, #6699ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .file-box {
+        border: 1px solid #ddd;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 5px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
+    st.markdown('<div class="title"><span>File Management</span></div>', unsafe_allow_html=True)
+
+    # Create a folder to store uploaded files if it doesn't exist
+    if not os.path.exists("uploaded_files"):
+        os.makedirs("uploaded_files")
+
+    # File uploader
+    uploaded_file = st.file_uploader("Upload a file", type=["xlsx", "xls", "doc", "docx", "pdf"])
+    if uploaded_file is not None:
+        file_details = {"FileName": uploaded_file.name, "FileType": uploaded_file.type, "FileSize": uploaded_file.size}
+        st.write(file_details)
+        
+        # Save the uploaded file
+        with open(os.path.join("uploaded_files", uploaded_file.name), "wb") as f:
+            f.write(uploaded_file.getbuffer())
+        st.success(f"File {uploaded_file.name} saved successfully!")
+
+    # Display uploaded files
+    st.subheader("Uploaded Files")
+    for filename in os.listdir("uploaded_files"):
+        file_path = os.path.join("uploaded_files", filename)
+        file_stats = os.stat(file_path)
+        
+        col1, col2, col3 = st.columns([3, 1, 1])
+        with col1:
+            st.markdown(f"<div class='file-box'>{filename}</div>", unsafe_allow_html=True)
+        with col2:
+            if st.button(f"Download {filename}"):
+                with open(file_path, "rb") as file:
+                    file_content = file.read()
+                    b64 = base64.b64encode(file_content).decode()
+                    href = f'<a href="data:application/octet-stream;base64,{b64}" download="{filename}">Click to download</a>'
+                    st.markdown(href, unsafe_allow_html=True)
+        with col3:
+            if st.button(f"Delete {filename}"):
+                os.remove(file_path)
+                st.warning(f"{filename} has been deleted.")
+                st.experimental_rerun()
 def main():
     st.sidebar.title("Menu")
     app_mode = st.sidebar.selectbox("Contents",
