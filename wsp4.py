@@ -495,7 +495,7 @@ def wsp_analysis_dashboard():
         
     st.markdown("### Generate Analysis")
         
-        if st.button('Generate Plots', key='generate_plots', use_container_width=True):
+    if st.button('Generate Plots', key='generate_plots', use_container_width=True):
             with st.spinner('Generating plots...'):
                 plot_district_graph(filtered_df, selected_districts, benchmark_brands_dict, 
                                     desired_diff_dict, 
