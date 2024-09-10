@@ -750,6 +750,7 @@ def get_online_editor_url(file_extension):
     return extension_mapping.get(file_extension.lower(), 'https://www.google.com/drive/')
 
 
+
 def folder_menu():
     st.markdown("""
     <style>
@@ -772,20 +773,56 @@ def folder_menu():
     }
     .file-box {
         border: 1px solid #ddd;
-        padding: 10px;
-        margin: 10px 0;
-        border-radius: 5px;
+        padding: 15px;
+        margin: 15px 0;
+        border-radius: 10px;
+        background-color: #f9f9f9;
+        transition: all 0.3s ease;
+    }
+    .file-box:hover {
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        transform: translateY(-5px);
+    }
+    .stButton>button {
+        border-radius: 20px;
+        padding: 10px 20px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+    .stButton>button:hover {
+        transform: scale(1.05);
+    }
+    .upload-section {
+        background-color: #e6f3ff;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
     }
     </style>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="title"><span>File Manager</span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="title"><span>Interactive File Manager</span></div>', unsafe_allow_html=True)
+
+    # Load Lottie animation
+    lottie_url = "https://assets5.lottiefiles.com/packages/lf20_V9t630.json"
+    lottie_json = load_lottie_url(lottie_url)
+    
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        st_lottie(lottie_json, height=200, key="file_animation")
+    with col2:
+        st.markdown("""
+        Welcome to the Interactive File Manager! 
+        Here you can upload, download, and manage your files with ease. 
+        Enjoy the smooth animations and user-friendly interface.
+        """)
 
     # Create a folder to store uploaded files if it doesn't exist
     if not os.path.exists("uploaded_files"):
         os.makedirs("uploaded_files")
 
     # File uploader
+    st.markdown('<div class="upload-section">', unsafe_allow_html=True)
     uploaded_file = st.file_uploader("Upload a file", type=["xlsx", "xls", "doc", "docx", "pdf", "ppt", "pptx"])
     if uploaded_file is not None:
         file_details = {"FileName": uploaded_file.name, "FileType": uploaded_file.type, "FileSize": uploaded_file.size}
@@ -794,9 +831,10 @@ def folder_menu():
         with open(os.path.join("uploaded_files", uploaded_file.name), "wb") as f:
             f.write(uploaded_file.getbuffer())
         st.success(f"File {uploaded_file.name} saved successfully!")
+    st.markdown('</div>', unsafe_allow_html=True)
 
     # Display uploaded files
-    st.subheader("Uploaded Files")
+    st.subheader("Your Files")
     
     # Use session state to track file deletion
     if 'files_to_delete' not in st.session_state:
@@ -806,24 +844,27 @@ def folder_menu():
         file_path = os.path.join("uploaded_files", filename)
         file_stats = os.stat(file_path)
         
+        st.markdown(f'<div class="file-box">', unsafe_allow_html=True)
         col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
         with col1:
-            st.markdown(f"<div class='file-box'>{filename}</div>", unsafe_allow_html=True)
+            st.markdown(f"<h3>{filename}</h3>", unsafe_allow_html=True)
+            st.text(f"Size: {file_stats.st_size / 1024:.2f} KB")
         with col2:
-            if st.button(f"Download {filename}"):
+            if st.button(f"📥 Download", key=f"download_{filename}"):
                 with open(file_path, "rb") as file:
                     file_content = file.read()
                     b64 = base64.b64encode(file_content).decode()
                     href = f'<a href="data:application/octet-stream;base64,{b64}" download="{filename}">Click to download</a>'
                     st.markdown(href, unsafe_allow_html=True)
         with col3:
-            if st.button(f"Delete {filename}"):
+            if st.button(f"🗑️ Delete", key=f"delete_{filename}"):
                 st.session_state.files_to_delete.add(filename)
         with col4:
             file_extension = os.path.splitext(filename)[1]
             editor_url = get_online_editor_url(file_extension)
             shareable_link = generate_shareable_link(file_path)
-            st.markdown(f"[Open Online]({editor_url})")
+            st.markdown(f"[🌐 Open Online]({editor_url})")
+        st.markdown('</div>', unsafe_allow_html=True)
 
     # Process file deletion
     files_deleted = False
@@ -841,7 +882,19 @@ def folder_menu():
     if files_deleted:
         st.rerun()
 
+    st.info("Note: The 'Open Online' links will redirect you to the appropriate online editor. You may need to manually open your file once there.")
 
+    # Add a fun fact section
+    st.markdown("---")
+    st.subheader("📚 Fun File Fact")
+    fun_facts = [
+        "The first computer virus was created in 1983 and was called the Elk Cloner.",
+        "The most common file extension in the world is .dll (Dynamic Link Library).",
+        "The largest file size theoretically possible in Windows is 16 exabytes minus 1 KB.",
+        "The PDF file format was invented by Adobe in 1993.",
+        "The first widely-used image format on the web was GIF, created in 1987."
+    ]
+    st.markdown(f"*{fun_facts[int(os.urandom(1)[0]) % len(fun_facts)]}*")
 def main():
     st.sidebar.title("Menu")
     app_mode = st.sidebar.selectbox("Contents",
