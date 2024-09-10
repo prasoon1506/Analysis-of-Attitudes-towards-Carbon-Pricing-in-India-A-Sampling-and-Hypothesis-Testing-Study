@@ -11,4 +11,4 @@ ipywidgets
 openpyxl
 statsmodels
 reportlab
-shutil
+
