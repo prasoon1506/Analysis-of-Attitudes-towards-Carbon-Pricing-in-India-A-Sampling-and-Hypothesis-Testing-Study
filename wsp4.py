@@ -367,7 +367,6 @@ def update_week_name(index):
 
 
 def Home():
-    # [Keep the existing Tutorial content]
     st.markdown("""
     <style>
     .title {
@@ -387,54 +386,73 @@ def Home():
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
     }
+    .section-box {
+        background-color: #f9f9f9;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+    .section-box:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+    }
+    .upload-section {
+        background-color: #e6f3ff;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
     </style>
     """, unsafe_allow_html=True)
+
     st.markdown('<div class="title"><span>Welcome to the WSP Analysis Dashboard</span></div>', unsafe_allow_html=True)
 
+    # Load Lottie animation
+    lottie_url = "https://assets4.lottiefiles.com/packages/lf20_jdf3xt3b.json"
+    lottie_json = load_lottie_url(lottie_url)
     
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        st_lottie(lottie_json, height=200, key="home_animation")
+    with col2:
+        st.markdown("""
+        Welcome to our interactive WSP Analysis Dashboard! 
+        This powerful tool helps you analyze Whole Sale Price (WSP) data for various brands across different regions and districts.
+        Let's get started with your data analysis journey!
+        """)
+
+    st.markdown('<div class="section-box">', unsafe_allow_html=True)
+    st.subheader("How to use this app:")
     st.markdown("""
-    This app helps you analyze Whole Sale Price (WSP) data for various brands across different regions and districts.
-
-    ## How to use this app:
-
-    1. **Navigate to the WSP Analysis Dashboard tab** using the dropdown menu at the top of the sidebar.
-
-    2. **Upload your Excel file** containing the WSP data.
-
-    3. **Enter the week names** for each column in your data.
-
-    4. **Select your analysis settings**:
-        - Choose the zone and region you want to analyze
-        - Select one or more districts
-        - Set the week for difference calculation
-        - Choose whether to download plots as PDF
-
-    5. **Set benchmark brands and desired differences**:
-        - You can set the same benchmarks for all districts or customize for each
-        - For each benchmark brand, set the desired price difference
-
-    6. **Generate plots** by clicking the 'Generate Plots' button
-
-    7. **View and download** the generated plots
-
-    Remember, you can always return to this page for a refresher on how to use the app.
-
-    Happy analyzing!
+    1. **Upload your Excel file** containing the WSP data.
+    2. **Enter the week names** for each column in your data.
+    3. **Navigate to the WSP Analysis Dashboard** or **Descriptive Statistics and Prediction** sections.
+    4. **Select your analysis settings** and generate insights!
     """)
-    st.markdown("""
-    ## Upload Your Data
-    
-    Before using the WSP Analysis Dashboard or the Descriptive Statistics and Prediction section, 
-    please upload your Excel file containing the WSP data here:
-    """)
-    
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="upload-section">', unsafe_allow_html=True)
+    st.subheader("Upload Your Data")
     uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx"])
     if uploaded_file:
-        st.markdown(f'<div class="uploadedFile">File uploaded: {uploaded_file.name}</div>', unsafe_allow_html=True)
+        st.success(f"File uploaded: {uploaded_file.name}")
         process_uploaded_file(uploaded_file)
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    # Add this line to show the current state of file_processed
-    st.write(f"File processed: {st.session_state.file_processed}")
+    if st.session_state.file_processed:
+        st.success("File processed successfully! You can now proceed to the analysis sections.")
+    else:
+        st.info("Please upload a file and fill in all week names to proceed with the analysis.")
+
+    st.markdown('<div class="section-box">', unsafe_allow_html=True)
+    st.subheader("Need Help?")
+    st.markdown("""
+    If you need any assistance or have questions about using the app, don't hesitate to reach out to our support team.
+    Happy analyzing!
+    """)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 def process_uploaded_file(uploaded_file):
     if uploaded_file and not st.session_state.file_processed:
