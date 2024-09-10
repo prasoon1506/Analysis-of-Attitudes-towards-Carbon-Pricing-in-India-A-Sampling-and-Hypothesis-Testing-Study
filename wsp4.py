@@ -410,7 +410,7 @@ def Home():
     st.markdown('<div class="title"><span>Welcome to the WSP Analysis Dashboard</span></div>', unsafe_allow_html=True)
 
     # Load Lottie animation
-    lottie_url = "https://assets5.lottiefiles.com/packages/lf20_qp1q7msk.json"
+    lottie_url = "https://assets5.lottiefiles.com/packages/lf20_V9t630.json" 
     lottie_json = load_lottie_url(lottie_url)
     
     col1, col2 = st.columns([1, 2])
