@@ -1,4 +1,4 @@
-pip install requirements.txt
+
 import shutil
 import streamlit as st
 import openpyxl
