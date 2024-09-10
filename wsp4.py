@@ -25,7 +25,13 @@ def create_stats_pdf(stats_data, district):
 
     data = [['Brand', 'Mean', 'Median', 'Std Dev', 'Min', 'Max', 'Skewness', 'Kurtosis', 'Range', 'IQR']]
     for brand, stats in stats_data.items():
-        row = [brand] + [f"{v:.2f}" for v in stats.values()]
+        row = [brand]
+        for stat in ['Mean', 'Median', 'Std Dev', 'Min', 'Max', 'Skewness', 'Kurtosis', 'Range', 'IQR']:
+            value = stats[stat]
+            if isinstance(value, (int, float)):
+                row.append(f"{value:.2f}")
+            else:
+                row.append(str(value))
         data.append(row)
 
     table = Table(data)
@@ -50,6 +56,7 @@ def create_stats_pdf(stats_data, district):
     doc.build(elements)
     buffer.seek(0)
     return buffer
+
 
 def create_prediction_pdf(prediction_data, district):
     buffer = BytesIO()
