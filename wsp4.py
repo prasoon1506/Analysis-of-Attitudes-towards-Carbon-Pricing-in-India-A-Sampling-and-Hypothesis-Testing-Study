@@ -258,9 +258,6 @@ def plot_district_graph(df, district_names, benchmark_brands_dict, desired_diff_
         b64_pdf = base64.b64encode(pdf_data).decode()
         st.markdown(f'<a download="{region_name}.pdf" href="data:application/pdf;base64,{b64_pdf}">Download All Plots as PDF</a>', unsafe_allow_html=True)
 
-def process_file():
-    st.session_state.file_processed = True
-
 def update_week_name(index):
     def callback():
         if index < len(st.session_state.week_names_input):
@@ -268,8 +265,10 @@ def update_week_name(index):
         else:
             st.warning(f"Attempted to update week {index + 1}, but only {len(st.session_state.week_names_input)} weeks are available.")
         if all(st.session_state.week_names_input):
-            process_file()
+            st.session_state.file_processed = True
     return callback
+
+
 def Home():
     # [Keep the existing Tutorial content]
     st.markdown("""
@@ -337,6 +336,9 @@ def Home():
         st.markdown(f'<div class="uploadedFile">File uploaded: {uploaded_file.name}</div>', unsafe_allow_html=True)
         process_uploaded_file(uploaded_file)
 
+    # Add this line to show the current state of file_processed
+    st.write(f"File processed: {st.session_state.file_processed}")
+
 def process_uploaded_file(uploaded_file):
     if uploaded_file and not st.session_state.file_processed:
         try:
@@ -347,11 +349,11 @@ def process_uploaded_file(uploaded_file):
             hidden_cols = [idx for idx, col in enumerate(ws.column_dimensions, 1) if ws.column_dimensions[col].hidden]
             
             st.session_state.df = pd.read_excel(BytesIO(file_content), skiprows=2)
-            
             if st.session_state.df.empty:
                 st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
             else:
                 st.session_state.df.drop(st.session_state.df.columns[hidden_cols], axis=1, inplace=True)
+
 
                 brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
                 brand_columns = [col for col in st.session_state.df.columns if any(brand in col for brand in brands)]
@@ -374,14 +376,20 @@ def process_uploaded_file(uploaded_file):
                                 key=f'week_{i}',
                                 on_change=update_week_name(i)
                             )
+                    if all(st.session_state.week_names_input):
+                        st.session_state.file_processed = True
+                    else:
+                        st.warning("Please fill in all week names to process the file.")
                 else:
+                   
                     st.warning("No weeks detected in the uploaded file. Please check the file content.")
                     st.session_state.week_names_input = []
-
+                    st.session_state.file_processed = False
         except Exception as e:
+
             st.error(f"Error processing file: {e}")
             st.exception(e)
-
+            st.session_state.file_processed = False
 def wsp_analysis_dashboard():
     # [Keep the existing wsp_analysis_dashboard content, but remove the file uploader part]
     st.markdown("""
@@ -409,8 +417,9 @@ def wsp_analysis_dashboard():
     # Display the stylized title
     st.markdown('<div class="title"><span>WSP Analysis Dashboard</span></div>', unsafe_allow_html=True)
     if not st.session_state.file_processed:
-        st.warning("Please upload a file in the Home section before using this dashboard.")
-        return
+      st.warning("Please upload a file and fill in all week names in the Home section before using this dashboard.")
+      return
+
 
     st.session_state.df = transform_data(st.session_state.df, st.session_state.week_names_input)
     
