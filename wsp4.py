@@ -745,7 +745,7 @@ def folder_menu():
     </style>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="title"><span>File Management</span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="title"><span>File Managemer</span></div>', unsafe_allow_html=True)
 
     # Create a folder to store uploaded files if it doesn't exist
     if not os.path.exists("uploaded_files"):
@@ -786,7 +786,7 @@ def folder_menu():
 def main():
     st.sidebar.title("Menu")
     app_mode = st.sidebar.selectbox("Contents",
-        ["Home", "WSP Analysis Dashboard", "Descriptive Statistics and Prediction","File Managemer"])
+        ["Home", "WSP Analysis Dashboard", "Descriptive Statistics and Prediction","File Manager"])
     
     if app_mode == "Home":
         Home()
@@ -794,7 +794,7 @@ def main():
         wsp_analysis_dashboard()
     elif app_mode == "Descriptive Statistics and Prediction":
         descriptive_statistics_and_prediction()
-    elif app_mode == "File Managemer":
+    elif app_mode == "File Manager":
         folder_menu()
 
 if __name__ == "__main__":
