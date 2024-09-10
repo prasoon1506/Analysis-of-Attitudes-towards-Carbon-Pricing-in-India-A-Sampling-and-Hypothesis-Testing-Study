@@ -780,7 +780,7 @@ def folder_menu():
     uploaded_file = st.file_uploader("Upload a file", type=["xlsx", "xls", "doc", "docx", "pdf", "ppt", "pptx"])
     if uploaded_file is not None:
         file_details = {"FileName": uploaded_file.name, "FileType": uploaded_file.type, "FileSize": uploaded_file.size}
-        st.write(file_details)
+        
         
         # Save the uploaded file
         with open(os.path.join("uploaded_files", uploaded_file.name), "wb") as f:
