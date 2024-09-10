@@ -581,7 +581,7 @@ def descriptive_statistics_and_prediction():
                         'Median': [np.median(brand_data)],
                         'Std Dev': [np.std(brand_data)],
                         'Min': [np.min(brand_data)],
-                        'Max': [np.max(brand_data),                        'Skewness': [stats.skew(brand_data)],
+                        'Max': [np.max(brand_data)],                        'Skewness': [stats.skew(brand_data)],
                         'Kurtosis': [stats.kurtosis(brand_data)],
                         'Range': [np.ptp(brand_data)],
                         'IQR': [np.percentile(brand_data, 75) - np.percentile(brand_data, 25)]
