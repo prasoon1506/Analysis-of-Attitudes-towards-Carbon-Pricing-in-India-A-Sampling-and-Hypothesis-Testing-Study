@@ -8,6 +8,85 @@ import base64
 import matplotlib.backends.backend_pdf
 from scipy import stats
 from statsmodels.tsa.arima.model import ARIMA
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import Paragraph
+def create_stats_pdf(stats_data, district):
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    elements = []
+
+    styles = getSampleStyleSheet()
+    title = Paragraph(f"Descriptive Statistics for {district}", styles['Title'])
+    elements.append(title)
+
+    data = [['Brand', 'Mean', 'Median', 'Std Dev', 'Min', 'Max', 'Skewness', 'Kurtosis', 'Range', 'IQR']]
+    for brand, stats in stats_data.items():
+        row = [brand] + [f"{v:.2f}" for v in stats.values()]
+        data.append(row)
+
+    table = Table(data)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 14),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -1), 12),
+        ('TOPPADDING', (0, 1), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+    ]))
+    elements.append(table)
+
+    doc.build(elements)
+    buffer.seek(0)
+    return buffer
+
+def create_prediction_pdf(prediction_data, district):
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    elements = []
+
+    styles = getSampleStyleSheet()
+    title = Paragraph(f"Price Predictions for {district}", styles['Title'])
+    elements.append(title)
+
+    data = [['Brand', 'Predicted Price', 'Lower CI', 'Upper CI']]
+    for brand, pred in prediction_data.items():
+        row = [brand, f"{pred['forecast']:.2f}", f"{pred['lower_ci']:.2f}", f"{pred['upper_ci']:.2f}"]
+        data.append(row)
+
+    table = Table(data)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 14),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -1), 12),
+        ('TOPPADDING', (0, 1), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+    ]))
+    elements.append(table)
+
+    doc.build(elements)
+    buffer.seek(0)
+    return buffer
+
 
 st.set_page_config(page_title="WSP Analysis", layout="wide")
 
@@ -561,7 +640,6 @@ def descriptive_statistics_and_prediction():
     filtered_df = filtered_df[filtered_df["REGION"] == selected_region]
     district_names = filtered_df["Dist Name"].unique().tolist()
     selected_districts = st.multiselect("Select District(s)", district_names, key="stats_district_select")
-
     if selected_districts:
         st.markdown("### Descriptive Statistics")
         
@@ -570,6 +648,9 @@ def descriptive_statistics_and_prediction():
             district_df = filtered_df[filtered_df["Dist Name"] == district]
             
             brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
+            stats_data = {}
+            prediction_data = {}
+            
             for brand in brands:
                 st.markdown(f"#### {brand}")
                 brand_data = district_df[[col for col in district_df.columns if brand in col]].values.flatten()
@@ -581,22 +662,51 @@ def descriptive_statistics_and_prediction():
                         'Median': [np.median(brand_data)],
                         'Std Dev': [np.std(brand_data)],
                         'Min': [np.min(brand_data)],
-                        'Max': [np.max(brand_data)],                        'Skewness': [stats.skew(brand_data)],
+                        'Max': [np.max(brand_data)],
+                        'Skewness': [stats.skew(brand_data)],
                         'Kurtosis': [stats.kurtosis(brand_data)],
                         'Range': [np.ptp(brand_data)],
                         'IQR': [np.percentile(brand_data, 75) - np.percentile(brand_data, 25)]
                     })
                     st.dataframe(basic_stats)
+                    stats_data[brand] = basic_stats.iloc[0]
 
-                    
                     # ARIMA prediction for next week
                     if len(brand_data) > 2:  # Need at least 3 data points for ARIMA
                         model = ARIMA(brand_data, order=(1,1,1))
                         model_fit = model.fit()
                         forecast = model_fit.forecast(steps=1)
+                        confidence_interval = model_fit.get_forecast(steps=1).conf_int()
                         st.markdown(f"Predicted price for next week: {forecast[0]:.2f}")
+                        st.markdown(f"95% Confidence Interval: [{confidence_interval.iloc[0, 0]:.2f}, {confidence_interval.iloc[0, 1]:.2f}]")
+                        prediction_data[brand] = {
+                            'forecast': forecast[0],
+                            'lower_ci': confidence_interval.iloc[0, 0],
+                            'upper_ci': confidence_interval.iloc[0, 1]
+                        }
                 else:
                     st.warning(f"No data available for {brand} in this district.")
+
+            # Create download buttons for stats and predictions
+            stats_pdf = create_stats_pdf(stats_data, district)
+            predictions_pdf = create_prediction_pdf(prediction_data, district)
+
+            col1, col2 = st.columns(2)
+            with col1:
+                st.download_button(
+                    label="Download Statistics PDF",
+                    data=stats_pdf,
+                    file_name=f"{district}_statistics.pdf",
+                    mime="application/pdf"
+                )
+            with col2:
+                st.download_button(
+                    label="Download Predictions PDF",
+                    data=predictions_pdf,
+                    file_name=f"{district}_predictions.pdf",
+                    mime="application/pdf"
+                )
+
 
 def main():
     st.sidebar.title("Menu")
