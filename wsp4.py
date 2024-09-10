@@ -716,6 +716,7 @@ def descriptive_statistics_and_prediction():
                     mime="application/pdf"
                 )
 
+
 def folder_menu():
     st.markdown("""
     <style>
@@ -768,7 +769,7 @@ def folder_menu():
         file_path = os.path.join("uploaded_files", filename)
         file_stats = os.stat(file_path)
         
-        col1, col2, col3 = st.columns([3, 1, 1])
+        col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
         with col1:
             st.markdown(f"<div class='file-box'>{filename}</div>", unsafe_allow_html=True)
         with col2:
@@ -783,6 +784,14 @@ def folder_menu():
                 os.remove(file_path)
                 st.warning(f"{filename} has been deleted.")
                 st.rerun()
+        with col4:
+            file_extension = os.path.splitext(filename)[1].lower()
+            if file_extension in ['.xlsx', '.xls']:
+                st.markdown(f"[Open in Excel Online](https://www.office.com/launch/excel?auth=2)")
+            elif file_extension in ['.doc', '.docx']:
+                st.markdown(f"[Open in Word Online](https://www.office.com/launch/word?auth=2)")
+            else:
+                st.write("No web link")
 def main():
     st.sidebar.title("Menu")
     app_mode = st.sidebar.selectbox("Contents",
