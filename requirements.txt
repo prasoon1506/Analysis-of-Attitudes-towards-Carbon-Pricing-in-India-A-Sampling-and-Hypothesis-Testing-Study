@@ -10,3 +10,4 @@ tqdm
 ipywidgets
 openpyxl
 statsmodels
+reportlab
