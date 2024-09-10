@@ -411,66 +411,20 @@ def wsp_analysis_dashboard():
 
 
     
-    if uploaded_file:
-        st.markdown(f'<div class="uploadedFile">File uploaded: {uploaded_file.name}</div>', unsafe_allow_html=True)
-    if uploaded_file and not st.session_state.file_processed:
-        try:
-            file_content = uploaded_file.read()
-            wb = openpyxl.load_workbook(BytesIO(file_content))
-            ws = wb.active
-            
-            hidden_cols = [idx for idx, col in enumerate(ws.column_dimensions, 1) if ws.column_dimensions[col].hidden]
-            
-            st.session_state.df = pd.read_excel(BytesIO(file_content), skiprows=2)
-            
-            if st.session_state.df.empty:
-                st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
-            else:
-                
-                st.session_state.df.drop(st.session_state.df.columns[hidden_cols], axis=1, inplace=True)
+    if not st.session_state.file_processed:
+        st.warning("Please upload a file in the Home section before using this dashboard.")
+        return
 
-                brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
-                brand_columns = [col for col in st.session_state.df.columns if any(brand in col for brand in brands)]
-
-                num_weeks = len(brand_columns) // len(brands)
-                
-                if num_weeks > 0:
-                    st.markdown("### Enter Week Names")
-                    num_columns = max(1, num_weeks)
-                    week_cols = st.columns(num_columns)
-                    
-                    if 'week_names_input' not in st.session_state or len(st.session_state.week_names_input) != num_weeks:
-                        st.session_state.week_names_input = [''] * num_weeks
-                    
-                    for i in range(num_weeks):
-                        with week_cols[i % num_columns]:
-                            st.text_input(
-                                f'Week {i+1}', 
-                                value=st.session_state.week_names_input[i] if i < len(st.session_state.week_names_input) else '',
-                                key=f'week_{i}',
-                                on_change=update_week_name(i)
-                            )
-                else:
-                    st.warning("No weeks detected in the uploaded file. Please check the file content.")
-                    st.session_state.week_names_input = []
-
-        except Exception as e:
-            st.error(f"Error processing file: {e}")
-            st.exception(e)
+    # The rest of the function remains the same
+    st.session_state.df = transform_data(st.session_state.df, st.session_state.week_names_input)
     
-   
+    st.markdown("### Analysis Settings")
     
-    
-    if st.session_state.file_processed:
-        st.session_state.df = transform_data(st.session_state.df, st.session_state.week_names_input)
-        
-        st.markdown("### Analysis Settings")
-        
-        st.session_state.diff_week = st.slider("Select Week for Difference Calculation", 
-                                               min_value=0, 
-                                               max_value=len(st.session_state.week_names_input) - 1, 
-                                               value=st.session_state.diff_week, 
-                                               key="diff_week_slider")
+    st.session_state.diff_week = st.slider("Select Week for Difference Calculation", 
+                                           min_value=0, 
+                                           max_value=len(st.session_state.week_names_input) - 1, 
+                                           value=st.session_state.diff_week, 
+                                           key="diff_week_slider")
         
         download_pdf = st.checkbox("Download Plots as PDF")
         
