@@ -408,14 +408,10 @@ def wsp_analysis_dashboard():
 
     # Display the stylized title
     st.markdown('<div class="title"><span>WSP Analysis Dashboard</span></div>', unsafe_allow_html=True)
-
-
-    
     if not st.session_state.file_processed:
         st.warning("Please upload a file in the Home section before using this dashboard.")
         return
 
-    # The rest of the function remains the same
     st.session_state.df = transform_data(st.session_state.df, st.session_state.week_names_input)
     
     st.markdown("### Analysis Settings")
@@ -424,11 +420,9 @@ def wsp_analysis_dashboard():
                                            min_value=0, 
                                            max_value=len(st.session_state.week_names_input) - 1, 
                                            value=st.session_state.diff_week, 
-                                           key="diff_week_slider")
-        
-        download_pdf = st.checkbox("Download Plots as PDF")
-        
-        col1, col2 = st.columns(2)
+                                           key="diff_week_slider") 
+    download_pdf = st.checkbox("Download Plots as PDF")   
+    col1, col2 = st.columns(2)
         with col1:
             zone_names = st.session_state.df["Zone"].unique().tolist()
             selected_zone = st.selectbox("Select Zone", zone_names, key="zone_select")
@@ -437,17 +431,17 @@ def wsp_analysis_dashboard():
             region_names = filtered_df["REGION"].unique().tolist()
             selected_region = st.selectbox("Select Region", region_names, key="region_select")
         
-        filtered_df = filtered_df[filtered_df["REGION"] == selected_region]
-        district_names = filtered_df["Dist Name"].unique().tolist()
-        selected_districts = st.multiselect("Select District(s)", district_names, key="district_select")
+    filtered_df = filtered_df[filtered_df["REGION"] == selected_region]
+    district_names = filtered_df["Dist Name"].unique().tolist()
+    selected_districts = st.multiselect("Select District(s)", district_names, key="district_select")
 
-        brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
-        benchmark_brands = [brand for brand in brands if brand != 'JKLC']
+    brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
+    benchmark_brands = [brand for brand in brands if brand != 'JKLC']
         
-        benchmark_brands_dict = {}
-        desired_diff_dict = {}
+    benchmark_brands_dict = {}
+    desired_diff_dict = {}
         
-        if selected_districts:
+    if selected_districts:
             st.markdown("### Benchmark Settings")
             use_same_benchmarks = st.checkbox("Use same benchmarks for all districts", value=True)
             
