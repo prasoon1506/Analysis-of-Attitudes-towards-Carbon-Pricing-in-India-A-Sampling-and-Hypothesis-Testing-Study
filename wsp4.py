@@ -679,9 +679,10 @@ def descriptive_statistics_and_prediction():
                         forecast = model_fit.forecast(steps=1)
                         confidence_interval = model_fit.get_forecast(steps=1).conf_int()
                         st.markdown(f"Predicted price for next week: {forecast[0]:.2f}")
-                    
+                         st.markdown(f"95% Confidence Interval: [{confidence_interval[0, 0]:.2f}, {confidence_interval[0, 1]:.2f}]")
                         prediction_data[brand] = {
-                            'forecast': forecast[0]
+                            'forecast': forecast[0],'lower_ci': confidence_interval[0, 0],
+                            'upper_ci': confidence_interval[0, 1]
                         }
                 else:
                     st.warning(f"No data available for {brand} in this district.")
