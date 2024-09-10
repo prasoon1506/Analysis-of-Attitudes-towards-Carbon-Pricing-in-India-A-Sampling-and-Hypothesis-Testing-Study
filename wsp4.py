@@ -423,10 +423,10 @@ def wsp_analysis_dashboard():
                                            key="diff_week_slider") 
     download_pdf = st.checkbox("Download Plots as PDF")   
     col1, col2 = st.columns(2)
-        with col1:
+    with col1:
             zone_names = st.session_state.df["Zone"].unique().tolist()
             selected_zone = st.selectbox("Select Zone", zone_names, key="zone_select")
-        with col2:
+    with col2:
             filtered_df = st.session_state.df[st.session_state.df["Zone"] == selected_zone]
             region_names = filtered_df["REGION"].unique().tolist()
             selected_region = st.selectbox("Select Region", region_names, key="region_select")
