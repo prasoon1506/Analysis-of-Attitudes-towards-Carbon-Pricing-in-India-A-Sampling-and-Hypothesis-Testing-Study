@@ -782,7 +782,7 @@ def folder_menu():
             if st.button(f"Delete {filename}"):
                 os.remove(file_path)
                 st.warning(f"{filename} has been deleted.")
-                st.experimental_rerun()
+                st.rerun()
 def main():
     st.sidebar.title("Menu")
     app_mode = st.sidebar.selectbox("Contents",
