@@ -745,7 +745,7 @@ def folder_menu():
     </style>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="title"><span>File Managemer</span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="title"><span>File Manager</span></div>', unsafe_allow_html=True)
 
     # Create a folder to store uploaded files if it doesn't exist
     if not os.path.exists("uploaded_files"):
