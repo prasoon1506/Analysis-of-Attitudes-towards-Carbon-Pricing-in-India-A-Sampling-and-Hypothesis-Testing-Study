@@ -785,7 +785,7 @@ def folder_menu():
 def main():
     st.sidebar.title("Menu")
     app_mode = st.sidebar.selectbox("Contents",
-        ["Home", "WSP Analysis Dashboard", "Descriptive Statistics and Prediction"])
+        ["Home", "WSP Analysis Dashboard", "Descriptive Statistics and Prediction","File Management"])
     
     if app_mode == "Home":
         Home()
