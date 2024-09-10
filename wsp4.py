@@ -833,7 +833,7 @@ def folder_menu():
     if files_deleted:
         st.rerun()
 
-    st.info("Note: The 'Open Online' links will redirect you to the appropriate online editor. You may need to manually open your file once there.")
+
 def main():
     st.sidebar.title("Menu")
     app_mode = st.sidebar.selectbox("Contents",
