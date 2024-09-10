@@ -9,3 +9,4 @@ scipy
 tqdm
 ipywidgets
 openpyxl
+statsmodels.tsa.arima.model
