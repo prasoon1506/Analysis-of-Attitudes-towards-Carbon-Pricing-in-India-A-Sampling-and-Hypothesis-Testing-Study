@@ -760,7 +760,6 @@ def descriptive_statistics_and_prediction():
     }
     .stats-box {
         background-color: #e6f3ff;
-        border-radius: 8px;
         padding: 15px;
         margin-bottom: 15px;
     }
@@ -903,7 +902,7 @@ def descriptive_statistics_and_prediction():
         st.markdown("### Descriptive Statistics")
         
         for district in selected_districts:
-            st.subheader(f"Statistics for {district}")
+            st.subheader(f"{district}")
             district_df = filtered_df[filtered_df["Dist Name"] == district]
             
             brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
