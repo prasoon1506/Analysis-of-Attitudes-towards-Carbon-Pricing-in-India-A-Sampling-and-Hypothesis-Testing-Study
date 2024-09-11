@@ -656,7 +656,6 @@ def wsp_analysis_dashboard():
 
     else:
         st.warning("Please upload a file in the Tutorial section before using this dashboard.")
-
 def descriptive_statistics_and_prediction():
     st.markdown("""
     <style>
@@ -677,18 +676,51 @@ def descriptive_statistics_and_prediction():
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
     }
+    .section-box {
+        background-color: #f9f9f9;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+    .section-box:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+    }
+    .stSelectbox, .stMultiSelect {
+        background-color: white;
+        border-radius: 8px;
+        margin-bottom: 10px;
+    }
+    .stButton>button {
+        border-radius: 20px;
+        padding: 10px 20px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+    .stButton>button:hover {
+        transform: scale(1.05);
+    }
+    .stats-box {
+        background-color: #e6f3ff;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
     </style>
     """, unsafe_allow_html=True)
 
     st.markdown('<div class="title"><span>Descriptive Statistics and Prediction</span></div>', unsafe_allow_html=True)
 
     if not st.session_state.file_processed:
-        st.warning("Please upload a file in the Tutorial section before using this feature.")
+        st.warning("Please upload a file in the Home section before using this feature.")
         return
 
     st.session_state.df = transform_data(st.session_state.df, st.session_state.week_names_input)
 
-    st.markdown("### Analysis Settings")
+    st.markdown('<div class="section-box">', unsafe_allow_html=True)
+    st.subheader("Analysis Settings")
 
     col1, col2 = st.columns(2)
     with col1:
@@ -702,7 +734,10 @@ def descriptive_statistics_and_prediction():
     filtered_df = filtered_df[filtered_df["REGION"] == selected_region]
     district_names = filtered_df["Dist Name"].unique().tolist()
     selected_districts = st.multiselect("Select District(s)", district_names, key="stats_district_select")
+    st.markdown('</div>', unsafe_allow_html=True)
+
     if selected_districts:
+        st.markdown('<div class="section-box">', unsafe_allow_html=True)
         st.markdown("### Descriptive Statistics")
         
         for district in selected_districts:
@@ -714,6 +749,7 @@ def descriptive_statistics_and_prediction():
             prediction_data = {}
             
             for brand in brands:
+                st.markdown(f'<div class="stats-box">', unsafe_allow_html=True)
                 st.markdown(f"#### {brand}")
                 brand_data = district_df[[col for col in district_df.columns if brand in col]].values.flatten()
                 brand_data = brand_data[~np.isnan(brand_data)]
@@ -747,6 +783,7 @@ def descriptive_statistics_and_prediction():
                         }
                 else:
                     st.warning(f"No data available for {brand} in this district.")
+                st.markdown('</div>', unsafe_allow_html=True)
 
             # Create download buttons for stats and predictions
             stats_pdf = create_stats_pdf(stats_data, district)
@@ -767,6 +804,8 @@ def descriptive_statistics_and_prediction():
                     file_name=f"{district}_predictions.pdf",
                     mime="application/pdf"
                 )
+        st.markdown('</div>', unsafe_allow_html=True)
+
 
 
 
