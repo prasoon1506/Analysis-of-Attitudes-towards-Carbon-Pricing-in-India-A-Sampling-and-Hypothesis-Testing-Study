@@ -364,12 +364,7 @@ def plot_district_graph(df, district_names, benchmark_brands_dict, desired_diff_
             pdf_data = f.read()
         b64_pdf = base64.b64encode(pdf_data).decode()
         st.markdown(f'<a download="{region_name}.pdf" href="data:application/pdf;base64,{b64_pdf}">Download All Plots as PDF</a>', unsafe_allow_html=True)
-        st.download_button(
-                    label="Download All Stats and Predictions PDF",
-                    data=district_plots.getvalue(),
-                    file_name=f"{selected_districts}stats_and_predictions.pdf",
-                    mime="application/pdf"
-                )
+
 
 def update_week_name(index):
     def callback():
