@@ -33,7 +33,7 @@ def create_multi_district_pdf(stats_data, prediction_data):
     doc = SimpleDocTemplate(buffer, pagesize=letter)
     elements = []
     styles = getSampleStyleSheet()
-def calculate_stats_and_prediction(district_df):
+def calculate_stats_and_predictions(district_df):
     return stats_data,prediction_data
 
     for district in stats_data.keys():
