@@ -506,7 +506,6 @@ def process_uploaded_file(uploaded_file):
             st.exception(e)
             st.session_state.file_processed = False
 def wsp_analysis_dashboard():
-    # [Keep the existing wsp_analysis_dashboard content, but remove the file uploader part]
     st.markdown("""
     <style>
     .title {
@@ -526,19 +525,45 @@ def wsp_analysis_dashboard():
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
     }
+    .section-box {
+        background-color: #f9f9f9;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+    .section-box:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+    }
+    .stSelectbox, .stMultiSelect {
+        background-color: white;
+        border-radius: 8px;
+        margin-bottom: 10px;
+    }
+    .stButton>button {
+        border-radius: 20px;
+        padding: 10px 20px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+    .stButton>button:hover {
+        transform: scale(1.05);
+    }
     </style>
     """, unsafe_allow_html=True)
 
-    # Display the stylized title
     st.markdown('<div class="title"><span>WSP Analysis Dashboard</span></div>', unsafe_allow_html=True)
-    if not st.session_state.file_processed:
-      st.warning("Please upload a file and fill in all week names in the Home section before using this dashboard.")
-      return
 
+    if not st.session_state.file_processed:
+        st.warning("Please upload a file and fill in all week names in the Home section before using this dashboard.")
+        return
 
     st.session_state.df = transform_data(st.session_state.df, st.session_state.week_names_input)
     
-    st.markdown("### Analysis Settings")
+    st.markdown('<div class="section-box">', unsafe_allow_html=True)
+    st.subheader("Analysis Settings")
     
     st.session_state.diff_week = st.slider("Select Week for Difference Calculation", 
                                            min_value=0, 
@@ -548,16 +573,17 @@ def wsp_analysis_dashboard():
     download_pdf = st.checkbox("Download Plots as PDF")   
     col1, col2 = st.columns(2)
     with col1:
-            zone_names = st.session_state.df["Zone"].unique().tolist()
-            selected_zone = st.selectbox("Select Zone", zone_names, key="zone_select")
+        zone_names = st.session_state.df["Zone"].unique().tolist()
+        selected_zone = st.selectbox("Select Zone", zone_names, key="zone_select")
     with col2:
-            filtered_df = st.session_state.df[st.session_state.df["Zone"] == selected_zone]
-            region_names = filtered_df["REGION"].unique().tolist()
-            selected_region = st.selectbox("Select Region", region_names, key="region_select")
+        filtered_df = st.session_state.df[st.session_state.df["Zone"] == selected_zone]
+        region_names = filtered_df["REGION"].unique().tolist()
+        selected_region = st.selectbox("Select Region", region_names, key="region_select")
         
     filtered_df = filtered_df[filtered_df["REGION"] == selected_region]
     district_names = filtered_df["Dist Name"].unique().tolist()
     selected_districts = st.multiselect("Select District(s)", district_names, key="district_select")
+    st.markdown('</div>', unsafe_allow_html=True)
 
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
     benchmark_brands = [brand for brand in brands if brand != 'JKLC']
