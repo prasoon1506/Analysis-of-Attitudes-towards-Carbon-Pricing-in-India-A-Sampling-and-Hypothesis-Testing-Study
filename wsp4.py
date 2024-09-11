@@ -570,7 +570,7 @@ def wsp_analysis_dashboard():
                                            max_value=len(st.session_state.week_names_input) - 1, 
                                            value=st.session_state.diff_week, 
                                            key="diff_week_slider") 
-    download_pdf = st.checkbox("Download Plots as PDF")   
+    download_pdf = st.checkbox("Download Plots as PDF",value=True)   
     col1, col2 = st.columns(2)
     with col1:
         zone_names = st.session_state.df["Zone"].unique().tolist()
@@ -597,6 +597,22 @@ def wsp_analysis_dashboard():
         elif selected_region == "Chhattisgarh":
             mp_west_districts = ["Durg","Raipur","Bilaspur","Raigarh","Rajnandgaon"]
             suggested_districts = [d for d in mp_west_districts if d in district_names]
+        elif selected_region == "Maharashtra(East)":
+            mp_west_districts = ["Nagpur","Gondiya"]
+            suggested_districts = [d for d in mp_west_districts if d in district_names]
+        elif selected_region == "Odisha":
+            mp_west_districts = ["Cuttack","Sambalpur","Khorda"]
+            suggested_districts = [d for d in mp_west_districts if d in district_names]
+        elif selected_region == "North-I":
+            mp_west_districts = ["East","Gurugram","Sonipat","Hisar","Yamunanagar","Bathinda"]
+            suggested_districts = [d for d in mp_west_districts if d in district_names]
+        elif selected_region == "North-II":
+            mp_west_districts = ["Ghaziabad","Meerut"]
+            suggested_districts = [d for d in mp_west_districts if d in district_names]
+        elif selected_region == "Gujarat":
+            mp_west_districts = ["Ahmadabad","Mahesana","Rajkot","Vadodara","Surat"]
+            suggested_districts = [d for d in mp_west_districts if d in district_names]
+        
         
         
         if suggested_districts:
