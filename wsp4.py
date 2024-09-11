@@ -895,7 +895,7 @@ def descriptive_statistics_and_prediction():
                 st.download_button(
                     label="Download All Stats and Predictions PDF",
                     data=all_stats_pdf.getvalue(),
-                    file_name=f"{Region}stats_and_predictions.pdf",
+                    file_name=f"{region_name}stats_and_predictions.pdf",
                     mime="application/pdf"
                 )
 
