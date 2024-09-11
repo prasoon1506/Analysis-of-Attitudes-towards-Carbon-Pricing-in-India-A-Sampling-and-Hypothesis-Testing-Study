@@ -701,7 +701,7 @@ def wsp_analysis_dashboard():
             st.success('Plots generated successfully!')
 
     else:
-        st.warning("Please upload a file in the Tutorial section before using this dashboard.")
+        st.warning("Please upload a file in the Home section before using this dashboard.")
 def descriptive_statistics_and_prediction():
     st.markdown("""
     <style>
