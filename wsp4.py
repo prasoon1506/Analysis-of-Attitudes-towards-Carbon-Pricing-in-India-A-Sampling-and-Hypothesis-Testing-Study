@@ -1187,7 +1187,7 @@ def folder_menu():
     ]
     st.markdown(f"*{fun_facts[int(os.urandom(1)[0]) % len(fun_facts)]}*")
 def main():
-    st.set_page_config(layout="wide")
+    
     
     # Custom CSS for the sidebar
     st.markdown("""
