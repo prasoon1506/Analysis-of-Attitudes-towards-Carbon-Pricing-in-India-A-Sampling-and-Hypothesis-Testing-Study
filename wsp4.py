@@ -28,77 +28,7 @@ def load_lottie_url(url: str):
     if r.status_code != 200:
         return None
     return r.json()
-def create_multi_district_pdf(stats_data, prediction_data):
-    buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter)
-    elements = []
-    styles = getSampleStyleSheet()
 
-
-    for district in stats_data.keys():
-        # Add district header
-        elements.append(Paragraph(f"Statistics and Predictions for {district}", styles['Heading1']))
-        elements.append(Spacer(1, 12))
-
-        # Add statistics table
-        stats_data_table = [['Brand', 'Mean', 'Median', 'Std Dev', 'Min', 'Max', 'Skewness', 'Kurtosis', 'Range', 'IQR']]
-        for brand, stats in stats_data[district].items():
-            row = [brand]
-            for stat in ['Mean', 'Median', 'Std Dev', 'Min', 'Max', 'Skewness', 'Kurtosis', 'Range', 'IQR']:
-                value = stats[stat]
-                row.append(f"{value:.2f}" if isinstance(value, (int, float)) else str(value))
-            stats_data_table.append(row)
-
-        stats_table = Table(stats_data_table)
-        stats_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 10),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-            ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 1), (-1, -1), 8),
-            ('TOPPADDING', (0, 1), (-1, -1), 6),
-            ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black)
-        ]))
-        elements.append(stats_table)
-        elements.append(Spacer(1, 12))
-
-        # Add predictions table
-        elements.append(Paragraph("Price Predictions", styles['Heading2']))
-        pred_data_table = [['Brand', 'Predicted Price', 'Lower CI', 'Upper CI']]
-        for brand, pred in prediction_data[district].items():
-            row = [brand, f"{pred['forecast']:.2f}", f"{pred['lower_ci']:.2f}", f"{pred['upper_ci']:.2f}"]
-            pred_data_table.append(row)
-
-        pred_table = Table(pred_data_table)
-        pred_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 10),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-            ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 1), (-1, -1), 8),
-            ('TOPPADDING', (0, 1), (-1, -1), 6),
-            ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black)
-        ]))
-        elements.append(pred_table)
-        elements.append(Spacer(1, 24))  # Add more space between districts
-
-    doc.build(elements)
-    buffer.seek(0)
-    return buffer
 
 def create_stats_pdf(stats_data, district):
     buffer = BytesIO()
@@ -852,35 +782,70 @@ def descriptive_statistics_and_prediction():
         filtered_df = st.session_state.df[st.session_state.df["Zone"] == selected_zone]
         region_names = filtered_df["REGION"].unique().tolist()
         selected_region = st.selectbox("Select Region", region_names, key="stats_region_select")
+
     filtered_df = filtered_df[filtered_df["REGION"] == selected_region]
     district_names = filtered_df["Dist Name"].unique().tolist()
     selected_districts = st.multiselect("Select District(s)", district_names, key="stats_district_select")
     st.markdown('</div>', unsafe_allow_html=True)
 
-    if len(selected_districts) > 1:
-        st.markdown('<div class="section-box">', unsafe_allow_html=True)
-        st.markdown("### Download Multi-District Report")
-        if st.button("Generate Multi-District PDF"):
-            with st.spinner("Generating PDF..."):
-                all_stats_data = {}
-                all_prediction_data = {}
-                for district in selected_districts:
-                    district_df = filtered_df[filtered_df["Dist Name"] == district]
-                    stats_data, prediction_data = calculate_stats_and_predictions(district_df)
-                    all_stats_data[district] = stats_data
-                    all_prediction_data[district] = prediction_data
+    if selected_districts:
+        # Add a button to download all stats and predictions in one PDF
+        if len(selected_districts) > 1:
+            if st.button("Download All Stats and Predictions"):
+                all_stats_pdf = BytesIO()
+                pdf = SimpleDocTemplate(all_stats_pdf, pagesize=letter)
+                elements = []
                 
-                pdf = create_multi_district_pdf(all_stats_data, all_prediction_data)
+                for district in selected_districts:
+                    elements.append(Paragraph(f"Statistics and Predictions for {district}", getSampleStyleSheet()['Title']))
+                    district_df = filtered_df[filtered_df["Dist Name"] == district]
+                    
+                    brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
+                    stats_data = {}
+                    prediction_data = {}
+                    
+                    for brand in brands:
+                        brand_data = district_df[[col for col in district_df.columns if brand in col]].values.flatten()
+                        brand_data = brand_data[~np.isnan(brand_data)]
+                        
+                        if len(brand_data) > 0:
+                            stats_data[brand] = pd.DataFrame({
+                                'Mean': [np.mean(brand_data)],
+                                'Median': [np.median(brand_data)],
+                                'Std Dev': [np.std(brand_data)],
+                                'Min': [np.min(brand_data)],
+                                'Max': [np.max(brand_data)],
+                                'Skewness': [stats.skew(brand_data)],
+                                'Kurtosis': [stats.kurtosis(brand_data)],
+                                'Range': [np.ptp(brand_data)],
+                                'IQR': [np.percentile(brand_data, 75) - np.percentile(brand_data, 25)]
+                            }).iloc[0]
+
+                            if len(brand_data) > 2:
+                                model = ARIMA(brand_data, order=(1,1,1))
+                                model_fit = model.fit()
+                                forecast = model_fit.forecast(steps=1)
+                                confidence_interval = model_fit.get_forecast(steps=1).conf_int()
+                                prediction_data[brand] = {
+                                    'forecast': forecast[0],
+                                    'lower_ci': confidence_interval[0, 0],
+                                    'upper_ci': confidence_interval[0, 1]
+                                }
+                    
+                    elements.append(Paragraph("Descriptive Statistics", getSampleStyleSheet()['Heading2']))
+                    elements.append(create_stats_table(stats_data))
+                    elements.append(Paragraph("Price Predictions", getSampleStyleSheet()['Heading2']))
+                    elements.append(create_prediction_table(prediction_data))
+                    elements.append(PageBreak())
+                
+                pdf.build(elements)
                 st.download_button(
-                    label="Download Multi-District Report",
-                    data=pdf,
-                    file_name="multi_district_report.pdf",
+                    label="Download All Stats and Predictions PDF",
+                    data=all_stats_pdf.getvalue(),
+                    file_name="all_districts_stats_and_predictions.pdf",
                     mime="application/pdf"
                 )
-        st.markdown('</div>', unsafe_allow_html=True)
 
-
-    if selected_districts:
         st.markdown('<div class="section-box">', unsafe_allow_html=True)
         st.markdown("### Descriptive Statistics")
         
@@ -922,7 +887,8 @@ def descriptive_statistics_and_prediction():
                         st.markdown(f"Predicted price for next week: {forecast[0]:.2f}")
                         st.markdown(f"95% Confidence Interval: [{confidence_interval[0, 0]:.2f}, {confidence_interval[0, 1]:.2f}]")
                         prediction_data[brand] = {
-                            'forecast': forecast[0],'lower_ci': confidence_interval[0, 0],
+                            'forecast': forecast[0],
+                            'lower_ci': confidence_interval[0, 0],
                             'upper_ci': confidence_interval[0, 1]
                         }
                 else:
@@ -949,6 +915,62 @@ def descriptive_statistics_and_prediction():
                     mime="application/pdf"
                 )
         st.markdown('</div>', unsafe_allow_html=True)
+
+def create_stats_table(stats_data):
+    data = [['Brand', 'Mean', 'Median', 'Std Dev', 'Min', 'Max', 'Skewness', 'Kurtosis', 'Range', 'IQR']]
+    for brand, stats in stats_data.items():
+        row = [brand]
+        for stat in ['Mean', 'Median', 'Std Dev', 'Min', 'Max', 'Skewness', 'Kurtosis', 'Range', 'IQR']:
+            value = stats[stat]
+            if isinstance(value, (int, float)):
+                row.append(f"{value:.2f}")
+            else:
+                row.append(str(value))
+        data.append(row)
+    
+    table = Table(data)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -1), 10),
+        ('TOPPADDING', (0, 1), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+    ]))
+    return table
+
+def create_prediction_table(prediction_data):
+    data = [['Brand', 'Predicted Price', 'Lower CI', 'Upper CI']]
+    for brand, pred in prediction_data.items():
+        row = [brand, f"{pred['forecast']:.2f}", f"{pred['lower_ci']:.2f}", f"{pred['upper_ci']:.2f}"]
+        data.append(row)
+    
+    table = Table(data)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -1), 10),
+        ('TOPPADDING', (0, 1), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+    ]))
+    return table
 
 
 
