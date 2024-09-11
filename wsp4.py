@@ -1250,21 +1250,7 @@ def main():
 
 
 
-if __name__ == "__main__":
-    main()
-def main():
-    st.sidebar.title("Menu")
-    app_mode = st.sidebar.selectbox("Contents",
-        ["Home", "WSP Analysis Dashboard", "Descriptive Statistics and Prediction","File Manager"])
-    
-    if app_mode == "Home":
-        Home()
-    elif app_mode == "WSP Analysis Dashboard":
-        wsp_analysis_dashboard()
-    elif app_mode == "Descriptive Statistics and Prediction":
-        descriptive_statistics_and_prediction()
-    elif app_mode == "File Manager":
-        folder_menu()
+
 
 if __name__ == "__main__":
     main()
