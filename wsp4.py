@@ -582,7 +582,25 @@ def wsp_analysis_dashboard():
         
     filtered_df = filtered_df[filtered_df["REGION"] == selected_region]
     district_names = filtered_df["Dist Name"].unique().tolist()
-    selected_districts = st.multiselect("Select District(s)", district_names, key="district_select")
+
+    # Add suggestion box for Rajasthan
+    if selected_region == "Rajasthan":
+        rajasthan_districts = ["Alwar", "Jodhpur", "Udaipur", "Jaipur", "Kota", "Bikaner"]
+        suggested_districts = [d for d in rajasthan_districts if d in district_names]
+        
+        if suggested_districts:
+            st.markdown("### Suggested Districts for Rajasthan")
+            select_all = st.checkbox("Select all suggested districts")
+            
+            if select_all:
+                selected_districts = st.multiselect("Select District(s)", district_names, default=suggested_districts, key="district_select")
+            else:
+                selected_districts = st.multiselect("Select District(s)", district_names, key="district_select")
+        else:
+            selected_districts = st.multiselect("Select District(s)", district_names, key="district_select")
+    else:
+        selected_districts = st.multiselect("Select District(s)", district_names, key="district_select")
+
     st.markdown('</div>', unsafe_allow_html=True)
 
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
@@ -592,67 +610,67 @@ def wsp_analysis_dashboard():
     desired_diff_dict = {}
         
     if selected_districts:
-            st.markdown("### Benchmark Settings")
-            use_same_benchmarks = st.checkbox("Use same benchmarks for all districts", value=True)
-            
-            if use_same_benchmarks:
-                selected_benchmarks = st.multiselect("Select Benchmark Brands for all districts", benchmark_brands, key="unified_benchmark_select")
-                for district in selected_districts:
-                    benchmark_brands_dict[district] = selected_benchmarks
-                    desired_diff_dict[district] = {}
-    
-                if selected_benchmarks:
-                    st.markdown("#### Desired Differences")
-                    num_cols = min(len(selected_benchmarks), 3)
+        st.markdown("### Benchmark Settings")
+        use_same_benchmarks = st.checkbox("Use same benchmarks for all districts", value=True)
+        
+        if use_same_benchmarks:
+            selected_benchmarks = st.multiselect("Select Benchmark Brands for all districts", benchmark_brands, key="unified_benchmark_select")
+            for district in selected_districts:
+                benchmark_brands_dict[district] = selected_benchmarks
+                desired_diff_dict[district] = {}
+
+            if selected_benchmarks:
+                st.markdown("#### Desired Differences")
+                num_cols = min(len(selected_benchmarks), 3)
+                diff_cols = st.columns(num_cols)
+                for i, brand in enumerate(selected_benchmarks):
+                    with diff_cols[i % num_cols]:
+                        value = st.number_input(
+                            f"{brand}",
+                            min_value=-100.00,
+                            step=0.1,
+                            format="%.2f",
+                            key=f"unified_{brand}"
+                        )
+                        for district in selected_districts:
+                            desired_diff_dict[district][brand] = value
+            else:
+                st.warning("Please select at least one benchmark brand.")
+        else:
+            for district in selected_districts:
+                st.subheader(f"Settings for {district}")
+                benchmark_brands_dict[district] = st.multiselect(
+                    f"Select Benchmark Brands for {district}",
+                    benchmark_brands,
+                    key=f"benchmark_select_{district}"
+                )
+                desired_diff_dict[district] = {}
+                
+                if benchmark_brands_dict[district]:
+                    num_cols = min(len(benchmark_brands_dict[district]), 3)
                     diff_cols = st.columns(num_cols)
-                    for i, brand in enumerate(selected_benchmarks):
+                    for i, brand in enumerate(benchmark_brands_dict[district]):
                         with diff_cols[i % num_cols]:
-                            value = st.number_input(
+                            desired_diff_dict[district][brand] = st.number_input(
                                 f"{brand}",
                                 min_value=-100.00,
                                 step=0.1,
                                 format="%.2f",
-                                key=f"unified_{brand}"
+                                key=f"{district}_{brand}"
                             )
-                            for district in selected_districts:
-                                desired_diff_dict[district][brand] = value
                 else:
-                    st.warning("Please select at least one benchmark brand.")
-            else:
-                for district in selected_districts:
-                    st.subheader(f"Settings for {district}")
-                    benchmark_brands_dict[district] = st.multiselect(
-                        f"Select Benchmark Brands for {district}",
-                        benchmark_brands,
-                        key=f"benchmark_select_{district}"
-                    )
-                    desired_diff_dict[district] = {}
-                    
-                    if benchmark_brands_dict[district]:
-                        num_cols = min(len(benchmark_brands_dict[district]), 3)
-                        diff_cols = st.columns(num_cols)
-                        for i, brand in enumerate(benchmark_brands_dict[district]):
-                            with diff_cols[i % num_cols]:
-                                desired_diff_dict[district][brand] = st.number_input(
-                                    f"{brand}",
-                                    min_value=-100.00,
-                                    step=0.1,
-                                    format="%.2f",
-                                    key=f"{district}_{brand}"
-                                )
-                    else:
-                        st.warning(f"No benchmark brands selected for {district}.")
-        
+                    st.warning(f"No benchmark brands selected for {district}.")
+    
     st.markdown("### Generate Analysis")
-        
+    
     if st.button('Generate Plots', key='generate_plots', use_container_width=True):
-            with st.spinner('Generating plots...'):
-                plot_district_graph(filtered_df, selected_districts, benchmark_brands_dict, 
-                                    desired_diff_dict, 
-                                    st.session_state.week_names_input, 
-                                    st.session_state.diff_week, 
-                                    download_pdf)
-                st.success('Plots generated successfully!')
+        with st.spinner('Generating plots...'):
+            plot_district_graph(filtered_df, selected_districts, benchmark_brands_dict, 
+                                desired_diff_dict, 
+                                st.session_state.week_names_input, 
+                                st.session_state.diff_week, 
+                                download_pdf)
+            st.success('Plots generated successfully!')
 
     else:
         st.warning("Please upload a file in the Tutorial section before using this dashboard.")
