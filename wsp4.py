@@ -582,15 +582,26 @@ def wsp_analysis_dashboard():
         
     filtered_df = filtered_df[filtered_df["REGION"] == selected_region]
     district_names = filtered_df["Dist Name"].unique().tolist()
-
-    # Add suggestion box for Rajasthan
-    if selected_region == "Rajasthan":
-        rajasthan_districts = ["Alwar", "Jodhpur", "Udaipur", "Jaipur", "Kota", "Bikaner"]
-        suggested_districts = [d for d in rajasthan_districts if d in district_names]
+    if selected_region in ["Rajasthan", "Madhya Pradesh(West)","Madhya Pradesh(East)","Chhattisgarh","Maharashtra(East)","Odisha","North-I","North-II","Gujarat"]:
+        suggested_districts = []
+        
+        if selected_region == "Rajasthan":
+            rajasthan_districts = ["Alwar", "Jodhpur", "Udaipur", "Jaipur", "Kota", "Bikaner"]
+            suggested_districts = [d for d in rajasthan_districts if d in district_names]
+        elif selected_region == "Madhya Pradesh(West)":
+            mp_west_districts = ["Indore", "Neemuch","Ratlam","Dhar"]
+            suggested_districts = [d for d in mp_west_districts if d in district_names]
+        elif selected_region == "Madhya Pradesh(East)":
+            mp_west_districts = ["Jabalpur","Balaghat","Chhindwara"]
+            suggested_districts = [d for d in mp_west_districts if d in district_names]
+        elif selected_region == "Chhattisgarh":
+            mp_west_districts = ["Durg","Raipur","Bilaspur","Raigarh","Rajnandgaon"]
+            suggested_districts = [d for d in mp_west_districts if d in district_names]
+        
         
         if suggested_districts:
-            st.markdown("### Suggested Districts for Rajasthan")
-            select_all = st.checkbox("Select all suggested districts")
+            st.markdown(f"### Suggested Districts for {selected_region}")
+            select_all = st.checkbox(f"Select all suggested districts for {selected_region}")
             
             if select_all:
                 selected_districts = st.multiselect("Select District(s)", district_names, default=suggested_districts, key="district_select")
@@ -600,6 +611,7 @@ def wsp_analysis_dashboard():
             selected_districts = st.multiselect("Select District(s)", district_names, key="district_select")
     else:
         selected_districts = st.multiselect("Select District(s)", district_names, key="district_select")
+    
 
     st.markdown('</div>', unsafe_allow_html=True)
 
