@@ -1186,58 +1186,14 @@ def folder_menu():
         "The first widely-used image format on the web was GIF, created in 1987."
     ]
     st.markdown(f"*{fun_facts[int(os.urandom(1)[0]) % len(fun_facts)]}*")
+
+
+
+
 def main():
-    
-    
-    # Custom CSS for the sidebar
-    st.markdown("""
-    <style>
-    .sidebar .sidebar-content {
-        background-image: linear-gradient(#2e7bcf,#2e7bcf);
-        color: white;
-    }
-    .sidebar-content {
-        padding-top: 20px;
-    }
-    .sidebar .sidebar-content .block-container {
-        padding-top: 1rem;
-        padding-bottom: 1rem;
-    }
-    .sidebar .sidebar-content h1 {
-        color: white;
-        font-size: 24px;
-        font-weight: bold;
-        padding-bottom: 20px;
-        text-align: center;
-        background: rgba(255,255,255,0.1);
-        padding: 10px;
-        border-radius: 5px;
-        margin-bottom: 20px;
-    }
-    .sidebar .sidebar-content .stSelectbox label {
-        color: white;
-    }
-    .sidebar .sidebar-content .stSelectbox > div > div {
-        background-color: rgba(255,255,255,0.1);
-        color: white;
-    }
-    .sidebar .sidebar-content .stSelectbox > div > div > div {
-        color: white;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-    # Sidebar
     st.sidebar.title("Menu")
-
-    # Add a Lottie animation to the sidebar
-    lottie_url = "https://assets5.lottiefiles.com/packages/lf20_jcikwtux.json"  # You can change this URL to any other suitable Lottie animation
-    lottie_json = load_lottie_url(lottie_url)
-    st_lottie(lottie_json, height=200, key="sidebar_animation")
-
-    app_mode = st.sidebar.selectbox("Navigate",
-        ["Home", "WSP Analysis Dashboard", "Descriptive Statistics and Prediction", "File Manager"],
-        index=0)
+    app_mode = st.sidebar.selectbox("Contents",
+        ["Home", "WSP Analysis Dashboard", "Descriptive Statistics and Prediction","File Manager"])
     
     if app_mode == "Home":
         Home()
@@ -1248,9 +1204,7 @@ def main():
     elif app_mode == "File Manager":
         folder_menu()
 
-
-
-
-
+if __name__ == "__main__":
+    main()
 if __name__ == "__main__":
     main()
