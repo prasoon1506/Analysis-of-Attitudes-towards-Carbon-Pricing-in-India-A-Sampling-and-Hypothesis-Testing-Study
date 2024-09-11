@@ -844,7 +844,7 @@ def descriptive_statistics_and_prediction():
     if selected_districts:
         # Add a button to download all stats and predictions in one PDF
         if len(selected_districts) > 1:
-            if st.checkbox("Download All Stats and Predictions"):
+            if st.checkbox("Download All Stats and Predictions",value=True):
                 all_stats_pdf = BytesIO()
                 pdf = SimpleDocTemplate(all_stats_pdf, pagesize=letter)
                 elements = []
