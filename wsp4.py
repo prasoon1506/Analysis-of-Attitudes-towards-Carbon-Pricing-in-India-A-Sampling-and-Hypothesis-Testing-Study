@@ -33,8 +33,7 @@ def create_multi_district_pdf(stats_data, prediction_data):
     doc = SimpleDocTemplate(buffer, pagesize=letter)
     elements = []
     styles = getSampleStyleSheet()
-def calculate_stats_and_predictions(district_df):
-    return stats_data,prediction_data
+
 
     for district in stats_data.keys():
         # Add district header
@@ -100,6 +99,8 @@ def calculate_stats_and_predictions(district_df):
     doc.build(elements)
     buffer.seek(0)
     return buffer
+def calculate_stats_and_predictions(district_df):
+    return stats_data,prediction_data
 def create_stats_pdf(stats_data, district):
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
