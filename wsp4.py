@@ -1204,7 +1204,6 @@ def main():
     elif app_mode == "File Manager":
         folder_menu()
 
-if __name__ == "__main__":
-    main()
+
 if __name__ == "__main__":
     main()
