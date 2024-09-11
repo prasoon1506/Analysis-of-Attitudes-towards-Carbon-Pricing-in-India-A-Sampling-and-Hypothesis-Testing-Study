@@ -892,7 +892,7 @@ def descriptive_statistics_and_prediction():
                     elements.append(PageBreak())
                 
                 pdf.build(elements)
-                st.download_button(
+                st.checkbox(
                     label="Download All Stats and Predictions PDF",
                     data=all_stats_pdf.getvalue(),
                     file_name="all_districts_stats_and_predictions.pdf",
