@@ -12,3 +12,4 @@ openpyxl
 statsmodels
 reportlab
 streamlit_lottie
+plotly
