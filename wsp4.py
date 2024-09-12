@@ -1240,7 +1240,7 @@ def sales_dashboard():
     </style>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="title"><span>Welcome to the WSP Analysis Dashboard</span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="title"><span>Welcome to SalesDashboard</span></div>', unsafe_allow_html=True)
 
     # Load Lottie animation
     lottie_url = "https://assets9.lottiefiles.com/packages/lf20_jcikwtux.json" 
@@ -1251,8 +1251,8 @@ def sales_dashboard():
         st_lottie(lottie_json, height=200, key="home_animation")
     with col2:
         st.markdown("""
-        Welcome to our interactive WSP Analysis Dashboard! 
-        This powerful tool helps you analyze Whole Sale Price (WSP) data for various brands across different regions and districts.
+        Welcome to our interactive Sales Analysis Dashboard! 
+        This powerful tool helps you analyze Sales data for JKLC and UCWL across different regions,districts and channels.
         Let's get started with your data analysis journey!
         """)
 
