@@ -1214,7 +1214,7 @@ def sales_dashboard():
 
         # Region selection
         regions = df['Region'].unique()
-        selected_regions = st.multiselect('Select Regions', regions, default=regions)
+        selected_regions = st.multiselect('Select Regions', regions)
 
         # District selection
         districts = df[df['Region'].isin(selected_regions)]['Dist Name'].unique()
