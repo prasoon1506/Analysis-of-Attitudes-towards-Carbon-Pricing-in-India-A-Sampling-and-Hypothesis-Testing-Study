@@ -1200,10 +1200,61 @@ def load_lottieurl(url: str):
 def sales_dashboard():
     st.title("Sales Dashboard")
 
+    st.markdown("""
+    <style>
+    .title {
+        font-size: 50px;
+        font-weight: bold;
+        color: #3366cc;
+        text-align: center;
+        padding: 20px;
+        border-radius: 10px;
+        background: linear-gradient(to right, #f0f8ff, #e6f3ff);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+        font-family: 'Arial', sans-serif;
+    }
+    .title span {
+        background: linear-gradient(45deg, #3366cc, #6699ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .section-box {
+        background-color: #f9f9f9;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+    .section-box:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+    }
+    .upload-section {
+        background-color: #e6f3ff;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown('<div class="title"><span>Welcome to the WSP Analysis Dashboard</span></div>', unsafe_allow_html=True)
+
     # Load Lottie animation
-    lottie_url = "https://assets5.lottiefiles.com/packages/lf20_V9t630.json"
-    lottie_json = load_lottieurl(lottie_url)
-    st_lottie(lottie_json, speed=1, height=200, key="initial")
+    lottie_url = "https://assets9.lottiefiles.com/packages/lf20_jcikwtux.json" 
+    lottie_json = load_lottie_url(lottie_url)
+    
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        st_lottie(lottie_json, height=200, key="home_animation")
+    with col2:
+        st.markdown("""
+        Welcome to our interactive WSP Analysis Dashboard! 
+        This powerful tool helps you analyze Whole Sale Price (WSP) data for various brands across different regions and districts.
+        Let's get started with your data analysis journey!
+        """)
 
     # File upload
     uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
