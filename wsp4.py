@@ -1389,6 +1389,7 @@ def display_data(df, selected_regions, selected_districts, selected_channels, sh
         styled_df = grouped_data[display_columns].style.format({
             col: '{:,.0f}' if 'Growth' not in col else '{:.2f}%' for col in columns_to_display
         }).applymap(color_growth, subset=[col for col in columns_to_display if 'Growth' in col])
+        st.dataframe(styled_df)
         # Add a bar chart for YTD comparison
         fig = go.Figure(data=[
             go.Bar(name='FY 2023', x=grouped_data['Region' if show_whole_region else 'Dist Name'], y=grouped_data[f'FY 2023 till Aug{" " + selected_channel if selected_channel != "Overall" else ""}']),
