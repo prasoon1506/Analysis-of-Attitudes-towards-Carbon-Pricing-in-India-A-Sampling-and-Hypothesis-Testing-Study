@@ -1187,13 +1187,161 @@ def folder_menu():
     ]
     st.markdown(f"*{fun_facts[int(os.urandom(1)[0]) % len(fun_facts)]}*")
 
+import plotly.graph_objects as go
+from streamlit_lottie import st_lottie
+import requests
 
+def load_lottieurl(url: str):
+    r = requests.get(url)
+    if r.status_code != 200:
+        return None
+    return r.json()
 
+def sales_dashboard():
+    st.title("Sales Dashboard")
 
+    # Load Lottie animation
+    lottie_url = "https://assets5.lottiefiles.com/packages/lf20_V9t630.json"
+    lottie_json = load_lottieurl(lottie_url)
+    st_lottie(lottie_json, speed=1, height=200, key="initial")
+
+    # File upload
+    uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
+
+    if uploaded_file is not None:
+        df = pd.read_excel(uploaded_file)
+        df = process_dataframe(df)
+
+        # Region selection
+        regions = df['Region'].unique()
+        selected_regions = st.multiselect('Select Regions', regions, default=regions)
+
+        # District selection
+        districts = df[df['Region'].isin(selected_regions)]['Dist Name'].unique()
+        selected_districts = st.multiselect('Select Districts', districts)
+
+        # Channel selection
+        channels = ['Overall', 'Trade', 'Non-Trade']
+        selected_channels = st.multiselect('Select Channels', channels, default=channels)
+
+        # Checkbox for whole region totals
+        show_whole_region = st.checkbox('Show whole region totals')
+
+        if st.button('Generate Report'):
+            display_data(df, selected_regions, selected_districts, selected_channels, show_whole_region)
+
+def process_dataframe(df):
+    
+    column_mapping = {
+    pd.to_datetime('2024-09-23 00:00:00'): '23-Sep',
+    pd.to_datetime('2024-08-23 00:00:00'): '23-Aug',
+    pd.to_datetime('2024-07-23 00:00:00'): '23-Jul',
+    pd.to_datetime('2024-06-23 00:00:00'): '23-Jun',
+    pd.to_datetime('2024-05-23 00:00:00'): '23-May',
+    pd.to_datetime('2024-04-23 00:00:00'): '23-Apr',
+    pd.to_datetime('2024-08-24 00:00:00'): '24-Aug',
+    pd.to_datetime('2024-07-24 00:00:00'): '24-Jul',
+    pd.to_datetime('2024-06-24 00:00:00'): '24-Jun',
+    pd.to_datetime('2024-05-24 00:00:00'): '24-May',
+    pd.to_datetime('2024-04-24 00:00:00'): '24-Apr'
+}
+
+    df = df.rename(columns=column_mapping)
+    df['FY 2024 till Aug'] = df['24-Apr'] + df['24-May'] + df['24-Jun'] + df['24-Jul'] + df['24-Aug']
+    df['FY 2023 till Aug'] = df['23-Apr'] + df['23-May'] + df['23-Jun'] + df['23-Jul'] + df['23-Aug']
+    df['Quarterly Requirement'] = df['23-Jul'] + df['23-Aug'] + df['23-Sep'] - df['24-Jul'] - df['24-Aug']
+    df['Growth/Degrowth(MTD)'] = (df['24-Aug'] - df['23-Aug']) / df['23-Aug'] * 100
+    df['Growth/Degrowth(YTD)'] = (df['FY 2024 till Aug'] - df['FY 2023 till Aug']) / df['FY 2023 till Aug'] * 100
+    df['Q3 2023'] = df['23-Jul'] + df['23-Aug'] + df['23-Sep']
+    df['Q3 2024 till August'] = df['24-Jul'] + df['24-Aug']
+
+    # Non-Trade calculations
+    for month in ['Sep', 'Aug', 'Jul', 'Jun', 'May', 'Apr']:
+        df[f'23-{month} Non-Trade'] = df[f'23-{month}'] - df[f'23-{month} Trade']
+        if month != 'Sep':
+            df[f'24-{month} Non-Trade'] = df[f'24-{month}'] - df[f'24-{month} Trade']
+
+    # Trade calculations
+    df['FY 2024 till Aug Trade'] = df['24-Apr Trade'] + df['24-May Trade'] + df['24-Jun Trade'] + df['24-Jul Trade'] + df['24-Aug Trade']
+    df['FY 2023 till Aug Trade'] = df['23-Apr Trade'] + df['23-May Trade'] + df['23-Jun Trade'] + df['23-Jul Trade'] + df['23-Aug Trade']
+    df['Quarterly Requirement Trade'] = df['23-Jul Trade'] + df['23-Aug Trade'] + df['23-Sep Trade'] - df['24-Jul Trade'] - df['24-Aug Trade']
+    df['Growth/Degrowth(MTD) Trade'] = (df['24-Aug Trade'] - df['23-Aug Trade']) / df['23-Aug Trade'] * 100
+    df['Growth/Degrowth(YTD) Trade'] = (df['FY 2024 till Aug Trade'] - df['FY 2023 till Aug Trade']) / df['FY 2023 till Aug Trade'] * 100
+    df['Q3 2023 Trade'] = df['23-Jul Trade'] + df['23-Aug Trade'] + df['23-Sep Trade']
+    df['Q3 2024 till August Trade'] = df['24-Jul Trade'] + df['24-Aug Trade']
+
+    # Non-Trade calculations
+    df['FY 2024 till Aug Non-Trade'] = df['24-Apr Non-Trade'] + df['24-May Non-Trade'] + df['24-Jun Non-Trade'] + df['24-Jul Non-Trade'] + df['24-Aug Non-Trade']
+    df['FY 2023 till Aug Non-Trade'] = df['23-Apr Non-Trade'] + df['23-May Non-Trade'] + df['23-Jun Non-Trade'] + df['23-Jul Non-Trade'] + df['23-Aug Non-Trade']
+    df['Quarterly Requirement Non-Trade'] = df['23-Jul Non-Trade'] + df['23-Aug Non-Trade'] + df['23-Sep Non-Trade'] - df['24-Jul Non-Trade'] - df['24-Aug Non-Trade']
+    df['Growth/Degrowth(MTD) Non-Trade'] = (df['24-Aug Non-Trade'] - df['23-Aug Non-Trade']) / df['23-Aug Non-Trade'] * 100
+    df['Growth/Degrowth(YTD) Non-Trade'] = (df['FY 2024 till Aug Non-Trade'] - df['FY 2023 till Aug Non-Trade']) / df['FY 2023 till Aug Non-Trade'] * 100
+    df['Q3 2023 Non-Trade'] = df['23-Jul Non-Trade'] + df['23-Aug Non-Trade'] + df['23-Sep Non-Trade']
+    df['Q3 2024 till August Non-Trade'] = df['24-Jul Non-Trade'] + df['24-Aug Non-Trade']
+
+    # Handle division by zero
+    for col in df.columns:
+        if 'Growth/Degrowth' in col:
+            df[col] = df[col].replace([np.inf, -np.inf], np.nan)
+    return df
+
+def display_data(df, selected_regions, selected_districts, selected_channels, show_whole_region):
+    if show_whole_region:
+        filtered_data = df[df['Region'].isin(selected_regions)].copy()
+        
+        # Calculate sums for relevant columns first
+        sum_columns = ['24-Aug', '23-Aug', 'FY 2024 till Aug', 'FY 2023 till Aug', 'Q3 2023', 'Q3 2024 till August', 
+                        '24-Aug Trade', '23-Aug Trade', 'FY 2024 till Aug Trade', 'FY 2023 till Aug Trade', 
+                        'Q3 2023 Trade', 'Q3 2024 till August Trade',
+                        '24-Aug Non-Trade', '23-Aug Non-Trade', 'FY 2024 till Aug Non-Trade', 'FY 2023 till Aug Non-Trade', 
+                        'Q3 2023 Non-Trade', 'Q3 2024 till August Non-Trade']
+        grouped_data = filtered_data.groupby('Region')[sum_columns].sum().reset_index()
+
+        # Then calculate Growth/Degrowth based on the summed values
+        grouped_data['Growth/Degrowth(MTD)'] = (grouped_data['24-Aug'] - grouped_data['23-Aug']) / grouped_data['23-Aug'] * 100
+        grouped_data['Growth/Degrowth(YTD)'] = (grouped_data['FY 2024 till Aug'] - grouped_data['FY 2023 till Aug']) / grouped_data['FY 2023 till Aug'] * 100
+        grouped_data['Quarterly Requirement'] = grouped_data['Q3 2023'] - grouped_data['Q3 2024 till August']
+
+        grouped_data['Growth/Degrowth(MTD) Trade'] = (grouped_data['24-Aug Trade'] - grouped_data['23-Aug Trade']) / grouped_data['23-Aug Trade'] * 100
+        grouped_data['Growth/Degrowth(YTD) Trade'] = (grouped_data['FY 2024 till Aug Trade'] - grouped_data['FY 2023 till Aug Trade']) / grouped_data['FY 2023 till Aug Trade'] * 100
+        grouped_data['Quarterly Requirement Trade'] = grouped_data['Q3 2023 Trade'] - grouped_data['Q3 2024 till August Trade']
+
+        grouped_data['Growth/Degrowth(MTD) Non-Trade'] = (grouped_data['24-Aug Non-Trade'] - grouped_data['23-Aug Non-Trade']) / grouped_data['23-Aug Non-Trade'] * 100
+        grouped_data['Growth/Degrowth(YTD) Non-Trade'] = (grouped_data['FY 2024 till Aug Non-Trade'] - grouped_data['FY 2023 till Aug Non-Trade']) / grouped_data['FY 2023 till Aug Non-Trade'] * 100
+        grouped_data['Quarterly Requirement Non-Trade'] = grouped_data['Q3 2023 Non-Trade'] - grouped_data['Q3 2024 till August Non-Trade']
+    else:
+        if selected_districts:
+            filtered_data = df[df['Dist Name'].isin(selected_districts)].copy()
+        else:
+            filtered_data = df[df['Region'].isin(selected_regions)].copy()
+        grouped_data = filtered_data
+
+    for selected_channel in selected_channels:
+        if selected_channel == 'Trade':
+            columns_to_display = ['24-Aug Trade','23-Aug Trade','Growth/Degrowth(MTD) Trade','FY 2024 till Aug Trade', 'FY 2023 till Aug Trade','Growth/Degrowth(YTD) Trade','Q3 2023 Trade','Q3 2024 till August Trade', 'Quarterly Requirement Trade']
+        elif selected_channel == 'Non-Trade':
+            columns_to_display = ['24-Aug Non-Trade','23-Aug Non-Trade','Growth/Degrowth(MTD) Non-Trade','FY 2024 till Aug Non-Trade', 'FY 2023 till Aug Non-Trade','Growth/Degrowth(YTD) Non-Trade','Q3 2023 Non-Trade','Q3 2024 till August Non-Trade', 'Quarterly Requirement Non-Trade']
+        else:  # Overall
+            columns_to_display = ['24-Aug','23-Aug','Growth/Degrowth(MTD)','FY 2024 till Aug', 'FY 2023 till Aug','Growth/Degrowth(YTD)','Q3 2023','Q3 2024 till August', 'Quarterly Requirement']
+        
+        display_columns = ['Region' if show_whole_region else 'Dist Name'] + columns_to_display
+        
+        st.subheader(f"{selected_channel} Sales Data")
+        st.dataframe(grouped_data[display_columns].style.format({
+            col: '{:,.0f}' if 'Growth' not in col else '{:.2f}%' for col in columns_to_display
+        }).applymap(lambda x: 'color: green' if isinstance(x, str) and '%' in x and float(x.strip('%')) > 0 else 'color: red', subset=[col for col in columns_to_display if 'Growth' in col]))
+
+        # Add a bar chart for YTD comparison
+        fig = go.Figure(data=[
+            go.Bar(name='FY 2023', x=grouped_data['Region' if show_whole_region else 'Dist Name'], y=grouped_data[f'FY 2023 till Aug{" " + selected_channel if selected_channel != "Overall" else ""}']),
+            go.Bar(name='FY 2024', x=grouped_data['Region' if show_whole_region else 'Dist Name'], y=grouped_data[f'FY 2024 till Aug{" " + selected_channel if selected_channel != "Overall" else ""}']),
+        ])
+        fig.update_layout(barmode='group', title=f'{selected_channel} YTD Comparison')
+        st.plotly_chart(fig)
 def main():
     st.sidebar.title("Menu")
     app_mode = st.sidebar.selectbox("Contents",
-        ["Home", "WSP Analysis Dashboard", "Descriptive Statistics and Prediction","File Manager"])
+        ["Home", "WSP Analysis Dashboard", "Descriptive Statistics and Prediction","File Manager","Sales Dashboard"])
     
     if app_mode == "Home":
         Home()
@@ -1203,6 +1351,8 @@ def main():
         descriptive_statistics_and_prediction()
     elif app_mode == "File Manager":
         folder_menu()
+    elif app_mode =="Sales Dashboard":
+        sales_dashboard()
 
 
 if __name__ == "__main__":
