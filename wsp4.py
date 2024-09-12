@@ -1338,11 +1338,11 @@ def process_dataframe(df):
 
 def display_data(df, selected_regions, selected_districts, selected_channels, show_whole_region):
     def color_growth(val):
-    try:
+     try:
         value = float(val.strip('%'))
         color = 'green' if value > 0 else 'red' if value < 0 else 'black'
         return f'color: {color}'
-    except:
+     except:
         return 'color: black'
     if show_whole_region:
         filtered_data = df[df['Region'].isin(selected_regions)].copy()
