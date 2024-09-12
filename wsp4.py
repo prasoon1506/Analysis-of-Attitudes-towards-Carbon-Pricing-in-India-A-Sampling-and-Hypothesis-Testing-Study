@@ -1258,7 +1258,7 @@ def sales_dashboard():
 
     # File upload
     uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
-
+    st.markdown('<div class="section-box">', unsafe_allow_html=True)
     if uploaded_file is not None:
         df = pd.read_excel(uploaded_file)
         df = process_dataframe(df)
