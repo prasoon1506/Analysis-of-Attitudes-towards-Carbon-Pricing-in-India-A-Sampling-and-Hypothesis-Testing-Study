@@ -1337,6 +1337,13 @@ def process_dataframe(df):
     return df
 
 def display_data(df, selected_regions, selected_districts, selected_channels, show_whole_region):
+    def color_growth(val):
+    try:
+        value = float(val.strip('%'))
+        color = 'green' if value > 0 else 'red' if value < 0 else 'black'
+        return f'color: {color}'
+    except:
+        return 'color: black'
     if show_whole_region:
         filtered_data = df[df['Region'].isin(selected_regions)].copy()
         
@@ -1378,10 +1385,10 @@ def display_data(df, selected_regions, selected_districts, selected_channels, sh
         display_columns = ['Region' if show_whole_region else 'Dist Name'] + columns_to_display
         
         st.subheader(f"{selected_channel} Sales Data")
-        st.dataframe(grouped_data[display_columns].style.format({
+        
+        styled_df = grouped_data[display_columns].style.format({
             col: '{:,.0f}' if 'Growth' not in col else '{:.2f}%' for col in columns_to_display
-        }).map(lambda x: 'color: green' if isinstance(x, str) and '%' in x and float(x.strip('%')) > 0 else 'color: red', subset=[col for col in columns_to_display if 'Growth' in col]))
-
+        }).applymap(color_growth, subset=[col for col in columns_to_display if 'Growth' in col])
         # Add a bar chart for YTD comparison
         fig = go.Figure(data=[
             go.Bar(name='FY 2023', x=grouped_data['Region' if show_whole_region else 'Dist Name'], y=grouped_data[f'FY 2023 till Aug{" " + selected_channel if selected_channel != "Overall" else ""}']),
