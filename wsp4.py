@@ -1380,7 +1380,7 @@ def display_data(df, selected_regions, selected_districts, selected_channels, sh
         st.subheader(f"{selected_channel} Sales Data")
         st.dataframe(grouped_data[display_columns].style.format({
             col: '{:,.0f}' if 'Growth' not in col else '{:.2f}%' for col in columns_to_display
-        }).applymap(lambda x: 'color: green' if isinstance(x, str) and '%' in x and float(x.strip('%')) > 0 else 'color: red', subset=[col for col in columns_to_display if 'Growth' in col]))
+        }).map(lambda x: 'color: green' if isinstance(x, str) and '%' in x and float(x.strip('%')) > 0 else 'color: red', subset=[col for col in columns_to_display if 'Growth' in col]))
 
         # Add a bar chart for YTD comparison
         fig = go.Figure(data=[
