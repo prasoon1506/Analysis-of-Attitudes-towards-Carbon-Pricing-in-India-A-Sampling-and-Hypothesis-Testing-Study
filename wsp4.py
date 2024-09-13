@@ -1198,6 +1198,7 @@ def load_lottieurl(url: str):
     return r.json()
 
 def sales_dashboard():
+    st.set_page_config(layout="wide")
     st.title("Sales Dashboard")
 
     st.markdown("""
@@ -1237,13 +1238,16 @@ def sales_dashboard():
         border-radius: 10px;
         margin-bottom: 20px;
     }
+    .stDataFrame {
+        font-family: 'Arial', sans-serif;
+    }
     </style>
     """, unsafe_allow_html=True)
 
     st.markdown('<div class="title"><span>Welcome to SalesDashboard</span></div>', unsafe_allow_html=True)
 
     # Load Lottie animation
-    lottie_url = "https://assets9.lottiefiles.com/packages/lf20_jcikwtux.json" 
+    lottie_url = "https://assets2.lottiefiles.com/packages/lf20_V9t630.json"  # New interesting animation
     lottie_json = load_lottie_url(lottie_url)
     
     col1, col2 = st.columns([1, 2])
@@ -1252,7 +1256,7 @@ def sales_dashboard():
     with col2:
         st.markdown("""
         Welcome to our interactive Sales Analysis Dashboard! 
-        This powerful tool helps you analyze Sales data for JKLC and UCWL across different regions,districts and channels.
+        This powerful tool helps you analyze Sales data for JKLC and UCWL across different regions, districts and channels.
         Let's get started with your data analysis journey!
         """)
 
@@ -1282,6 +1286,7 @@ def sales_dashboard():
             display_data(df, selected_regions, selected_districts, selected_channels, show_whole_region)
 
 def process_dataframe(df):
+    def process_dataframe(df):
     
     column_mapping = {
     pd.to_datetime('2024-09-23 00:00:00'): '23-Sep',
@@ -1336,14 +1341,17 @@ def process_dataframe(df):
             df[col] = df[col].replace([np.inf, -np.inf], np.nan)
     return df
 
+    pass
+
 def display_data(df, selected_regions, selected_districts, selected_channels, show_whole_region):
     def color_growth(val):
-     try:
-        value = float(val.strip('%'))
-        color = 'green' if value > 0 else 'red' if value < 0 else 'black'
-        return f'color: {color}'
-     except:
-        return 'color: black'
+        try:
+            value = float(val.strip('%'))
+            color = 'green' if value > 0 else 'red' if value < 0 else 'black'
+            return f'color: {color}'
+        except:
+            return 'color: black'
+
     if show_whole_region:
         filtered_data = df[df['Region'].isin(selected_regions)].copy()
         
@@ -1389,7 +1397,12 @@ def display_data(df, selected_regions, selected_districts, selected_channels, sh
         styled_df = grouped_data[display_columns].style.format({
             col: '{:,.0f}' if 'Growth' not in col else '{:.2f}%' for col in columns_to_display
         }).applymap(color_growth, subset=[col for col in columns_to_display if 'Growth' in col])
+        
+        # Hide index
+        styled_df = styled_df.hide_index()
+        
         st.dataframe(styled_df)
+
         # Add a bar chart for YTD comparison
         fig = go.Figure(data=[
             go.Bar(name='FY 2023', x=grouped_data['Region' if show_whole_region else 'Dist Name'], y=grouped_data[f'FY 2023 till Aug{" " + selected_channel if selected_channel != "Overall" else ""}']),
@@ -1397,6 +1410,31 @@ def display_data(df, selected_regions, selected_districts, selected_channels, sh
         ])
         fig.update_layout(barmode='group', title=f'{selected_channel} YTD Comparison')
         st.plotly_chart(fig)
+
+        # Add a line chart for monthly trends
+        months = ['Apr', 'May', 'Jun', 'Jul', 'Aug']
+        fig_trend = go.Figure()
+        for year in ['23', '24']:
+            y_values = [grouped_data[f'{year}-{month}{" " + selected_channel if selected_channel != "Overall" else ""}'].sum() for month in months]
+            fig_trend.add_trace(go.Scatter(x=months, y=y_values, mode='lines+markers', name=f'FY 20{year}'))
+        fig_trend.update_layout(title=f'{selected_channel} Monthly Trends', xaxis_title='Month', yaxis_title='Sales')
+        st.plotly_chart(fig_trend)
+
+        # Add a pie chart for Q3 distribution
+        fig_pie = px.pie(grouped_data, values=f'Q3 2024 till August{" " + selected_channel if selected_channel != "Overall" else ""}', 
+                         names='Region' if show_whole_region else 'Dist Name', 
+                         title=f'{selected_channel} Q3 2024 Distribution')
+        st.plotly_chart(fig_pie)
+
+        # Add a heatmap for Growth/Degrowth
+        growth_columns = [col for col in columns_to_display if 'Growth' in col]
+        fig_heatmap = px.imshow(grouped_data[growth_columns], 
+                                labels=dict(x="Metric", y="Region" if show_whole_region else "District", color="Growth/Degrowth (%)"),
+                                x=growth_columns,
+                                y=grouped_data['Region' if show_whole_region else 'Dist Name'],
+                                title=f'{selected_channel} Growth/Degrowth Heatmap')
+        fig_heatmap.update_xaxes(side="top")
+        st.plotly_chart(fig_heatmap)
 def main():
     st.sidebar.title("Menu")
     app_mode = st.sidebar.selectbox("Contents",
