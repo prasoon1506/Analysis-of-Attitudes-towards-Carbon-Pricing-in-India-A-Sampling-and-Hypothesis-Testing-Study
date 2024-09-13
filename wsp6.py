@@ -219,5 +219,8 @@ def main():
                                     plt.close(fig)
                             except Exception as e:
                                st.error(f"Error processing graph for {entity} - {channel}: {str(e)}")
+        except Exception as e:
+                    st.error(f"An error occurred while processing the file: {str(e)}")
+                    st.error("Please check your Excel file and try again.")
 if __name__ == "__main__":
     main()
