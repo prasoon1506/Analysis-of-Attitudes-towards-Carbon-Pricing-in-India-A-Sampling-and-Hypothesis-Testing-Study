@@ -1337,9 +1337,7 @@ def process_dataframe(df):
     df['Q3 2024 till August Non-Trade'] = df['24-Jul Non-Trade'] + df['24-Aug Non-Trade']
 
     # Handle division by zero
-    for col in df.columns:
-        if 'Growth/Degrowth' in col:
-            df[col] = df[col].replace([np.inf, -np.inf], np.nan)
+
     return df
 
     pass
