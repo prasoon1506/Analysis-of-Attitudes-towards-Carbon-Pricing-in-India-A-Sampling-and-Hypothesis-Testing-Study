@@ -1421,7 +1421,7 @@ def display_data(df, selected_regions, selected_districts, selected_channels, sh
         # Add a line chart for monthly trends including September 2024
         months = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep']
         fig_trend = go.Figure()
-        for year in ['23', '24']:
+        for year in ['23']:
             y_values = [grouped_data[f'{year}-{month}{suffix}'].sum() for month in months]
             
             # For 2024, we only have data up to August, so we'll use None for September
