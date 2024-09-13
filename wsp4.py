@@ -1408,10 +1408,10 @@ def main():
         wsp_analysis_dashboard()
     elif app_mode == "Descriptive Statistics and Prediction":
         descriptive_statistics_and_prediction()
-    elif app_mode == "File Manager":
-        folder_menu()
-    elif app_mode =="Sales Dashboard":
+    elif app_mode == "Sales Dashboard":
         sales_dashboard()
+    elif app_mode =="File Manager":
+        folder_menu()
 
 
 if __name__ == "__main__":
