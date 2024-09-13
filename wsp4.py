@@ -1390,18 +1390,24 @@ def display_data(df, selected_regions, selected_districts, selected_channels, sh
         else:  # Overall
             columns_to_display = ['24-Aug','23-Aug','Growth/Degrowth(MTD)','FY 2024 till Aug', 'FY 2023 till Aug','Growth/Degrowth(YTD)','Q3 2023','Q3 2024 till August', 'Quarterly Requirement']
         
+
         display_columns = ['Region' if show_whole_region else 'Dist Name'] + columns_to_display
         
         st.subheader(f"{selected_channel} Sales Data")
         
-        styled_df = grouped_data[display_columns].style.format({
+        # Create a copy of the dataframe with only the columns we want to display
+        display_df = grouped_data[display_columns].copy()
+        
+        # Set the 'Region' or 'Dist Name' column as the index
+        display_df.set_index('Region' if show_whole_region else 'Dist Name', inplace=True)
+        
+        # Style the dataframe
+        styled_df = display_df.style.format({
             col: '{:,.0f}' if 'Growth' not in col else '{:.2f}%' for col in columns_to_display
         }).applymap(color_growth, subset=[col for col in columns_to_display if 'Growth' in col])
         
-        # Hide index
-        styled_df = styled_df.hide_index()
-        
         st.dataframe(styled_df)
+       
 
         # Add a bar chart for YTD comparison
         fig = go.Figure(data=[
