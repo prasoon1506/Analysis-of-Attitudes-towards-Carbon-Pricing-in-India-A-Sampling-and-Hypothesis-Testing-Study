@@ -1400,7 +1400,7 @@ def display_data(df, selected_regions, selected_districts, selected_channels, sh
 def main():
     st.sidebar.title("Menu")
     app_mode = st.sidebar.selectbox("Contents",
-        ["Home", "WSP Analysis Dashboard", "Descriptive Statistics and Prediction","Sales Dadshboard","File Manager"])
+        ["Home", "WSP Analysis Dashboard", "Descriptive Statistics and Prediction","Sales Dashboard","File Manager"])
     
     if app_mode == "Home":
         Home()
