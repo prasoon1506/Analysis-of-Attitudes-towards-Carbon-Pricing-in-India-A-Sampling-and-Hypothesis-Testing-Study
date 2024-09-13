@@ -1198,7 +1198,7 @@ def load_lottieurl(url: str):
     return r.json()
 
 def sales_dashboard():
-    st.set_page_config(layout="wide")
+    
     st.title("Sales Dashboard")
 
     st.markdown("""
