@@ -1286,7 +1286,7 @@ def sales_dashboard():
             display_data(df, selected_regions, selected_districts, selected_channels, show_whole_region)
 
 def process_dataframe(df):
-    def process_dataframe(df):
+    
     
     column_mapping = {
     pd.to_datetime('2024-09-23 00:00:00'): '23-Sep',
