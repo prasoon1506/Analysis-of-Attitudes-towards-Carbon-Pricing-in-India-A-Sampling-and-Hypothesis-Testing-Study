@@ -215,8 +215,8 @@ def main():
                                     fig = create_graph(df_23_nontrade, df_24_nontrade, ' Non-Trade', entity)
                                 
                                 if fig is not None:
-                            st.pyplot(fig)
-                            plt.close(fig)
+                                    st.pyplot(fig)
+                                    plt.close(fig)
                     except Exception as e:
                         st.error(f"Error processing graph for {entity} - {channel}: {str(e)}")
 if __name__ == "__main__":
