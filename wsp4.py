@@ -1421,21 +1421,10 @@ def display_data(df, selected_regions, selected_districts, selected_channels, sh
         # Add a line chart for monthly trends including September 2024
         months = ['Apr', 'May', 'Jun', 'Jul', 'Aug','Sep']
         fig_trend = go.Figure()
-        for year in ['23','24']:
-            
-            
-            # For 2024, we only have data up to August, so we'll use None for September
+        for values in ['23','24']:
+            y_values = [grouped_data[f'{year}-{month}{suffix}'].sum() for month in months]
             if year == '24':
-                y_values[1] = [grouped_data[f'{year}-{Apr}{suffix}'].sum() for Apr in months]
-                y_values[2] = [grouped_data[f'{year}-{May}{suffix}'].sum() for May in months]
-                y_values[3] = [grouped_data[f'{year}-{Jun}{suffix}'].sum() for Jun in months]
-                y_values[4] = [grouped_data[f'{year}-{Jul}{suffix}'].sum() for Jul in months]
-                y_values[5] = [grouped_data[f'{year}-{Aug}{suffix}'].sum() for Aug in months]
                 y_values[-1] = None
-
-            else:
-                y_values = [grouped_data[f'{year}-{month}{suffix}'].sum() for month in months]
-            
             fig_trend.add_trace(go.Scatter(
                 x=months, 
                 y=y_values, 
