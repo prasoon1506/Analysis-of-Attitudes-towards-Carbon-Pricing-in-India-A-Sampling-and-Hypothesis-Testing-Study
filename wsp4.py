@@ -1382,16 +1382,17 @@ def display_data(df, selected_regions, selected_districts, selected_channels, sh
         else:
             filtered_data = df[df['Region'].isin(selected_regions)].copy()
         grouped_data = filtered_data
-
     for selected_channel in selected_channels:
         if selected_channel == 'Trade':
             columns_to_display = ['24-Aug Trade','23-Aug Trade','Growth/Degrowth(MTD) Trade','FY 2024 till Aug Trade', 'FY 2023 till Aug Trade','Growth/Degrowth(YTD) Trade','Q3 2023 Trade','Q3 2024 till August Trade', 'Quarterly Requirement Trade']
+            suffix = ' Trade'
         elif selected_channel == 'Non-Trade':
             columns_to_display = ['24-Aug Non-Trade','23-Aug Non-Trade','Growth/Degrowth(MTD) Non-Trade','FY 2024 till Aug Non-Trade', 'FY 2023 till Aug Non-Trade','Growth/Degrowth(YTD) Non-Trade','Q3 2023 Non-Trade','Q3 2024 till August Non-Trade', 'Quarterly Requirement Non-Trade']
+            suffix = ' Non-Trade'
         else:  # Overall
             columns_to_display = ['24-Aug','23-Aug','Growth/Degrowth(MTD)','FY 2024 till Aug', 'FY 2023 till Aug','Growth/Degrowth(YTD)','Q3 2023','Q3 2024 till August', 'Quarterly Requirement']
+            suffix = ''
         
-
         display_columns = ['Region' if show_whole_region else 'Dist Name'] + columns_to_display
         
         st.subheader(f"{selected_channel} Sales Data")
@@ -1408,40 +1409,43 @@ def display_data(df, selected_regions, selected_districts, selected_channels, sh
         }).applymap(color_growth, subset=[col for col in columns_to_display if 'Growth' in col])
         
         st.dataframe(styled_df)
-       
 
         # Add a bar chart for YTD comparison
         fig = go.Figure(data=[
-            go.Bar(name='FY 2023', x=grouped_data['Region' if show_whole_region else 'Dist Name'], y=grouped_data[f'FY 2023 till Aug{" " + selected_channel if selected_channel != "Overall" else ""}']),
-            go.Bar(name='FY 2024', x=grouped_data['Region' if show_whole_region else 'Dist Name'], y=grouped_data[f'FY 2024 till Aug{" " + selected_channel if selected_channel != "Overall" else ""}']),
+            go.Bar(name='FY 2023', x=grouped_data['Region' if show_whole_region else 'Dist Name'], y=grouped_data[f'FY 2023 till Aug{suffix}']),
+            go.Bar(name='FY 2024', x=grouped_data['Region' if show_whole_region else 'Dist Name'], y=grouped_data[f'FY 2024 till Aug{suffix}']),
         ])
         fig.update_layout(barmode='group', title=f'{selected_channel} YTD Comparison')
         st.plotly_chart(fig)
 
-        # Add a line chart for monthly trends
-        months = ['Apr', 'May', 'Jun', 'Jul', 'Aug']
+        # Add a line chart for monthly trends including September 2024
+        months = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep']
         fig_trend = go.Figure()
         for year in ['23', '24']:
-            y_values = [grouped_data[f'{year}-{month}{" " + selected_channel if selected_channel != "Overall" else ""}'].sum() for month in months]
-            fig_trend.add_trace(go.Scatter(x=months, y=y_values, mode='lines+markers', name=f'FY 20{year}'))
-        fig_trend.update_layout(title=f'{selected_channel} Monthly Trends', xaxis_title='Month', yaxis_title='Sales')
+            y_values = [grouped_data[f'{year}-{month}{suffix}'].sum() for month in months]
+            
+            # For 2024, we only have data up to August, so we'll use None for September
+            if year == '24':
+                y_values[-1] = None
+            
+            fig_trend.add_trace(go.Scatter(
+                x=months, 
+                y=y_values, 
+                mode='lines+markers+text',
+                name=f'FY 20{year}',
+                text=[f'{y:,.0f}' if y is not None else '' for y in y_values],
+                textposition='top center'
+            ))
+        
+        fig_trend.update_layout(
+            title=f'{selected_channel} Monthly Trends', 
+            xaxis_title='Month', 
+            yaxis_title='Sales',
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+        )
         st.plotly_chart(fig_trend)
 
-        # Add a pie chart for Q3 distribution
-        fig_pie = px.pie(grouped_data, values=f'Q3 2024 till August{" " + selected_channel if selected_channel != "Overall" else ""}', 
-                         names='Region' if show_whole_region else 'Dist Name', 
-                         title=f'{selected_channel} Q3 2024 Distribution')
-        st.plotly_chart(fig_pie)
 
-        # Add a heatmap for Growth/Degrowth
-        growth_columns = [col for col in columns_to_display if 'Growth' in col]
-        fig_heatmap = px.imshow(grouped_data[growth_columns], 
-                                labels=dict(x="Metric", y="Region" if show_whole_region else "District", color="Growth/Degrowth (%)"),
-                                x=growth_columns,
-                                y=grouped_data['Region' if show_whole_region else 'Dist Name'],
-                                title=f'{selected_channel} Growth/Degrowth Heatmap')
-        fig_heatmap.update_xaxes(side="top")
-        st.plotly_chart(fig_heatmap)
 def main():
     st.sidebar.title("Menu")
     app_mode = st.sidebar.selectbox("Contents",
