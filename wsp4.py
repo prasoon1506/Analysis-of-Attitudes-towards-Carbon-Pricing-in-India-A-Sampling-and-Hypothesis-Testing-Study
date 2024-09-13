@@ -1425,7 +1425,7 @@ def display_data(df, selected_regions, selected_districts, selected_channels, sh
             
             
             # For 2024, we only have data up to August, so we'll use None for September
-            if year == '24':
+            if year == '23':
                 y_values[0] = [grouped_data[f'{year}-{Apr}{suffix}'].sum() for Apr in months]
                 y_values[1] = [grouped_data[f'{year}-{May}{suffix}'].sum() for May in months]
                 y_values[2] = [grouped_data[f'{year}-{Jun}{suffix}'].sum() for Jun in months]
