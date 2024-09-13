@@ -77,27 +77,51 @@ def process_dataframe(df):
         st.error("Please check your Excel file for data consistency and try again.")
         return None
 
-def create_graph(df_23, df_24, channel_col, entity_name):
-    months = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep']
-    
-    fig, ax = plt.subplots(figsize=(10, 6))
-    
-    # Extract values for 2023 and 2024
-    values_23 = df_23.iloc[0, 1:].values
-    values_24 = df_24.iloc[0, 1:].values
-    
-    # Plot 2023 data
-    sns.lineplot(x=months, y=values_23, marker='o', label=f'FY23{channel_col}', ax=ax)
-    
-    # Plot 2024 data (stop at August)
-    sns.lineplot(x=months[:-1], y=values_24, marker='o', label=f'FY24{channel_col}', ax=ax)
+def validate_data_for_graphs(df):
+    numeric_columns = df.select_dtypes(include=[np.number]).columns
+    for col in numeric_columns:
+        if df[col].isnull().any():
+            st.warning(f"Column {col} contains null values")
+        if np.isinf(df[col]).any():
+            st.warning(f"Column {col} contains infinite values")
+        if not np.issubdtype(df[col].dtype, np.number):
+            st.warning(f"Column {col} contains non-numeric values")
 
-    ax.set_title(f'Sales Data by Month for {entity_name} {channel_col}')
-    ax.set_xlabel('Month')
-    ax.set_ylabel('Quantity Sold')
-    ax.legend()
-    
-    return fig
+def create_graph(df_23, df_24, channel_col, entity_name):
+    try:
+        months = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep']
+        
+        fig, ax = plt.subplots(figsize=(10, 6))
+        
+        # Extract values for 2023 and 2024
+        values_23 = df_23.iloc[0, 1:].values
+        values_24 = df_24.iloc[0, 1:].values
+        
+        # Check for NaN or infinite values
+        if np.isnan(values_23).any() or np.isinf(values_23).any() or np.isnan(values_24).any() or np.isinf(values_24).any():
+            raise ValueError("Data contains NaN or infinite values")
+        
+        # Check if all values are numeric
+        if not (np.issubdtype(values_23.dtype, np.number) and np.issubdtype(values_24.dtype, np.number)):
+            raise ValueError("Data contains non-numeric values")
+        
+        # Plot 2023 data
+        sns.lineplot(x=months, y=values_23, marker='o', label=f'FY23{channel_col}', ax=ax)
+        
+        # Plot 2024 data (stop at August)
+        sns.lineplot(x=months[:-1], y=values_24, marker='o', label=f'FY24{channel_col}', ax=ax)
+
+        ax.set_title(f'Sales Data by Month for {entity_name} {channel_col}')
+        ax.set_xlabel('Month')
+        ax.set_ylabel('Quantity Sold')
+        ax.legend()
+        
+        return fig
+    except Exception as e:
+        st.error(f"Error creating graph for {entity_name} {channel_col}: {str(e)}")
+        st.error(f"Data for 2023: {df_23.iloc[0, 1:].values}")
+        st.error(f"Data for 2024: {df_24.iloc[0, 1:].values}")
+        return None
 
 def main():
     st.title('Sales Data Analysis')
@@ -132,6 +156,8 @@ def main():
                 if grouped_data.empty:
                     st.warning("No data to display. Please select at least one region or district.")
                     return
+
+                validate_data_for_graphs(grouped_data)
 
                 # Calculate growth rates and quarterly requirements
                 for prefix in ['', ' Trade', ' Non-Trade']:
@@ -176,23 +202,22 @@ def main():
                         df_24 = entity_data[months_24]
 
                         for channel in selected_channels:
-                            if channel == 'Overall':
-                                fig = create_graph(df_23, df_24, '', entity)
-                            elif channel == 'Trade':
-                                df_23_trade = entity_data[[col + ' Trade' for col in months_23]]
-                                df_24_trade = entity_data[[col + ' Trade' for col in months_24]]
-                                fig = create_graph(df_23_trade, df_24_trade, ' Trade', entity)
-                            elif channel == 'Non-Trade':
-                                df_23_nontrade = entity_data[[col + ' Non-Trade' for col in months_23]]
-                                df_24_nontrade = entity_data[[col + ' Non-Trade' for col in months_24]]
-                                fig = create_graph(df_23_nontrade, df_24_nontrade, ' Non-Trade', entity)
-                            
+                            try:
+                                if channel == 'Overall':
+                                    fig = create_graph(df_23, df_24, '', entity)
+                                elif channel == 'Trade':
+                                    df_23_trade = entity_data[[col + ' Trade' for col in months_23]]
+                                    df_24_trade = entity_data[[col + ' Trade' for col in months_24]]
+                                    fig = create_graph(df_23_trade, df_24_trade, ' Trade', entity)
+                                elif channel == 'Non-Trade':
+                                    df_23_nontrade = entity_data[[col + ' Non-Trade' for col in months_23]]
+                                    df_24_nontrade = entity_data[[col + ' Non-Trade' for col in months_24]]
+                                    fig = create_graph(df_23_nontrade, df_24_nontrade, ' Non-Trade', entity)
+                                
+                                if fig is not None:
                             st.pyplot(fig)
                             plt.close(fig)
-
-        except Exception as e:
-            st.error(f"An error occurred while processing the file: {str(e)}")
-            st.error("Please check your Excel file and try again.")
-
+                    except Exception as e:
+                        st.error(f"Error processing graph for {entity} - {channel}: {str(e)}")
 if __name__ == "__main__":
     main()
