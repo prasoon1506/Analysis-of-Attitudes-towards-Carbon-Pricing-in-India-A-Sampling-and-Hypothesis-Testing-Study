@@ -217,7 +217,7 @@ def main():
                                 if fig is not None:
                                     st.pyplot(fig)
                                     plt.close(fig)
-                    except Exception as e:
+        except Exception as e:
                         st.error(f"Error processing graph for {entity} - {channel}: {str(e)}")
 if __name__ == "__main__":
     main()
