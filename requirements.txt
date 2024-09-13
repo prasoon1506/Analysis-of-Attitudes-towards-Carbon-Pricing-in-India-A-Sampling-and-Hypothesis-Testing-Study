@@ -13,3 +13,4 @@ statsmodels
 reportlab
 streamlit_lottie
 plotly
+seaborn
