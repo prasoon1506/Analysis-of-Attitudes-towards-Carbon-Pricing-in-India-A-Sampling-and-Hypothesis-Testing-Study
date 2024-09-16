@@ -1430,12 +1430,11 @@ def display_data(df, selected_regions, selected_districts, selected_channels, sh
         st.plotly_chart(fig)
 
         # Add a line chart for monthly trends including September 2024
-        months = ['Apr', 'May', 'Jun', 'Jul', 'Aug','Sep']
+        months = ['Apr', 'May', 'Jun', 'Jul', 'Aug']
         fig_trend = go.Figure()
         for year in ['23','24']:
             y_values = [grouped_data[f'{year}-{month}{suffix}'].sum() for month in months]
-            if year == '24':
-                y_values[-1] = None
+            
             fig_trend.add_trace(go.Scatter(
                 x=months, 
                 y=y_values, 
