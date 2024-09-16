@@ -301,8 +301,8 @@ def plot_district_graph(df, district_names, benchmark_brands_dict, desired_diff_
         explanation_text = f"***Numbers in brackets next to brand names show the price difference between {reference_week} and {last_week}.***"
         plt.annotate(explanation_text, 
                      xy=(0, -0.15), xycoords='axes fraction', 
-                     ha='left', va='center', fontsize=8, style='italic', color='#1e90ff',
-                     bbox=dict(facecolor='pink', edgecolor='none', alpha=0.7, pad=3))
+                     ha='left', va='center', fontsize=8, style='italic', color='pink',
+                     bbox=dict(facecolor='white', edgecolor='none', alpha=0.7, pad=3))
         
         region_name = district_df['REGION'].iloc[0]
         plt.ylabel('Whole Sale Price(in Rs.)', weight='bold')
