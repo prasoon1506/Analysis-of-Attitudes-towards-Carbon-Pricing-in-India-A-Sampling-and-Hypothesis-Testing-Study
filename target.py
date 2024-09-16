@@ -35,6 +35,112 @@ def load_lottie_url(url: str):
     if r.status_code != 200:
         return None
     return r.json()
+def xgboost_explanation():
+    st.title("Understanding XGBoost")
+    st.write("""
+    XGBoost (eXtreme Gradient Boosting) is an advanced implementation of gradient boosting algorithms. 
+    It's known for its speed and performance, particularly with structured/tabular data.
+    """)
+
+    st.header("Key Concepts")
+    st.subheader("1. Ensemble Learning")
+    st.write("""
+    XGBoost is an ensemble learning method. It combines multiple weak learners (typically decision trees) 
+    to create a strong predictor.
+    """)
+
+    st.subheader("2. Gradient Boosting")
+    st.write("""
+    XGBoost builds trees sequentially, with each new tree correcting the errors of the combined existing trees.
+    """)
+
+    st.latex(r'''
+    F_m(x) = F_{m-1}(x) + \gamma_m h_m(x)
+    ''')
+    st.write("""
+    Where:
+    - F_m(x) is the model after m iterations
+    - h_m(x) is the new tree
+    - γ_m is the weight of the new tree
+    """)
+
+    st.subheader("3. Loss Function and Gradient")
+    st.write("""
+    XGBoost aims to minimize a loss function. The gradient of the loss function is used to identify the best direction 
+    for improvement.
+    """)
+
+    st.latex(r'''
+    L = \sum_{i=1}^n l(y_i, \hat{y}_i) + \sum_{k=1}^K \Omega(f_k)
+    ''')
+    st.write("""
+    Where:
+    - L is the loss function
+    - l is a differentiable convex loss function
+    - Ω is a regularization term
+    """)
+
+    st.subheader("4. Feature Importance")
+    st.write("""
+    XGBoost provides a measure of feature importance based on how often a feature is used to split the data across all trees.
+    """)
+
+    # Create a simple diagram to illustrate XGBoost
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.set_title("XGBoost: Sequential Tree Building")
+    ax.set_xlabel("Features")
+    ax.set_ylabel("Target")
+    ax.scatter(np.random.rand(100), np.random.rand(100), alpha=0.5, label="Data points")
+    
+    for i in range(3):
+        rect = plt.Rectangle((0.1 + i*0.3, 0.1), 0.2, 0.8, fill=False, label=f"Tree {i+1}")
+        ax.add_patch(rect)
+    
+    ax.legend()
+    st.pyplot(fig)
+
+    st.header("Advantages of XGBoost")
+    advantages = [
+        "High performance and fast execution",
+        "Handles missing values automatically",
+        "Built-in regularization to prevent overfitting",
+        "Supports parallel and distributed computing",
+        "Flexibility (can solve regression, classification, and ranking problems)"
+    ]
+    for adv in advantages:
+        st.write(f"- {adv}")
+
+    st.header("Example: XGBoost in Action")
+    st.code("""
+    import xgboost as xgb
+    from sklearn.datasets import make_regression
+    from sklearn.model_selection import train_test_split
+
+    # Create sample data
+    X, y = make_regression(n_samples=1000, n_features=10, noise=0.1)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+
+    # Create and train the model
+    model = xgb.XGBRegressor(n_estimators=100, learning_rate=0.1)
+    model.fit(X_train, y_train)
+
+    # Make predictions
+    predictions = model.predict(X_test)
+
+    # Evaluate the model
+    mse = mean_squared_error(y_test, predictions)
+    print(f"Mean Squared Error: {mse}")
+
+    # Feature importance
+    importance = model.feature_importances_
+    for i, imp in enumerate(importance):
+        print(f"Feature {i} importance: {imp}")
+    """, language="python")
+
+    st.write("""
+    This example demonstrates how to use XGBoost for a regression task, including model training, 
+    prediction, evaluation, and examining feature importance.
+    """)
 
 def predict_and_visualize(df, region, brand):
     try:
@@ -317,6 +423,8 @@ def main():
                 )
               else:
                 st.error("Unable to generate combined report due to lack of data.")
+    elif page == "XGBoost Explained":
+        xgboost_explanation()
     
     elif page == "About":
         st.title("ℹ️ About the Sales Prediction App")
