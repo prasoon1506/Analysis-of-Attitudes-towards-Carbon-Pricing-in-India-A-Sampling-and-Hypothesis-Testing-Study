@@ -97,7 +97,7 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
     ax_table = fig.add_subplot(gs[1])
     ax_table.axis('off')
     table_data = [
-        ['Brand', 'Month Target (Sep)', 'Monthly Achievement (Aug)', 'Predicted Achievement', 'CI', 'RMSE'],
+        ['Brand', 'Month Target (Sep)', 'Monthly Achievement (Aug)', 'Predicted Achievement(Sept)', 'CI', 'RMSE'],
         [brand, f"{sept_target:.2f}", f"{region_data['Monthly Achievement(Aug)'].iloc[-1]:.2f}", 
          f"{sept_achievement:.2f}", f"({lower_achievement:.2f}, {upper_achievement:.2f})", f"{rmse:.4f}"]
     ]
@@ -186,8 +186,8 @@ def generate_combined_report(df, regions, brands):
                     aug_achievement = region_data['Monthly Achievement(Aug)'].iloc[-1]
                     
                     table_data.append([
-                        region, brand, f"{sept_target:.2f}", f"{aug_achievement:.2f}",
-                        f"{sept_achievement:.2f}", f"({lower_achievement:.2f},\n{upper_achievement:.2f})", f"{rmse:.4f}"
+                        region, brand, f"{sept_target:.0f}", f"{aug_achievement:.0f}",
+                        f"{sept_achievement:.0f}", f"({lower_achievement:.2f},\n{upper_achievement:.2f})", f"{rmse:.4f}"
                     ])
                 else:
                     st.warning(f"No data available for {region} and {brand}")
