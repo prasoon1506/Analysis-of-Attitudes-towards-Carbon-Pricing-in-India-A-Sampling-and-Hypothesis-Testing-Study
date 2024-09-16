@@ -295,6 +295,10 @@ def plot_district_graph(df, district_names, benchmark_brands_dict, desired_diff_
                     plt.text(week, price, str(round(price)), fontsize=10)
         plt.grid(False)
         plt.xlabel('Month/Week', weight='bold')
+        reference_week = week_names[diff_week]
+        plt.annotate(f"*Difference is taken from {reference_week}", 
+                     xy=(0.5, -0.15), xycoords='axes fraction', 
+                     ha='center', va='center', fontsize=10, style='italic')
         plt.ylabel('Whole Sale Price(in Rs.)', weight='bold')
         region_name = district_df['REGION'].iloc[0]
         
