@@ -298,7 +298,7 @@ def plot_district_graph(df, district_names, benchmark_brands_dict, desired_diff_
         reference_week = week_names[diff_week]
         last_week = week_names[-1]
         
-        explanation_text = f"Numbers in brackets next to brand names show the price difference between {reference_week} and {last_week}."
+        explanation_text = f"***Numbers in brackets next to brand names show the price difference between {reference_week} and {last_week}.***"
         plt.annotate(explanation_text, 
                      xy=(0, -0.15), xycoords='axes fraction', 
                      ha='left', va='center', fontsize=8, style='italic', color='#1e90ff',
