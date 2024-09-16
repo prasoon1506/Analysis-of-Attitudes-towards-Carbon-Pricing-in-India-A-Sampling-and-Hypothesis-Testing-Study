@@ -290,7 +290,7 @@ def main():
                     mime="application/pdf"
                 )
               else:
-                st.error("Unable to generate combined report due to lack of data."
+                st.error("Unable to generate combined report due to lack of data.")
     
     elif page == "About":
         st.title("ℹ️ About the Sales Prediction App")
