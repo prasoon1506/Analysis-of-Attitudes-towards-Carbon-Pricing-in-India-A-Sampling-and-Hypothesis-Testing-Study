@@ -168,7 +168,6 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
     
     plt.tight_layout()
     return fig
-
 def generate_combined_report(df, regions, brands):
     table_data = [['Region', 'Brand', 'Month Target (Sep)', 'Monthly Achievement (Aug)', 'Predicted Achievement', 'CI', 'RMSE']]
     
@@ -178,36 +177,44 @@ def generate_combined_report(df, regions, brands):
             for brand in brands:
                 futures.append(executor.submit(predict_and_visualize, df, region, brand))
         
-        for future in futures:
+        for future, (region, brand) in zip(futures, [(r, b) for r in regions for b in brands]):
             _, sept_achievement, lower_achievement, upper_achievement, rmse = future.result()
             if sept_achievement is not None:
                 region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)]
-                sept_target = region_data['Month Tgt (Sep)'].iloc[-1]
-                aug_achievement = region_data['Monthly Achievement(Aug)'].iloc[-1]
-                
-                table_data.append([
-                    region, brand, f"{sept_target:.2f}", f"{aug_achievement:.2f}",
-                    f"{sept_achievement:.2f}", f"({lower_achievement:.2f}, {upper_achievement:.2f})", f"{rmse:.4f}"
-                ])
+                if not region_data.empty:
+                    sept_target = region_data['Month Tgt (Sep)'].iloc[-1]
+                    aug_achievement = region_data['Monthly Achievement(Aug)'].iloc[-1]
+                    
+                    table_data.append([
+                        region, brand, f"{sept_target:.2f}", f"{aug_achievement:.2f}",
+                        f"{sept_achievement:.2f}", f"({lower_achievement:.2f}, {upper_achievement:.2f})", f"{rmse:.4f}"
+                    ])
+                else:
+                    st.warning(f"No data available for {region} and {brand}")
     
-    fig, ax = plt.subplots(figsize=(12, 6))
-    ax.axis('off')
-    table = ax.table(cellText=table_data, colLabels=None, cellLoc='center', loc='center')
-    table.auto_set_font_size(False)
-    table.set_fontsize(8)
-    table.scale(1, 1.5)
-    for (row, col), cell in table.get_celld().items():
-        if row == 0:
-            cell.set_text_props(fontweight='bold')
-    
-    plt.title("Combined Prediction Report for All Regions and Brands", fontsize=16, fontweight='bold')
-    
-    pdf_buffer = BytesIO()
-    fig.savefig(pdf_buffer, format='pdf')
-    plt.close(fig)
-    
-    pdf_buffer.seek(0)
-    return base64.b64encode(pdf_buffer.getvalue()).decode()
+    if len(table_data) > 1:
+        fig, ax = plt.subplots(figsize=(12, 6))
+        ax.axis('off')
+        table = ax.table(cellText=table_data, colLabels=None, cellLoc='center', loc='center')
+        table.auto_set_font_size(False)
+        table.set_fontsize(8)
+        table.scale(1, 1.5)
+        for (row, col), cell in table.get_celld().items():
+            if row == 0:
+                cell.set_text_props(fontweight='bold')
+        
+        plt.title("Combined Prediction Report for All Regions and Brands", fontsize=16, fontweight='bold')
+        
+        pdf_buffer = BytesIO()
+        fig.savefig(pdf_buffer, format='pdf')
+        plt.close(fig)
+        
+        pdf_buffer.seek(0)
+        return base64.b64encode(pdf_buffer.getvalue()).decode()
+    else:
+        st.warning("No data available for any region and brand combination.")
+        return None
+
 
 def main():
     st.set_page_config(page_title="Sales Prediction App", page_icon="📊", layout="wide")
@@ -271,15 +278,19 @@ def main():
                 else:
                     st.error(f"No data available for {region} and {brand}")
             
+
             if st.button("Generate Combined Report"):
-                with st.spinner("Generating combined report..."):
-                    combined_report_data = generate_combined_report(df, regions, brands)
+              with st.spinner("Generating combined report..."):
+                combined_report_data = generate_combined_report(df, regions, brands)
+              if combined_report_data:
                 st.download_button(
                     label="Download Combined PDF Report",
                     data=base64.b64decode(combined_report_data),
                     file_name="combined_prediction_report.pdf",
                     mime="application/pdf"
                 )
+              else:
+                st.error("Unable to generate combined report due to lack of data."
     
     elif page == "About":
         st.title("ℹ️ About the Sales Prediction App")
