@@ -287,9 +287,10 @@ def plot_district_graph(df, district_names, benchmark_brands_dict, desired_diff_
             else:
                 price_diff = np.nan
             if np.isnan(price_diff):
-               price_diff = 0
+               price_diff = 'NA'
             price_diffs.append(price_diff)
-            plt.plot(week_names, brand_prices, marker='o', linestyle='-', label=f"{brand} ({price_diff:.0f})")
+            label = f"{brand} ({'NA' if np.isnan(price_diff) else price_diff:.0f})"
+            plt.plot(week_names, brand_prices, marker='o', linestyle='-', label=label)
             for week, price in zip(week_names, brand_prices):
                 if not np.isnan(price):
                     plt.text(week, price, str(round(price)), fontsize=10)
