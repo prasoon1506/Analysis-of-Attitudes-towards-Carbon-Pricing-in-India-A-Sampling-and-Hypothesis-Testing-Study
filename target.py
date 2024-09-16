@@ -203,7 +203,7 @@ def generate_combined_report(df, regions, brands):
         ax.axis('off')
         
         # Add title to the figure, not the axis
-        fig.suptitle("Combined Prediction Report for All Regions and Brands", fontsize=16, fontweight='bold', y=0.95)
+        fig.suptitle("", fontsize=16, fontweight='bold', y=0.95)
         
         # Create the table
         table = ax.table(cellText=table_data[1:], colLabels=table_data[0], cellLoc='center', loc='center')
