@@ -18,14 +18,26 @@ brands = []
 
 def load_data(uploaded_file):
     global df, regions, brands
-    df = pd.read_excel(uploaded_file)
-    regions = df['Zone'].unique().tolist()
-    brands = df['Brand'].unique().tolist()
+    try:
+        df = pd.read_excel(uploaded_file)
+        st.write("Data loaded successfully. Shape:", df.shape)
+        st.write("Columns:", df.columns.tolist())
+        regions = df['Zone'].unique().tolist()
+        brands = df['Brand'].unique().tolist()
+        st.write("Regions:", regions)
+        st.write("Brands:", brands)
+    except Exception as e:
+        st.error(f"Error loading data: {str(e)}")
+        raise
 
 def predict_and_visualize(region, brand):
-    region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)].copy()
-    
-    if len(region_data) > 0:
+    try:
+        st.write(f"Predicting for Region: {region}, Brand: {brand}")
+        region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)].copy()
+        st.write(f"Data shape for this region and brand: {region_data.shape}")
+        
+        if len(region_data) > 0:
+             if len(region_data) > 0:
         months = ['Apr', 'May', 'June', 'July', 'Aug']
         for month in months:
             region_data[f'Achievement({month})'] = region_data[f'Monthly Achievement({month})'] / region_data[f'Month Tgt ({month})']
@@ -143,74 +155,91 @@ def predict_and_visualize(region, brand):
                          ha='center', va='bottom', fontsize=8)
         
         plt.tight_layout()
-        return fig, sept_achievement, lower_achievement, upper_achievement, rmse
-    else:
-        return None, None, None, None, None
+            return fig, sept_achievement, lower_achievement, upper_achievement, rmse
+        else:
+            st.warning(f"No data available for {region} and {brand}")
+            return None, None, None, None, None
+    except Exception as e:
+        st.error(f"Error in predict_and_visualize: {str(e)}")
+        raise
 
 def generate_combined_report():
-    pdf_buffer = BytesIO()
-    fig, ax = plt.subplots(figsize=(12, 6))
-    ax.axis('off')
-    
-    table_data = [['Region', 'Brand', 'Month Target (Sep)', 'Monthly Achievement (Aug)', 'Predicted Achievement', 'CI', 'RMSE']]
-    
-    for region in regions:
-        for brand in brands:
-            _, sept_achievement, lower_achievement, upper_achievement, rmse = predict_and_visualize(region, brand)
-            if sept_achievement is not None:
-                region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)]
-                sept_target = region_data['Month Tgt (Sep)'].iloc[-1]
-                aug_achievement = region_data['Monthly Achievement(Aug)'].iloc[-1]
-                
-                table_data.append([
-                    region, brand, f"{sept_target:.2f}", f"{aug_achievement:.2f}",
-                    f"{sept_achievement:.2f}", f"({lower_achievement:.2f}, {upper_achievement:.2f})", f"{rmse:.4f}"
-                ])
-    
-    table = ax.table(cellText=table_data, colLabels=None, cellLoc='center', loc='center')
-    table.auto_set_font_size(False)
-    table.set_fontsize(8)
-    table.scale(1, 1.5)
-    for (row, col), cell in table.get_celld().items():
-        if row == 0:
-            cell.set_text_props(fontweight='bold')
-    
-    plt.title("Combined Prediction Report for All Regions and Brands", fontsize=16, fontweight='bold')
-    fig.savefig(pdf_buffer, format='pdf')
-    plt.close(fig)
-    
-    pdf_buffer.seek(0)
-    return base64.b64encode(pdf_buffer.getvalue()).decode()
+    try:
+        st.write("Generating combined report...")
+        pdf_buffer = BytesIO()
+        fig, ax = plt.subplots(figsize=(12, 6))
+        ax.axis('off')
+        
+        table_data = [['Region', 'Brand', 'Month Target (Sep)', 'Monthly Achievement (Aug)', 'Predicted Achievement', 'CI', 'RMSE']]
+        
+        for region in regions:
+            for brand in brands:
+                _, sept_achievement, lower_achievement, upper_achievement, rmse = predict_and_visualize(region, brand)
+                if sept_achievement is not None:
+                    region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)]
+                    sept_target = region_data['Month Tgt (Sep)'].iloc[-1]
+                    aug_achievement = region_data['Monthly Achievement(Aug)'].iloc[-1]
+                    
+                    table_data.append([
+                        region, brand, f"{sept_target:.2f}", f"{aug_achievement:.2f}",
+                        f"{sept_achievement:.2f}", f"({lower_achievement:.2f}, {upper_achievement:.2f})", f"{rmse:.4f}"
+                    ])
+        
+        table = ax.table(cellText=table_data, colLabels=None, cellLoc='center', loc='center')
+        table.auto_set_font_size(False)
+        table.set_fontsize(8)
+        table.scale(1, 1.5)
+        for (row, col), cell in table.get_celld().items():
+            if row == 0:
+                cell.set_text_props(fontweight='bold')
+        
+        plt.title("Combined Prediction Report for All Regions and Brands", fontsize=16, fontweight='bold')
+        fig.savefig(pdf_buffer, format='pdf')
+        plt.close(fig)
+        
+        pdf_buffer.seek(0)
+        st.write("Combined report generated successfully.")
+        return base64.b64encode(pdf_buffer.getvalue()).decode()
+    except Exception as e:
+        st.error(f"Error generating combined report: {str(e)}")
+        raise
 
 def main():
     st.title("Sales Prediction App")
 
     uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
     if uploaded_file is not None:
-        load_data(uploaded_file)
-        st.success("File uploaded successfully!")
+        try:
+            load_data(uploaded_file)
+            st.success("File uploaded and processed successfully!")
 
-        # Combined report download link
-        combined_report_data = generate_combined_report()
-        st.markdown(f'<a href="data:application/pdf;base64,{combined_report_data}" download="combined_prediction_report.pdf">Download Combined PDF Report</a>', unsafe_allow_html=True)
+            # Combined report download link
+            st.write("Generating combined report...")
+            combined_report_data = generate_combined_report()
+            st.markdown(f'<a href="data:application/pdf;base64,{combined_report_data}" download="combined_prediction_report.pdf">Download Combined PDF Report</a>', unsafe_allow_html=True)
 
-        # Region and Brand selection
-        region = st.selectbox("Select Region", regions)
-        brand = st.selectbox("Select Brand", brands)
+            # Region and Brand selection
+            region = st.selectbox("Select Region", regions)
+            brand = st.selectbox("Select Brand", brands)
 
-        if st.button("Run Prediction"):
-            fig, sept_achievement, lower_achievement, upper_achievement, rmse = predict_and_visualize(region, brand)
-            if fig:
-                st.pyplot(fig)
-                
-                # Individual report download
-                buf = BytesIO()
-                fig.savefig(buf, format="pdf")
-                buf.seek(0)
-                b64 = base64.b64encode(buf.getvalue()).decode()
-                st.markdown(f'<a href="data:application/pdf;base64,{b64}" download="prediction_report_{region}_{brand}.pdf">Download Individual PDF Report</a>', unsafe_allow_html=True)
-            else:
-                st.error(f"No data available for {region} and {brand}")
+            if st.button("Run Prediction"):
+                st.write("Running prediction...")
+                fig, sept_achievement, lower_achievement, upper_achievement, rmse = predict_and_visualize(region, brand)
+                if fig:
+                    st.pyplot(fig)
+                    
+                    # Individual report download
+                    buf = BytesIO()
+                    fig.savefig(buf, format="pdf")
+                    buf.seek(0)
+                    b64 = base64.b64encode(buf.getvalue()).decode()
+                    st.markdown(f'<a href="data:application/pdf;base64,{b64}" download="prediction_report_{region}_{brand}.pdf">Download Individual PDF Report</a>', unsafe_allow_html=True)
+                else:
+                    st.error(f"No data available for {region} and {brand}")
+        except Exception as e:
+            st.error(f"An error occurred: {str(e)}")
+    else:
+        st.info("Please upload an Excel file to begin.")
 
 if __name__ == "__main__":
     main()
