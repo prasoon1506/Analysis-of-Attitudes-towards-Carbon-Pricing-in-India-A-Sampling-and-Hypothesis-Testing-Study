@@ -169,7 +169,7 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
     plt.tight_layout()
     return fig
 def generate_combined_report(df, regions, brands):
-    table_data = [['Region', 'Brand', 'Month Target\n(Sep)', 'Monthly Achievement\n(Aug)', 'Predicted\nAchievement', 'CI', 'RMSE']]
+    table_data = [['Region', 'Brand', 'Month Target\n(Sep)', 'Monthly Achievement\n(Aug)', 'Predicted\nAchievement(Sept)', 'CI', 'RMSE']]
     
     with ThreadPoolExecutor() as executor:
         futures = []
