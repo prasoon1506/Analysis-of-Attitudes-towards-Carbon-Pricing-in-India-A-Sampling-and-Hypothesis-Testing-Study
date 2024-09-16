@@ -169,7 +169,7 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
     plt.tight_layout()
     return fig
 def generate_combined_report(df, regions, brands):
-    table_data = [['Region', 'Brand', 'Month Target (Sep)', 'Monthly Achievement (Aug)', 'Predicted Achievement', 'CI', 'RMSE']]
+    table_data = [['Region', 'Brand', 'Month Target\n(Sep)', 'Monthly Achievement\n(Aug)', 'Predicted\nAchievement', 'CI', 'RMSE']]
     
     with ThreadPoolExecutor() as executor:
         futures = []
@@ -187,26 +187,50 @@ def generate_combined_report(df, regions, brands):
                     
                     table_data.append([
                         region, brand, f"{sept_target:.2f}", f"{aug_achievement:.2f}",
-                        f"{sept_achievement:.2f}", f"({lower_achievement:.2f}, {upper_achievement:.2f})", f"{rmse:.4f}"
+                        f"{sept_achievement:.2f}", f"({lower_achievement:.2f},\n{upper_achievement:.2f})", f"{rmse:.4f}"
                     ])
                 else:
                     st.warning(f"No data available for {region} and {brand}")
     
     if len(table_data) > 1:
-        fig, ax = plt.subplots(figsize=(12, 6))
+        # Determine the number of rows in the table
+        num_rows = len(table_data)
+        
+        # Calculate the figure height based on the number of rows
+        fig_height = max(6, 1 + 0.5 * num_rows)  # Minimum height of 6, scales with number of rows
+        
+        fig, ax = plt.subplots(figsize=(12, fig_height))
         ax.axis('off')
-        table = ax.table(cellText=table_data, colLabels=None, cellLoc='center', loc='center')
+        
+        # Add title to the figure, not the axis
+        fig.suptitle("Combined Prediction Report for All Regions and Brands", fontsize=16, fontweight='bold', y=0.95)
+        
+        # Create the table
+        table = ax.table(cellText=table_data[1:], colLabels=table_data[0], cellLoc='center', loc='center')
+        
+        # Set font size and style
         table.auto_set_font_size(False)
         table.set_fontsize(8)
-        table.scale(1, 1.5)
+        
+        # Adjust column widths
+        col_widths = [0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.1]
+        for i, width in enumerate(col_widths):
+            table.auto_set_column_width(i)
+            
+        # Style the header
         for (row, col), cell in table.get_celld().items():
             if row == 0:
-                cell.set_text_props(fontweight='bold')
+                cell.set_text_props(fontweight='bold', wrap=True)
+                cell.set_height(0.1)
+            else:
+                cell.set_height(0.05)
         
-        plt.title("Combined Prediction Report for All Regions and Brands", fontsize=16, fontweight='bold')
+        # Adjust the layout
+        table.scale(1, 1.5)
+        plt.subplots_adjust(top=0.9, bottom=0.02, left=0.05, right=0.95)
         
         pdf_buffer = BytesIO()
-        fig.savefig(pdf_buffer, format='pdf')
+        fig.savefig(pdf_buffer, format='pdf', bbox_inches='tight')
         plt.close(fig)
         
         pdf_buffer.seek(0)
@@ -214,6 +238,8 @@ def generate_combined_report(df, regions, brands):
     else:
         st.warning("No data available for any region and brand combination.")
         return None
+
+# The main function remains the same as in the previous response
 
 
 def main():
