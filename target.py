@@ -386,7 +386,7 @@ def generate_combined_report(df, regions, brands):
         fig_height = max(12, 2 + 0.5 * num_rows)  # Increased minimum height
         
         fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, fig_height), gridspec_kw={'height_ratios': [1, 1.5]})
-        fig.suptitle("Combined Sales Prediction Report", fontsize=16, fontweight='bold', y=0.98)
+        fig.suptitle("", fontsize=16, fontweight='bold', y=0.98)
         
         # Function to create styled table
         def create_styled_table(ax, data, title):
