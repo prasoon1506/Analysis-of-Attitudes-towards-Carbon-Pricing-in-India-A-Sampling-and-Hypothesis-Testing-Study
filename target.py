@@ -359,7 +359,7 @@ def main():
     with st.sidebar:
         st_lottie(lottie_json, height=200)
         st.title("Navigation")
-        page = st.radio("Go to", ["Home", "Predictions", "About"])
+        page = st.radio("Go to", ["Home", "Predictions","XGBoost Explained", "About"])
     
     if page == "Home":
         st.title("📊 Welcome to the Sales Prediction App")
