@@ -197,7 +197,7 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
     gs = fig.add_gridspec(6, 2, height_ratios=[0.5, 0.5,0.5, 3, 1, 2])
     ax_region = fig.add_subplot(gs[0, :])
     ax_region.axis('off')
-    ax_region.text(0.5, 0.5, region, fontsize=24, fontweight='bold', ha='center', va='center')
+    ax_region.text(0.5, 0.5, f'region({brand})', fontsize=28, fontweight='bold', ha='center', va='center')
             
     # New table for current month sales data
     ax_current = fig.add_subplot(gs[1, :])
