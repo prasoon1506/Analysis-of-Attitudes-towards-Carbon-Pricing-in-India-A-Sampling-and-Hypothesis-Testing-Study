@@ -221,18 +221,18 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
                 cell.set_edgecolor('white')
             
             # Existing table (same as before)
-            ax_table = fig.add_subplot(gs[2, :])
-            ax_table.axis('off')
-            table_data = [
+    ax_table = fig.add_subplot(gs[2, :])
+    ax_table.axis('off')
+    table_data = [
                 ['Brand', 'Month Target (Sep)', 'Monthly Achievement (Aug)', 'Predicted Achievement(Sept)', 'CI', 'RMSE'],
                 [brand, f"{sept_target:.2f}", f"{region_data['Monthly Achievement(Aug)'].iloc[-1]:.2f}", 
                  f"{sept_achievement:.2f}", f"({lower_achievement:.2f}, {upper_achievement:.2f})", f"{rmse:.4f}"]
             ]
-            table = ax_table.table(cellText=table_data[1:], colLabels=table_data[0], cellLoc='center', loc='center')
-            table.auto_set_font_size(False)
-            table.set_fontsize(10)
-            table.scale(1, 1.2)
-            for (row, col), cell in table.get_celld().items():
+    table = ax_table.table(cellText=table_data[1:], colLabels=table_data[0], cellLoc='center', loc='center')
+    table.auto_set_font_size(False)
+    table.set_fontsize(10)
+    table.scale(1, 1.2)
+    for (row, col), cell in table.get_celld().items():
                 if row == 0:
                     cell.set_text_props(fontweight='bold', color='white')
                     cell.set_facecolor('#4CAF50')
