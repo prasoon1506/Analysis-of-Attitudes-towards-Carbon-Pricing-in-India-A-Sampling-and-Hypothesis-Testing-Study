@@ -254,7 +254,7 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
     for i, (target, achievement) in enumerate(zip(all_targets, all_achievements)):
         percentage = (achievement / target) * 100
         color = 'green' if percentage >= 100 else 'red'
-        ax1.text(i, max(target, achievement), f'{percentage:.1f}%', 
+        ax1.text(i, (max(target, achievement)+min(target,achievement))/2, f'{percentage:.1f}%', 
                  ha='center', va='bottom', fontsize=10, color=color, fontweight='bold')
     
     ax1.errorbar(x[-1] + width/2, sept_achievement, 
@@ -285,7 +285,7 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
     ]
     monthly_achievement_aug = region_data['Monthly Achievement(Aug)'].iloc[-1]
     
-    ax3.text(0.5, 1.1, 'August Sales Channel Breakdown', fontsize=14, fontweight='bold', ha='center', va='center')
+    ax3.text(0.1, 1.1, '\nAugust Sales Channel Breakdown', fontsize=14, fontweight='bold', ha='center', va='center')
     
     for i, (channel, value) in enumerate(channel_data):
         percentage = (value / monthly_achievement_aug) * 100
@@ -301,7 +301,7 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
         region_data['Unidentified Aug'].iloc[-1]
     ]
     region_type_labels = ['Green', 'Yellow', 'Red', 'Unidentified']
-    colors = ['#66b3ff', '#ffcc99', '#ff9999', '#c2c2f0']
+    colors = ['green', 'yellow', 'red', 'gray']
     
     def make_autopct(values):
         def my_autopct(pct):
