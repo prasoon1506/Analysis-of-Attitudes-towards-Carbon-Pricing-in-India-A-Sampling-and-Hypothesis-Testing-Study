@@ -312,7 +312,7 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
     
     ax4.pie(region_type_data, labels=region_type_labels, colors=colors,
             autopct=make_autopct(region_type_data), startangle=90)
-    ax4.set_title('August Region Type Breakdown:-', fontsize=14, fontweight='bold')
+    ax4.set_title('August Region Type Breakdown:-', fontsize=15, fontweight='bold')
     
     plt.tight_layout()
     return fig
