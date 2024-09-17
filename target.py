@@ -325,47 +325,44 @@ def generate_combined_report(df, regions, brands):
             for brand in brands:
                 futures.append(executor.submit(predict_and_visualize, df, region, brand))
         
+        valid_data = False
         for future, (region, brand) in zip(futures, [(r, b) for r in regions for b in brands]):
-            _, sept_achievement, lower_achievement, upper_achievement, rmse = future.result()
-            if sept_achievement is not None:
-                region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)]
-                if not region_data.empty:
-                    sept_target = region_data['Month Tgt (Sep)'].iloc[-1]
-                    aug_achievement = region_data['Monthly Achievement(Aug)'].iloc[-1]
-                    
-                    table_data.append([
-                        region, brand, f"{sept_target:.0f}", f"{aug_achievement:.0f}",
-                        f"{sept_achievement:.0f}", f"({lower_achievement:.2f},\n{upper_achievement:.2f})", f"{rmse:.4f}"
-                    ])
-                else:
-                    st.warning(f"No data available for {region} and {brand}")
+            try:
+                _, sept_achievement, lower_achievement, upper_achievement, rmse = future.result()
+                if sept_achievement is not None:
+                    region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)]
+                    if not region_data.empty:
+                        sept_target = region_data['Month Tgt (Sep)'].iloc[-1]
+                        aug_achievement = region_data['Monthly Achievement(Aug)'].iloc[-1]
+                        
+                        table_data.append([
+                            region, brand, f"{sept_target:.0f}", f"{aug_achievement:.0f}",
+                            f"{sept_achievement:.0f}", f"({lower_achievement:.2f},\n{upper_achievement:.2f})", f"{rmse:.4f}"
+                        ])
+                        valid_data = True
+                    else:
+                        st.warning(f"No data available for {region} and {brand}")
+            except Exception as e:
+                st.warning(f"Error processing {region} and {brand}: {str(e)}")
     
-    if len(table_data) > 1:
-        # Determine the number of rows in the table
+    if valid_data:
         num_rows = len(table_data)
-        
-        # Calculate the figure height based on the number of rows
-        fig_height = max(6, 1 + 0.5 * num_rows)  # Minimum height of 6, scales with number of rows
+        fig_height = max(6, 1 + 0.5 * num_rows)
         
         fig, ax = plt.subplots(figsize=(12, fig_height))
         ax.axis('off')
         
-        # Add title to the figure, not the axis
-        fig.suptitle("", fontsize=16, fontweight='bold', y=0.95)
+        fig.suptitle("Combined Sales Prediction Report", fontsize=16, fontweight='bold', y=0.95)
         
-        # Create the table
         table = ax.table(cellText=table_data[1:], colLabels=table_data[0], cellLoc='center', loc='center')
         
-        # Set font size and style
         table.auto_set_font_size(False)
         table.set_fontsize(8)
         
-        # Adjust column widths
         col_widths = [0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.1]
         for i, width in enumerate(col_widths):
             table.auto_set_column_width(i)
             
-        # Style the header
         for (row, col), cell in table.get_celld().items():
             if row == 0:
                 cell.set_text_props(fontweight='bold', wrap=True)
@@ -373,7 +370,6 @@ def generate_combined_report(df, regions, brands):
             else:
                 cell.set_height(0.05)
         
-        # Adjust the layout
         table.scale(1, 1.5)
         plt.subplots_adjust(top=0.9, bottom=0.02, left=0.05, right=0.95)
         
@@ -384,10 +380,8 @@ def generate_combined_report(df, regions, brands):
         pdf_buffer.seek(0)
         return base64.b64encode(pdf_buffer.getvalue()).decode()
     else:
-        st.warning("No data available for any region and brand combination.")
+        st.warning("No valid data available for any region and brand combination.")
         return None
-
-
 
 
 def main():
@@ -452,19 +446,19 @@ def main():
                 else:
                     st.error(f"No data available for {region} and {brand}")
             
-
             if st.button("Generate Combined Report"):
-              with st.spinner("Generating combined report..."):
-                combined_report_data = generate_combined_report(df, regions, brands)
-              if combined_report_data:
-                st.download_button(
-                    label="Download Combined PDF Report",
-                    data=base64.b64decode(combined_report_data),
-                    file_name="combined_prediction_report.pdf",
-                    mime="application/pdf"
-                )
-              else:
-                st.error("Unable to generate combined report due to lack of data.")
+                     with st.spinner("Generating combined report..."):
+                         combined_report_data = generate_combined_report(df, regions, brands)
+                     if combined_report_data:
+                          st.download_button(
+                             label="Download Combined PDF Report",
+                             data=base64.b64decode(combined_report_data),
+                             file_name="combined_prediction_report.pdf",
+                             mime="application/pdf"
+                          )
+                     else:
+                        st.error("Unable to generate combined report. Please check the warnings above for more details.")
+
     elif page == "XGBoost Explained":
         xgboost_explanation()
     
