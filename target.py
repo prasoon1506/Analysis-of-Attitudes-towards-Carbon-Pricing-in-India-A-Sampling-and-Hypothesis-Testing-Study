@@ -285,7 +285,7 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
     ]
     monthly_achievement_aug = region_data['Monthly Achievement(Aug)'].iloc[-1]
     
-    ax3.text(0.3, 1, '\n August Sales Channel Breakdown:-', fontsize=14, fontweight='bold', ha='center', va='center')
+    ax3.text(0.3, 1, '\n August Sales Channel Breakdown:-', fontsize=15, fontweight='bold', ha='center', va='center')
     
     for i, (channel, value) in enumerate(channel_data):
         percentage = (value / monthly_achievement_aug) * 100
