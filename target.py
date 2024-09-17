@@ -352,7 +352,7 @@ def generate_combined_report(df, regions, brands):
         fig, ax = plt.subplots(figsize=(12, fig_height))
         ax.axis('off')
         
-        fig.suptitle("Combined Sales Prediction Report", fontsize=16, fontweight='bold', y=0.95)
+        fig.suptitle("", fontsize=16, fontweight='bold', y=0.95)
         
         table = ax.table(cellText=table_data[1:], colLabels=table_data[0], cellLoc='center', loc='center')
         
