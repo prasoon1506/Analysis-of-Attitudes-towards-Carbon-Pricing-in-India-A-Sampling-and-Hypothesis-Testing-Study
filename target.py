@@ -191,9 +191,10 @@ def predict_and_visualize(df, region, brand):
         st.error(f"Error in predict_and_visualize: {str(e)}")
         raise
 
+
 def create_visualization(region_data, region, brand, months, sept_target, sept_achievement, lower_achievement, upper_achievement, rmse):
-    fig = plt.figure(figsize=(20, 24))
-    gs = fig.add_gridspec(6, 2, height_ratios=[0.5, 0.5, 3, 1, 2, 2])
+    fig = plt.figure(figsize=(20, 20))  # Reduced height since we're removing a section
+    gs = fig.add_gridspec(5, 2, height_ratios=[0.5, 0.5, 3, 1, 2])
     
     # Region and table (same as before)
     ax_region = fig.add_subplot(gs[0, :])
@@ -253,7 +254,7 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
     for i, (target, achievement) in enumerate(zip(all_targets, all_achievements)):
         percentage = (achievement / target) * 100
         color = 'green' if percentage >= 100 else 'red'
-        ax1.text(i, (max(target, achievement)+min(target,achievement))/2, f'{percentage:.1f}%', 
+        ax1.text(i, max(target, achievement), f'{percentage:.1f}%', 
                  ha='center', va='bottom', fontsize=10, color=color, fontweight='bold')
     
     ax1.errorbar(x[-1] + width/2, sept_achievement, 
@@ -274,7 +275,7 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
         ax2.annotate(f'{pct:.1f}%', (i, pct), xytext=(0, 5), textcoords='offset points', 
                      ha='center', va='bottom', fontsize=8)
     
-    # New: August Sales Channel Breakdown (Text-based)
+    # Updated: August Sales Channel Breakdown (Text-based)
     ax3 = fig.add_subplot(gs[4, 0])
     ax3.axis('off')
     channel_data = [
@@ -284,14 +285,14 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
     ]
     monthly_achievement_aug = region_data['Monthly Achievement(Aug)'].iloc[-1]
     
-    ax3.text(0.5, 1.1, 'August Sales Channel and Product wise Breakdown', fontsize=14, fontweight='bold', ha='center', va='center')
+    ax3.text(0.5, 1.1, 'August Sales Channel Breakdown', fontsize=14, fontweight='bold', ha='center', va='center')
     
     for i, (channel, value) in enumerate(channel_data):
-        percentage = value / monthly_achievement_aug * 100
+        percentage = (value / monthly_achievement_aug) * 100
         ax3.text(0.1, 0.8 - i*0.2, f"{channel}:", fontsize=12, fontweight='bold')
         ax3.text(0.5, 0.8 - i*0.2, f"{value:.2f} ({percentage:.1f}%)", fontsize=12)
     
-    # New: August Region Type Breakdown
+    # Updated: August Region Type Breakdown with values
     ax4 = fig.add_subplot(gs[4, 1])
     region_type_data = [
         region_data['Green Aug'].iloc[-1],
@@ -301,30 +302,17 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
     ]
     region_type_labels = ['Green', 'Yellow', 'Red', 'Unidentified']
     colors = ['#66b3ff', '#ffcc99', '#ff9999', '#c2c2f0']
-    ax4.pie(region_type_data, labels=region_type_labels, autopct='%1.1f%%', startangle=90, colors=colors)
-    ax4.set_title('August Region Type Breakdown', fontsize=14, fontweight='bold')
     
-    # New: August Data Table
-    ax5 = fig.add_subplot(gs[5, :])
-    ax5.axis('off')
-    aug_data = [
-        ['Trade Aug', 'Premium Aug', 'Blended Aug', 'Green Aug', 'Yellow Aug', 'Red Aug', 'Unidentified Aug'],
-        [f"{region_data['Trade Aug'].iloc[-1]:.2f}", 
-         f"{region_data['Premium Aug'].iloc[-1]:.2f}",
-         f"{region_data['Blended Aug'].iloc[-1]:.2f}",
-         f"{region_data['Green Aug'].iloc[-1]:.2f}",
-         f"{region_data['Yellow Aug'].iloc[-1]:.2f}",
-         f"{region_data['Red Aug'].iloc[-1]:.2f}",
-         f"{region_data['Unidentified Aug'].iloc[-1]:.2f}"]
-    ]
-    aug_table = ax5.table(cellText=aug_data[1:], colLabels=aug_data[0], cellLoc='center', loc='center')
-    aug_table.auto_set_font_size(False)
-    aug_table.set_fontsize(10)
-    aug_table.scale(1, 1.5)
-    for (row, col), cell in aug_table.get_celld().items():
-        if row == 0:
-            cell.set_text_props(fontweight='bold')
-    ax5.set_title('August Detailed Breakdown', fontsize=14, fontweight='bold')
+    def make_autopct(values):
+        def my_autopct(pct):
+            total = sum(values)
+            val = int(round(pct*total/100.0))
+            return f'{pct:.1f}%\n({val:.0f})'
+        return my_autopct
+    
+    ax4.pie(region_type_data, labels=region_type_labels, colors=colors,
+            autopct=make_autopct(region_type_data), startangle=90)
+    ax4.set_title('August Region Type Breakdown', fontsize=14, fontweight='bold')
     
     plt.tight_layout()
     return fig
