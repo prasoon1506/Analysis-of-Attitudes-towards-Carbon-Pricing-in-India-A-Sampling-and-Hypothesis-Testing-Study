@@ -195,29 +195,54 @@ def predict_and_visualize(df, region, brand):
 def create_visualization(region_data, region, brand, months, sept_target, sept_achievement, lower_achievement, upper_achievement, rmse):
     fig = plt.figure(figsize=(20, 20))  # Reduced height since we're removing a section
     gs = fig.add_gridspec(5, 2, height_ratios=[0.5, 0.5, 3, 1, 2])
-    
-    # Region and table (same as before)
     ax_region = fig.add_subplot(gs[0, :])
     ax_region.axis('off')
     ax_region.text(0.5, 0.5, region, fontsize=24, fontweight='bold', ha='center', va='center')
+            
+    # New table for current month sales data
+    ax_current = fig.add_subplot(gs[1, :])
+    ax_current.axis('off')
+    current_data = [
+                ['Till Yesterday\nTotal Sales', 'Commitment\nfor Today', 'Asking\nfor Today', 'Yesterday\nSales', 'Yesterday\nCommitment'],
+                [f"{region_data['Till Yesterday Total Sales'].iloc[-1]:.0f}",
+                 f"{region_data['Commitment for Today'].iloc[-1]:.0f}",
+                 f"{region_data['Asking for Today'].iloc[-1]:.0f}",
+                 f"{region_data['Yesterday Sales'].iloc[-1]:.0f}",
+                 f"{region_data['Yesterday Commitment'].iloc[-1]:.0f}"]
+            ]
+    current_table = ax_current.table(cellText=current_data[1:], colLabels=current_data[0], cellLoc='center', loc='center')
+    current_table.auto_set_font_size(False)
+    current_table.set_fontsize(10)
+    current_table.scale(1, 1.5)
+    for (row, col), cell in current_table.get_celld().items():
+                if row == 0:
+                    cell.set_text_props(fontweight='bold', color='white')
+                    cell.set_facecolor('#4CAF50')
+                cell.set_edgecolor('white')
+            
+            # Existing table (same as before)
+            ax_table = fig.add_subplot(gs[2, :])
+            ax_table.axis('off')
+            table_data = [
+                ['Brand', 'Month Target (Sep)', 'Monthly Achievement (Aug)', 'Predicted Achievement(Sept)', 'CI', 'RMSE'],
+                [brand, f"{sept_target:.2f}", f"{region_data['Monthly Achievement(Aug)'].iloc[-1]:.2f}", 
+                 f"{sept_achievement:.2f}", f"({lower_achievement:.2f}, {upper_achievement:.2f})", f"{rmse:.4f}"]
+            ]
+            table = ax_table.table(cellText=table_data[1:], colLabels=table_data[0], cellLoc='center', loc='center')
+            table.auto_set_font_size(False)
+            table.set_fontsize(10)
+            table.scale(1, 1.2)
+            for (row, col), cell in table.get_celld().items():
+                if row == 0:
+                    cell.set_text_props(fontweight='bold', color='white')
+                    cell.set_facecolor('#4CAF50')
+                cell.set_edgecolor('white')
+
     
-    ax_table = fig.add_subplot(gs[1, :])
-    ax_table.axis('off')
-    table_data = [
-        ['Brand', 'Month Target (Sep)', 'Monthly Achievement (Aug)', 'Predicted Achievement(Sept)', 'CI', 'RMSE'],
-        [brand, f"{sept_target:.2f}", f"{region_data['Monthly Achievement(Aug)'].iloc[-1]:.2f}", 
-         f"{sept_achievement:.2f}", f"({lower_achievement:.2f}, {upper_achievement:.2f})", f"{rmse:.4f}"]
-    ]
-    table = ax_table.table(cellText=table_data, colLabels=None, cellLoc='center', loc='center')
-    table.auto_set_font_size(False)
-    table.set_fontsize(10)
-    table.scale(1, 1.2)
-    for (row, col), cell in table.get_celld().items():
-        if row == 0:
-            cell.set_text_props(fontweight='bold')
+    
     
     # Main bar chart (same as before)
-    ax1 = fig.add_subplot(gs[2, :])
+    ax1 = fig.add_subplot(gs[3, :])
     
     actual_achievements = [region_data[f'Monthly Achievement({month})'].iloc[-1] for month in months]
     actual_targets = [region_data[f'Month Tgt ({month})'].iloc[-1] for month in months]
@@ -262,7 +287,7 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
                  fmt='o', color='darkred', capsize=5, capthick=2, elinewidth=2)
     
     # Percentage achievement line chart (same as before)
-    ax2 = fig.add_subplot(gs[3, :])
+    ax2 = fig.add_subplot(gs[4, :])
     percent_achievements = [((ach / tgt) * 100) for ach, tgt in zip(all_achievements, all_targets)]
     ax2.plot(x, percent_achievements, marker='o', linestyle='-', color='purple')
     ax2.axhline(y=100, color='r', linestyle='--', alpha=0.7)
@@ -276,7 +301,7 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
                      ha='center', va='bottom', fontsize=8)
     
     # Updated: August Sales Channel Breakdown (Text-based)
-    ax3 = fig.add_subplot(gs[4, 0])
+    ax3 = fig.add_subplot(gs[5, 0])
     ax3.axis('off')
     channel_data = [
         ('Trade', region_data['Trade Aug'].iloc[-1]),
@@ -293,7 +318,7 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
         ax3.text(0.5, 0.8 - i*0.2, f"{value:.2f} ({percentage:.1f}%)", fontsize=12)
     
     # Updated: August Region Type Breakdown with values
-    ax4 = fig.add_subplot(gs[4, 1])
+    ax4 = fig.add_subplot(gs[5, 1])
     region_type_data = [
         region_data['Green Aug'].iloc[-1],
         region_data['Yellow Aug'].iloc[-1],
@@ -317,7 +342,8 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
     plt.tight_layout()
     return fig
 def generate_combined_report(df, regions, brands):
-    table_data = [['Region', 'Brand', 'Month Target\n(Sep)', 'Monthly Achievement\n(Aug)', 'Predicted\nAchievement(Sept)', 'CI', 'RMSE']]
+    main_table_data = [['Region', 'Brand', 'Month Target\n(Sep)', 'Monthly Achievement\n(Aug)', 'Predicted\nAchievement(Sept)', 'CI', 'RMSE']]
+    additional_table_data = [['Region', 'Brand', 'Till Yesterday\nTotal Sales', 'Commitment\nfor Today', 'Asking\nfor Today', 'Yesterday\nSales', 'Yesterday\nCommitment']]
     
     with ThreadPoolExecutor() as executor:
         futures = []
@@ -335,10 +361,20 @@ def generate_combined_report(df, regions, brands):
                         sept_target = region_data['Month Tgt (Sep)'].iloc[-1]
                         aug_achievement = region_data['Monthly Achievement(Aug)'].iloc[-1]
                         
-                        table_data.append([
+                        main_table_data.append([
                             region, brand, f"{sept_target:.0f}", f"{aug_achievement:.0f}",
                             f"{sept_achievement:.0f}", f"({lower_achievement:.2f},\n{upper_achievement:.2f})", f"{rmse:.4f}"
                         ])
+                        
+                        additional_table_data.append([
+                            region, brand, 
+                            f"{region_data['Till Yesterday Total Sales'].iloc[-1]:.0f}",
+                            f"{region_data['Commitment for Today'].iloc[-1]:.0f}",
+                            f"{region_data['Asking for Today'].iloc[-1]:.0f}",
+                            f"{region_data['Yesterday Sales'].iloc[-1]:.0f}",
+                            f"{region_data['Yesterday Commitment'].iloc[-1]:.0f}"
+                        ])
+                        
                         valid_data = True
                     else:
                         st.warning(f"No data available for {region} and {brand}")
@@ -346,32 +382,43 @@ def generate_combined_report(df, regions, brands):
                 st.warning(f"Error processing {region} and {brand}: {str(e)}")
     
     if valid_data:
-        num_rows = len(table_data)
-        fig_height = max(6, 1 + 0.5 * num_rows)
+        num_rows = len(main_table_data) + len(additional_table_data)
+        fig_height = max(12, 2 + 0.5 * num_rows)  # Increased minimum height
         
-        fig, ax = plt.subplots(figsize=(12, fig_height))
-        ax.axis('off')
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, fig_height), gridspec_kw={'height_ratios': [1, 1.5]})
+        fig.suptitle("Combined Sales Prediction Report", fontsize=16, fontweight='bold', y=0.98)
         
-        fig.suptitle("", fontsize=16, fontweight='bold', y=0.95)
-        
-        table = ax.table(cellText=table_data[1:], colLabels=table_data[0], cellLoc='center', loc='center')
-        
-        table.auto_set_font_size(False)
-        table.set_fontsize(8)
-        
-        col_widths = [0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.1]
-        for i, width in enumerate(col_widths):
-            table.auto_set_column_width(i)
+        # Function to create styled table
+        def create_styled_table(ax, data, title):
+            ax.axis('off')
+            ax.set_title(title, fontsize=14, fontweight='bold', pad=20)
             
-        for (row, col), cell in table.get_celld().items():
-            if row == 0:
-                cell.set_text_props(fontweight='bold', wrap=True)
-                cell.set_height(0.1)
-            else:
-                cell.set_height(0.05)
+            table = ax.table(cellText=data[1:], colLabels=data[0], cellLoc='center', loc='center')
+            
+            table.auto_set_font_size(False)
+            table.set_fontsize(8)
+            table.scale(1, 1.5)
+            
+            for (row, col), cell in table.get_celld().items():
+                if row == 0:
+                    cell.set_text_props(fontweight='bold', color='white')
+                    cell.set_facecolor('#4CAF50')
+                elif row % 2 == 0:
+                    cell.set_facecolor('#f2f2f2')
+                
+                cell.set_edgecolor('white')
+                cell.set_text_props(wrap=True)
+                
+            for i in range(len(data[0])):
+                table.auto_set_column_width(i)
         
-        table.scale(1, 1.5)
-        plt.subplots_adjust(top=0.9, bottom=0.02, left=0.05, right=0.95)
+        # Create additional table
+        create_styled_table(ax1, additional_table_data, "Current Month Sales Data")
+        
+        # Create main table
+        create_styled_table(ax2, main_table_data, "Sales Predictions")
+        
+        plt.tight_layout()
         
         pdf_buffer = BytesIO()
         fig.savefig(pdf_buffer, format='pdf', bbox_inches='tight')
@@ -382,7 +429,6 @@ def generate_combined_report(df, regions, brands):
     else:
         st.warning("No valid data available for any region and brand combination.")
         return None
-
 
 def main():
     st.set_page_config(page_title="Sales Prediction App", page_icon="📊", layout="wide")
