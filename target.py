@@ -253,7 +253,7 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
     for i, (target, achievement) in enumerate(zip(all_targets, all_achievements)):
         percentage = (achievement / target) * 100
         color = 'green' if percentage >= 100 else 'red'
-        ax1.text(i, max(target, achievement), f'{percentage:.1f}%', 
+        ax1.text(i, (max(target, achievement)+min(target,achievement))/2, f'{percentage:.1f}%', 
                  ha='center', va='bottom', fontsize=10, color=color, fontweight='bold')
     
     ax1.errorbar(x[-1] + width/2, sept_achievement, 
@@ -284,10 +284,10 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
     ]
     total_aug = sum(value for _, value in channel_data)
     
-    ax3.text(0.5, 1.1, 'August Sales Channel Breakdown', fontsize=14, fontweight='bold', ha='center', va='center')
+    ax3.text(0.5, 1.1, 'August Sales Channel and Product wise Breakdown', fontsize=14, fontweight='bold', ha='center', va='center')
     
     for i, (channel, value) in enumerate(channel_data):
-        percentage = (value / total_aug) * 100
+        percentage = (value / f'{Monthly Achievement (Aug)}') * 100
         ax3.text(0.1, 0.8 - i*0.2, f"{channel}:", fontsize=12, fontweight='bold')
         ax3.text(0.5, 0.8 - i*0.2, f"{value:.2f} ({percentage:.1f}%)", fontsize=12)
     
