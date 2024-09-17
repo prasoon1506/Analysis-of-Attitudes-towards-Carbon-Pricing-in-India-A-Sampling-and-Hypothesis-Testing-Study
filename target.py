@@ -213,12 +213,12 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
     current_table = ax_current.table(cellText=current_data[1:], colLabels=current_data[0], cellLoc='center', loc='center')
     current_table.auto_set_font_size(False)
     current_table.set_fontsize(10)
-    current_table.scale(1, 1.5)
+    current_table.scale(1, 1.7)
     for (row, col), cell in current_table.get_celld().items():
                 if row == 0:
                     cell.set_text_props(fontweight='bold', color='black')
-                    cell.set_facecolor('brown')
-                cell.set_edgecolor('white')
+                    cell.set_facecolor('goldenrod')
+                cell.set_edgecolor('brown')
             
             # Existing table (same as before)
     ax_table = fig.add_subplot(gs[2, :])
@@ -231,12 +231,12 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
     table = ax_table.table(cellText=table_data[1:], colLabels=table_data[0], cellLoc='center', loc='center')
     table.auto_set_font_size(False)
     table.set_fontsize(10)
-    table.scale(1, 1.5)
+    table.scale(1, 1.7)
     for (row, col), cell in table.get_celld().items():
                 if row == 0:
                     cell.set_text_props(fontweight='bold', color='black')
-                    cell.set_facecolor('brown')
-                cell.set_edgecolor('white')
+                    cell.set_facecolor('goldenrod')
+                cell.set_edgecolor('brown')
 
     
     
