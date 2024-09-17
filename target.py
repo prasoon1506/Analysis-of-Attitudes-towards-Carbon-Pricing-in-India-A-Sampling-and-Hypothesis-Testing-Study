@@ -387,7 +387,7 @@ def generate_combined_report(df, regions, brands):
         st.warning("No data available for any region and brand combination.")
         return None
 
-# The main function remains the same as in the previous response
+
 
 
 def main():
