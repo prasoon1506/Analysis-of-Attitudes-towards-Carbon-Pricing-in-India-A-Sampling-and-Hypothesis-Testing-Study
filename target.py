@@ -141,7 +141,6 @@ def xgboost_explanation():
     This example demonstrates how to use XGBoost for a regression task, including model training, 
     prediction, evaluation, and examining feature importance.
     """)
-
 def predict_and_visualize(df, region, brand):
     try:
         region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)].copy()
@@ -193,14 +192,15 @@ def predict_and_visualize(df, region, brand):
         raise
 
 def create_visualization(region_data, region, brand, months, sept_target, sept_achievement, lower_achievement, upper_achievement, rmse):
-    fig = plt.figure(figsize=(16, 18))
-    gs = fig.add_gridspec(4, 1, height_ratios=[0.5, 0.5, 3, 1])
+    fig = plt.figure(figsize=(20, 24))
+    gs = fig.add_gridspec(6, 2, height_ratios=[0.5, 0.5, 3, 1, 2, 2])
     
-    ax_region = fig.add_subplot(gs[0])
+    # Region and table (same as before)
+    ax_region = fig.add_subplot(gs[0, :])
     ax_region.axis('off')
     ax_region.text(0.5, 0.5, region, fontsize=24, fontweight='bold', ha='center', va='center')
     
-    ax_table = fig.add_subplot(gs[1])
+    ax_table = fig.add_subplot(gs[1, :])
     ax_table.axis('off')
     table_data = [
         ['Brand', 'Month Target (Sep)', 'Monthly Achievement (Aug)', 'Predicted Achievement(Sept)', 'CI', 'RMSE'],
@@ -215,7 +215,8 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
         if row == 0:
             cell.set_text_props(fontweight='bold')
     
-    ax1 = fig.add_subplot(gs[2])
+    # Main bar chart (same as before)
+    ax1 = fig.add_subplot(gs[2, :])
     
     actual_achievements = [region_data[f'Monthly Achievement({month})'].iloc[-1] for month in months]
     actual_targets = [region_data[f'Month Tgt ({month})'].iloc[-1] for month in months]
@@ -259,7 +260,8 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
                  yerr=[[sept_achievement - lower_achievement], [upper_achievement - sept_achievement]],
                  fmt='o', color='darkred', capsize=5, capthick=2, elinewidth=2)
     
-    ax2 = fig.add_subplot(gs[3])
+    # Percentage achievement line chart (same as before)
+    ax2 = fig.add_subplot(gs[3, :])
     percent_achievements = [((ach / tgt) * 100) for ach, tgt in zip(all_achievements, all_targets)]
     ax2.plot(x, percent_achievements, marker='o', linestyle='-', color='purple')
     ax2.axhline(y=100, color='r', linestyle='--', alpha=0.7)
@@ -271,6 +273,58 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
     for i, pct in enumerate(percent_achievements):
         ax2.annotate(f'{pct:.1f}%', (i, pct), xytext=(0, 5), textcoords='offset points', 
                      ha='center', va='bottom', fontsize=8)
+    
+    # New: August Sales Channel Breakdown (Text-based)
+    ax3 = fig.add_subplot(gs[4, 0])
+    ax3.axis('off')
+    channel_data = [
+        ('Trade', region_data['Trade Aug'].iloc[-1]),
+        ('Premium', region_data['Premium Aug'].iloc[-1]),
+        ('Blended', region_data['Blended Aug'].iloc[-1])
+    ]
+    total_aug = sum(value for _, value in channel_data)
+    
+    ax3.text(0.5, 1.1, 'August Sales Channel Breakdown', fontsize=14, fontweight='bold', ha='center', va='center')
+    
+    for i, (channel, value) in enumerate(channel_data):
+        percentage = (value / total_aug) * 100
+        ax3.text(0.1, 0.8 - i*0.2, f"{channel}:", fontsize=12, fontweight='bold')
+        ax3.text(0.5, 0.8 - i*0.2, f"{value:.2f} ({percentage:.1f}%)", fontsize=12)
+    
+    # New: August Region Type Breakdown
+    ax4 = fig.add_subplot(gs[4, 1])
+    region_type_data = [
+        region_data['Green Aug'].iloc[-1],
+        region_data['Yellow Aug'].iloc[-1],
+        region_data['Red Aug'].iloc[-1],
+        region_data['Unidentified Aug'].iloc[-1]
+    ]
+    region_type_labels = ['Green', 'Yellow', 'Red', 'Unidentified']
+    colors = ['#66b3ff', '#ffcc99', '#ff9999', '#c2c2f0']
+    ax4.pie(region_type_data, labels=region_type_labels, autopct='%1.1f%%', startangle=90, colors=colors)
+    ax4.set_title('August Region Type Breakdown', fontsize=14, fontweight='bold')
+    
+    # New: August Data Table
+    ax5 = fig.add_subplot(gs[5, :])
+    ax5.axis('off')
+    aug_data = [
+        ['Trade Aug', 'Premium Aug', 'Blended Aug', 'Green Aug', 'Yellow Aug', 'Red Aug', 'Unidentified Aug'],
+        [f"{region_data['Trade Aug'].iloc[-1]:.2f}", 
+         f"{region_data['Premium Aug'].iloc[-1]:.2f}",
+         f"{region_data['Blended Aug'].iloc[-1]:.2f}",
+         f"{region_data['Green Aug'].iloc[-1]:.2f}",
+         f"{region_data['Yellow Aug'].iloc[-1]:.2f}",
+         f"{region_data['Red Aug'].iloc[-1]:.2f}",
+         f"{region_data['Unidentified Aug'].iloc[-1]:.2f}"]
+    ]
+    aug_table = ax5.table(cellText=aug_data[1:], colLabels=aug_data[0], cellLoc='center', loc='center')
+    aug_table.auto_set_font_size(False)
+    aug_table.set_fontsize(10)
+    aug_table.scale(1, 1.5)
+    for (row, col), cell in aug_table.get_celld().items():
+        if row == 0:
+            cell.set_text_props(fontweight='bold')
+    ax5.set_title('August Detailed Breakdown', fontsize=14, fontweight='bold')
     
     plt.tight_layout()
     return fig
