@@ -197,13 +197,13 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
     gs = fig.add_gridspec(6, 2, height_ratios=[0.5, 0.5,0.5, 3, 1, 2])
     ax_region = fig.add_subplot(gs[0, :])
     ax_region.axis('off')
-    ax_region.text(0.5, 0.5, f'region({brand})', fontsize=28, fontweight='bold', ha='center', va='center')
+    ax_region.text(0.5, 0.5, f'{region}({brand})', fontsize=28, fontweight='bold', ha='center', va='center')
             
     # New table for current month sales data
     ax_current = fig.add_subplot(gs[1, :])
     ax_current.axis('off')
     current_data = [
-                ['Till Yesterday\nTotal Sales', 'Commitment\nfor Today', 'Asking\nfor Today', 'Yesterday\nSales', 'Yesterday\nCommitment'],
+                ['Total Sales\nTill Now', 'Commitment\nfor Today', 'Asking\nfor Today', 'Yesterday\nSales', 'Yesterday\nCommitment'],
                 [f"{region_data['Till Yesterday Total Sales'].iloc[-1]:.0f}",
                  f"{region_data['Commitment for Today'].iloc[-1]:.0f}",
                  f"{region_data['Asking for Today'].iloc[-1]:.0f}",
@@ -224,8 +224,8 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
     ax_table = fig.add_subplot(gs[2, :])
     ax_table.axis('off')
     table_data = [
-                ['Brand', 'Month Target (Sep)', 'Monthly Achievement (Aug)', 'Predicted Achievement(Sept)', 'CI', 'RMSE'],
-                [brand, f"{sept_target:.2f}", f"{region_data['Monthly Achievement(Aug)'].iloc[-1]:.2f}", 
+                ['Month Target (Sep)', 'Monthly Achievement (Aug)', 'Predicted Achievement(Sept)', 'CI', 'RMSE'],
+                [f"{sept_target:.2f}", f"{region_data['Monthly Achievement(Aug)'].iloc[-1]:.2f}", 
                  f"{sept_achievement:.2f}", f"({lower_achievement:.2f}, {upper_achievement:.2f})", f"{rmse:.4f}"]
             ]
     table = ax_table.table(cellText=table_data[1:], colLabels=table_data[0], cellLoc='center', loc='center')
