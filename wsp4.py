@@ -473,14 +473,22 @@ def process_uploaded_file(uploaded_file):
             file_content = uploaded_file.read()
             wb = openpyxl.load_workbook(BytesIO(file_content))
             ws = wb.active
-            
             hidden_cols = [idx for idx, col in enumerate(ws.column_dimensions, 1) if ws.column_dimensions[col].hidden]
             
+            # Get black-colored columns
+            black_cols = []
+            for col in range(1, ws.max_column + 1):
+                cell = ws.cell(row=1, column=col)
+                if cell.fill.start_color.rgb == '00000000':  # Black color in ARGB format
+                    black_cols.append(col)
+            
+            # Combine hidden and black columns
+            columns_to_ignore = list(set(hidden_cols + black_cols))
             st.session_state.df = pd.read_excel(BytesIO(file_content), skiprows=2)
             if st.session_state.df.empty:
                 st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
             else:
-                st.session_state.df.drop(st.session_state.df.columns[hidden_cols], axis=1, inplace=True)
+                st.session_state.df.drop(st.session_state.df.columns[columns_to_ignore], axis=1, inplace=True)
 
 
                 brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
