@@ -470,16 +470,22 @@ def process_uploaded_file(uploaded_file):
     if uploaded_file and not st.session_state.file_processed:
         try:
             file_content = uploaded_file.read()
-            wb = openpyxl.load_workbook(BytesIO(file_content))
-            ws = wb.get_sheet_by_name('All India')
+            
+            # Read the Excel file, skipping the first two rows
             st.session_state.df = pd.read_excel(BytesIO(file_content), skiprows=2)
-            hidden_cols = []
-            for col_letter, col_dimension in st.session_state.df.column_dimensions.items():
-                if col_dimension.hidden:
-                    hidden_cols.append(openpyxl.utils.column_index_from_string(col_letter) - 1)
+            
             if st.session_state.df.empty:
                 st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
             else:
+                # Process hidden columns
+                wb = openpyxl.load_workbook(BytesIO(file_content))
+                ws = wb['All India']  # Use sheet name directly
+                
+                hidden_cols = []
+                for idx, col in enumerate(ws.columns):
+                    if ws.column_dimensions[get_column_letter(idx + 1)].hidden:
+                        hidden_cols.append(idx)
+                
                 # Drop hidden columns
                 st.session_state.df.drop(st.session_state.df.columns[hidden_cols], axis=1, inplace=True)
                 
@@ -515,6 +521,7 @@ def process_uploaded_file(uploaded_file):
             st.error(f"Error processing file: {e}")
             st.exception(e)
             st.session_state.file_processed = False
+
 
 def wsp_analysis_dashboard():
     st.markdown("""
