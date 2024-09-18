@@ -314,7 +314,7 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
     total_aug_current = region_data['Monthly Achievement(Aug)'].iloc[-1]
     total_aug_last = region_data['Total Aug 2023'].iloc[-1]
     
-    ax3.text(0.5, 1, f'\nAugust {current_year} Sales Channel Breakdown', fontsize=15, fontweight='bold', ha='center', va='center')
+    ax3.text(0.3, 1, f'\nAugust {current_year} Sales Breakdown', fontsize=15, fontweight='bold', ha='center', va='center')
     
     # Helper function to create arrow
     def get_arrow(value):
@@ -328,8 +328,8 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
     total_change = ((total_aug_current - total_aug_last) / total_aug_last) * 100
     arrow = get_arrow(total_change)
     color = get_color(total_change)
-    ax3.text(0.5, 0.9, f"Total August Sales: {total_aug_current:.2f}", fontsize=12, fontweight='bold', ha='center')
-    ax3.text(0.5, 0.85, f"vs Last Year: {total_aug_last:.2f} ({total_change:.1f}% {arrow})", fontsize=10, color=color, ha='center')
+    ax3.text(0.3, 0.9, f"August 2024: {total_aug_current:.2f}", fontsize=12, fontweight='bold', ha='center')
+    ax3.text(0.3, 0.85, f"vs August 2023: {total_aug_last:.2f} ({total_change:.1f}% {arrow})", fontsize=10, color=color, ha='center')
 
     for i, (channel, value_current, value_last) in enumerate(channel_data):
         percentage = (value_current / monthly_achievement_aug) * 100
