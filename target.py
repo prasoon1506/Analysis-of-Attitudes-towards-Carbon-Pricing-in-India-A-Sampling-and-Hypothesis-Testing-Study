@@ -314,7 +314,7 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
     total_aug_current = region_data['Monthly Achievement(Aug)'].iloc[-1]
     total_aug_last = region_data['Total Aug 2023'].iloc[-1]
     
-    ax3.text(0.2, 1, f'\nAugust {current_year} Sales Breakdown:-', fontsize=15, fontweight='bold', ha='center', va='center')
+    ax3.text(0.2, 1, f'\nAugust {current_year} Sales Breakdown:-', fontsize=16, fontweight='bold', ha='center', va='center')
     
     # Helper function to create arrow
     def get_arrow(value):
@@ -328,8 +328,8 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
     total_change = ((total_aug_current - total_aug_last) / total_aug_last) * 100
     arrow = get_arrow(total_change)
     color = get_color(total_change)
-    ax3.text(0.1, 0.9, f"August 2024: {total_aug_current:.0f}", fontsize=12, fontweight='bold', ha='center')
-    ax3.text(0.1, 0.85, f"vs August 2023: {total_aug_last:.0f} ({total_change:.1f}% {arrow})", fontsize=10, color=color, ha='center')
+    ax3.text(0.21, 0.9, f"August 2024: {total_aug_current:.0f}", fontsize=14, fontweight='bold', ha='center')
+    ax3.text(0.22, 0.85, f"vs August 2023: {total_aug_last:.0f} ({total_change:.1f}% {arrow})", fontsize=12, color=color, ha='center')
 
     for i, (channel, value_current, value_last) in enumerate(channel_data):
         percentage = (value_current / monthly_achievement_aug) * 100
@@ -338,10 +338,10 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
         color = get_color(change)
         
         y_pos = 0.75 - i*0.25
-        ax3.text(0.1, y_pos, f"{channel}:", fontsize=12, fontweight='bold')
-        ax3.text(0.2, y_pos, f"{value_current:.0f} ({percentage:.1f}%)", fontsize=12)
-        ax3.text(0.1, y_pos-0.05, f"vs Last Year: {value_last:.2f}", fontsize=10)
-        ax3.text(0.2, y_pos-0.05, f"({change:.1f}% {arrow})", fontsize=10, color=color)
+        ax3.text(0.1, y_pos, f"{channel}:", fontsize=14, fontweight='bold')
+        ax3.text(0.2, y_pos, f"{value_current:.0f} ({percentage:.1f}%)", fontsize=14)
+        ax3.text(0.1, y_pos-0.05, f"vs Last Year: {value_last:.2f}", fontsize=12)
+        ax3.text(0.2, y_pos-0.05, f"({change:.1f}% {arrow})", fontsize=12, color=color)
 
     
 
@@ -366,7 +366,7 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
     
     ax4.pie(region_type_data, labels=region_type_labels, colors=colors,
             autopct=make_autopct(region_type_data), startangle=90)
-    ax4.set_title('August Region Type Breakdown:-', fontsize=15, fontweight='bold')
+    ax4.set_title('August 2024 Region Type Breakdown:-', fontsize=16, fontweight='bold')
     
     plt.tight_layout()
     return fig
