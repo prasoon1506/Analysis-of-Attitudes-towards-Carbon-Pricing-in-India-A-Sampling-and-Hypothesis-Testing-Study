@@ -467,6 +467,11 @@ def Home():
     Happy analyzing!
     """)
     st.markdown('</div>', unsafe_allow_html=True)
+import pandas as pd
+import openpyxl
+from io import BytesIO
+import streamlit as st
+from openpyxl.utils import get_column_letter
 
 def process_uploaded_file(uploaded_file):
     if uploaded_file and not st.session_state.file_processed:
@@ -486,9 +491,13 @@ def process_uploaded_file(uploaded_file):
             
             width_threshold = 1  # Set your desired width threshold
             columns_to_keep = []
-            for idx in range(len(ws.columns)):
+
+            # Convert ws.columns to a list for indexing
+            column_list = list(ws.columns)
+            for idx in range(len(column_list)):
                 if idx < len(st.session_state.df.columns):
-                    if ws.column_dimensions[get_column_letter(idx + 1)].width and ws.column_dimensions[get_column_letter(idx + 1)].width > width_threshold:
+                    column_width = ws.column_dimensions[get_column_letter(idx + 1)].width
+                    if column_width and column_width > width_threshold:
                         columns_to_keep.append(st.session_state.df.columns[idx])
             
             # Check if any columns are to be kept
@@ -531,6 +540,7 @@ def process_uploaded_file(uploaded_file):
             st.error(f"Error processing file: {e}")
             st.exception(e)
             st.session_state.file_processed = False
+
 
 def wsp_analysis_dashboard():
     st.markdown("""
