@@ -467,7 +467,7 @@ def Home():
     Happy analyzing!
     """)
     st.markdown('</div>', unsafe_allow_html=True)
-r
+
 def process_uploaded_file(uploaded_file):
     if uploaded_file and not st.session_state.file_processed:
         try:
