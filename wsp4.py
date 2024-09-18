@@ -466,7 +466,6 @@ def Home():
     Happy analyzing!
     """)
     st.markdown('</div>', unsafe_allow_html=True)
-
 def process_uploaded_file(uploaded_file):
     if uploaded_file and not st.session_state.file_processed:
         try:
@@ -475,17 +474,16 @@ def process_uploaded_file(uploaded_file):
             ws = wb.active
             
             # Get hidden columns
-            hidden_cols = [idx for idx, col in enumerate(ws.column_dimensions, 1) if ws.column_dimensions[col].hidden]
+            hidden_cols = [col for col, column_dimension in ws.column_dimensions.items() if column_dimension.hidden]
             
             # Get black-colored columns
             black_cols = []
-            for col in range(1, ws.max_column + 1):
-                cell = ws.cell(row=1, column=col)
-                if cell.fill.start_color.rgb == '00000000':  # Black color in ARGB format
-                    black_cols.append(col)
+            for col in ws.iter_cols(min_row=1, max_row=1):
+                if col[0].fill.start_color.rgb == '00000000':  # Black color in ARGB format
+                    black_cols.append(col[0].column_letter)
             
             # Combine hidden and black columns
-            columns_to_ignore = list(set(hidden_cols + black_cols))
+            columns_to_ignore = set(hidden_cols + black_cols)
             
             # Read the Excel file into a pandas DataFrame
             st.session_state.df = pd.read_excel(BytesIO(file_content), skiprows=2)
@@ -493,12 +491,15 @@ def process_uploaded_file(uploaded_file):
             if st.session_state.df.empty:
                 st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
             else:
-                # Filter columns_to_ignore to only include valid column indices
-                valid_columns_to_ignore = [col for col in columns_to_ignore if col <= len(st.session_state.df.columns)]
+                # Convert column letters to DataFrame column names
+                df_columns = st.session_state.df.columns
+                columns_to_drop = [df_columns[openpyxl.utils.column_index_from_string(col) - 1] 
+                                   for col in columns_to_ignore 
+                                   if openpyxl.utils.column_index_from_string(col) <= len(df_columns)]
                 
                 # Drop hidden and black columns
-                if valid_columns_to_ignore:
-                    st.session_state.df.drop(st.session_state.df.columns[valid_columns_to_ignore], axis=1, inplace=True)
+                if columns_to_drop:
+                    st.session_state.df.drop(columns=columns_to_drop, axis=1, inplace=True)
 
                 # Rest of the function remains the same...
                 brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
@@ -534,6 +535,7 @@ def process_uploaded_file(uploaded_file):
             st.error(f"Error processing file: {e}")
             st.exception(e)
             st.session_state.file_processed = False
+
 def wsp_analysis_dashboard():
     st.markdown("""
     <style>
