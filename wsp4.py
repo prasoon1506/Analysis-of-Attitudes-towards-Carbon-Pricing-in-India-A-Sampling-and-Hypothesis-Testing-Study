@@ -467,6 +467,8 @@ def Home():
     Happy analyzing!
     """)
     st.markdown('</div>', unsafe_allow_html=True)
+
+
 def process_uploaded_file(uploaded_file):
     if uploaded_file and not st.session_state.file_processed:
         try:
@@ -477,53 +479,53 @@ def process_uploaded_file(uploaded_file):
             
             if st.session_state.df.empty:
                 st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
-            else:
-                # Process hidden columns
-                wb = openpyxl.load_workbook(BytesIO(file_content))
-                ws = wb['All India']  # Use sheet name directly
+                return
+            
+            # Load workbook and check column widths
+            wb = openpyxl.load_workbook(BytesIO(file_content))
+            ws = wb['All India']  # Use sheet name directly
+            
+            width_threshold = 1  # Set your desired width threshold
+            columns_to_keep = []
+            for idx, col in enumerate(ws.columns):
+                if ws.column_dimensions[get_column_letter(idx + 1)].width and ws.column_dimensions[get_column_letter(idx + 1)].width > width_threshold:
+                    columns_to_keep.append(st.session_state.df.columns[idx])
+            
+            # Filter the DataFrame to keep only the desired columns
+            st.session_state.df = st.session_state.df[columns_to_keep]
+            
+            brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
+            brand_columns = [col for col in st.session_state.df.columns if any(brand in col for brand in brands)]
+            num_weeks = len(brand_columns) // len(brands)
+            
+            if num_weeks > 0:
+                st.markdown("### Enter Week Names")
+                num_columns = max(1, num_weeks)
+                week_cols = st.columns(num_columns)
                 
-                hidden_cols = []
-                for idx, col in enumerate(ws.columns):
-                    if ws.column_dimensions[get_column_letter(idx + 1)].hidden:
-                        hidden_cols.append(idx)
+                if 'week_names_input' not in st.session_state or len(st.session_state.week_names_input) != num_weeks:
+                    st.session_state.week_names_input = [''] * num_weeks
                 
-                # Drop hidden columns
-                st.session_state.df.drop(st.session_state.df.columns[hidden_cols], axis=1, inplace=True)
-                
-                brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
-                brand_columns = [col for col in st.session_state.df.columns if any(brand in col for brand in brands)]
-                num_weeks = len(brand_columns) // len(brands)
-                
-                if num_weeks > 0:
-                    st.markdown("### Enter Week Names")
-                    num_columns = max(1, num_weeks)
-                    week_cols = st.columns(num_columns)
-                    
-                    if 'week_names_input' not in st.session_state or len(st.session_state.week_names_input) != num_weeks:
-                        st.session_state.week_names_input = [''] * num_weeks
-                    
-                    for i in range(num_weeks):
-                        with week_cols[i % num_columns]:
-                            st.text_input(
-                                f'Week {i+1}', 
-                                value=st.session_state.week_names_input[i] if i < len(st.session_state.week_names_input) else '',
-                                key=f'week_{i}',
-                                on_change=update_week_name(i)
-                            )
-                    if all(st.session_state.week_names_input):
-                        st.session_state.file_processed = True
-                    else:
-                        st.warning("Please fill in all week names to process the file.")
+                for i in range(num_weeks):
+                    with week_cols[i % num_columns]:
+                        st.text_input(
+                            f'Week {i+1}', 
+                            value=st.session_state.week_names_input[i] if i < len(st.session_state.week_names_input) else '',
+                            key=f'week_{i}',
+                            on_change=update_week_name(i)
+                        )
+                if all(st.session_state.week_names_input):
+                    st.session_state.file_processed = True
                 else:
-                    st.warning("No weeks detected in the uploaded file. Please check the file content.")
-                    st.session_state.week_names_input = []
-                    st.session_state.file_processed = False
+                    st.warning("Please fill in all week names to process the file.")
+            else:
+                st.warning("No weeks detected in the uploaded file. Please check the file content.")
+                st.session_state.week_names_input = []
+                st.session_state.file_processed = False
         except Exception as e:
             st.error(f"Error processing file: {e}")
             st.exception(e)
             st.session_state.file_processed = False
-
-
 def wsp_analysis_dashboard():
     st.markdown("""
     <style>
