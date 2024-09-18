@@ -468,7 +468,6 @@ def Home():
     """)
     st.markdown('</div>', unsafe_allow_html=True)
 
-
 def process_uploaded_file(uploaded_file):
     if uploaded_file and not st.session_state.file_processed:
         try:
@@ -487,12 +486,18 @@ def process_uploaded_file(uploaded_file):
             
             width_threshold = 1  # Set your desired width threshold
             columns_to_keep = []
-            for idx, col in enumerate(ws.columns):
-                if ws.column_dimensions[get_column_letter(idx + 1)].width and ws.column_dimensions[get_column_letter(idx + 1)].width > width_threshold:
-                    columns_to_keep.append(st.session_state.df.columns[idx])
+            for idx in range(len(ws.columns)):
+                if idx < len(st.session_state.df.columns):
+                    if ws.column_dimensions[get_column_letter(idx + 1)].width and ws.column_dimensions[get_column_letter(idx + 1)].width > width_threshold:
+                        columns_to_keep.append(st.session_state.df.columns[idx])
             
-            # Filter the DataFrame to keep only the desired columns
-            st.session_state.df = st.session_state.df[columns_to_keep]
+            # Check if any columns are to be kept
+            if columns_to_keep:
+                # Filter the DataFrame to keep only the desired columns
+                st.session_state.df = st.session_state.df[columns_to_keep]
+            else:
+                st.warning("No columns meet the width criteria. Please check the file content.")
+                return
             
             brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
             brand_columns = [col for col in st.session_state.df.columns if any(brand in col for brand in brands)]
@@ -509,7 +514,7 @@ def process_uploaded_file(uploaded_file):
                 for i in range(num_weeks):
                     with week_cols[i % num_columns]:
                         st.text_input(
-                            f'Week {i+1}', 
+                            f'Week {i + 1}', 
                             value=st.session_state.week_names_input[i] if i < len(st.session_state.week_names_input) else '',
                             key=f'week_{i}',
                             on_change=update_week_name(i)
@@ -526,6 +531,7 @@ def process_uploaded_file(uploaded_file):
             st.error(f"Error processing file: {e}")
             st.exception(e)
             st.session_state.file_processed = False
+
 def wsp_analysis_dashboard():
     st.markdown("""
     <style>
