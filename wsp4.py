@@ -474,16 +474,13 @@ def process_uploaded_file(uploaded_file):
             wb = openpyxl.load_workbook(BytesIO(file_content))
             ws = wb.active
             
-            hidden_cols = [idx for idx, col in enumerate(ws.column_dimensions, 1) if ws.column_dimensions[col].hidden]
+            
             
             st.session_state.df = pd.read_excel(BytesIO(file_content), skiprows=2)
             if st.session_state.df.empty:
                 st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
             else:
-                st.session_state.df.drop(st.session_state.df.columns[hidden_cols], axis=1, inplace=True)
-
-
-                brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
+                brands = ['UTCL1', 'JKS1', 'JKLC1', 'Ambuja1', 'Wonder1', 'Shree1']
                 brand_columns = [col for col in st.session_state.df.columns if any(brand in col for brand in brands)]
 
                 num_weeks = len(brand_columns) // len(brands)
