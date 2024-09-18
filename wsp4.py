@@ -473,6 +473,8 @@ def process_uploaded_file(uploaded_file):
             file_content = uploaded_file.read()
             wb = openpyxl.load_workbook(BytesIO(file_content))
             ws = wb.active
+            
+            # Get hidden columns
             hidden_cols = [idx for idx, col in enumerate(ws.column_dimensions, 1) if ws.column_dimensions[col].hidden]
             
             # Get black-colored columns
@@ -484,13 +486,21 @@ def process_uploaded_file(uploaded_file):
             
             # Combine hidden and black columns
             columns_to_ignore = list(set(hidden_cols + black_cols))
+            
+            # Read the Excel file into a pandas DataFrame
             st.session_state.df = pd.read_excel(BytesIO(file_content), skiprows=2)
+            
             if st.session_state.df.empty:
                 st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
             else:
-                st.session_state.df.drop(st.session_state.df.columns[columns_to_ignore], axis=1, inplace=True)
+                # Filter columns_to_ignore to only include valid column indices
+                valid_columns_to_ignore = [col for col in columns_to_ignore if col <= len(st.session_state.df.columns)]
+                
+                # Drop hidden and black columns
+                if valid_columns_to_ignore:
+                    st.session_state.df.drop(st.session_state.df.columns[valid_columns_to_ignore], axis=1, inplace=True)
 
-
+                # Rest of the function remains the same...
                 brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
                 brand_columns = [col for col in st.session_state.df.columns if any(brand in col for brand in brands)]
 
@@ -517,12 +527,10 @@ def process_uploaded_file(uploaded_file):
                     else:
                         st.warning("Please fill in all week names to process the file.")
                 else:
-                   
                     st.warning("No weeks detected in the uploaded file. Please check the file content.")
                     st.session_state.week_names_input = []
                     st.session_state.file_processed = False
         except Exception as e:
-
             st.error(f"Error processing file: {e}")
             st.exception(e)
             st.session_state.file_processed = False
