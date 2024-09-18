@@ -193,8 +193,8 @@ def predict_and_visualize(df, region, brand):
 
 
 def create_visualization(region_data, region, brand, months, sept_target, sept_achievement, lower_achievement, upper_achievement, rmse):
-    fig = plt.figure(figsize=(20, 24))  # Reduced height since we're removing a section
-    gs = fig.add_gridspec(6, 2, height_ratios=[0.5, 0.5,0.5, 3, 1, 2])
+    fig = plt.figure(figsize=(20, 28))  # Increased height to accommodate new table
+    gs = fig.add_gridspec(7, 2, height_ratios=[0.5, 0.5, 0.5, 3, 1, 2, 1])
     ax_region = fig.add_subplot(gs[0, :])
     ax_region.axis('off')
     ax_region.text(0.5, 0.5, f'{region}({brand})', fontsize=28, fontweight='bold', ha='center', va='center')
@@ -367,7 +367,29 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
     ax4.pie(region_type_data, labels=region_type_labels, colors=colors,
             autopct=make_autopct(region_type_data), startangle=90)
     ax4.set_title('August 2024 Region Type Breakdown:-', fontsize=16, fontweight='bold')
+    ax5 = fig.add_subplot(gs[6, :])
+    ax5.axis('off')
     
+    q3_table_data = [
+        ['Overall Requirement', 'Requirement in\nTrade Channel', 'Requirement in\nBlednded Product Category', 'Requirement for\nPremium Product'],
+        [f"{q3_2023_data['Q3 2023']:.0f}", f"{q3_2023_data['Q3 2023 Trade']:.0f}", 
+         f"{q3_2023_data['Q3 2023 Blended']:.0f}", f"{q3_2023_data['Q3 2023 Premium']:.0f}"]
+    ]
+    
+    q3_table = ax5.table(cellText=q3_table_data[1:], colLabels=q3_table_data[0], cellLoc='center', loc='center')
+    q3_table.auto_set_font_size(False)
+    q3_table.set_fontsize(10)
+    q3_table.scale(1, 1.7)
+    for (row, col), cell in q3_table.get_celld().items():
+        if row == 0:
+            cell.set_text_props(fontweight='bold', color='black')
+            cell.set_facecolor('goldenrod')
+        cell.set_edgecolor('brown')
+    
+    ax5.set_title('Quarterly Requirements for September 2024', fontsize=16, fontweight='bold')
+    
+    plt.tight_layout()
+    return fig
     plt.tight_layout()
     return fig
 def generate_combined_report(df, regions, brands):
