@@ -478,9 +478,10 @@ def process_uploaded_file(uploaded_file):
             
             # Get black-colored columns
             black_cols = []
-            for col in ws.iter_cols(min_row=1, max_row=1):
-                if col[0].fill.start_color.rgb == '00000000':  # Black color in ARGB format
-                    black_cols.append(col[0].column_letter)
+            for col in range(1, ws.max_column + 1):
+                cell = ws.cell(row=1, column=col)
+                if isinstance(cell, openpyxl.cell.cell.Cell) and cell.fill.start_color.rgb == '00000000':  # Black color in ARGB format
+                    black_cols.append(openpyxl.utils.get_column_letter(col))
             
             # Combine hidden and black columns
             columns_to_ignore = set(hidden_cols + black_cols)
