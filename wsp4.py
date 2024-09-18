@@ -473,18 +473,12 @@ def process_uploaded_file(uploaded_file):
             wb = openpyxl.load_workbook(BytesIO(file_content))
             ws = wb.active
             
-            # Get hidden columns
-            hidden_cols = [col for col, column_dimension in ws.column_dimensions.items() if column_dimension.hidden]
-            
             # Get black-colored columns
             black_cols = []
             for col in range(1, ws.max_column + 1):
                 cell = ws.cell(row=1, column=col)
-                if isinstance(cell, openpyxl.cell.cell.Cell) and cell.fill.start_color.rgb == '00000000':  # Black color in ARGB format
+                if cell.fill.start_color.rgb == '00000000':  # Black color in ARGB format
                     black_cols.append(openpyxl.utils.get_column_letter(col))
-            
-            # Combine hidden and black columns
-            columns_to_ignore = set(hidden_cols + black_cols)
             
             # Read the Excel file into a pandas DataFrame
             st.session_state.df = pd.read_excel(BytesIO(file_content), skiprows=2)
@@ -492,15 +486,14 @@ def process_uploaded_file(uploaded_file):
             if st.session_state.df.empty:
                 st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
             else:
-                # Convert column letters to DataFrame column names
-                df_columns = st.session_state.df.columns
-                columns_to_drop = [df_columns[openpyxl.utils.column_index_from_string(col) - 1] 
-                                   for col in columns_to_ignore 
-                                   if openpyxl.utils.column_index_from_string(col) <= len(df_columns)]
+                # Convert column letters to DataFrame column indices
+                columns_to_drop = [openpyxl.utils.column_index_from_string(col) - 1 
+                                   for col in black_cols 
+                                   if openpyxl.utils.column_index_from_string(col) <= len(st.session_state.df.columns)]
                 
-                # Drop hidden and black columns
+                # Drop black columns
                 if columns_to_drop:
-                    st.session_state.df.drop(columns=columns_to_drop, axis=1, inplace=True)
+                    st.session_state.df = st.session_state.df.iloc[:, [i for i in range(len(st.session_state.df.columns)) if i not in columns_to_drop]]
 
                 # Rest of the function remains the same...
                 brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
