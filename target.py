@@ -372,8 +372,8 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
     
     q3_table_data = [
         ['Overall Requirement', 'Requirement in\nTrade Channel', 'Requirement in\nBlednded Product Category', 'Requirement for\nPremium Product'],
-        [f"{q3_2023_data['Q3 2023']:.0f}", f"{q3_2023_data['Q3 2023 Trade']:.0f}", 
-         f"{q3_2023_data['Q3 2023 Blended']:.0f}", f"{q3_2023_data['Q3 2023 Premium']:.0f}"]
+        [f"{region_data['Q3 2023']:.0f}", f"{region_data['Q3 2023 Trade']:.0f}", 
+         f"{region_data['Q3 2023 Blended']:.0f}", f"{region_data['Q3 2023 Premium']:.0f}"]
     ]
     
     q3_table = ax5.table(cellText=q3_table_data[1:], colLabels=q3_table_data[0], cellLoc='center', loc='center')
