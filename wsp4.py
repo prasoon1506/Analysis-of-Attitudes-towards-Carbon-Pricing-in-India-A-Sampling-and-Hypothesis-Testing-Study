@@ -472,13 +472,13 @@ def process_uploaded_file(uploaded_file):
             file_content = uploaded_file.read()
             wb = openpyxl.load_workbook(BytesIO(file_content))
             ws = wb.get_sheet_by_name('All India')
-            
+            st.session_state.df = pd.read_excel(BytesIO(file_content), skiprows=2)
             hidden_cols = []
             for col_letter, col_dimension in ws.column_dimensions.items():
                 if col_dimension.hidden:
                     hidden_cols.append(openpyxl.utils.column_index_from_string(col_letter) - 1)
             
-            st.session_state.df = pd.read_excel(BytesIO(file_content), skiprows=2)
+            
             if st.session_state.df.empty:
                 st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
             else:
