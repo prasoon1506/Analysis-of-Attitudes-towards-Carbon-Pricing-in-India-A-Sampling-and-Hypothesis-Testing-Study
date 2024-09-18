@@ -16,6 +16,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 from streamlit_lottie import st_lottie
 import json
 import requests
+from openpyxl.utils import get_column_letter
 import plotly.express as px
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
 def load_lottie_url(url: str):
