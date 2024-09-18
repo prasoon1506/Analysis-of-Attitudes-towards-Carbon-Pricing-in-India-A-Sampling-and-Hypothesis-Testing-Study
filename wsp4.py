@@ -466,6 +466,7 @@ def Home():
     Happy analyzing!
     """)
     st.markdown('</div>', unsafe_allow_html=True)
+
 def process_uploaded_file(uploaded_file):
     if uploaded_file and not st.session_state.file_processed:
         try:
@@ -473,29 +474,15 @@ def process_uploaded_file(uploaded_file):
             wb = openpyxl.load_workbook(BytesIO(file_content))
             ws = wb.active
             
-            # Get black-colored columns
-            black_cols = []
-            for col in range(1, ws.max_column + 1):
-                cell = ws.cell(row=1, column=col)
-                if cell.fill.start_color.rgb == '00000000':  # Black color in ARGB format
-                    black_cols.append(openpyxl.utils.get_column_letter(col))
+            hidden_cols = [idx for idx, col in enumerate(ws.column_dimensions, 1) if ws.column_dimensions[col].hidden]
             
-            # Read the Excel file into a pandas DataFrame
             st.session_state.df = pd.read_excel(BytesIO(file_content), skiprows=2)
-            
             if st.session_state.df.empty:
                 st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
             else:
-                # Convert column letters to DataFrame column indices
-                columns_to_drop = [openpyxl.utils.column_index_from_string(col) - 1 
-                                   for col in black_cols 
-                                   if openpyxl.utils.column_index_from_string(col) <= len(st.session_state.df.columns)]
-                
-                # Drop black columns
-                if columns_to_drop:
-                    st.session_state.df = st.session_state.df.iloc[:, [i for i in range(len(st.session_state.df.columns)) if i not in columns_to_drop]]
+                st.session_state.df.drop(st.session_state.df.columns[hidden_cols], axis=1, inplace=True)
 
-                # Rest of the function remains the same...
+
                 brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
                 brand_columns = [col for col in st.session_state.df.columns if any(brand in col for brand in brands)]
 
@@ -522,10 +509,12 @@ def process_uploaded_file(uploaded_file):
                     else:
                         st.warning("Please fill in all week names to process the file.")
                 else:
+                   
                     st.warning("No weeks detected in the uploaded file. Please check the file content.")
                     st.session_state.week_names_input = []
                     st.session_state.file_processed = False
         except Exception as e:
+
             st.error(f"Error processing file: {e}")
             st.exception(e)
             st.session_state.file_processed = False
