@@ -337,7 +337,7 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
         arrow = get_arrow(change)
         color = get_color(change)
         
-        y_pos = 0.75 - i*0.15
+        y_pos = 0.75 - i*0.25
         ax3.text(0.1, y_pos, f"{channel}:", fontsize=12, fontweight='bold')
         ax3.text(0.2, y_pos, f"{value_current:.0f} ({percentage:.1f}%)", fontsize=12)
         ax3.text(0.1, y_pos-0.05, f"vs Last Year: {value_last:.2f}", fontsize=10)
