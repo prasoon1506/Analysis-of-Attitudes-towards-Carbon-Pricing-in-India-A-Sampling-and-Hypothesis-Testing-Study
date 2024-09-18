@@ -314,7 +314,7 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
     total_aug_current = region_data['Monthly Achievement(Aug)'].iloc[-1]
     total_aug_last = region_data['Total Aug 2023'].iloc[-1]
     
-    ax3.text(0.1, 1, f'\nAugust {current_year} Sales Breakdown', fontsize=15, fontweight='bold', ha='center', va='center')
+    ax3.text(0.2, 1, f'\nAugust {current_year} Sales Breakdown:-', fontsize=15, fontweight='bold', ha='center', va='center')
     
     # Helper function to create arrow
     def get_arrow(value):
