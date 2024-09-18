@@ -299,23 +299,52 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
     for i, pct in enumerate(percent_achievements):
         ax2.annotate(f'{pct:.1f}%', (i, pct), xytext=(0, 5), textcoords='offset points', 
                      ha='center', va='bottom', fontsize=8)
-    
-    # Updated: August Sales Channel Breakdown (Text-based)
-    ax3 = fig.add_subplot(gs[5, 0])
+    ax3 = fig.add_subplot(gs[5, :])
     ax3.axis('off')
+    
+    current_year = 2024  # Assuming the current year is 2024
+    last_year = 2023
+
     channel_data = [
-        ('Trade', region_data['Trade Aug'].iloc[-1]),
-        ('Premium', region_data['Premium Aug'].iloc[-1]),
-        ('Blended', region_data['Blended Aug'].iloc[-1])
+        ('Trade', region_data['Trade Aug'].iloc[-1], region_data['Trade Aug 2023'].iloc[-1]),
+        ('Premium', region_data['Premium Aug'].iloc[-1], region_data['Premium Aug 2023'].iloc[-1]),
+        ('Blended', region_data['Blended Aug'].iloc[-1], region_data['Blended Aug 2023'].iloc[-1])
     ]
     monthly_achievement_aug = region_data['Monthly Achievement(Aug)'].iloc[-1]
+    total_aug_current = region_data['Total Aug 2024'].iloc[-1]
+    total_aug_last = region_data['Total Aug 2023'].iloc[-1]
     
-    ax3.text(0.3, 1, '\n August Sales Channel Breakdown:-', fontsize=15, fontweight='bold', ha='center', va='center')
+    ax3.text(0.5, 1, f'\nAugust {current_year} Sales Channel Breakdown', fontsize=15, fontweight='bold', ha='center', va='center')
     
-    for i, (channel, value) in enumerate(channel_data):
-        percentage = (value / monthly_achievement_aug) * 100
-        ax3.text(0.1, 0.8 - i*0.2, f"{channel}:", fontsize=12, fontweight='bold')
-        ax3.text(0.5, 0.8 - i*0.2, f"{value:.2f} ({percentage:.1f}%)", fontsize=12)
+    # Helper function to create arrow
+    def get_arrow(value):
+        return '↑' if value > 0 else '↓' if value < 0 else '→'
+
+    # Helper function to get color
+    def get_color(value):
+        return 'green' if value > 0 else 'red' if value < 0 else 'black'
+
+    # Display total sales
+    total_change = ((total_aug_current - total_aug_last) / total_aug_last) * 100
+    arrow = get_arrow(total_change)
+    color = get_color(total_change)
+    ax3.text(0.5, 0.9, f"Total August Sales: {total_aug_current:.2f}", fontsize=12, fontweight='bold', ha='center')
+    ax3.text(0.5, 0.85, f"vs Last Year: {total_aug_last:.2f} ({total_change:.1f}% {arrow})", fontsize=10, color=color, ha='center')
+
+    for i, (channel, value_current, value_last) in enumerate(channel_data):
+        percentage = (value_current / monthly_achievement_aug) * 100
+        change = ((value_current - value_last) / value_last) * 100
+        arrow = get_arrow(change)
+        color = get_color(change)
+        
+        y_pos = 0.75 - i*0.15
+        ax3.text(0.2, y_pos, f"{channel}:", fontsize=12, fontweight='bold')
+        ax3.text(0.4, y_pos, f"{value_current:.2f} ({percentage:.1f}%)", fontsize=12)
+        ax3.text(0.7, y_pos, f"vs Last Year: {value_last:.2f}", fontsize=10)
+        ax3.text(0.9, y_pos, f"({change:.1f}% {arrow})", fontsize=10, color=color)
+
+    
+
     
     # Updated: August Region Type Breakdown with values
     ax4 = fig.add_subplot(gs[5, 1])
