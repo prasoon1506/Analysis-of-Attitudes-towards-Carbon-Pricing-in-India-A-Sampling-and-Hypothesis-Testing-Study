@@ -474,7 +474,7 @@ def process_uploaded_file(uploaded_file):
             ws = wb.get_sheet_by_name('All India')
             st.session_state.df = pd.read_excel(BytesIO(file_content), skiprows=2)
             hidden_cols = []
-            for col_letter, col_dimension in df.column_dimensions.items():
+            for col_letter, col_dimension in st.session_state.df.column_dimensions.items():
                 if col_dimension.hidden:
                     hidden_cols.append(openpyxl.utils.column_index_from_string(col_letter) - 1)
             if st.session_state.df.empty:
