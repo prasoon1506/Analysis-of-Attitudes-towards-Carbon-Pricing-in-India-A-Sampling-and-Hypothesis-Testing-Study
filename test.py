@@ -195,7 +195,6 @@ if 'file_processed' not in st.session_state:
 if 'diff_week' not in st.session_state:
     st.session_state.diff_week = 0
 
-# [Keep the existing transform_data, plot_district_graph, process_file, and update_week_name functions]
 def transform_data(df, week_names_input, selected_weeks):
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
     transformed_df = df[['Zone', 'REGION', 'Dist Code', 'Dist Name']].copy()
@@ -239,10 +238,11 @@ def transform_data(df, week_names_input, selected_weeks):
         'WZ_West Zone': 'West Zone'
     }
     transformed_df['Zone'] = transformed_df['Zone'].replace(zone_replacements)
+    
     def check_brand(col):
         return any(brand in str(col) for brand in brands)
+    
     all_brand_columns = [col for col in df.columns if check_brand(col)]
-
     
     for i, week in enumerate(selected_weeks):
         start_idx = i * len(brands)
@@ -252,10 +252,7 @@ def transform_data(df, week_names_input, selected_weeks):
         week_name = week_names_input[i]
         
         def get_brand_name(col):
-            if isinstance(col, tuple):
-                return str(col[1])
-            else:
-                return str(col)
+            return next((brand for brand in brands if brand in col), col)
         
         week_data = week_data.rename(columns={
             col: f"{get_brand_name(col)} ({week_name})"
@@ -490,9 +487,18 @@ def process_uploaded_file(uploaded_file):
             week_month_names = [ws.cell(row=1, column=cell.min_col).value for cell in merged_ranges]
             
             # Read the first four columns separately
-            df = pd.read_excel(BytesIO(file_content), sheet_name="All India", header=2)
+            header_df = pd.read_excel(BytesIO(file_content), sheet_name="All India", usecols="A:D", header=2)
             
-
+            # Read the rest of the data, keeping the brand names intact
+            data_df = pd.read_excel(BytesIO(file_content), sheet_name="All India", header=[0, 1, 2], usecols=lambda x: x not in "ABCD")
+            
+            # Flatten the multi-index columns for the data part
+            data_df.columns = [f"{col[0]}_{col[1]}_{col[2]}" if isinstance(col, tuple) else col for col in data_df.columns]
+            
+            # Combine the header and data dataframes
+            df = pd.concat([header_df, data_df], axis=1)
+            
+            st.session_state.df = df
             
             if st.session_state.df.empty:
                 st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
@@ -537,6 +543,7 @@ def process_uploaded_file(uploaded_file):
             st.error(f"Error processing file: {e}")
             st.exception(e)
             st.session_state.file_processed = False
+
 def wsp_analysis_dashboard():
     st.markdown("""
     <style>
