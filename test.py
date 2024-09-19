@@ -240,7 +240,13 @@ def transform_data(df, week_names_input, selected_weeks):
     }
     transformed_df['Zone'] = transformed_df['Zone'].replace(zone_replacements)
     
-    all_brand_columns = [col for col in df.columns if any(brand in col[1] for brand in brands)]
+    def check_brand(col):
+        if isinstance(col, tuple):
+            return any(brand in str(col[1]) for brand in brands)
+        else:
+            return any(brand in str(col) for brand in brands)
+    
+    all_brand_columns = [col for col in df.columns if check_brand(col)]
     
     for i, week in enumerate(selected_weeks):
         start_idx = i * len(brands)
@@ -248,8 +254,15 @@ def transform_data(df, week_names_input, selected_weeks):
         week_columns = all_brand_columns[start_idx:end_idx]
         week_data = df[week_columns]
         week_name = week_names_input[i]
+        
+        def get_brand_name(col):
+            if isinstance(col, tuple):
+                return str(col[1])
+            else:
+                return str(col)
+        
         week_data = week_data.rename(columns={
-            col: f"{col[1]} ({week_name})"
+            col: f"{get_brand_name(col)} ({week_name})"
             for col in week_data.columns
         })
         week_data.replace(0, np.nan, inplace=True)
@@ -262,7 +275,7 @@ def transform_data(df, week_names_input, selected_weeks):
     transformed_df = transformed_df.loc[:, ~transformed_df.columns.str.contains('_\d+$')]
     
     return transformed_df
-
+    
 def plot_district_graph(df, district_names, benchmark_brands_dict, desired_diff_dict, week_names, diff_week, download_pdf=False):
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
     num_weeks = len(df.columns[4:]) // len(brands)
