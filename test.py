@@ -483,7 +483,7 @@ def process_uploaded_file(uploaded_file):
             nan_value=float("NaN")
             uploaded_file1.replace("",nan_value,inplace=True)
             uploaded_file1.dropna(how="all",axis=1,inplace=True)
-            week_df = pd.read_excel(uploaded_file1, sheet_name="All India", header=None, nrows=1)
+            week_df = pd.read_excel(uploaded_file1, header=None, nrows=1)
             week_names = [col for col in week_df.iloc[0] if isinstance(col, str) and "'" in col]
 
             # Read the header information (first 4 columns)
@@ -495,7 +495,7 @@ def process_uploaded_file(uploaded_file):
                 start_col = 4 + i * 6  # Each week has 6 columns (UTCL, JKS, JKLC, Ambuja, Wonder, Shree)
                 data_columns.extend(range(start_col, start_col + 6))
             
-            data_df = pd.read_excel(uploaded_file1, sheet_name="All India", usecols=data_columns, header=2)
+            data_df = pd.read_excel(uploaded_file1, usecols=data_columns, header=2)
             data_df.rename(columns={"":"test"},inplace=True)
             nan_value=float("NaN")
             data_df.replace("",nan_value,inplace=True)
