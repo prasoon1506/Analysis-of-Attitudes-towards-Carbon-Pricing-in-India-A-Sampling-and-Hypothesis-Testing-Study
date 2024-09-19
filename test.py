@@ -249,8 +249,8 @@ def transform_data(df, week_names_input, selected_weeks):
         week_data = df[week_columns]
         week_name = week_names_input[i]
         week_data = week_data.rename(columns={
-            col: f"{brand} ({week_name})"
-            for brand, col in zip(brands, week_data.columns)
+            col: f"{col.split('_')[0]} ({week_name})"
+            for col in week_data.columns
         })
         week_data.replace(0, np.nan, inplace=True)
         
@@ -481,7 +481,9 @@ def process_uploaded_file(uploaded_file):
             
             # Read data starting from the third row
             st.session_state.df = pd.read_excel(BytesIO(file_content), sheet_name="All India", header=[1, 2], skiprows=[0])
-            
+            df = pd.read_excel(BytesIO(file_content), sheet_name="All India", header=[0, 1], skiprows=[0])
+            df.columns = [f"{col[0]}_{col[1]}" if isinstance(col, tuple) else col for col in df.columns]
+            st.session_state.df = df
             if st.session_state.df.empty:
                 st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
             else:
