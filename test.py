@@ -508,7 +508,6 @@ def process_uploaded_file(uploaded_file):
             df.columns = new_columns
 
             st.session_state.df = df
-            
             if st.session_state.df.empty:
                 st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
             else:
@@ -551,7 +550,7 @@ def process_uploaded_file(uploaded_file):
             st.error(f"Error processing file: {e}")
             st.exception(e)
             st.session_state.file_processed = False
-
+            
 def wsp_analysis_dashboard():
     st.markdown("""
     <style>
