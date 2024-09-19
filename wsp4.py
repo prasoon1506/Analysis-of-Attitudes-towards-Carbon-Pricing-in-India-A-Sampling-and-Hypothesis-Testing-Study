@@ -467,33 +467,26 @@ def Home():
     Happy analyzing!
     """)
     st.markdown('</div>', unsafe_allow_html=True)
-import pandas as pd
-import streamlit as st
-from io import BytesIO
-import xlrd
-
-def is_column_hidden(sheet, col_index):
-    return sheet.colinfo_map.get(col_index, {}).get('hidden', 0) != 0
 
 def process_uploaded_file(uploaded_file):
     if uploaded_file and not st.session_state.file_processed:
         try:
-            # Read the Excel file
-            xls = xlrd.open_workbook(file_contents=uploaded_file.read(), on_demand=True)
-            sheet = xls.sheet_by_index(0)
-
-            # Identify visible columns
-            visible_cols = [i for i in range(sheet.ncols) if not is_column_hidden(sheet, i)]
-
-            # Read only visible columns
-            df = pd.read_excel(uploaded_file, usecols=visible_cols, skiprows=2)
-
-            if df.empty:
+            file_content = uploaded_file.read()
+            wb = openpyxl.load_workbook(BytesIO(file_content))
+            ws = wb.active
+            
+            hidden_cols = [idx for idx, col in enumerate(ws.column_dimensions, 1) if ws.column_dimensions[col].hidden]
+            
+            st.session_state.df = pd.read_excel(BytesIO(file_content), skiprows=2)
+            if st.session_state.df.empty:
                 st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
             else:
-                st.session_state.df = df
+                st.session_state.df.drop(st.session_state.df.columns[hidden_cols], axis=1, inplace=True)
+
+
                 brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
-                brand_columns = [col for col in df.columns if any(brand in str(col) for brand in brands)]
+                brand_columns = [col for col in st.session_state.df.columns if any(brand in col for brand in brands)]
+
                 num_weeks = len(brand_columns) // len(brands)
                 
                 if num_weeks > 0:
@@ -517,20 +510,15 @@ def process_uploaded_file(uploaded_file):
                     else:
                         st.warning("Please fill in all week names to process the file.")
                 else:
+                   
                     st.warning("No weeks detected in the uploaded file. Please check the file content.")
                     st.session_state.week_names_input = []
                     st.session_state.file_processed = False
-
         except Exception as e:
+
             st.error(f"Error processing file: {e}")
             st.exception(e)
             st.session_state.file_processed = False
-
-# Make sure to define the update_week_name function if it's not already defined
-def update_week_name(index):
-    def update():
-        st.session_state.week_names_input[index] = st.session_state[f'week_{index}']
-    return update
 
 def wsp_analysis_dashboard():
     st.markdown("""
