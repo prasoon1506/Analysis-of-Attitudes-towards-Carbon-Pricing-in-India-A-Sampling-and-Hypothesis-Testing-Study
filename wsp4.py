@@ -19,21 +19,13 @@ import requests
 from openpyxl.utils import get_column_letter
 import plotly.express as px
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
-import streamlit as st
-import pandas as pd
-import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 import math
-from scipy import stats
-import matplotlib.pyplot as plt
 import seaborn as sns
 import xgboost as xgb
 from io import BytesIO
-import base64
 import time
-import requests
-from streamlit_lottie import st_lottie
 from concurrent.futures import ThreadPoolExecutor
 def load_lottie_url(url: str):
     r = requests.get(url)
