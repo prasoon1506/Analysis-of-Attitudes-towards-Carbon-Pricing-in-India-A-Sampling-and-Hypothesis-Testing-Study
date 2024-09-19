@@ -478,12 +478,16 @@ def Home():
 def process_uploaded_file(uploaded_file):
     if uploaded_file and not st.session_state.file_processed:
         try:
-            # Read the first row to get week names
-            week_df = pd.read_excel(uploaded_file, sheet_name="All India", header=None, nrows=1)
+            uploaded_file1=pd.read_excel(uploaded_file,sheet_name="All India")
+            uploaded_file1.rename(columns={"":"test"},inplace=True)
+            nan_value=float("NaN")
+            uploaded_file1.replace("",nan_value,inplace=True)
+            uploaded_file1.dropna(how="all",axis=1,inplace=True)
+            week_df = pd.read_excel(uploaded_file1, sheet_name="All India", header=None, nrows=1)
             week_names = [col for col in week_df.iloc[0] if isinstance(col, str) and "'" in col]
 
             # Read the header information (first 4 columns)
-            header_df = pd.read_excel(uploaded_file, sheet_name="All India", usecols="A:D", header=2)
+            header_df = pd.read_excel(uploaded_file1, sheet_name="All India", usecols="A:D", header=2)
 
             # Read the data columns, skipping the 'GAP - from' columns
             data_columns = [0, 1, 2, 3]  # First 4 columns
@@ -491,7 +495,7 @@ def process_uploaded_file(uploaded_file):
                 start_col = 4 + i * 6  # Each week has 6 columns (UTCL, JKS, JKLC, Ambuja, Wonder, Shree)
                 data_columns.extend(range(start_col, start_col + 6))
             
-            data_df = pd.read_excel(uploaded_file, sheet_name="All India", usecols=data_columns, header=2)
+            data_df = pd.read_excel(uploaded_file1, sheet_name="All India", usecols=data_columns, header=2)
             data_df.rename(columns={"":"test"},inplace=True)
             nan_value=float("NaN")
             data_df.replace("",nan_value,inplace=True)
