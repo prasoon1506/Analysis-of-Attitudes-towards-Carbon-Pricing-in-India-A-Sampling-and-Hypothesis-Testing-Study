@@ -243,6 +243,11 @@ def transform_data(df, week_names_input):
     brand_columns = [col for col in df.columns if any(brand in col for brand in brands)]
     num_weeks = len(brand_columns) // len(brands)
     
+    # Ensure we have enough week names
+    if len(week_names_input) < num_weeks:
+        st.warning(f"Not enough week names provided. Expected {num_weeks}, got {len(week_names_input)}. Using default names for missing weeks.")
+        week_names_input.extend([f"Week {i+1}" for i in range(len(week_names_input), num_weeks)])
+    
     for i in range(num_weeks):
         start_idx = i * len(brands)
         end_idx = (i + 1) * len(brands)
@@ -262,6 +267,7 @@ def transform_data(df, week_names_input):
     transformed_df = transformed_df.loc[:, ~transformed_df.columns.str.contains('_\d+$')]
     
     return transformed_df
+
 
 def plot_district_graph(df, district_names, benchmark_brands_dict, desired_diff_dict, week_names, diff_week, download_pdf=False):
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
