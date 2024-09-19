@@ -490,7 +490,7 @@ def process_uploaded_file(uploaded_file):
             df = pd.read_excel(BytesIO(file_content), header=2)
             
             # Remove completely empty columns (including those without column names)
-            df = df.dropna(axis=1, how='any',subset=None)
+            df = df.dropna(axis=1, how='all')
             
             # Remove hidden columns
             df = df.drop(columns=df.columns[hidden_cols], errors='ignore')
