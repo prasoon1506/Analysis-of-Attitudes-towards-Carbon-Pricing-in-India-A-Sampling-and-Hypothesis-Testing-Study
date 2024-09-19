@@ -489,7 +489,7 @@ def process_uploaded_file(uploaded_file):
             # Read the data columns, skipping the 'GAP - from' columns
             data_columns = [0, 1, 2, 3]  # First 4 columns
             for i, week in enumerate(week_names):
-                start_col = 4 + i * 6  # Each week has 6 columns (UTCL, JKS, JKLC, Ambuja, Wonder, Shree)
+                start_col = 4 + i * 5  # Each week has 6 columns (UTCL, JKS, JKLC, Ambuja, Wonder, Shree)
                 data_columns.extend(range(start_col, start_col + 5))
 
             data_df = pd.read_excel(uploaded_file, sheet_name="All India", usecols=data_columns, header=2)
