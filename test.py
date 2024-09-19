@@ -499,7 +499,6 @@ def process_uploaded_file(uploaded_file):
             df = pd.concat([header_df, data_df], axis=1)
             
             st.session_state.df = df
-            
             if st.session_state.df.empty:
                 st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
             else:
