@@ -196,7 +196,7 @@ if 'diff_week' not in st.session_state:
     st.session_state.diff_week = 0
 
 # [Keep the existing transform_data, plot_district_graph, process_file, and update_week_name functions]
-def transform_data(df, week_names_input):
+def transform_data(df, week_names_input, selected_weeks):
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
     transformed_df = df[['Zone', 'REGION', 'Dist Code', 'Dist Name']].copy()
     
@@ -240,13 +240,13 @@ def transform_data(df, week_names_input):
     }
     transformed_df['Zone'] = transformed_df['Zone'].replace(zone_replacements)
     
-    brand_columns = [col for col in df.columns if any(brand in col for brand in brands)]
-    num_weeks = len(brand_columns) // len(brands)
+    all_brand_columns = [col for col in df.columns if any(brand in col for brand in brands)]
     
-    for i in range(num_weeks):
+    for i, week in enumerate(selected_weeks):
         start_idx = i * len(brands)
         end_idx = (i + 1) * len(brands)
-        week_data = df[brand_columns[start_idx:end_idx]]
+        week_columns = all_brand_columns[start_idx:end_idx]
+        week_data = df[week_columns]
         week_name = week_names_input[i]
         week_data = week_data.rename(columns={
             col: f"{brand} ({week_name})"
@@ -476,6 +476,7 @@ def process_uploaded_file(uploaded_file):
             
             # Extract merged cells from the first row that span 6 columns
             merged_ranges = [cell for cell in ws.merged_cells.ranges if cell.min_row == 1 and cell.max_row == 1 and cell.max_col - cell.min_col == 5]
+            merged_ranges.sort(key=lambda x: x.min_col)  # Sort by column to maintain order
             week_month_names = [ws.cell(row=1, column=cell.min_col).value for cell in merged_ranges]
             
             # Read data starting from the third row
@@ -487,8 +488,8 @@ def process_uploaded_file(uploaded_file):
                 # Display checkboxes for selecting weeks/months
                 st.markdown("### Select Weeks/Months for Analysis")
                 selected_weeks = []
-                for name in week_month_names:
-                    if st.checkbox(str(name)):  # Convert to string in case of non-string values
+                for i, name in enumerate(week_month_names):
+                    if st.checkbox(str(name), key=f"week_checkbox_{i}"):  # Convert to string in case of non-string values
                         selected_weeks.append(name)
                 
                 if selected_weeks:
@@ -524,6 +525,7 @@ def process_uploaded_file(uploaded_file):
             st.error(f"Error processing file: {e}")
             st.exception(e)
             st.session_state.file_processed = False
+
 def wsp_analysis_dashboard():
     st.markdown("""
     <style>
@@ -579,8 +581,8 @@ def wsp_analysis_dashboard():
         st.warning("Please upload a file and fill in all week names in the Home section before using this dashboard.")
         return
 
-    st.session_state.df = transform_data(st.session_state.df, st.session_state.week_names_input)
-    
+
+    st.session_state.df = transform_data(st.session_state.df, st.session_state.week_names_input, st.session_state.selected_weeks)
     st.markdown('<div class="section-box">', unsafe_allow_html=True)
     st.subheader("Analysis Settings")
     
@@ -709,7 +711,6 @@ def wsp_analysis_dashboard():
                     st.warning(f"No benchmark brands selected for {district}.")
     
     st.markdown("### Generate Analysis")
-    
     if st.button('Generate Plots', key='generate_plots', use_container_width=True):
         with st.spinner('Generating plots...'):
             plot_district_graph(filtered_df, selected_districts, benchmark_brands_dict, 
@@ -721,6 +722,7 @@ def wsp_analysis_dashboard():
 
     else:
         st.warning("Please upload a file in the Home section before using this dashboard.")
+    
 def descriptive_statistics_and_prediction():
     st.markdown("""
     <style>
