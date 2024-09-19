@@ -2020,7 +2020,7 @@ def main():
         descriptive_statistics_and_prediction()
     elif app_mode == "Sales Dashboard":
         sales_dashboard()
-    elif app_choice == "Sales Prediction":
+    elif app_mode == "Sales Prediction":
         sales_prediction_app()
     elif app_mode =="File Manager":
         folder_menu()
