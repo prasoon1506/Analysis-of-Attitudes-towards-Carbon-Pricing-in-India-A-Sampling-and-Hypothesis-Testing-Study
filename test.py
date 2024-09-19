@@ -487,7 +487,7 @@ def process_uploaded_file(uploaded_file):
             week_names = [col for col in week_df.iloc[0] if isinstance(col, str) and "'" in col]
 
             # Read the header information (first 4 columns)
-            header_df = pd.read_excel(uploaded_file1, sheet_name="All India", usecols="A:D", header=2)
+            header_df = pd.read_excel(uploaded_file1, usecols="A:D", header=2)
 
             # Read the data columns, skipping the 'GAP - from' columns
             data_columns = [0, 1, 2, 3]  # First 4 columns
