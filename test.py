@@ -474,38 +474,42 @@ def Home():
     Happy analyzing!
     """)
     st.markdown('</div>', unsafe_allow_html=True)
+
 def process_uploaded_file(uploaded_file):
     if uploaded_file and not st.session_state.file_processed:
         try:
-            file_content = uploaded_file.read()
-            wb = openpyxl.load_workbook(BytesIO(file_content))
-            ws = wb.get_sheet_by_name("All India")
-            
-            # Extract merged cells from the first row that span 6 columns
-            merged_ranges = [cell for cell in ws.merged_cells.ranges if cell.min_row == 1 and cell.max_row == 1 and cell.max_col - cell.min_col == 5]
-            merged_ranges.sort(key=lambda x: x.min_col)  # Sort by column to maintain order
-            week_month_names = [ws.cell(row=1, column=cell.min_col).value for cell in merged_ranges]
-            
-            # Read the first four columns separately
-            header_df = pd.read_excel(BytesIO(file_content), sheet_name="All India", usecols="A:D", header=2)
-            
-            # Read the rest of the data, keeping the brand names intact
-            data_df = pd.read_excel(BytesIO(file_content), sheet_name="All India", header=[0, 1, 2], usecols=lambda x: x not in "ABCD")
-            
-            # Flatten the multi-index columns for the data part
-            data_df.columns = [f"{col[0]}_{col[1]}_{col[2]}" if isinstance(col, tuple) else col for col in data_df.columns]
-            
-            # Combine the header and data dataframes
-            df = pd.concat([header_df, data_df], axis=1)
-            
+            # Read the first row to get week names
+            week_df = pd.read_excel(uploaded_file, sheet_name="All India", header=None, nrows=1)
+            week_names = [col for col in week_df.iloc[0] if isinstance(col, str) and col.startswith('W-')]
+
+            # Read the header information (first 4 columns)
+            header_df = pd.read_excel(uploaded_file, sheet_name="All India", usecols="A:D", header=2)
+
+            # Read the data columns, skipping the 'GAP - from' columns
+            data_columns = [0, 1, 2, 3]  # First 4 columns
+            for i, week in enumerate(week_names):
+                start_col = 5 + i * 6  # Each week has 6 columns (UTCL, JKS, JKLC, Ambuja, Wonder, Shree)
+                data_columns.extend(range(start_col, start_col + 6))
+
+            data_df = pd.read_excel(uploaded_file, sheet_name="All India", usecols=data_columns, header=2)
+
+            # Combine header and data dataframes
+            df = pd.concat([header_df, data_df.iloc[:, 4:]], axis=1)
+
+            # Rename columns to include week names
+            new_columns = list(df.columns[:4])
+            for week in week_names:
+                new_columns.extend([f"{brand} ({week})" for brand in ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']])
+            df.columns = new_columns
+
             st.session_state.df = df
+            
             if st.session_state.df.empty:
                 st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
             else:
-                # Display checkboxes for selecting weeks/months
                 st.markdown("### Select Weeks/Months for Analysis")
                 selected_weeks = []
-                for i, name in enumerate(week_month_names):
+                for i, name in enumerate(week_names):
                     if st.checkbox(str(name), key=f"week_checkbox_{i}"):
                         selected_weeks.append(name)
                 
@@ -542,7 +546,6 @@ def process_uploaded_file(uploaded_file):
             st.error(f"Error processing file: {e}")
             st.exception(e)
             st.session_state.file_processed = False
-
 def wsp_analysis_dashboard():
     st.markdown("""
     <style>
