@@ -477,7 +477,6 @@ def Home():
     """)
     st.markdown('</div>', unsafe_allow_html=True)
 
-
 def process_uploaded_file(uploaded_file):
     if uploaded_file and not st.session_state.file_processed:
         try:
@@ -488,20 +487,20 @@ def process_uploaded_file(uploaded_file):
             hidden_cols = [idx for idx, col in enumerate(ws.column_dimensions, 1) if ws.column_dimensions[col].hidden]
             
             # Read the Excel file into a DataFrame, skipping the first two rows
-            df = pd.read_excel(BytesIO(file_content), skiprows=2)
+            df = pd.read_excel(BytesIO(file_content), header=2)
             
             # Remove completely empty columns (including those without column names)
             df = df.dropna(axis=1, how='all')
             
             # Remove hidden columns
-            df = df.drop(df.columns[hidden_cols], axis=1, errors='ignore')
+            df = df.drop(columns=df.columns[hidden_cols], errors='ignore')
             
             if df.empty:
                 st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
             else:
                 st.session_state.df = df
                 brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
-                brand_columns = [col for col in st.session_state.df.columns if any(brand in col for brand in brands)]
+                brand_columns = [col for col in st.session_state.df.columns if any(brand in str(col) for brand in brands)]
                 num_weeks = len(brand_columns) // len(brands)
                 
                 if num_weeks > 0:
@@ -532,6 +531,7 @@ def process_uploaded_file(uploaded_file):
             st.error(f"Error processing file: {e}")
             st.exception(e)
             st.session_state.file_processed = False
+
 def wsp_analysis_dashboard():
     st.markdown("""
     <style>
