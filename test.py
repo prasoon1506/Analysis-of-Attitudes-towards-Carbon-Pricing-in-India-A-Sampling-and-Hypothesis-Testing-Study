@@ -480,7 +480,8 @@ def process_uploaded_file(uploaded_file):
         try:
             # Read the first row to get week names
             week_df = pd.read_excel(uploaded_file, sheet_name="All India", header=None, nrows=1)
-            week_names = [col for col in week_df.iloc[0] if isinstance(col, str) and col.startswith('W-')]
+            
+            week_names = [col for col in week_df.iloc[0] if isinstance(col, str) and "'" in col]
 
             # Read the header information (first 4 columns)
             header_df = pd.read_excel(uploaded_file, sheet_name="All India", usecols="A:D", header=2)
@@ -488,7 +489,7 @@ def process_uploaded_file(uploaded_file):
             # Read the data columns, skipping the 'GAP - from' columns
             data_columns = [0, 1, 2, 3]  # First 4 columns
             for i, week in enumerate(week_names):
-                start_col = 5 + i * 6  # Each week has 6 columns (UTCL, JKS, JKLC, Ambuja, Wonder, Shree)
+                start_col = 5 + (i-1) * 6  # Each week has 6 columns (UTCL, JKS, JKLC, Ambuja, Wonder, Shree)
                 data_columns.extend(range(start_col, start_col + 6))
 
             data_df = pd.read_excel(uploaded_file, sheet_name="All India", usecols=data_columns, header=2)
