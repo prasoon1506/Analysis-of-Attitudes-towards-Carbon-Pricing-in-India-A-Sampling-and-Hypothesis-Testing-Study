@@ -480,9 +480,6 @@ def process_uploaded_file(uploaded_file):
         try:
             # Read the first row to get week names
             week_df = pd.read_excel(uploaded_file, sheet_name="All India", header=None, nrows=1)
-            nan_value=float("NaN")
-            week_df.replace("",nan_value,inplace=True)
-            week_df.dropna(how="all",axis=1,inplace=True)
             week_names = [col for col in week_df.iloc[0] if isinstance(col, str) and "'" in col]
 
             # Read the header information (first 4 columns)
@@ -495,7 +492,9 @@ def process_uploaded_file(uploaded_file):
                 data_columns.extend(range(start_col, start_col + 6))
             
             data_df = pd.read_excel(uploaded_file, sheet_name="All India", usecols=data_columns, header=2)
-
+            nan_value=float("NaN")
+            data_df.replace("",nan_value,inplace=True)
+            data_df.dropna(how="all",axis=1,inplace=True)
             # Combine header and data dataframes
             df = pd.concat([header_df, data_df.iloc[:, 4:]], axis=1)
 
