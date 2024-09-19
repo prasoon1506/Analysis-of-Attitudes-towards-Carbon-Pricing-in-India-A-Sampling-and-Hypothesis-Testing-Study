@@ -486,7 +486,7 @@ def process_uploaded_file(uploaded_file):
             hidden_cols = [idx for idx, col in enumerate(ws.column_dimensions, 1) if ws.column_dimensions[col].hidden]
 
             # Read the Excel file into a DataFrame, skipping the first two rows
-            df = pd.read_excel(BytesIO(file_content), header=2)
+            df = pd.read_excel(BytesIO(file_content), skiprows=2)
             df = df.loc[:, df.columns[df.columns.notna() & (df.columns != '')]]
 
             # Remove hidden columns
