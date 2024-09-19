@@ -489,11 +489,11 @@ def process_uploaded_file(uploaded_file):
             merged_ranges.sort(key=lambda x: x.min_col)  # Sort by column to maintain order
             week_month_names = [ws.cell(row=1, column=cell.min_col).value for cell in merged_ranges]
             
-            # Read data starting from the third row
+            # Read the first four columns separately
+            df = pd.read_excel(BytesIO(file_content), sheet_name="All India", header=2)
             
-            df = pd.read_excel(BytesIO(file_content), sheet_name="All India", header=[0, 1], skiprows=[0])
-            df.columns = [f"{col[0]}_{col[1]}" if isinstance(col, tuple) else col for col in df.columns]
-            st.session_state.df = df
+
+            
             if st.session_state.df.empty:
                 st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
             else:
@@ -501,7 +501,7 @@ def process_uploaded_file(uploaded_file):
                 st.markdown("### Select Weeks/Months for Analysis")
                 selected_weeks = []
                 for i, name in enumerate(week_month_names):
-                    if st.checkbox(str(name), key=f"week_checkbox_{i}"):  # Convert to string in case of non-string values
+                    if st.checkbox(str(name), key=f"week_checkbox_{i}"):
                         selected_weeks.append(name)
                 
                 if selected_weeks:
@@ -510,7 +510,7 @@ def process_uploaded_file(uploaded_file):
                     num_selected_weeks = len(selected_weeks)
                     
                     st.markdown("### Enter Week Names")
-                    num_columns = max(1, num_selected_weeks)
+                    num_columns = min(3, num_selected_weeks)  # Use at most 3 columns
                     week_cols = st.columns(num_columns)
                     
                     if 'week_names_input' not in st.session_state or len(st.session_state.week_names_input) != num_selected_weeks:
@@ -537,7 +537,6 @@ def process_uploaded_file(uploaded_file):
             st.error(f"Error processing file: {e}")
             st.exception(e)
             st.session_state.file_processed = False
-
 def wsp_analysis_dashboard():
     st.markdown("""
     <style>
