@@ -239,14 +239,10 @@ def transform_data(df, week_names_input, selected_weeks):
         'WZ_West Zone': 'West Zone'
     }
     transformed_df['Zone'] = transformed_df['Zone'].replace(zone_replacements)
-    
     def check_brand(col):
-        if isinstance(col, tuple):
-            return any(brand in str(col[1]) for brand in brands)
-        else:
-            return any(brand in str(col) for brand in brands)
-    
+        return any(brand in str(col) for brand in brands)
     all_brand_columns = [col for col in df.columns if check_brand(col)]
+
     
     for i, week in enumerate(selected_weeks):
         start_idx = i * len(brands)
@@ -289,12 +285,13 @@ def plot_district_graph(df, district_names, benchmark_brands_dict, desired_diff_
         for brand in brands:
             brand_prices = []
             for week_name in week_names:
-                column_name = f"{brand} ({week_name})"
-                if column_name in district_df.columns:
-                    price = district_df[column_name].iloc[0]
-                    brand_prices.append(price)
-                else:
-                    brand_prices.append(np.nan)
+                 column_name = f"{brand} ({week_name})"
+                 if column_name in district_df.columns:
+                     price = district_df[column_name].iloc[0]
+                     brand_prices.append(price)
+                 else:
+                      brand_prices.append(np.nan)
+
             valid_prices = [p for p in brand_prices if not np.isnan(p)]
             if len(valid_prices) > diff_week:
                 price_diff = valid_prices[-1] - valid_prices[diff_week]
