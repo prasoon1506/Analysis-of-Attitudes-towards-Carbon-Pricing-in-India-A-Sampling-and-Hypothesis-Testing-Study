@@ -487,9 +487,7 @@ def process_uploaded_file(uploaded_file):
 
             # Read the Excel file into a DataFrame, skipping the first two rows
             df = pd.read_excel(BytesIO(file_content), header=2)
-
-            # Remove completely empty columns (including those without column names)
-            df = df.dropna(axis=1, how='all')
+            df = df.loc[:, df.columns[df.columns.notna() & (df.columns != '')]]
 
             # Remove hidden columns
             df = df.drop(columns=df.columns[hidden_cols], errors='ignore')
