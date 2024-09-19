@@ -471,22 +471,25 @@ def process_uploaded_file(uploaded_file):
     if uploaded_file and not st.session_state.file_processed:
         try:
             file_content = uploaded_file.read()
+            
+            # Read all columns first
+            df_all = pd.read_excel(BytesIO(file_content), skiprows=2)
+            
+            # Use openpyxl to identify hidden columns
             wb = openpyxl.load_workbook(BytesIO(file_content))
             ws = wb.active
             
-            # Get visible columns
-            visible_cols = [col for col in ws.iter_cols(min_col=1, max_col=ws.max_column, min_row=1, max_row=1) 
-                            if not ws.column_dimensions[openpyxl.utils.get_column_letter(col[0].column)].hidden]
+            # Get hidden column indices
+            hidden_cols = [idx for idx, col in enumerate(ws.column_dimensions.values(), 1) if col.hidden]
             
-            # Get column letters for visible columns
-            visible_col_letters = [openpyxl.utils.get_column_letter(col[0].column) for col in visible_cols]
+            # Convert column indices to Excel-style column letters
+            hidden_col_letters = [openpyxl.utils.get_column_letter(col) for col in hidden_cols]
             
-            # Read only visible columns
-            st.session_state.df = pd.read_excel(
-                BytesIO(file_content), 
-                skiprows=2, 
-                usecols=visible_col_letters
-            )
+            # Filter out hidden columns
+            visible_columns = [col for col in df_all.columns if openpyxl.utils.column_index_from_string(col) not in hidden_cols]
+            
+            # Create new DataFrame with only visible columns
+            st.session_state.df = df_all[visible_columns]
             
             if st.session_state.df.empty:
                 st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
