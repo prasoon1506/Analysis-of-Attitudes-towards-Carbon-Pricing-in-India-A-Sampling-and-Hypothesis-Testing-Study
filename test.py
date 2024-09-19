@@ -478,30 +478,36 @@ def process_uploaded_file(uploaded_file):
     if uploaded_file and not st.session_state.file_processed:
         try:
             # Read the Excel file
-            uploaded_file1 = pd.read_excel(uploaded_file, sheet_name="All India", header=None)
+            uploaded_file1 = pd.read_excel(uploaded_file, sheet_name="All India")
+            uploaded_file1.rename(columns={"": "test"}, inplace=True)
+            nan_value = float("NaN")
+            uploaded_file1.replace("", nan_value, inplace=True)
+            uploaded_file1.dropna(how="all", axis=1, inplace=True)
+
+            # Get week names from the first row
+            week_names = [col for col in uploaded_file1.iloc[0] if isinstance(col, str) and "'" in col]
+
+            # Read the header information (first 4 columns)
+            header_df = uploaded_file1.iloc[2:, :4]
+
+            # Read the data columns, skipping the 'GAP - from' columns
+            data_columns = list(range(4))  # First 4 columns
+            for i, week in enumerate(week_names):
+                start_col = 4 + i * 6  # Each week has 6 columns (UTCL, JKS, JKLC, Ambuja, Wonder, Shree)
+                data_columns.extend(range(start_col, start_col + 6))
             
-            # Find the row index where the actual data starts (usually after the week names)
-            start_row = uploaded_file1.index[uploaded_file1.iloc[:, 0] == 'State'].tolist()[0]
-            
-            # Extract week names from the row just above the 'State' row
-            week_names = [col for col in uploaded_file1.iloc[start_row - 1] if isinstance(col, str) and "'" in col]
-            
-            # Read the actual data, using the 'State' row as header
-            df = pd.read_excel(uploaded_file, sheet_name="All India", header=start_row)
-            
-            # Clean up the dataframe
-            df.rename(columns={"": "test"}, inplace=True)
-            df.replace("", pd.NA, inplace=True)
-            df.dropna(how="all", axis=1, inplace=True)
-            
-            # Identify the columns for each week
-            week_columns = {}
+            data_df = uploaded_file1.iloc[2:, data_columns]
+
+            # Combine header and data dataframes
+            df = pd.concat([header_df, data_df.iloc[:, 4:]], axis=1)
+
+            # Rename columns to include week names
+            new_columns = list(df.columns[:4])
             for week in week_names:
-                week_columns[week] = [col for col in df.columns if week in col]
-            
+                new_columns.extend([f"{brand} ({week})" for brand in ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']])
+            df.columns = new_columns
+
             st.session_state.df = df
-            st.session_state.week_names = week_names
-            st.session_state.week_columns = week_columns
             
             if st.session_state.df.empty:
                 st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
