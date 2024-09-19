@@ -1519,13 +1519,20 @@ def generate_combined_report(df, regions, brands):
     else:
         st.warning("No valid data available for any region and brand combination.")
         return None
-
 def sales_prediction_app():
     st.title("📊 Sales Prediction App")
     
     # Load Lottie animation
     lottie_url = "https://assets5.lottiefiles.com/packages/lf20_V9t630.json"
     lottie_json = load_lottie_url(lottie_url)
+    
+    # Initialize session state variables if they don't exist
+    if 'df' not in st.session_state:
+        st.session_state['df'] = None
+    if 'regions' not in st.session_state:
+        st.session_state['regions'] = []
+    if 'brands' not in st.session_state:
+        st.session_state['brands'] = []
     
     # Sidebar
     with st.sidebar:
@@ -1548,7 +1555,7 @@ def sales_prediction_app():
     
     elif page == "Predictions":
         st.subheader("🔮 Sales Predictions")
-        if 'df' not in st.session_state:
+        if st.session_state['df'] is None:
             st.warning("Please upload a file on the Home page first.")
         else:
             df = st.session_state['df']
@@ -1610,6 +1617,8 @@ def sales_prediction_app():
         
         For any questions or support, please contact our team at support@salespredictionapp.com
         """)
+
+
 def folder_menu():
     st.markdown("""
     <style>
@@ -1755,9 +1764,7 @@ def folder_menu():
     ]
     st.markdown(f"*{fun_facts[int(os.urandom(1)[0]) % len(fun_facts)]}*")
 
-import plotly.graph_objects as go
-from streamlit_lottie import st_lottie
-import requests
+
 
 def load_lottieurl(url: str):
     r = requests.get(url)
