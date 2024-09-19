@@ -476,24 +476,27 @@ def Home():
     Happy analyzing!
     """)
     st.markdown('</div>', unsafe_allow_html=True)
-
 def process_uploaded_file(uploaded_file):
     if uploaded_file and not st.session_state.file_processed:
         try:
             file_content = uploaded_file.read()
             wb = openpyxl.load_workbook(BytesIO(file_content))
-            ws = wb.get_sheet_by_name("All India")
+            ws = wb.active  # Get the active sheet instead of assuming "All India"
             
-            hidden_cols = [idx for idx, col in enumerate(ws.column_dimensions, 1) if ws.column_dimensions[col].hidden]
+            # Identify hidden columns
+            hidden_cols = [col for col in ws.column_dimensions if ws.column_dimensions[col].hidden]
             
             # Read the Excel file into a DataFrame, skipping the first two rows
             df = pd.read_excel(BytesIO(file_content), header=2)
             
-            # Remove completely empty columns (including those without column names)
+            # Remove columns with blank headers
+            df = df.loc[:, df.columns.notna()]
+            
+            # Remove completely empty columns
             df = df.dropna(axis=1, how='all')
             
             # Remove hidden columns
-            df = df.drop(columns=df.columns[hidden_cols], errors='ignore')
+            df = df.drop(columns=[df.columns[openpyxl.utils.column_index_from_string(col) - 1] for col in hidden_cols if col in openpyxl.utils.get_column_letter(df.shape[1])], errors='ignore')
             
             if df.empty:
                 st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
