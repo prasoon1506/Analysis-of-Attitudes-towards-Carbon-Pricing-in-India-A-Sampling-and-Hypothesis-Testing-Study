@@ -493,7 +493,7 @@ def process_uploaded_file(uploaded_file):
             week_month_names = [ws.cell(row=1, column=cell.min_col).value for cell in merged_ranges]
             
             # Read data starting from the third row
-            st.session_state.df = pd.read_excel(BytesIO(file_content), sheet_name="All India", header=[1, 2], skiprows=[0])
+            
             df = pd.read_excel(BytesIO(file_content), sheet_name="All India", header=[0, 1], skiprows=[0])
             df.columns = [f"{col[0]}_{col[1]}" if isinstance(col, tuple) else col for col in df.columns]
             st.session_state.df = df
