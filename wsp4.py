@@ -482,11 +482,11 @@ def process_uploaded_file(uploaded_file):
             # Get hidden column indices
             hidden_cols = [idx for idx, col in enumerate(ws.column_dimensions.values(), 1) if col.hidden]
             
-            # Convert column indices to Excel-style column letters
-            hidden_col_letters = [openpyxl.utils.get_column_letter(col) for col in hidden_cols]
+            # Create a mapping of column index to column name
+            col_mapping = {idx: name for idx, name in enumerate(df_all.columns, 1)}
             
-            # Filter out hidden columns
-            visible_columns = [col for col in df_all.columns if openpyxl.utils.column_index_from_string(col) not in hidden_cols]
+            # Filter out hidden columns using the mapping
+            visible_columns = [col for idx, col in col_mapping.items() if idx not in hidden_cols]
             
             # Create new DataFrame with only visible columns
             st.session_state.df = df_all[visible_columns]
@@ -495,7 +495,7 @@ def process_uploaded_file(uploaded_file):
                 st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
             else:
                 brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
-                brand_columns = [col for col in st.session_state.df.columns if any(brand in col for brand in brands)]
+                brand_columns = [col for col in st.session_state.df.columns if any(brand in str(col) for brand in brands)]
                 num_weeks = len(brand_columns) // len(brands)
                 
                 if num_weeks > 0:
