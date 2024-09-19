@@ -240,7 +240,7 @@ def transform_data(df, week_names_input, selected_weeks):
     }
     transformed_df['Zone'] = transformed_df['Zone'].replace(zone_replacements)
     
-    all_brand_columns = [col for col in df.columns if any(brand in col for brand in brands)]
+    all_brand_columns = [col for col in df.columns if any(brand in col[1] for brand in brands)]
     
     for i, week in enumerate(selected_weeks):
         start_idx = i * len(brands)
@@ -249,7 +249,7 @@ def transform_data(df, week_names_input, selected_weeks):
         week_data = df[week_columns]
         week_name = week_names_input[i]
         week_data = week_data.rename(columns={
-            col: f"{col.split('_')[0]} ({week_name})"
+            col: f"{col[1]} ({week_name})"
             for col in week_data.columns
         })
         week_data.replace(0, np.nan, inplace=True)
