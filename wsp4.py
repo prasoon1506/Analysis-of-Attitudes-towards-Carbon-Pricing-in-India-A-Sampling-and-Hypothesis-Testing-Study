@@ -511,7 +511,7 @@ def process_uploaded_file(uploaded_file):
                     for i in range(num_weeks):
                         with week_cols[i % num_columns]:
                             st.text_input(
-                                f'Week {i+1}', 
+                                f'Week{i+1}', 
                                 value=st.session_state.week_names_input[i] if i < len(st.session_state.week_names_input) else '',
                                 key=f'week{i}',
                                 on_change=update_week_name(i)
