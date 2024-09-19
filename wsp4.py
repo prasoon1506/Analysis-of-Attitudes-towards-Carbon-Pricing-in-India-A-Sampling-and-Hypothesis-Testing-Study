@@ -481,23 +481,19 @@ def process_uploaded_file(uploaded_file):
         try:
             file_content = uploaded_file.read()
             wb = openpyxl.load_workbook(BytesIO(file_content))
-            ws = wb.active  # Get the active sheet instead of assuming "All India"
-            
-            # Identify hidden columns
-            hidden_cols = [col for col in ws.column_dimensions if ws.column_dimensions[col].hidden]
-            
+            ws = wb.get_sheet_by_name("All India")
+
+            hidden_cols = [idx for idx, col in enumerate(ws.column_dimensions, 1) if ws.column_dimensions[col].hidden]
+
             # Read the Excel file into a DataFrame, skipping the first two rows
             df = pd.read_excel(BytesIO(file_content), header=2)
-            
-            # Remove columns with blank headers
-            df = df.loc[:, df.columns.notna()]
-            
-            # Remove completely empty columns
+
+            # Remove completely empty columns (including those without column names)
             df = df.dropna(axis=1, how='all')
-            
+
             # Remove hidden columns
-            df = df.drop(columns=[df.columns[openpyxl.utils.column_index_from_string(col) - 1] for col in hidden_cols if col in openpyxl.utils.get_column_letter(df.shape[1])], errors='ignore')
-            
+            df = df.drop(columns=df.columns[hidden_cols], errors='ignore')
+
             if df.empty:
                 st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
             else:
@@ -505,21 +501,21 @@ def process_uploaded_file(uploaded_file):
                 brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
                 brand_columns = [col for col in st.session_state.df.columns if any(brand in str(col) for brand in brands)]
                 num_weeks = len(brand_columns) // len(brands)
-                
+
                 if num_weeks > 0:
                     st.markdown("### Enter Week Names")
                     num_columns = max(1, num_weeks)
                     week_cols = st.columns(num_columns)
-                    
+
                     if 'week_names_input' not in st.session_state or len(st.session_state.week_names_input) != num_weeks:
                         st.session_state.week_names_input = [''] * num_weeks
-                    
+
                     for i in range(num_weeks):
                         with week_cols[i % num_columns]:
                             st.text_input(
                                 f'Week {i+1}', 
-                                value=st.session_state.week_names_input[i] if i < len(st.session_state.week_names_input) else '',
-                                key=f'week_{i}',
+                                value=st.session_state.week_names_input[i] if i < len(st.session_state.week_namesinput) else '',
+                                key=f'week{i}',
                                 on_change=update_week_name(i)
                             )
                     if all(st.session_state.week_names_input):
