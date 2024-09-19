@@ -492,6 +492,7 @@ def process_uploaded_file(uploaded_file):
                 data_columns.extend(range(start_col, start_col + 6))
             
             data_df = pd.read_excel(uploaded_file, sheet_name="All India", usecols=data_columns, header=2)
+            data_df.rename(columns={"":"test",inplace=True)
             nan_value=float("NaN")
             data_df.replace("",nan_value,inplace=True)
             data_df.dropna(how="all",axis=1,inplace=True)
