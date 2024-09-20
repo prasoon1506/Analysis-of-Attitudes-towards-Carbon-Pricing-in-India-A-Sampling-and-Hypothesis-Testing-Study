@@ -484,8 +484,8 @@ def process_uploaded_file(uploaded_file):
             # Extract all week/month names from the first row, including hidden columns
             all_weeks = [cell.value for cell in ws[1] if cell.value]
             
-            # Filter out unnecessary columns like 'GAP-from'
-            all_weeks = [week for week in all_weeks if 'GAP' not in str(week)]
+            # Filter out unnecessary items
+            all_weeks = [week for week in all_weeks if 'GAP' not in str(week) and 'WSP Report' not in str(week)]
 
             # Allow user to select weeks for analysis
             selected_weeks = st.multiselect("Select weeks/months for analysis:", all_weeks)
@@ -501,8 +501,13 @@ def process_uploaded_file(uploaded_file):
             df = df.dropna(axis=1, how='all')
             df = df.loc[:, df.columns.notna()]
 
-            # Keep only the selected weeks and necessary columns
-            cols_to_keep = ['Zone', 'REGION', 'Dist Cd', 'Dist Name'] + selected_weeks
+            # Identify the columns that exist in the DataFrame
+            existing_cols = ['Zone', 'REGION', 'Dist Cd', 'Dist Name']
+            existing_cols = [col for col in existing_cols if col in df.columns]
+            existing_weeks = [week for week in selected_weeks if week in df.columns]
+
+            # Keep only the existing columns and selected weeks
+            cols_to_keep = existing_cols + existing_weeks
             df = df[cols_to_keep]
 
             if df.empty:
