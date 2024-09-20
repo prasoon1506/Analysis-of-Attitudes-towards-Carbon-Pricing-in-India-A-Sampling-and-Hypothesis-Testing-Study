@@ -477,80 +477,47 @@ def Home():
 def process_uploaded_file(uploaded_file):
     if uploaded_file and not st.session_state.file_processed:
         try:
-            # Read the Excel file
-            uploaded_file1 = pd.read_excel(uploaded_file, sheet_name="All India")
-            uploaded_file1.rename(columns={"": "test"}, inplace=True)
-            nan_value = float("NaN")
-            uploaded_file1.replace("", nan_value, inplace=True)
-            uploaded_file1.dropna(how="all", axis=1, inplace=True)
+            file_content = uploaded_file.read()
+            wb = openpyxl.load_workbook(BytesIO(file_content))
+            ws = wb.active  # Assuming the relevant sheet is the active one
 
-            # Get week names from the first row
-            week_names = [col for col in uploaded_file1.iloc[0] if isinstance(col, str) and "'" in col]
-
-            # Read the header information (first 4 columns)
-            header_df = uploaded_file1.iloc[2:, :4]
-
-            # Read the data columns, skipping the 'GAP - from' columns
-            data_columns = list(range(4))  # First 4 columns
-            for i, week in enumerate(week_names):
-                start_col = 4 + i * 6  # Each week has 6 columns (UTCL, JKS, JKLC, Ambuja, Wonder, Shree)
-                data_columns.extend(range(start_col, start_col + 6))
+            # Extract all week/month names from the first row, including hidden columns
+            all_weeks = [cell.value for cell in ws[1] if cell.value]
             
-            data_df = uploaded_file1.iloc[2:, data_columns]
+            # Filter out unnecessary columns like 'GAP-from'
+            all_weeks = [week for week in all_weeks if 'GAP' not in str(week)]
 
-            # Combine header and data dataframes
-            df = pd.concat([header_df, data_df.iloc[:, 4:]], axis=1)
+            # Allow user to select weeks for analysis
+            selected_weeks = st.multiselect("Select weeks/months for analysis:", all_weeks)
 
-            # Rename columns to include week names
-            new_columns = list(df.columns[:4])
-            for week in week_names:
-                new_columns.extend([f"{brand} ({week})" for brand in ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']])
-            df.columns = new_columns
+            if not selected_weeks:
+                st.warning("Please select at least one week/month for analysis.")
+                return
 
-            st.session_state.df = df
-            if st.session_state.df.empty:
-                st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
+            # Read the Excel file into a DataFrame, using the third row as header
+            df = pd.read_excel(BytesIO(file_content), header=2)
+
+            # Drop completely blank columns and columns with NaN names
+            df = df.dropna(axis=1, how='all')
+            df = df.loc[:, df.columns.notna()]
+
+            # Keep only the selected weeks and necessary columns
+            cols_to_keep = ['Zone', 'REGION', 'Dist Cd', 'Dist Name'] + selected_weeks
+            df = df[cols_to_keep]
+
+            if df.empty:
+                st.error("The processed data is empty. Please check your selections.")
             else:
-                st.markdown("### Select Weeks/Months for Analysis")
-                selected_weeks = []
-                for i, name in enumerate(week_names):
-                    if st.checkbox(str(name), key=f"week_checkbox_{i}"):
-                        selected_weeks.append(name)
-                
-                if selected_weeks:
-                    st.session_state.selected_weeks = selected_weeks
-                    
-                    num_selected_weeks = len(selected_weeks)
-                    
-                    st.markdown("### Enter Week Names")
-                    num_columns = min(3, num_selected_weeks)  # Use at most 3 columns
-                    week_cols = st.columns(num_columns)
-                    
-                    if 'week_names_input' not in st.session_state or len(st.session_state.week_names_input) != num_selected_weeks:
-                        st.session_state.week_names_input = [''] * num_selected_weeks
-                    
-                    for i, week in enumerate(selected_weeks):
-                        with week_cols[i % num_columns]:
-                            st.text_input(
-                                f'Name for {week}', 
-                                value=st.session_state.week_names_input[i] if i < len(st.session_state.week_names_input) else '',
-                                key=f'week_{i}',
-                                on_change=update_week_name(i)
-                            )
-                    
-                    if all(st.session_state.week_names_input):
-                        st.session_state.file_processed = True
-                    else:
-                        st.warning("Please fill in all week names to process the file.")
-                else:
-                    st.warning("Please select at least one week/month for analysis.")
-                    st.session_state.week_names_input = []
-                    st.session_state.file_processed = False
+                st.session_state.df = df
+                st.session_state.file_processed = True
+                st.success("File processed successfully!")
+                st.write(df.head())  # Display the first few rows of the processed data
+
         except Exception as e:
             st.error(f"Error processing file: {e}")
             st.exception(e)
             st.session_state.file_processed = False
-            
+
 def wsp_analysis_dashboard():
     st.markdown("""
     <style>
