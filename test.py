@@ -527,7 +527,7 @@ def process_uploaded_file(uploaded_file):
                         st.session_state.file_processed = False
                     else:    
                         st.session_state.df = df
-                        st.session_state.file_processed = True
+                        st.session_state.file_processed = True # set file_processed to True here
                         
                 else:
                     st.warning("No weeks detected in the uploaded file. Please check the file content.")
