@@ -473,15 +473,15 @@ def Home():
     Happy analyzing!
     """)
     st.markdown('</div>', unsafe_allow_html=True)
-
 def process_uploaded_file(uploaded_file):
     if uploaded_file and not st.session_state.file_processed:
         try:
             file_content = uploaded_file.read()
             wb = openpyxl.load_workbook(BytesIO(file_content))
             ws = wb.get_sheet_by_name("All India")
-            
-            # Read all columns, including hidden ones
+
+            #Instead of removing hidden columns, get indices for all columns 
+            all_cols = [idx for idx, col in enumerate(ws.column_dimensions, 1)]
             df = pd.read_excel(BytesIO(file_content), header=2)
             df = df.dropna(axis=1, how='all')
             
@@ -492,32 +492,43 @@ def process_uploaded_file(uploaded_file):
                 brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
                 brand_columns = [col for col in st.session_state.df.columns if any(brand in str(col) for brand in brands)]
                 num_weeks = len(brand_columns) // len(brands)
+
                 if num_weeks > 0:
                     st.markdown("### Enter Week Names")
                     num_columns = max(1, num_weeks)
                     week_cols = st.columns(num_columns)
+
                     if 'week_names_input' not in st.session_state or len(st.session_state.week_names_input) != num_weeks:
                         st.session_state.week_names_input = [''] * num_weeks
+
                     for i in range(num_weeks):
                         with week_cols[i % num_columns]:
                             st.text_input(
                                 f'Week {i+1}', 
                                 value=st.session_state.week_names_input[i] if i < len(st.session_state.week_names_input) else '',
                                 key=f'week_{i}',
-                                on_change=update_week_name(i)
+                                # on_change=update_week_name(i)
                             )
-                    if any(st.session_state.week_names_input):
-                        # Filter columns based on filled week names
-                        filled_weeks = [i for i, name in enumerate(st.session_state.week_names_input) if name]
-                        columns_to_keep = [col for col in st.session_state.df.columns if not any(brand in str(col) for brand in brands)]
-                        for week in filled_weeks:
-                            for brand in brands:
-                                columns_to_keep.extend([col for col in brand_columns if f"{brand} W{week+1}" in str(col)])
-                        
-                        st.session_state.df = st.session_state.df[columns_to_keep]
+                    
+                    # Keep only weeks with entered names
+                    week_names = [name for name in st.session_state.week_names_input if name]
+                    
+                    # Filter columns based on entered week names
+                    selected_cols = []
+                    for i, col in enumerate(brand_columns):
+                        week_index = i // len(brands)
+                        if week_index < len(week_names): 
+                            selected_cols.append(col)
+
+                    df = df[selected_cols] #Update the dataframe
+
+                    if df.empty:
+                        st.error("No weeks selected. Please enter week names to process the file.")
+                        st.session_state.file_processed = False
+                    else:    
+                        st.session_state.df = df
                         st.session_state.file_processed = True
-                    else:
-                        st.warning("Please fill in at least one week name to process the file.")
+                        
                 else:
                     st.warning("No weeks detected in the uploaded file. Please check the file content.")
                     st.session_state.week_names_input = []
@@ -526,6 +537,7 @@ def process_uploaded_file(uploaded_file):
             st.error(f"Error processing file: {e}")
             st.exception(e)
             st.session_state.file_processed = False
+
 def wsp_analysis_dashboard():
     st.markdown("""
     <style>
