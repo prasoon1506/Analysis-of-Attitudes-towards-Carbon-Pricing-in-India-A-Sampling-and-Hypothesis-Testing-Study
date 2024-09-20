@@ -546,13 +546,15 @@ def process_uploaded_file(uploaded_file):
                 df = df[cols_to_keep]
 
                 # Create new column names
-                new_columns = []
-                for col in df.columns:
+                new_columns = ['Zone', 'Region', 'Dist Code', 'Dist Name']
+                brand_names = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
+                
+                for col in df.columns[4:]:
                     if col[0] in selected_periods:
-                        new_name = f"{renamed_periods[col[0]]}_{col[1]}"
-                    else:
-                        new_name = col[1] if pd.notna(col[1]) else col[0]
-                    new_columns.append(new_name)
+                        period_name = renamed_periods[col[0]]
+                        brand_index = (df.columns.get_loc(col) - 4) % 6
+                        new_name = f"{period_name}_{brand_names[brand_index]}"
+                        new_columns.append(new_name)
 
                 df.columns = new_columns
 
@@ -582,7 +584,6 @@ def process_uploaded_file(uploaded_file):
                         st.session_state.current_page = "WSP Analysis Dashboard"
         else:
             st.warning("Please select at least one period for analysis.")
-
 def wsp_analysis_dashboard():
     st.markdown("""
     <style>
