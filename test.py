@@ -491,18 +491,20 @@ def process_uploaded_file(uploaded_file):
                 st.session_state.selected_weeks = []
             if 'week_names_input' not in st.session_state:
                 st.session_state.week_names_input = []
-            def update_selected_weeks():
-                st.session_state.week_names_input = st.session_state.week_names_input[:len(st.session_state.selected_weeks)]
-                while len(st.session_state.week_names_input) < len(st.session_state.selected_weeks):
-                    st.session_state.week_names_input.append('')
 
-            # Allow user to select weeks for analysis
+            # Allow user to select weeks for analysis without the callback
             st.session_state.selected_weeks = st.multiselect(
                 "Select weeks/months for analysis:",
                 all_weeks,
-                key="week_selector",
-                on_change=update_selected_weeks
+                default=st.session_state.selected_weeks,
+                key="week_selector"
             )
+
+            # Update week_names_input based on selected_weeks
+            if len(st.session_state.week_names_input) < len(st.session_state.selected_weeks):
+                st.session_state.week_names_input.extend([''] * (len(st.session_state.selected_weeks) - len(st.session_state.week_names_input)))
+            elif len(st.session_state.week_names_input) > len(st.session_state.selected_weeks):
+                st.session_state.week_names_input = st.session_state.week_names_input[:len(st.session_state.selected_weeks)]
 
             if not st.session_state.selected_weeks:
                 st.warning("Please select at least one week/month for analysis.")
@@ -511,15 +513,11 @@ def process_uploaded_file(uploaded_file):
             # Allow user to rename selected weeks
             st.subheader("Rename selected weeks/months")
             for i, week in enumerate(st.session_state.selected_weeks):
-                new_name = st.text_input(
+                st.session_state.week_names_input[i] = st.text_input(
                     f"New name for {week}",
-                    value=st.session_state.week_names_input[i] if i < len(st.session_state.week_names_input) else week,
+                    value=st.session_state.week_names_input[i],
                     key=f'week_{i}'
                 )
-                if i < len(st.session_state.week_names_input):
-                    st.session_state.week_names_input[i] = new_name
-                else:
-                    st.session_state.week_names_input.append(new_name)
 
             # Read the Excel file into a DataFrame, using the third row as header
             df = pd.read_excel(BytesIO(file_content), header=2)
@@ -539,9 +537,9 @@ def process_uploaded_file(uploaded_file):
                 st.error("The processed data is empty. Please check your selections.")
             else:
                 st.session_state.df = df
+                st.write(df.head())  # Display the first few rows of the processed data
                 st.session_state.file_processed = True
                 st.success("File processed successfully!")
-                st.write(df.head())  # Display the first few rows of the processed data
 
             # Debugging: Print the shape of the DataFrame
             st.write(f"DataFrame shape: {df.shape}")
