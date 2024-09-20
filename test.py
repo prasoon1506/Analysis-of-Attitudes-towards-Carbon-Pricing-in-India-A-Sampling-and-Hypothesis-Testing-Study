@@ -474,7 +474,6 @@ def Home():
     """)
     st.markdown('</div>', unsafe_allow_html=True)
 
-
 import streamlit as st
 import pandas as pd
 import openpyxl
@@ -535,19 +534,27 @@ def process_uploaded_file(uploaded_file):
                 df = pd.read_excel(BytesIO(st.session_state.file_content), header=[0, 1])
 
                 # Select the first four columns
-                base_cols = df.columns[:4].get_level_values(1).tolist()
+                base_cols = df.columns[:4]
 
                 # Select columns for chosen periods
-                period_cols = []
-                for period in selected_periods:
-                    period_cols.extend(df.columns[df.columns.get_level_values(0) == period].tolist())
+                period_cols = [col for col in df.columns if col[0] in selected_periods]
 
                 # Combine base columns and selected period columns
-                cols_to_keep = base_cols + period_cols
+                cols_to_keep = base_cols.tolist() + period_cols
 
                 # Select and reset the column index
                 df = df[cols_to_keep]
-                df.columns = [f"{renamed_periods[col[0]]}_{col[1]}" if col[0] in selected_periods else col[1] for col in df.columns]
+
+                # Create new column names
+                new_columns = []
+                for col in df.columns:
+                    if col[0] in selected_periods:
+                        new_name = f"{renamed_periods[col[0]]}_{col[1]}"
+                    else:
+                        new_name = col[1] if pd.notna(col[1]) else col[0]
+                    new_columns.append(new_name)
+
+                df.columns = new_columns
 
                 # Remove the first two rows (header rows)
                 df = df.iloc[2:].reset_index(drop=True)
