@@ -490,17 +490,21 @@ def process_uploaded_file(uploaded_file):
             if 'selected_weeks' not in st.session_state:
                 st.session_state.selected_weeks = []
 
+            # Callback function for multiselect
+            def update_selected_weeks():
+                st.session_state.week_names_input = st.session_state.week_names_input[:len(st.session_state.selected_weeks)]
+                while len(st.session_state.week_names_input) < len(st.session_state.selected_weeks):
+                    st.session_state.week_names_input.append('')
+
             # Allow user to select weeks for analysis
-            st.session_state.selected_weeks = st.multiselect("Select weeks/months for analysis:", all_weeks)
+            st.session_state.selected_weeks = st.multiselect("Select weeks/months for analysis:", 
+                                                             all_weeks, 
+                                                             key="week_selector",
+                                                             on_change=update_selected_weeks)
 
             if not st.session_state.selected_weeks:
                 st.warning("Please select at least one week/month for analysis.")
                 return
-
-            # Update week_names_input to match the length of selected_weeks
-            st.session_state.week_names_input = st.session_state.week_names_input[:len(st.session_state.selected_weeks)]
-            while len(st.session_state.week_names_input) < len(st.session_state.selected_weeks):
-                st.session_state.week_names_input.append('')
 
             # Allow user to rename selected weeks
             st.subheader("Rename selected weeks/months")
@@ -530,6 +534,11 @@ def process_uploaded_file(uploaded_file):
                 st.session_state.file_processed = True
                 st.success("File processed successfully!")
                 st.write(df.head())  # Display the first few rows of the processed data
+
+            # Debugging: Print the shape of the DataFrame
+            st.write(f"DataFrame shape: {df.shape}")
+            st.write(f"Selected weeks: {st.session_state.selected_weeks}")
+            st.write(f"Week names input: {st.session_state.week_names_input}")
 
         except Exception as e:
             st.error(f"Error processing file: {e}")
