@@ -486,21 +486,27 @@ def process_uploaded_file(uploaded_file):
             # Filter out unnecessary items
             all_weeks = [week for week in all_weeks if 'GAP' not in str(week) and 'WSP Report' not in str(week)]
 
-            # Initialize selected_weeks in session state if not already present
+            # Initialize selected_weeks and week_names_input in session state if not already present
             if 'selected_weeks' not in st.session_state:
                 st.session_state.selected_weeks = []
+            if 'week_names_input' not in st.session_state:
+                st.session_state.week_names_input = []
 
             # Callback function for multiselect
             def update_selected_weeks():
-                st.session_state.week_names_input = st.session_state.week_names_input[:len(st.session_state.selected_weeks)]
-                while len(st.session_state.week_names_input) < len(st.session_state.selected_weeks):
-                    st.session_state.week_names_input.append('')
+                # Update week_names_input to match selected_weeks
+                st.session_state.week_names_input = [
+                    st.session_state.week_names_input[i] if i < len(st.session_state.week_names_input) else week
+                    for i, week in enumerate(st.session_state.selected_weeks)
+                ]
 
             # Allow user to select weeks for analysis
-            st.session_state.selected_weeks = st.multiselect("Select weeks/months for analysis:", 
-                                                             all_weeks, 
-                                                             key="week_selector",
-                                                             on_change=update_selected_weeks)
+            st.session_state.selected_weeks = st.multiselect(
+                "Select weeks/months for analysis:",
+                all_weeks,
+                key="week_selector",
+                on_change=update_selected_weeks
+            )
 
             if not st.session_state.selected_weeks:
                 st.warning("Please select at least one week/month for analysis.")
@@ -509,7 +515,15 @@ def process_uploaded_file(uploaded_file):
             # Allow user to rename selected weeks
             st.subheader("Rename selected weeks/months")
             for i, week in enumerate(st.session_state.selected_weeks):
-                st.session_state.week_names_input[i] = st.text_input(f"New name for {week}", value=week, key=f'week_{i}')
+                new_name = st.text_input(
+                    f"New name for {week}",
+                    value=st.session_state.week_names_input[i] if i < len(st.session_state.week_names_input) else week,
+                    key=f'week_{i}'
+                )
+                if i < len(st.session_state.week_names_input):
+                    st.session_state.week_names_input[i] = new_name
+                else:
+                    st.session_state.week_names_input.append(new_name)
 
             # Read the Excel file into a DataFrame, using the third row as header
             df = pd.read_excel(BytesIO(file_content), header=2)
@@ -519,7 +533,7 @@ def process_uploaded_file(uploaded_file):
             df = df.loc[:, df.columns.notna()]
 
             # Identify the columns that exist in the DataFrame
-            existing_cols = ['Zone', 'REGION', 'Dist Code', 'Dist Name']
+            existing_cols = ['Zone', 'REGION', 'Dist Cd', 'Dist Name']
             existing_cols = [col for col in existing_cols if col in df.columns]
             existing_weeks = [week for week in st.session_state.selected_weeks if week in df.columns]
 
@@ -535,7 +549,7 @@ def process_uploaded_file(uploaded_file):
                 st.success("File processed successfully!")
                 st.write(df.head())  # Display the first few rows of the processed data
 
-            # Debugging: Print the shape of the DataFrame
+            # Debugging: Print the shape of the DataFrame and other relevant information
             st.write(f"DataFrame shape: {df.shape}")
             st.write(f"Selected weeks: {st.session_state.selected_weeks}")
             st.write(f"Week names input: {st.session_state.week_names_input}")
