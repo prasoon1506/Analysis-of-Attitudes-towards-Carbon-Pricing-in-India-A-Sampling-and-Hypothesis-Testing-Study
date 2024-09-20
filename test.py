@@ -533,7 +533,7 @@ def process_uploaded_file(uploaded_file):
             df = df.loc[:, df.columns.notna()]
 
             # Identify the columns that exist in the DataFrame
-            existing_cols = ['Zone', 'REGION', 'Dist Cd', 'Dist Name']
+            existing_cols = ['Zone', 'REGION', 'Dist Code', 'Dist Name']
             existing_cols = [col for col in existing_cols if col in df.columns]
             existing_weeks = [week for week in st.session_state.selected_weeks if week in df.columns]
 
