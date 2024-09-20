@@ -474,116 +474,58 @@ def Home():
     """)
     st.markdown('</div>', unsafe_allow_html=True)
 
-import streamlit as st
-import pandas as pd
-import openpyxl
-from io import BytesIO
-
 def process_uploaded_file(uploaded_file):
-    if 'file_processed' not in st.session_state:
-        st.session_state.file_processed = False
-    
-    if 'selected_periods' not in st.session_state:
-        st.session_state.selected_periods = []
-    
-    if 'all_periods' not in st.session_state:
-        st.session_state.all_periods = []
-
     if uploaded_file and not st.session_state.file_processed:
         try:
             file_content = uploaded_file.read()
             wb = openpyxl.load_workbook(BytesIO(file_content))
-            ws = wb.active
-
-            # Extract period names from the first row
-            st.session_state.all_periods = []
-            for cell in ws[1]:
-                if cell.value and cell.value not in st.session_state.all_periods:
-                    if 'WSP Report' not in str(cell.value) and 'GAP' not in str(cell.value):
-                        st.session_state.all_periods.append(cell.value)
-
-            # Store the file content in session state
-            st.session_state.file_content = file_content
-            st.success("File uploaded successfully. Please select periods for analysis.")
-            st.session_state.file_processed = True
+            ws = wb.get_sheet_by_name("All India")
+            
+            # Read all columns, including hidden ones
+            df = pd.read_excel(BytesIO(file_content), header=2)
+            df = df.dropna(axis=1, how='all')
+            
+            if df.empty:
+                st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
+            else:
+                st.session_state.df = df
+                brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
+                brand_columns = [col for col in st.session_state.df.columns if any(brand in str(col) for brand in brands)]
+                num_weeks = len(brand_columns) // len(brands)
+                if num_weeks > 0:
+                    st.markdown("### Enter Week Names")
+                    num_columns = max(1, num_weeks)
+                    week_cols = st.columns(num_columns)
+                    if 'week_names_input' not in st.session_state or len(st.session_state.week_names_input) != num_weeks:
+                        st.session_state.week_names_input = [''] * num_weeks
+                    for i in range(num_weeks):
+                        with week_cols[i % num_columns]:
+                            st.text_input(
+                                f'Week {i+1}', 
+                                value=st.session_state.week_names_input[i] if i < len(st.session_state.week_names_input) else '',
+                                key=f'week_{i}',
+                                on_change=update_week_name(i)
+                            )
+                    if any(st.session_state.week_names_input):
+                        # Filter columns based on filled week names
+                        filled_weeks = [i for i, name in enumerate(st.session_state.week_names_input) if name]
+                        columns_to_keep = [col for col in st.session_state.df.columns if not any(brand in str(col) for brand in brands)]
+                        for week in filled_weeks:
+                            for brand in brands:
+                                columns_to_keep.extend([col for col in brand_columns if f"{brand} W{week+1}" in str(col)])
+                        
+                        st.session_state.df = st.session_state.df[columns_to_keep]
+                        st.session_state.file_processed = True
+                    else:
+                        st.warning("Please fill in at least one week name to process the file.")
+                else:
+                    st.warning("No weeks detected in the uploaded file. Please check the file content.")
+                    st.session_state.week_names_input = []
+                    st.session_state.file_processed = False
         except Exception as e:
             st.error(f"Error processing file: {e}")
             st.exception(e)
             st.session_state.file_processed = False
-
-    if st.session_state.file_processed:
-        selected_periods = st.multiselect(
-            "Select periods for analysis:",
-            st.session_state.all_periods
-        )
-
-        if selected_periods:
-            st.session_state.selected_periods = selected_periods
-            
-            # Allow renaming of selected periods
-            renamed_periods = {}
-            for period in selected_periods:
-                new_name = st.text_input(f"Rename '{period}' (leave blank to keep original):", key=f"rename_{period}")
-                if new_name:
-                    renamed_periods[period] = new_name
-                else:
-                    renamed_periods[period] = period
-
-            if st.button("Process Selected Periods"):
-                # Read the Excel file
-                df = pd.read_excel(BytesIO(st.session_state.file_content), header=[0, 1])
-
-                # Select the first four columns
-                base_cols = df.columns[:4]
-
-                # Select columns for chosen periods
-                period_cols = [col for col in df.columns if col[0] in selected_periods]
-
-                # Combine base columns and selected period columns
-                cols_to_keep = base_cols.tolist() + period_cols
-
-                # Select and reset the column index
-                df = df[cols_to_keep]
-
-                # Create new column names
-                new_columns = ['Zone', 'Region', 'Dist Code', 'Dist Name']
-                brand_names = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
-                
-                for col in df.columns[4:]:
-                    if col[0] in selected_periods:
-                        period_name = renamed_periods[col[0]]
-                        brand_index = (df.columns.get_loc(col) - 4) % 6
-                        new_name = f"{period_name}_{brand_names[brand_index]}"
-                        new_columns.append(new_name)
-
-                df.columns = new_columns
-
-                # Remove the first two rows (header rows)
-                df = df.iloc[2:].reset_index(drop=True)
-
-                if df.empty:
-                    st.error("The processed data is empty. Please check your selections.")
-                else:
-                    st.session_state.df = df
-                    st.success("Data processed successfully!")
-
-                    # Display DataFrame info and preview
-                    st.write("DataFrame Info:")
-                    st.write(df.info())
-                    st.write("DataFrame Preview:")
-                    st.write(df.head())
-                    
-                    # Debugging information
-                    st.write(f"DataFrame shape: {df.shape}")
-                    st.write(f"Selected periods: {selected_periods}")
-                    st.write(f"Renamed periods: {renamed_periods}")
-                    st.write(f"Columns in final DataFrame: {df.columns.tolist()}")
-                    
-                    # Add a button to proceed to the analysis section
-                    if st.button("Proceed to Analysis"):
-                        st.session_state.current_page = "WSP Analysis Dashboard"
-        else:
-            st.warning("Please select at least one period for analysis.")
 def wsp_analysis_dashboard():
     st.markdown("""
     <style>
