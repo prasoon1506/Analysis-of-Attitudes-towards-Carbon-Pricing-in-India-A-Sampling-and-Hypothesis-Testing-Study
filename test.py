@@ -473,7 +473,6 @@ def Home():
     Happy analyzing!
     """)
     st.markdown('</div>', unsafe_allow_html=True)
-
 def process_uploaded_file(uploaded_file):
     if uploaded_file and not st.session_state.file_processed:
         try:
@@ -496,7 +495,6 @@ def process_uploaded_file(uploaded_file):
                 st.session_state.week_names_input = st.session_state.week_names_input[:len(st.session_state.selected_weeks)]
                 while len(st.session_state.week_names_input) < len(st.session_state.selected_weeks):
                     st.session_state.week_names_input.append('')
-
 
             # Allow user to select weeks for analysis
             st.session_state.selected_weeks = st.multiselect(
@@ -558,15 +556,6 @@ def process_uploaded_file(uploaded_file):
     # Add a button to proceed to the analysis section
     if st.session_state.file_processed and st.button("Proceed to Analysis"):
         st.session_state.current_page = "WSP Analysis Dashboard"
-
-
-
-
-
-
-
-
-
 def wsp_analysis_dashboard():
     st.markdown("""
     <style>
