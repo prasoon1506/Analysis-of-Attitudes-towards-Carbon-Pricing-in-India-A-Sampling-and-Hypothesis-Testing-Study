@@ -386,7 +386,6 @@ def update_week_name(index):
             st.session_state.file_processed = True
     return callback
 
-
 def Home():
     st.markdown("""
     <style>
@@ -448,8 +447,8 @@ def Home():
     st.subheader("How to use this app:")
     st.markdown("""
     1. **Upload your Excel file** containing the WSP data.
-    2. **Enter the week names** for each column in your data.
-    3. **Navigate to the WSP Analysis Dashboard** or **Descriptive Statistics and Prediction** sections.
+    2. **Select and rename the weeks/months** for your analysis.
+    3. **Proceed to the WSP Analysis Dashboard** for further analysis.
     4. **Select your analysis settings** and generate insights!
     """)
     st.markdown('</div>', unsafe_allow_html=True)
@@ -463,9 +462,9 @@ def Home():
     st.markdown('</div>', unsafe_allow_html=True)
 
     if st.session_state.file_processed:
-        st.success("File processed successfully! You can now proceed to the analysis sections.")
+        st.success("File processed successfully! You can now proceed to the analysis section.")
     else:
-        st.info("Please upload a file and fill in all week names to proceed with the analysis.")
+        st.info("Please upload a file, select weeks/months, and rename them to proceed with the analysis.")
 
     st.markdown('<div class="section-box">', unsafe_allow_html=True)
     st.subheader("Need Help?")
@@ -474,6 +473,7 @@ def Home():
     Happy analyzing!
     """)
     st.markdown('</div>', unsafe_allow_html=True)
+
 def process_uploaded_file(uploaded_file):
     if uploaded_file and not st.session_state.file_processed:
         try:
@@ -487,12 +487,25 @@ def process_uploaded_file(uploaded_file):
             # Filter out unnecessary items
             all_weeks = [week for week in all_weeks if 'GAP' not in str(week) and 'WSP Report' not in str(week)]
 
-            # Allow user to select weeks for analysis
-            selected_weeks = st.multiselect("Select weeks/months for analysis:", all_weeks)
+            # Initialize selected_weeks in session state if not already present
+            if 'selected_weeks' not in st.session_state:
+                st.session_state.selected_weeks = []
 
-            if not selected_weeks:
+            # Allow user to select weeks for analysis
+            st.session_state.selected_weeks = st.multiselect("Select weeks/months for analysis:", all_weeks)
+
+            if not st.session_state.selected_weeks:
                 st.warning("Please select at least one week/month for analysis.")
                 return
+
+            # Initialize week_names_input in session state if not already present
+            if 'week_names_input' not in st.session_state:
+                st.session_state.week_names_input = [''] * len(st.session_state.selected_weeks)
+
+            # Allow user to rename selected weeks
+            st.subheader("Rename selected weeks/months")
+            for i, week in enumerate(st.session_state.selected_weeks):
+                st.session_state.week_names_input[i] = st.text_input(f"New name for {week}", value=week, key=f'week_{i}')
 
             # Read the Excel file into a DataFrame, using the third row as header
             df = pd.read_excel(BytesIO(file_content), header=2)
@@ -504,7 +517,7 @@ def process_uploaded_file(uploaded_file):
             # Identify the columns that exist in the DataFrame
             existing_cols = ['Zone', 'REGION', 'Dist Cd', 'Dist Name']
             existing_cols = [col for col in existing_cols if col in df.columns]
-            existing_weeks = [week for week in selected_weeks if week in df.columns]
+            existing_weeks = [week for week in st.session_state.selected_weeks if week in df.columns]
 
             # Keep only the existing columns and selected weeks
             cols_to_keep = existing_cols + existing_weeks
@@ -522,6 +535,10 @@ def process_uploaded_file(uploaded_file):
             st.error(f"Error processing file: {e}")
             st.exception(e)
             st.session_state.file_processed = False
+
+    # Add a button to proceed to the analysis section
+    if st.session_state.file_processed and st.button("Proceed to Analysis"):
+        st.session_state.current_page = "WSP Analysis Dashboard"
 
 def wsp_analysis_dashboard():
     st.markdown("""
