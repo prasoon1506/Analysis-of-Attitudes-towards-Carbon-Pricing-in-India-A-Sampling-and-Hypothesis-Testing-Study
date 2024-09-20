@@ -473,20 +473,22 @@ def Home():
     Happy analyzing!
     """)
     st.markdown('</div>', unsafe_allow_html=True)
-import pandas as pd
+
+
 import streamlit as st
-from io import BytesIO
+import pandas as pd
 import openpyxl
+from io import BytesIO
 
 def process_uploaded_file(uploaded_file):
     if 'file_processed' not in st.session_state:
         st.session_state.file_processed = False
     
-    if 'selected_weeks' not in st.session_state:
-        st.session_state.selected_weeks = []
+    if 'selected_periods' not in st.session_state:
+        st.session_state.selected_periods = []
     
-    if 'all_weeks' not in st.session_state:
-        st.session_state.all_weeks = []
+    if 'all_periods' not in st.session_state:
+        st.session_state.all_periods = []
 
     if uploaded_file and not st.session_state.file_processed:
         try:
@@ -494,77 +496,85 @@ def process_uploaded_file(uploaded_file):
             wb = openpyxl.load_workbook(BytesIO(file_content))
             ws = wb.active
 
-            # Extract week names from the first row
-            st.session_state.all_weeks = []
+            # Extract period names from the first row
+            st.session_state.all_periods = []
             for cell in ws[1]:
-                if cell.value and cell.value not in st.session_state.all_weeks:
-                    st.session_state.all_weeks.append(cell.value)
-            
-            # Filter out unnecessary items
-            st.session_state.all_weeks = [week for week in st.session_state.all_weeks if 'GAP' not in str(week) and 'WSP Report' not in str(week)]
+                if cell.value and cell.value not in st.session_state.all_periods:
+                    if 'WSP Report' not in str(cell.value) and 'GAP' not in str(cell.value):
+                        st.session_state.all_periods.append(cell.value)
 
             # Store the file content in session state
             st.session_state.file_content = file_content
-
-            st.success("File uploaded successfully. Please select weeks for analysis.")
+            st.success("File uploaded successfully. Please select periods for analysis.")
             st.session_state.file_processed = True
-
         except Exception as e:
             st.error(f"Error processing file: {e}")
             st.exception(e)
             st.session_state.file_processed = False
 
     if st.session_state.file_processed:
-        selected_weeks = st.multiselect(
-            "Select weeks for analysis:",
-            st.session_state.all_weeks
+        selected_periods = st.multiselect(
+            "Select periods for analysis:",
+            st.session_state.all_periods
         )
 
-        if selected_weeks:
-            st.session_state.selected_weeks = selected_weeks
+        if selected_periods:
+            st.session_state.selected_periods = selected_periods
+            
+            # Allow renaming of selected periods
+            renamed_periods = {}
+            for period in selected_periods:
+                new_name = st.text_input(f"Rename '{period}' (leave blank to keep original):", key=f"rename_{period}")
+                if new_name:
+                    renamed_periods[period] = new_name
+                else:
+                    renamed_periods[period] = period
 
-            if st.button("Process Selected Weeks"):
+            if st.button("Process Selected Periods"):
                 # Read the Excel file
-                df = pd.read_excel(BytesIO(st.session_state.file_content), header=[0, 1, 2])
-                
+                df = pd.read_excel(BytesIO(st.session_state.file_content), header=[0, 1])
+
                 # Select the first four columns
-                base_cols = df.columns[:4].get_level_values(2).tolist()
-                
-                # Select columns for chosen weeks
-                week_cols = []
-                for week in selected_weeks:
-                    week_cols.extend(df.columns[df.columns.get_level_values(0) == week].tolist())
-                
-                # Combine base columns and selected week columns
-                cols_to_keep = base_cols + week_cols
-                
+                base_cols = df.columns[:4].get_level_values(1).tolist()
+
+                # Select columns for chosen periods
+                period_cols = []
+                for period in selected_periods:
+                    period_cols.extend(df.columns[df.columns.get_level_values(0) == period].tolist())
+
+                # Combine base columns and selected period columns
+                cols_to_keep = base_cols + period_cols
+
                 # Select and reset the column index
                 df = df[cols_to_keep]
-                df.columns = [f"{col[0]}_{col[2]}" if col[0] in selected_weeks else col[2] for col in df.columns]
-                
+                df.columns = [f"{renamed_periods[col[0]]}_{col[1]}" if col[0] in selected_periods else col[1] for col in df.columns]
+
+                # Remove the first two rows (header rows)
+                df = df.iloc[2:].reset_index(drop=True)
+
                 if df.empty:
                     st.error("The processed data is empty. Please check your selections.")
                 else:
                     st.session_state.df = df
                     st.success("Data processed successfully!")
-                    
+
                     # Display DataFrame info and preview
                     st.write("DataFrame Info:")
                     st.write(df.info())
                     st.write("DataFrame Preview:")
                     st.write(df.head())
-
+                    
                     # Debugging information
                     st.write(f"DataFrame shape: {df.shape}")
-                    st.write(f"Selected weeks: {selected_weeks}")
+                    st.write(f"Selected periods: {selected_periods}")
+                    st.write(f"Renamed periods: {renamed_periods}")
                     st.write(f"Columns in final DataFrame: {df.columns.tolist()}")
-
+                    
                     # Add a button to proceed to the analysis section
                     if st.button("Proceed to Analysis"):
                         st.session_state.current_page = "WSP Analysis Dashboard"
-
         else:
-            st.warning("Please select at least one week for analysis.")
+            st.warning("Please select at least one period for analysis.")
 
 def wsp_analysis_dashboard():
     st.markdown("""
