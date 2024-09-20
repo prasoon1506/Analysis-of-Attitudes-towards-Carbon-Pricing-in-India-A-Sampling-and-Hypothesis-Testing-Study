@@ -473,6 +473,7 @@ def Home():
     Happy analyzing!
     """)
     st.markdown('</div>', unsafe_allow_html=True)
+
 def process_uploaded_file(uploaded_file):
     if uploaded_file and not st.session_state.file_processed:
         try:
@@ -491,14 +492,11 @@ def process_uploaded_file(uploaded_file):
                 st.session_state.selected_weeks = []
             if 'week_names_input' not in st.session_state:
                 st.session_state.week_names_input = []
-
-            # Callback function for multiselect
             def update_selected_weeks():
-                # Update week_names_input to match selected_weeks
-                st.session_state.week_names_input = [
-                    st.session_state.week_names_input[i] if i < len(st.session_state.week_names_input) else week
-                    for i, week in enumerate(st.session_state.selected_weeks)
-                ]
+                st.session_state.week_names_input = st.session_state.week_names_input[:len(st.session_state.selected_weeks)]
+                while len(st.session_state.week_names_input) < len(st.session_state.selected_weeks):
+                    st.session_state.week_names_input.append('')
+
 
             # Allow user to select weeks for analysis
             st.session_state.selected_weeks = st.multiselect(
@@ -527,8 +525,6 @@ def process_uploaded_file(uploaded_file):
 
             # Read the Excel file into a DataFrame, using the third row as header
             df = pd.read_excel(BytesIO(file_content), header=2)
-
-            # Drop completely blank columns and columns with NaN names
             df = df.dropna(axis=1, how='all')
             df = df.loc[:, df.columns.notna()]
 
@@ -549,7 +545,7 @@ def process_uploaded_file(uploaded_file):
                 st.success("File processed successfully!")
                 st.write(df.head())  # Display the first few rows of the processed data
 
-            # Debugging: Print the shape of the DataFrame and other relevant information
+            # Debugging: Print the shape of the DataFrame
             st.write(f"DataFrame shape: {df.shape}")
             st.write(f"Selected weeks: {st.session_state.selected_weeks}")
             st.write(f"Week names input: {st.session_state.week_names_input}")
@@ -562,6 +558,14 @@ def process_uploaded_file(uploaded_file):
     # Add a button to proceed to the analysis section
     if st.session_state.file_processed and st.button("Proceed to Analysis"):
         st.session_state.current_page = "WSP Analysis Dashboard"
+
+
+
+
+
+
+
+
 
 def wsp_analysis_dashboard():
     st.markdown("""
