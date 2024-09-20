@@ -473,10 +473,6 @@ def Home():
     Happy analyzing!
     """)
     st.markdown('</div>', unsafe_allow_html=True)
-import streamlit as st
-from io import BytesIO
-import pandas as pd
-import openpyxl
 
 def process_uploaded_file(uploaded_file):
     if 'file_processed' not in st.session_state:
@@ -554,10 +550,21 @@ def process_uploaded_file(uploaded_file):
 
                 existing_cols = ['Zone', 'REGION', 'Dist Code', 'Dist Name']
                 existing_cols = [col for col in existing_cols if col in df.columns]
-                existing_weeks = [week for week in st.session_state.selected_weeks if week in df.columns]
+                
+                # Create a mapping of selected weeks to their actual column names
+                week_mapping = {week: week for week in st.session_state.selected_weeks}
+                for orig_week, new_name in zip(st.session_state.selected_weeks, st.session_state.week_names_input):
+                    if new_name:
+                        week_mapping[orig_week] = new_name
 
-                cols_to_keep = existing_cols + existing_weeks
+                # Find the actual column names for selected weeks
+                selected_week_cols = [col for col in df.columns if any(week in col for week in st.session_state.selected_weeks)]
+
+                cols_to_keep = existing_cols + selected_week_cols
                 df = df[cols_to_keep]
+
+                # Rename columns based on user input
+                df = df.rename(columns=week_mapping)
 
                 if df.empty:
                     st.error("The processed data is empty. Please check your selections.")
@@ -577,8 +584,6 @@ def process_uploaded_file(uploaded_file):
 
         else:
             st.warning("Please select at least one week/month for analysis.")
-
-
 
 def wsp_analysis_dashboard():
     st.markdown("""
