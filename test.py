@@ -473,6 +473,10 @@ def Home():
     Happy analyzing!
     """)
     st.markdown('</div>', unsafe_allow_html=True)
+import pandas as pd
+import streamlit as st
+from io import BytesIO
+import openpyxl
 
 def process_uploaded_file(uploaded_file):
     if 'file_processed' not in st.session_state:
@@ -480,9 +484,6 @@ def process_uploaded_file(uploaded_file):
     
     if 'selected_weeks' not in st.session_state:
         st.session_state.selected_weeks = []
-    
-    if 'week_names_input' not in st.session_state:
-        st.session_state.week_names_input = []
     
     if 'all_weeks' not in st.session_state:
         st.session_state.all_weeks = []
@@ -493,8 +494,11 @@ def process_uploaded_file(uploaded_file):
             wb = openpyxl.load_workbook(BytesIO(file_content))
             ws = wb.active
 
-            # Extract all week/month names from the first row, including hidden columns
-            st.session_state.all_weeks = [cell.value for cell in ws[1] if cell.value]
+            # Extract week names from the first row
+            st.session_state.all_weeks = []
+            for cell in ws[1]:
+                if cell.value and cell.value not in st.session_state.all_weeks:
+                    st.session_state.all_weeks.append(cell.value)
             
             # Filter out unnecessary items
             st.session_state.all_weeks = [week for week in st.session_state.all_weeks if 'GAP' not in str(week) and 'WSP Report' not in str(week)]
@@ -511,79 +515,56 @@ def process_uploaded_file(uploaded_file):
             st.session_state.file_processed = False
 
     if st.session_state.file_processed:
-        # Use a callback for the multiselect
-        def update_selected_weeks():
-            # Ensure week_names_input matches selected_weeks
-            if len(st.session_state.week_names_input) < len(st.session_state.selected_weeks):
-                st.session_state.week_names_input.extend([''] * (len(st.session_state.selected_weeks) - len(st.session_state.week_names_input)))
-            elif len(st.session_state.week_names_input) > len(st.session_state.selected_weeks):
-                st.session_state.week_names_input = st.session_state.week_names_input[:len(st.session_state.selected_weeks)]
-
         selected_weeks = st.multiselect(
-            "Select weeks/months for analysis:",
-            st.session_state.all_weeks,
-            key="week_selector",
-            on_change=update_selected_weeks
+            "Select weeks for analysis:",
+            st.session_state.all_weeks
         )
 
         if selected_weeks:
             st.session_state.selected_weeks = selected_weeks
-            
-            # Allow user to rename selected weeks
-            st.subheader("Rename selected weeks/months")
-            for i, week in enumerate(st.session_state.selected_weeks):
-                new_name = st.text_input(
-                    f"New name for {week}",
-                    value=st.session_state.week_names_input[i] if i < len(st.session_state.week_names_input) else week,
-                    key=f'week_{i}'
-                )
-                if i < len(st.session_state.week_names_input):
-                    st.session_state.week_names_input[i] = new_name
-                else:
-                    st.session_state.week_names_input.append(new_name)
 
             if st.button("Process Selected Weeks"):
-                # Process the data based on selected weeks
-                df = pd.read_excel(BytesIO(st.session_state.file_content), header=2)
-                df = df.dropna(axis=1, how='all')
-                df = df.loc[:, df.columns.notna()]
-
-                existing_cols = ['Zone', 'REGION', 'Dist Code', 'Dist Name']
-                existing_cols = [col for col in existing_cols if col in df.columns]
+                # Read the Excel file
+                df = pd.read_excel(BytesIO(st.session_state.file_content), header=[0, 1, 2])
                 
-                # Create a mapping of selected weeks to their actual column names
-                week_mapping = {week: week for week in st.session_state.selected_weeks}
-                for orig_week, new_name in zip(st.session_state.selected_weeks, st.session_state.week_names_input):
-                    if new_name:
-                        week_mapping[orig_week] = new_name
-
-                # Find the actual column names for selected weeks
-                selected_week_cols = [col for col in df.columns if any(week in col for week in st.session_state.selected_weeks)]
-
-                cols_to_keep = existing_cols + selected_week_cols
+                # Select the first four columns
+                base_cols = df.columns[:4].get_level_values(2).tolist()
+                
+                # Select columns for chosen weeks
+                week_cols = []
+                for week in selected_weeks:
+                    week_cols.extend(df.columns[df.columns.get_level_values(0) == week].tolist())
+                
+                # Combine base columns and selected week columns
+                cols_to_keep = base_cols + week_cols
+                
+                # Select and reset the column index
                 df = df[cols_to_keep]
-
-                # Rename columns based on user input
-                df = df.rename(columns=week_mapping)
-
+                df.columns = [f"{col[0]}_{col[2]}" if col[0] in selected_weeks else col[2] for col in df.columns]
+                
                 if df.empty:
                     st.error("The processed data is empty. Please check your selections.")
                 else:
                     st.session_state.df = df
                     st.success("Data processed successfully!")
+                    
+                    # Display DataFrame info and preview
+                    st.write("DataFrame Info:")
+                    st.write(df.info())
+                    st.write("DataFrame Preview:")
                     st.write(df.head())
 
                     # Debugging information
                     st.write(f"DataFrame shape: {df.shape}")
-                    st.write(f"Selected weeks: {st.session_state.selected_weeks}")
-                    st.write(f"Week names input: {st.session_state.week_names_input}")
+                    st.write(f"Selected weeks: {selected_weeks}")
+                    st.write(f"Columns in final DataFrame: {df.columns.tolist()}")
 
                     # Add a button to proceed to the analysis section
                     if st.button("Proceed to Analysis"):
                         st.session_state.current_page = "WSP Analysis Dashboard"
 
         else:
-            st.warning("Please select at least one week/month for analysis.")
+            st.warning("Please select at least one week for analysis.")
 
 def wsp_analysis_dashboard():
     st.markdown("""
