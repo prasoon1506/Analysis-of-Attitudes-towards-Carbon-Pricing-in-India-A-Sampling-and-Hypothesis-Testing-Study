@@ -489,6 +489,7 @@ def process_uploaded_file(uploaded_file):
             df = pd.read_excel(BytesIO(file_content), header=2)
             
             df = df.dropna(axis=1, how='all')
+            df = df.loc[:, df.columns.notna()]  
             # Remove hidden columns
             df = df.drop(columns=df.columns[hidden_cols], errors='ignore')
 
