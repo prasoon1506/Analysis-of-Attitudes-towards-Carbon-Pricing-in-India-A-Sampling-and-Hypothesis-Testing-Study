@@ -60,7 +60,6 @@ with col2:
     else:
         st.image("https://cdn-icons-png.flaticon.com/512/4503/4503700.png", width=150)
 st.markdown("</div>", unsafe_allow_html=True)
-
 if uploaded_file is not None:
     # Read the Excel file
     df = pd.read_excel(uploaded_file)
@@ -80,28 +79,21 @@ if uploaded_file is not None:
     product_type = st.sidebar.selectbox("Select Type", options=df['Type'].unique())
     region_subset = st.sidebar.selectbox("Select Region Subset", options=df['Region subsets'].unique())
     
-    # Analysis type selection buttons
+    # Analysis type selection using radio buttons
     st.sidebar.header("Analysis on")
-    col1, col2, col3 = st.sidebar.columns(3)
+    analysis_options = ["NSR Analysis", "Contribution Analysis", "EBITDA Analysis"]
     
     # Use session state to store the selected analysis type
     if 'analysis_type' not in st.session_state:
         st.session_state.analysis_type = "NSR Analysis"
     
-    with col1:
-        if st.button("NSR"):
-            st.session_state.analysis_type = "NSR Analysis"
-    with col2:
-        if st.button("Contribution"):
-            st.session_state.analysis_type = "Contribution Analysis"
-    with col3:
-        if st.button("EBITDA"):
-            st.session_state.analysis_type = "EBITDA Analysis"
-
-    analysis_type = st.session_state.analysis_type
+    analysis_type = st.sidebar.radio("Select Analysis Type", analysis_options, index=analysis_options.index(st.session_state.analysis_type))
+    
+    # Update session state
+    st.session_state.analysis_type = analysis_type
 
     premium_share = st.sidebar.slider("Adjust Premium Share (%)", 0, 100, 50)
-    
+
     # Filter the dataframe
     filtered_df = df[(df['Region'] == region) & (df['Brand'] == brand) &
                      (df['Type'] == product_type) & (df['Region subsets'] == region_subset)].copy()
