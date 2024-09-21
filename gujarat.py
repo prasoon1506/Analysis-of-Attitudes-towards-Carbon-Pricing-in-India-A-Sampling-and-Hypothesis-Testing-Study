@@ -141,7 +141,7 @@ if uploaded_file is not None:
         
         fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[imaginary_col],
                                  mode='lines+markers', name=f'Imaginary {overall_col} ({premium_share}% Premium)',
-                                 line=dict(color='red', dash='dot')))
+                                 line=dict(color='brown', dash='dot')))
         
         # Customize x-axis labels to include the difference
         x_labels = [f"{month}<br>({diff:.2f})" for month, diff in zip(filtered_df['Month'], filtered_df['Difference'])]
