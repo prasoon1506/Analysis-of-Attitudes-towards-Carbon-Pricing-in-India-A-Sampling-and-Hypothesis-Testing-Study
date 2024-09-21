@@ -493,12 +493,10 @@ def process_uploaded_file(uploaded_file):
             wb = openpyxl.load_workbook(BytesIO(file_content))
             ws = wb.get_sheet_by_name("All India")
 
-            hidden_cols = [idx for idx, col in enumerate(ws.column_dimensions, 1) if ws.column_dimensions[col].hidden]
-            df = pd.read_excel(BytesIO(file_content), header=2)
+            
             df = df.dropna(axis=1, how='all')
             
-            # Drop hidden columns
-            df = df.drop(columns=df.columns[hidden_cols], errors='ignore')
+
             
             # Drop unnamed columns
             unnamed_cols = df.columns[df.columns.str.contains('^Unnamed')]
