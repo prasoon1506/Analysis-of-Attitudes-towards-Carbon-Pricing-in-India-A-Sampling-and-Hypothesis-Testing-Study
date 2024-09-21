@@ -10,10 +10,13 @@ st.set_page_config(page_title="Data Analysis App", page_icon="📊", layout="wid
 
 # Function to load Lottie animations
 def load_lottieurl(url: str):
-    r = requests.get(url)
-    if r.status_code != 200:
+    try:
+        r = requests.get(url)
+        if r.status_code != 200:
+            return None
+        return r.json()
+    except:
         return None
-    return r.json()
 
 # Load Lottie animations
 lottie_analysis = load_lottieurl("https://assets4.lottiefiles.com/packages/lf20_qp1q7mct.json")
@@ -29,18 +32,15 @@ st.markdown("""
     max-width: 1200px;
     margin: 0 auto;
 }
-.upload-section {
-    background-color: #ffffff;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-.analysis-section {
+.upload-section, .analysis-section {
     background-color: #ffffff;
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     margin-top: 20px;
+}
+.stButton>button {
+    width: 100%;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -55,7 +55,10 @@ col1, col2 = st.columns([2, 1])
 with col1:
     uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
 with col2:
-    st_lottie(lottie_upload, height=150, key="upload")
+    if lottie_upload:
+        st_lottie(lottie_upload, height=150, key="upload")
+    else:
+        st.image("https://cdn-icons-png.flaticon.com/512/4503/4503700.png", width=150)
 st.markdown("</div>", unsafe_allow_html=True)
 
 if uploaded_file is not None:
@@ -64,8 +67,11 @@ if uploaded_file is not None:
     
     st.markdown("<div class='analysis-section'>", unsafe_allow_html=True)
     
-    # Display Lottie animation
-    st_lottie(lottie_analysis, height=200, key="analysis")
+    # Display Lottie animation or static image
+    if lottie_analysis:
+        st_lottie(lottie_analysis, height=200, key="analysis")
+    else:
+        st.image("https://cdn-icons-png.flaticon.com/512/2756/2756778.png", width=200)
     
     # Create sidebar for user inputs
     st.sidebar.header("Filter Options")
@@ -145,3 +151,7 @@ if uploaded_file is not None:
 
 else:
     st.info("Please upload an Excel file to begin the analysis.")
+
+# Add a footer
+st.markdown("---")
+st.markdown("Created with ❤️ by Your Name")
