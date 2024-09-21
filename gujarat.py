@@ -81,14 +81,14 @@ if uploaded_file is not None:
     region_subset = st.sidebar.selectbox("Select Region Subset", options=df['Region subsets'].unique())
     
     # Analysis type selection buttons
-    st.sidebar.header("Analysis Type")
+    st.sidebar.header("Analysis on")
     col1, col2, col3 = st.sidebar.columns(3)
     with col1:
-        nsr_button = st.button("NSR Analysis")
+        nsr_button = st.button("NSR")
     with col2:
-        contribution_button = st.button("Contribution Analysis")
+        contribution_button = st.button("Contribution")
     with col3:
-        ebitda_button = st.button("EBITDA Analysis")
+        ebitda_button = st.button("EBITDA")
 
     if nsr_button:
         analysis_type = "NSR Analysis"
