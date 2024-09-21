@@ -79,8 +79,26 @@ if uploaded_file is not None:
     brand = st.sidebar.selectbox("Select Brand", options=df['Brand'].unique())
     product_type = st.sidebar.selectbox("Select Type", options=df['Type'].unique())
     region_subset = st.sidebar.selectbox("Select Region Subset", options=df['Region subsets'].unique())
-    analysis_type = st.sidebar.selectbox("Select Analysis Type", 
-                                         options=['NSR Analysis', 'Contribution Analysis', 'EBITDA Analysis'])
+    
+    # Analysis type selection buttons
+    st.sidebar.header("Analysis Type")
+    col1, col2, col3 = st.sidebar.columns(3)
+    with col1:
+        nsr_button = st.button("NSR Analysis")
+    with col2:
+        contribution_button = st.button("Contribution Analysis")
+    with col3:
+        ebitda_button = st.button("EBITDA Analysis")
+
+    if nsr_button:
+        analysis_type = "NSR Analysis"
+    elif contribution_button:
+        analysis_type = "Contribution Analysis"
+    elif ebitda_button:
+        analysis_type = "EBITDA Analysis"
+    else:
+        analysis_type = "NSR Analysis"  # Default selection
+
     premium_share = st.sidebar.slider("Adjust Premium Share (%)", 0, 100, 50)
     
     # Filter the dataframe
@@ -108,6 +126,9 @@ if uploaded_file is not None:
         filtered_df[imaginary_col] = ((1 - premium_share/100) * filtered_df[cols[0]] +
                                       (premium_share/100) * filtered_df[cols[1]])
         
+        # Calculate difference between Premium and Normal
+        filtered_df['Difference'] = filtered_df[cols[1]] - filtered_df[cols[0]]
+        
         # Create the plot
         fig = go.Figure()
         
@@ -122,13 +143,24 @@ if uploaded_file is not None:
                                  mode='lines+markers', name=f'Imaginary {overall_col} ({premium_share}% Premium)',
                                  line=dict(color='red', dash='dot')))
         
-        fig.update_layout(title=analysis_type,
-                          xaxis_title='Month',
-                          yaxis_title='Value',
-                          legend_title='Metrics',
-                          hovermode="x unified")
+        # Customize x-axis labels to include the difference
+        x_labels = [f"{month}<br>({diff:.2f})" for month, diff in zip(filtered_df['Month'], filtered_df['Difference'])]
+        
+        fig.update_layout(
+            title=analysis_type,
+            xaxis_title='Month (Difference between Premium and Normal)',
+            yaxis_title='Value',
+            legend_title='Metrics',
+            hovermode="x unified",
+            xaxis=dict(tickmode='array', tickvals=list(range(len(x_labels))), ticktext=x_labels)
+        )
         
         st.plotly_chart(fig, use_container_width=True)
+        
+        # Display descriptive statistics
+        st.subheader("Descriptive Statistics")
+        desc_stats = filtered_df[cols + [overall_col, imaginary_col]].describe()
+        st.dataframe(desc_stats.style.format("{:.2f}"), use_container_width=True)
         
         # Display share of Normal and Premium Products
         st.subheader("Share of Normal and Premium Products")
@@ -142,7 +174,7 @@ if uploaded_file is not None:
             'Premium Share (%)': premium_share
         })
         
-        st.dataframe(share_df, use_container_width=True)
+        st.dataframe(share_df.set_index('Month'), use_container_width=True)
         
     else:
         st.warning("No data available for the selected combination.")
@@ -154,4 +186,4 @@ else:
 
 # Add a footer
 st.markdown("---")
-st.markdown("Created with ❤️ by Your Name")
+st.markdown("Created with ❤️ by Prasoon Bajpai")
