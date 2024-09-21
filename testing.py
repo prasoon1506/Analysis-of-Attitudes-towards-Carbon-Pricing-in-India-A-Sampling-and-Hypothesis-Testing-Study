@@ -493,9 +493,6 @@ def process_uploaded_file(uploaded_file):
             wb = openpyxl.load_workbook(BytesIO(file_content))
             ws = wb.get_sheet_by_name("All India")
 
-            
-            df = df.dropna(axis=1, how='all')
-            
 
             
             # Drop unnamed columns
