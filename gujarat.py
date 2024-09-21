@@ -83,21 +83,22 @@ if uploaded_file is not None:
     # Analysis type selection buttons
     st.sidebar.header("Analysis on")
     col1, col2, col3 = st.sidebar.columns(3)
+    
+    # Use session state to store the selected analysis type
+    if 'analysis_type' not in st.session_state:
+        st.session_state.analysis_type = "NSR Analysis"
+    
     with col1:
-        nsr_button = st.button("NSR")
+        if st.button("NSR"):
+            st.session_state.analysis_type = "NSR Analysis"
     with col2:
-        contribution_button = st.button("Contribution")
+        if st.button("Contribution"):
+            st.session_state.analysis_type = "Contribution Analysis"
     with col3:
-        ebitda_button = st.button("EBITDA")
+        if st.button("EBITDA"):
+            st.session_state.analysis_type = "EBITDA Analysis"
 
-    if nsr_button:
-        analysis_type = "NSR Analysis"
-    elif contribution_button:
-        analysis_type = "Contribution Analysis"
-    elif ebitda_button:
-        analysis_type = "EBITDA Analysis"
-    else:
-        analysis_type = "NSR Analysis"  # Default selection
+    analysis_type = st.session_state.analysis_type
 
     premium_share = st.sidebar.slider("Adjust Premium Share (%)", 0, 100, 50)
     
@@ -129,6 +130,9 @@ if uploaded_file is not None:
         # Calculate difference between Premium and Normal
         filtered_df['Difference'] = filtered_df[cols[1]] - filtered_df[cols[0]]
         
+        # Calculate difference between Imaginary and Overall
+        filtered_df['Imaginary vs Overall Difference'] = filtered_df[imaginary_col] - filtered_df[overall_col]
+        
         # Create the plot
         fig = go.Figure()
         
@@ -143,12 +147,13 @@ if uploaded_file is not None:
                                  mode='lines+markers', name=f'Imaginary {overall_col} ({premium_share}% Premium)',
                                  line=dict(color='brown', dash='dot')))
         
-        # Customize x-axis labels to include the difference
-        x_labels = [f"{month}<br>({diff:.2f})" for month, diff in zip(filtered_df['Month'], filtered_df['Difference'])]
+        # Customize x-axis labels to include the differences
+        x_labels = [f"{month}<br>(P-N: {diff:.2f})<br>(I-O: {i_diff:.2f})" for month, diff, i_diff in 
+                    zip(filtered_df['Month'], filtered_df['Difference'], filtered_df['Imaginary vs Overall Difference'])]
         
         fig.update_layout(
             title=analysis_type,
-            xaxis_title='Month (Difference between Premium and Normal)',
+            xaxis_title='Month (P-N: Premium - Normal, I-O: Imaginary - Overall)',
             yaxis_title='Value',
             legend_title='Metrics',
             hovermode="x unified",
