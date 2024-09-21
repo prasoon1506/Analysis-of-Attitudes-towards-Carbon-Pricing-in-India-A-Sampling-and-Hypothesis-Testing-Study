@@ -81,11 +81,11 @@ if uploaded_file is not None:
     
     # Analysis type selection using radio buttons
     st.sidebar.header("Analysis on")
-    analysis_options = ["NSR Analysis", "Contribution Analysis", "EBITDA Analysis"]
+    analysis_options = ["NSR", "Contribution", "EBITDA"]
     
     # Use session state to store the selected analysis type
     if 'analysis_type' not in st.session_state:
-        st.session_state.analysis_type = "NSR Analysis"
+        st.session_state.analysis_type = "NSR"
     
     analysis_type = st.sidebar.radio("Select Analysis Type", analysis_options, index=analysis_options.index(st.session_state.analysis_type))
     
