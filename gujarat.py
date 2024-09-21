@@ -81,11 +81,11 @@ if uploaded_file is not None:
     
     # Analysis type selection using radio buttons
     st.sidebar.header("Analysis on")
-    analysis_options = ["NSR", "Contribution", "EBITDA"]
+    analysis_options = ["NSR Analysis", "Contribution Analysis", "EBITDA Analysis"]
     
     # Use session state to store the selected analysis type
     if 'analysis_type' not in st.session_state:
-        st.session_state.analysis_type = "NSR"
+        st.session_state.analysis_type = "NSR Analysis"
     
     analysis_type = st.sidebar.radio("Select Analysis Type", analysis_options, index=analysis_options.index(st.session_state.analysis_type))
     
@@ -99,13 +99,13 @@ if uploaded_file is not None:
                      (df['Type'] == product_type) & (df['Region subsets'] == region_subset)].copy()
     
     if not filtered_df.empty:
-        if analysis_type == 'NSR':
+        if analysis_type == 'NSR Analysis':
             cols = ['Normal NSR', 'Premium NSR']
             overall_col = 'Overall NSR'
-        elif analysis_type == 'Contribution':
+        elif analysis_type == 'Contribution Analysis':
             cols = ['Normal Contribution', 'Premium Contribution']
             overall_col = 'Overall Contribution'
-        elif analysis_type == 'EBITDA':
+        elif analysis_type == 'EBITDA Analysis':
             cols = ['Normal EBITDA', 'Premium EBITDA']
             overall_col = 'Overall EBITDA'
         
