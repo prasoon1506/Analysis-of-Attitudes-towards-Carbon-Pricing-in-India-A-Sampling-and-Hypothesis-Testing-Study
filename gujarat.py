@@ -99,13 +99,13 @@ if uploaded_file is not None:
                      (df['Type'] == product_type) & (df['Region subsets'] == region_subset)].copy()
     
     if not filtered_df.empty:
-        if analysis_type == 'NSR Analysis':
+        if analysis_type == 'NSR':
             cols = ['Normal NSR', 'Premium NSR']
             overall_col = 'Overall NSR'
-        elif analysis_type == 'Contribution Analysis':
+        elif analysis_type == 'Contribution':
             cols = ['Normal Contribution', 'Premium Contribution']
             overall_col = 'Overall Contribution'
-        elif analysis_type == 'EBITDA Analysis':
+        elif analysis_type == 'EBITDA':
             cols = ['Normal EBITDA', 'Premium EBITDA']
             overall_col = 'Overall EBITDA'
         
