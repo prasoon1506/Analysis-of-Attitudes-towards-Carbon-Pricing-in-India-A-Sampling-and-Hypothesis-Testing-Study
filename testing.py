@@ -203,74 +203,102 @@ if 'file_processed' not in st.session_state:
     st.session_state.file_processed = False
 if 'diff_week' not in st.session_state:
     st.session_state.diff_week = 0
-
-# [Keep the existing transform_data, plot_district_graph, process_file, and update_week_name functions]
 def transform_data(df, week_names_input):
-    brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
-    transformed_df = df[['Zone', 'REGION', 'Dist Code', 'Dist Name']].copy()
-    
-    # Region name replacements
-    region_replacements = {
-        '12_Madhya Pradesh(west)': 'Madhya Pradesh(West)',
-        '20_Rajasthan': 'Rajasthan', '50_Rajasthan III': 'Rajasthan', '80_Rajasthan II': 'Rajasthan',
-        '33_Chhattisgarh(2)': 'Chhattisgarh', '38_Chhattisgarh(3)': 'Chhattisgarh', '39_Chhattisgarh(1)': 'Chhattisgarh',
-        '07_Haryana 1': 'Haryana', '07_Haryana 2': 'Haryana',
-        '06_Gujarat 1': 'Gujarat', '66_Gujarat 2': 'Gujarat', '67_Gujarat 3': 'Gujarat', '68_Gujarat 4': 'Gujarat', '69_Gujarat 5': 'Gujarat',
-        '13_Maharashtra': 'Maharashtra(West)',
-        '24_Uttar Pradesh': 'Uttar Pradesh(West)',
-        '35_Uttarakhand': 'Uttarakhand',
-        '83_UP East Varanasi Region': 'Varanasi',
-        '83_UP East Lucknow Region': 'Lucknow',
-        '30_Delhi': 'Delhi',
-        '19_Punjab': 'Punjab',
-        '09_Jammu&Kashmir': 'Jammu&Kashmir',
-        '08_Himachal Pradesh': 'Himachal Pradesh',
-        '82_Maharashtra(East)': 'Maharashtra(East)',
-        '81_Madhya Pradesh': 'Madhya Pradesh(East)',
-        '34_Jharkhand': 'Jharkhand',
-        '18_ODISHA': 'Odisha',
-        '04_Bihar': 'Bihar',
-        '27_Chandigarh': 'Chandigarh',
-        '82_Maharashtra (East)': 'Maharashtra(East)',
-        '25_West Bengal': 'West Bengal'
-    }
-    
-    transformed_df['REGION'] = transformed_df['REGION'].replace(region_replacements)
-    transformed_df['REGION'] = transformed_df['REGION'].replace(['Delhi', 'Haryana', 'Punjab'], 'North-I')
-    transformed_df['REGION'] = transformed_df['REGION'].replace(['Uttar Pradesh(West)','Uttarakhand'], 'North-II')
-    
-    zone_replacements = {
-        'EZ_East Zone': 'East Zone',
-        'CZ_Central Zone': 'Central Zone',
-        'NZ_North Zone': 'North Zone',
-        'UPEZ_UP East Zone': 'UP East Zone',
-        'upWZ_up West Zone': 'UP West Zone',
-        'WZ_West Zone': 'West Zone'
-    }
-    transformed_df['Zone'] = transformed_df['Zone'].replace(zone_replacements)
-    
-    brand_columns = [col for col in df.columns if any(brand in col for brand in brands)]
-    num_weeks = len(brand_columns) // len(brands)
-    
-    for i in range(num_weeks):
-        start_idx = i * len(brands)
-        end_idx = (i + 1) * len(brands)
-        week_data = df[brand_columns[start_idx:end_idx]]
-        week_name = week_names_input[i]
-        week_data = week_data.rename(columns={
-            col: f"{brand} ({week_name})"
-            for brand, col in zip(brands, week_data.columns)
-        })
-        week_data.replace(0, np.nan, inplace=True)
+    if df is None:
+        st.error("No data available for transformation. Please ensure you've uploaded and processed a file.")
+        return None
+
+    if not isinstance(df, pd.DataFrame):
+        st.error(f"Expected a pandas DataFrame, but got {type(df)}. Please check the data processing steps.")
+        return None
+
+    required_columns = ['Zone', 'REGION', 'Dist Code', 'Dist Name']
+    missing_columns = [col for col in required_columns if col not in df.columns]
+    if missing_columns:
+        st.error(f"The following required columns are missing from the dataframe: {', '.join(missing_columns)}")
+        return None
+
+    try:
+        brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
+        transformed_df = df[['Zone', 'REGION', 'Dist Code', 'Dist Name']].copy()
         
-        # Use a unique suffix for each merge operation
-        suffix = f'_{i}'
-        transformed_df = pd.merge(transformed_df, week_data, left_index=True, right_index=True, suffixes=('', suffix))
-    
-    # Remove any columns with suffixes (duplicates)
-    transformed_df = transformed_df.loc[:, ~transformed_df.columns.str.contains('_\d+$')]
-    
-    return transformed_df
+        # Region name replacements
+        region_replacements = {
+            '12_Madhya Pradesh(west)': 'Madhya Pradesh(West)',
+            '20_Rajasthan': 'Rajasthan', '50_Rajasthan III': 'Rajasthan', '80_Rajasthan II': 'Rajasthan',
+            '33_Chhattisgarh(2)': 'Chhattisgarh', '38_Chhattisgarh(3)': 'Chhattisgarh', '39_Chhattisgarh(1)': 'Chhattisgarh',
+            '07_Haryana 1': 'Haryana', '07_Haryana 2': 'Haryana',
+            '06_Gujarat 1': 'Gujarat', '66_Gujarat 2': 'Gujarat', '67_Gujarat 3': 'Gujarat', '68_Gujarat 4': 'Gujarat', '69_Gujarat 5': 'Gujarat',
+            '13_Maharashtra': 'Maharashtra(West)',
+            '24_Uttar Pradesh': 'Uttar Pradesh(West)',
+            '35_Uttarakhand': 'Uttarakhand',
+            '83_UP East Varanasi Region': 'Varanasi',
+            '83_UP East Lucknow Region': 'Lucknow',
+            '30_Delhi': 'Delhi',
+            '19_Punjab': 'Punjab',
+            '09_Jammu&Kashmir': 'Jammu&Kashmir',
+            '08_Himachal Pradesh': 'Himachal Pradesh',
+            '82_Maharashtra(East)': 'Maharashtra(East)',
+            '81_Madhya Pradesh': 'Madhya Pradesh(East)',
+            '34_Jharkhand': 'Jharkhand',
+            '18_ODISHA': 'Odisha',
+            '04_Bihar': 'Bihar',
+            '27_Chandigarh': 'Chandigarh',
+            '82_Maharashtra (East)': 'Maharashtra(East)',
+            '25_West Bengal': 'West Bengal'
+        }
+        
+        transformed_df['REGION'] = transformed_df['REGION'].replace(region_replacements)
+        transformed_df['REGION'] = transformed_df['REGION'].replace(['Delhi', 'Haryana', 'Punjab'], 'North-I')
+        transformed_df['REGION'] = transformed_df['REGION'].replace(['Uttar Pradesh(West)','Uttarakhand'], 'North-II')
+        
+        zone_replacements = {
+            'EZ_East Zone': 'East Zone',
+            'CZ_Central Zone': 'Central Zone',
+            'NZ_North Zone': 'North Zone',
+            'UPEZ_UP East Zone': 'UP East Zone',
+            'upWZ_up West Zone': 'UP West Zone',
+            'WZ_West Zone': 'West Zone'
+        }
+        transformed_df['Zone'] = transformed_df['Zone'].replace(zone_replacements)
+        
+        brand_columns = [col for col in df.columns if any(brand in col for brand in brands)]
+        num_weeks = len(brand_columns) // len(brands)
+        
+        if num_weeks != len(week_names_input):
+            st.warning(f"Mismatch between number of weeks in data ({num_weeks}) and provided week names ({len(week_names_input)}). Using available data.")
+        
+        for i in range(min(num_weeks, len(week_names_input))):
+            start_idx = i * len(brands)
+            end_idx = (i + 1) * len(brands)
+            week_data = df[brand_columns[start_idx:end_idx]]
+            week_name = week_names_input[i]
+            week_data = week_data.rename(columns={
+                col: f"{brand} ({week_name})"
+                for brand, col in zip(brands, week_data.columns)
+            })
+            week_data = week_data.replace(0, np.nan)
+            
+            # Use a unique suffix for each merge operation
+            suffix = f'_{i}'
+            transformed_df = pd.merge(transformed_df, week_data, left_index=True, right_index=True, suffixes=('', suffix))
+        
+        # Remove any columns with suffixes (duplicates)
+        transformed_df = transformed_df.loc[:, ~transformed_df.columns.str.contains('_\d+$')]
+        
+        return transformed_df
+
+    except Exception as e:
+        st.error(f"An error occurred while transforming the data: {str(e)}")
+        return None
+
+# In the main app logic, you should check if the transformation was successful:
+transformed_df = transform_data(st.session_state.df, st.session_state.week_names_input)
+if transformed_df is not None:
+    st.session_state.df = transformed_df
+    # Proceed with the rest of your app logic
+else:
+    st.error("Unable to proceed due to data transformation error. Please check your data and try again.")
 
 def plot_district_graph(df, district_names, benchmark_brands_dict, desired_diff_dict, week_names, diff_week, download_pdf=False):
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
@@ -558,7 +586,7 @@ def update_week_name(index):
         else:
             st.warning(f"Attempted to update week {index + 1}, but only {len(st.session_state.week_names_input)} weeks are available.")
         if all(st.session_state.week_names_input):
-            st.session_state.file_processed = True
+            st.session_state.file_processed = False
     return callback
 
 
