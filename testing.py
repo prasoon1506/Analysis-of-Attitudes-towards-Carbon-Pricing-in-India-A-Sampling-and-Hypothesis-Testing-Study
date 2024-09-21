@@ -458,7 +458,6 @@ def Home():
         st.info("Please fill in all week names to proceed with the analysis.")
     else:
         st.info("Please upload a file to proceed with the analysis.")
-
 def process_uploaded_file(uploaded_file):
     if uploaded_file:
         try:
@@ -470,13 +469,19 @@ def process_uploaded_file(uploaded_file):
             df = pd.read_excel(BytesIO(file_content), header=2)
             df = df.dropna(axis=1, how='all')
             
+            # Drop hidden columns
             df = df.drop(columns=df.columns[hidden_cols], errors='ignore')
+            
+            # Drop unnamed columns
+            unnamed_cols = df.columns[df.columns.str.contains('^Unnamed')]
+            df = df.drop(columns=unnamed_cols)
 
             if df.empty:
                 st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
             else:
                 st.session_state.original_df = df.copy()
                 st.session_state.edited_df = df.copy()
+                st.success("File processed successfully. Unnamed columns have been removed.")
                 edit_data()
         except Exception as e:
             st.error(f"Error processing file: {e}")
@@ -486,10 +491,14 @@ def process_uploaded_file(uploaded_file):
 def edit_data():
     st.subheader("Edit Your Data")
     
+    st.write("Current dataframe shape:", st.session_state.edited_df.shape)
+    st.write("Columns in the dataframe:", st.session_state.edited_df.columns.tolist())
+    
     # Column selection for deletion
     columns_to_delete = st.multiselect("Select columns to delete", st.session_state.edited_df.columns)
     if columns_to_delete:
         st.session_state.edited_df = st.session_state.edited_df.drop(columns=columns_to_delete)
+        st.success(f"Deleted columns: {', '.join(columns_to_delete)}")
     
     # Row selection for deletion
     st.write("Select rows to delete:")
@@ -501,6 +510,7 @@ def edit_data():
     rows_to_delete = [i for i, row in row_selection.iterrows() if row.any()]
     if rows_to_delete:
         st.session_state.edited_df = st.session_state.edited_df.drop(rows_to_delete)
+        st.success(f"Deleted {len(rows_to_delete)} rows")
     
     # Data editor for individual cell editing
     st.write("Edit your data:")
@@ -544,12 +554,13 @@ def get_week_names():
 def update_week_name(index):
     def callback():
         if index < len(st.session_state.week_names_input):
-            st.session_state.week_names_input[index] = st.session_state[f'week_{i}']
+            st.session_state.week_names_input[index] = st.session_state[f'week_{index}']
         else:
             st.warning(f"Attempted to update week {index + 1}, but only {len(st.session_state.week_names_input)} weeks are available.")
         if all(st.session_state.week_names_input):
             st.session_state.file_processed = True
     return callback
+
 
 
 def wsp_analysis_dashboard():
