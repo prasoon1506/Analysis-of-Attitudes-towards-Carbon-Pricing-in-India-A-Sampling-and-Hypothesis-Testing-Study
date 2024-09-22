@@ -2214,8 +2214,6 @@ def display_data(df, selected_regions, selected_districts, selected_channels, sh
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
         )
         st.plotly_chart(fig_trend)
-
-
 def main():
     st.sidebar.title("Menu")
     app_mode = st.sidebar.selectbox("Contents",
