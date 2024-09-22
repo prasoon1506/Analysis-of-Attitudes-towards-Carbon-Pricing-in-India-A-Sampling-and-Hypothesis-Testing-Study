@@ -176,7 +176,6 @@ if uploaded_file is not None:
         
         st.markdown("</div>", unsafe_allow_html=True)
     
- st.markdown("</div>", unsafe_allow_html=True)
 else:
     st.info("Please upload an Excel file to begin the analysis.")
 
