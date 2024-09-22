@@ -8,7 +8,7 @@ import openpyxl
 # Set page config
 st.set_page_config(page_title="Excel Editor", layout="wide")
 
-# Custom CSS for styling (unchanged)
+# Custom CSS for styling
 st.markdown("""
 <style>
     .main .block-container {
@@ -96,13 +96,19 @@ if uploaded_file is not None:
 
     # Create a list of column headers, considering merged cells
     column_headers = []
+    column_indices = {}  # To store the column indices for each header
     for col in range(1, sheet.max_column + 1):
         cell_value = sheet.cell(1, col).value
         if cell_value is not None:
             column_headers.append(cell_value)
+            if cell_value not in column_indices:
+                column_indices[cell_value] = []
+            column_indices[cell_value].append(col - 1)  # pandas uses 0-based index
         else:
             # If the cell is empty, it's part of a merged cell, so use the previous header
-            column_headers.append(column_headers[-1])
+            prev_header = column_headers[-1]
+            column_headers.append(prev_header)
+            column_indices[prev_header].append(col - 1)
 
     # Read as pandas DataFrame using the correct column headers
     df = pd.read_excel(uploaded_file, header=None, names=column_headers)
@@ -114,15 +120,12 @@ if uploaded_file is not None:
     cols_to_delete = st.multiselect("Choose columns to remove", all_columns)
     
     if cols_to_delete:
-        columns_to_remove = set()
+        columns_to_remove = []
         for col in cols_to_delete:
-            if col in merged_groups:
-                columns_to_remove.update([column_headers[i-1] for i in merged_groups[col]])
-            else:
-                columns_to_remove.add(col)
+            columns_to_remove.extend(column_indices[col])
         
-        df = df.drop(columns=list(columns_to_remove))
-        st.success(f"Deleted columns: {', '.join(columns_to_remove)}")
+        df = df.drop(df.columns[columns_to_remove], axis=1)
+        st.success(f"Deleted columns: {', '.join(cols_to_delete)}")
 
     # Row deletion
     st.subheader("Delete rows")
