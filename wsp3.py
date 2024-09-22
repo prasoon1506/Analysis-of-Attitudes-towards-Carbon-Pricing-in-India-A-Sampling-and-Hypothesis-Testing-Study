@@ -1,4 +1,3 @@
-
 import streamlit as st
 import openpyxl
 import pandas as pd
@@ -7,9 +6,7 @@ import matplotlib.pyplot as plt
 from io import BytesIO
 import base64
 import matplotlib.backends.backend_pdf
-
 st.set_page_config(page_title="WSP Analysis", layout="wide")
-
 # Custom CSS for the entire app
 st.markdown("""
 <style>
@@ -269,60 +266,6 @@ def update_week_name(index):
             process_file()
     return callback
 
-def Tutorial():
-    st.markdown("""
-    <style>
-    .title {
-        font-size: 50px;
-        font-weight: bold;
-        color: #3366cc;
-        text-align: center;
-        padding: 20px;
-        border-radius: 10px;
-        background: linear-gradient(to right, #f0f8ff, #e6f3ff);
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        margin-bottom: 30px;
-        font-family: 'Arial', sans-serif;
-    }
-    .title span {
-        background: linear-gradient(45deg, #3366cc, #6699ff);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-    st.markdown('<div class="title"><span>Welcome to the WSP Analysis Dashboard</span></div>', unsafe_allow_html=True)
-
-    
-    st.markdown("""
-    This app helps you analyze Whole Sale Price (WSP) data for various brands across different regions and districts.
-
-    ## How to use this app:
-
-    1. **Navigate to the WSP Analysis Dashboard tab** using the dropdown menu at the top of the sidebar.
-
-    2. **Upload your Excel file** containing the WSP data.
-
-    3. **Enter the week names** for each column in your data.
-
-    4. **Select your analysis settings**:
-        - Choose the zone and region you want to analyze
-        - Select one or more districts
-        - Set the week for difference calculation
-        - Choose whether to download plots as PDF
-
-    5. **Set benchmark brands and desired differences**:
-        - You can set the same benchmarks for all districts or customize for each
-        - For each benchmark brand, set the desired price difference
-
-    6. **Generate plots** by clicking the 'Generate Plots' button
-
-    7. **View and download** the generated plots
-
-    Remember, you can always return to this page for a refresher on how to use the app.
-
-    Happy analyzing!
-    """)
 
 def wsp_analysis_dashboard():
     st.markdown("""
@@ -499,11 +442,8 @@ def wsp_analysis_dashboard():
 
 def main():
     st.sidebar.title("Navigation")
-    app_mode = st.sidebar.selectbox("  Contents",
-        ["Tutorial", "WSP Analysis Dashboard"])
-    
-    if app_mode == "Tutorial":
-        Tutorial()
+    app_mode = st.sidebar.selectbox("Contents",
+        ["WSP Analysis Dashboard"])
     elif app_mode == "WSP Analysis Dashboard":
         wsp_analysis_dashboard()
 
