@@ -626,10 +626,9 @@ def Home():
                 process_uploaded_file(st.session_state.edited_df)
         with col2:
             if st.button("❌ Delete Edited File"):
-                
                 st.session_state.file_ready = False
                 st.session_state.file_processed = False
-                st.experimental_rerun()
+                st.rerun()
 
     elif uploaded_file:
         st.success(f"File uploaded: {uploaded_file.name}")
