@@ -531,15 +531,15 @@ def plot_district_graph(df, district_names, benchmark_brands_dict, desired_diff_
         b64_pdf = base64.b64encode(pdf_data).decode()
         st.markdown(f'<a download="{region_name}.pdf" href="data:application/pdf;base64,{b64_pdf}">Download All Plots as PDF</a>', unsafe_allow_html=True)
 
-
 def update_week_name(index):
     def callback():
         if index < len(st.session_state.week_names_input):
             st.session_state.week_names_input[index] = st.session_state[f'week_{index}']
         else:
             st.warning(f"Attempted to update week {index + 1}, but only {len(st.session_state.week_names_input)} weeks are available.")
-        if all(st.session_state.week_names_input):
-            st.session_state.file_processed = True
+        
+        # Check if all weeks are filled
+        st.session_state.all_weeks_filled = all(st.session_state.week_names_input)
     return callback
 
 def Home():
@@ -686,7 +686,7 @@ def process_uploaded_file(uploaded_file):
                                 on_change=update_week_name(i)
                             )
                     if all(st.session_state.week_names_input):
-                        st.session_state.file_processed = False
+                        st.session_state.file_processed = True
                     else:
                         st.warning("Please fill in all week names to process the file.")
                 else:
