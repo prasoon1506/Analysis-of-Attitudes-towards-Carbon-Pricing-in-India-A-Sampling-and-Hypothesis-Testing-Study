@@ -609,8 +609,13 @@ def Home():
     st.markdown('</div>', unsafe_allow_html=True)
     st.markdown('<div class="upload-section">', unsafe_allow_html=True)
     st.subheader("Upload Your Data")
+    
     if 'file_processed' not in st.session_state:
         st.session_state.file_processed = False
+    if 'all_weeks_filled' not in st.session_state:
+        st.session_state.all_weeks_filled = False
+
+    # Check if there's an edited file from the Excel Editor
     if 'edited_df' in st.session_state and 'edited_file_name' in st.session_state and not st.session_state.edited_df.empty:
         st.success(f"Edited file uploaded: {st.session_state.edited_file_name}")
         st.write("Preview of the edited data:")
@@ -618,7 +623,6 @@ def Home():
         if not st.session_state.file_processed:
             if st.button("Process Edited File"):
                 process_uploaded_file(st.session_state.edited_df)
-                st.session_state.file_processed = True
                 st.success("Edited file processed successfully!")
     else:
         if not st.session_state.file_processed:
