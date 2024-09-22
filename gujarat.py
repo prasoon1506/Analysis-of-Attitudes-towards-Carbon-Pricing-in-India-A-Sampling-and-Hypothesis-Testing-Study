@@ -4,6 +4,7 @@ import plotly.graph_objects as go
 import io
 import requests
 from streamlit_lottie import st_lottie
+from streamlit.components.v1 import html
 
 # Set page config
 st.set_page_config(page_title="Data Analysis App", page_icon="📊", layout="wide")
@@ -45,30 +46,53 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Title and description
-st.title("📊 Interactive Data Analysis App")
-st.markdown("Upload your Excel file and analyze it with interactive visualizations.")
-st.markdown("<div class='upload-section'>", unsafe_allow_html=True)
-col1, col2 = st.columns([2, 1])
-with col1:
-    uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
-with col2:
-    if lottie_upload:
-        st_lottie(lottie_upload, height=150, key="upload")
-    else:
-        st.image("https://cdn-icons-png.flaticon.com/512/4503/4503700.png", width=150)
-st.markdown("</div>", unsafe_allow_html=True)
+# Vertical slider component
+def vertical_slider(value, min_value, max_value, step, key):
+    slider_html = f"""
+        <input type="range" min="{min_value}" max="{max_value}" value="{value}" step="{step}" 
+               style="width: 300px; writing-mode: bt-lr; -webkit-appearance: slider-vertical; transform: rotate(270deg);">
+        <p id="slider-value">{value}%</p>
+        <script>
+            var slider = document.querySelector('input[type="range"]');
+            var output = document.getElementById("slider-value");
+            slider.oninput = function() {{
+                output.innerHTML = this.value + "%";
+                parent.postMessage({{
+                    type: "streamlit:setComponentValue",
+                    value: this.value
+                }}, "*");
+            }}
+        </script>
+    """
+    component_value = html(slider_html, height=350, key=key)
+    return int(component_value) if component_value else value
 
-if uploaded_file is not None:
-    # Read the Excel file
-    df = pd.read_excel(uploaded_file)
-    st.markdown("<div class='analysis-section'>", unsafe_allow_html=True)
+# Main app
+def main():
+    st.title("📊 Interactive Data Analysis App")
     
-    # Display Lottie animation or static image
-    if lottie_analysis:
-        st_lottie(lottie_analysis, height=200, key="analysis")
-    else:
-        st.image("https://cdn-icons-png.flaticon.com/512/2756/2756778.png", width=200)
+    # Create tabs
+    tab1, tab2, tab3 = st.tabs(["Upload Data", "Analyze Data", "Other Tab"])
+    
+    with tab1:
+        st.header("Upload Your Data")
+        uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
+        if uploaded_file is not None:
+            st.session_state.df = pd.read_excel(uploaded_file)
+            st.success("File uploaded successfully!")
+    
+    with tab2:
+        if 'df' not in st.session_state:
+            st.info("Please upload an Excel file in the 'Upload Data' tab to begin the analysis.")
+        else:
+            analyze_data(st.session_state.df)
+    
+    with tab3:
+        st.header("Other Tab Content")
+        st.write("This is another tab where you can add more functionality to your app.")
+
+def analyze_data(df):
+    st.header("Data Analysis")
     
     # Create sidebar for user inputs
     st.sidebar.header("Filter Options")
@@ -80,18 +104,7 @@ if uploaded_file is not None:
     # Analysis type selection using radio buttons
     st.sidebar.header("Analysis on")
     analysis_options = ["NSR Analysis", "Contribution Analysis", "EBITDA Analysis"]
-    
-    # Use session state to store the selected analysis type
-    if 'analysis_type' not in st.session_state:
-        st.session_state.analysis_type = "NSR Analysis"
-    
-    analysis_type = st.sidebar.radio("Select Analysis Type", analysis_options, index=analysis_options.index(st.session_state.analysis_type))
-    
-    # Update session state
-    st.session_state.analysis_type = analysis_type
-
-    # Create two columns: one for the graph and one for the slider
-    col1, col2 = st.columns([4, 1])
+    analysis_type = st.sidebar.radio("Select Analysis Type", analysis_options)
 
     # Filter the dataframe
     filtered_df = df[(df['Region'] == region) & (df['Brand'] == brand) &
@@ -113,9 +126,11 @@ if uploaded_file is not None:
                                     filtered_df['Premium Quantity'] * filtered_df[cols[1]]) / (
                                         filtered_df['Normal Quantity'] + filtered_df['Premium Quantity'])
         
-        # Premium share slider (now on the right side)
+        # Create two columns: one for the graph and one for the slider
+        col1, col2 = st.columns([4, 1])
+        
         with col2:
-            premium_share = st.slider("", 0, 100, 50, 1, key="premium_share")
+            premium_share = vertical_slider(50, 0, 100, 1, "premium_share")
         
         # Calculate imaginary overall based on slider
         imaginary_col = f'Imaginary {overall_col}'
@@ -179,11 +194,10 @@ if uploaded_file is not None:
         
     else:
         st.warning("No data available for the selected combination.")
-    
-    st.markdown("</div>", unsafe_allow_html=True)
 
-else:
-    st.info("Please upload an Excel file to begin the analysis.")
+# Run the app
+if __name__ == "__main__":
+    main()
 
 # Add a footer
 st.markdown("---")
