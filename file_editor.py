@@ -7,7 +7,7 @@ import openpyxl
 # Set page config
 st.set_page_config(page_title="Excel Editor", layout="wide")
 
-# Custom CSS for styling
+# Custom CSS for styling (unchanged)
 st.markdown("""
 <style>
     .main .block-container {
@@ -53,7 +53,6 @@ def create_excel_structure_html(sheet):
     for row in sheet.iter_rows():
         html += "<tr>"
         for cell in row:
-            # Check if the cell is part of a merged range
             merged = False
             for merged_range in merged_cells:
                 if cell.coordinate in merged_range:
@@ -69,6 +68,15 @@ def create_excel_structure_html(sheet):
     html += "</table>"
     return html
 
+# Function to get merged column groups
+def get_merged_column_groups(sheet):
+    merged_groups = {}
+    for merged_range in sheet.merged_cells.ranges:
+        if merged_range.min_row == 1:  # Only consider merged cells in the first row (header)
+            main_col = sheet.cell(1, merged_range.min_col).value
+            merged_groups[main_col] = list(range(merged_range.min_col, merged_range.max_col + 1))
+    return merged_groups
+
 # File uploader
 uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
 
@@ -82,17 +90,32 @@ if uploaded_file is not None:
     excel_html = create_excel_structure_html(sheet)
     st.markdown(excel_html, unsafe_allow_html=True)
 
+    # Get merged column groups
+    merged_groups = get_merged_column_groups(sheet)
+
     # Read as pandas DataFrame for further processing
-    df = pd.read_excel(uploaded_file)
+    df = pd.read_excel(uploaded_file, header=None)
     
+    # Set the first row as the header
+    df.columns = df.iloc[0]
+    df = df.drop(df.index[0])
+
     # Column selection for deletion
     st.subheader("Select columns to delete")
-    cols_to_delete = st.multiselect("Choose columns to remove", df.columns.tolist())
+    all_columns = df.columns.tolist()
+    cols_to_delete = st.multiselect("Choose columns to remove", all_columns)
     
     if cols_to_delete:
-        df = df.drop(columns=cols_to_delete)
-        st.success(f"Deleted columns: {', '.join(cols_to_delete)}")
-    
+        columns_to_remove = set()
+        for col in cols_to_delete:
+            if col in merged_groups:
+                columns_to_remove.update([df.columns[i-1] for i in merged_groups[col]])
+            else:
+                columns_to_remove.add(col)
+        
+        df = df.drop(columns=list(columns_to_remove))
+        st.success(f"Deleted columns: {', '.join(columns_to_remove)}")
+
     # Row deletion
     st.subheader("Delete rows")
     num_rows = st.number_input("Enter the number of rows to delete from the start", min_value=0, max_value=len(df)-1, value=0)
@@ -136,7 +159,7 @@ st.markdown("""
 ### Instructions:
 1. Upload an Excel file using the file uploader at the top of the page.
 2. View the original Excel structure, including merged cells.
-3. Select columns to delete if needed.
+3. Select columns to delete. For merged headers, selecting any part will delete the entire merged group.
 4. Specify the number of rows to delete from the start, if any.
 5. Edit individual cell values directly in the editable table.
 6. Review your changes in the "Edited Data" section.
