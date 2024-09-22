@@ -163,8 +163,6 @@ def excel_editor_menu():
         
         # Convert edited data back to dataframe
         edited_df = pd.DataFrame(edited_data)
-        
-        # Display edited data
         st.subheader("Edited Data")
         st.dataframe(edited_df)
         
@@ -179,9 +177,16 @@ def excel_editor_menu():
         
         st.markdown(get_excel_download_link(edited_df), unsafe_allow_html=True)
 
+        # New button to upload edited file to Home
+        if st.button("Upload Edited File to Home"):
+            # Save the edited DataFrame to session state
+            st.session_state.edited_df = edited_df
+            st.session_state.edited_file_name = "edited_" + uploaded_file.name
+            st.success("Edited file has been uploaded to Home. Please switch to the Home tab to see the uploaded file.")
+
     else:
         st.info("Please upload an Excel file to begin editing.")
-
+        
 def create_stats_pdf(stats_data, district):
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
@@ -537,7 +542,6 @@ def update_week_name(index):
             st.session_state.file_processed = True
     return callback
 
-
 def Home():
     st.markdown("""
     <style>
@@ -578,9 +582,8 @@ def Home():
     }
     </style>
     """, unsafe_allow_html=True)
-
     st.markdown('<div class="title"><span>Welcome to the WSP Analysis Dashboard</span></div>', unsafe_allow_html=True)
-
+    
     # Load Lottie animation
     lottie_url = "https://assets9.lottiefiles.com/packages/lf20_jcikwtux.json" 
     lottie_json = load_lottie_url(lottie_url)
@@ -594,7 +597,7 @@ def Home():
         This powerful tool helps you analyze Whole Sale Price (WSP) data for various brands across different regions and districts.
         Let's get started with your data analysis journey!
         """)
-
+    
     st.markdown('<div class="section-box">', unsafe_allow_html=True)
     st.subheader("How to use this app:")
     st.markdown("""
@@ -604,20 +607,31 @@ def Home():
     4. **Select your analysis settings** and generate insights!
     """)
     st.markdown('</div>', unsafe_allow_html=True)
-
+    
     st.markdown('<div class="upload-section">', unsafe_allow_html=True)
     st.subheader("Upload Your Data")
-    uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx"])
-    if uploaded_file:
-        st.success(f"File uploaded: {uploaded_file.name}")
-        process_uploaded_file(uploaded_file)
+    
+    # Check if there's an edited file from the Excel Editor
+    if 'edited_df' in st.session_state and 'edited_file_name' in st.session_state:
+        st.success(f"Edited file uploaded: {st.session_state.edited_file_name}")
+        st.write("Preview of the edited data:")
+        st.dataframe(st.session_state.edited_df.head())
+        if st.button("Process Edited File"):
+            process_uploaded_file(st.session_state.edited_df)
+            st.success("Edited file processed successfully!")
+    else:
+        uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx"])
+        if uploaded_file:
+            st.success(f"File uploaded: {uploaded_file.name}")
+            process_uploaded_file(uploaded_file)
+    
     st.markdown('</div>', unsafe_allow_html=True)
-
+    
     if st.session_state.file_processed:
         st.success("File processed successfully! You can now proceed to the analysis sections.")
     else:
         st.info("Please upload a file and fill in all week names to proceed with the analysis.")
-
+    
     st.markdown('<div class="section-box">', unsafe_allow_html=True)
     st.subheader("Need Help?")
     st.markdown("""
@@ -625,6 +639,8 @@ def Home():
     Happy analyzing!
     """)
     st.markdown('</div>', unsafe_allow_html=True)
+
+
 def process_uploaded_file(uploaded_file):
     if uploaded_file and not st.session_state.file_processed:
         try:
