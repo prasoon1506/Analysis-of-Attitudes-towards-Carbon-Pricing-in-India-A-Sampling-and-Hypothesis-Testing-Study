@@ -617,8 +617,6 @@ def Home():
     # Check if there's an edited file from the Excel Editor
     if 'edited_df' in st.session_state and 'edited_file_name' in st.session_state and not st.session_state.edited_df.empty:
         st.success(f"Edited file uploaded: {st.session_state.edited_file_name}")
-        st.write("Preview of the edited data:")
-        st.dataframe(st.session_state.edited_df.head())
         
         col1, col2 = st.columns([3, 1])
         with col1:
