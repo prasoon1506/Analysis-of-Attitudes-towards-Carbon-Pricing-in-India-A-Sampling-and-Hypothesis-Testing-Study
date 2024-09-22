@@ -131,7 +131,7 @@ def data_editor(df):
     st.write(df)
     
     # Skip the first two rows after editing
-    df = df.iloc[2:].reset_index(drop=True)
+    df = df.iloc[1:].reset_index(drop=True)
     st.write("Data after skipping first two rows:")
     st.write(df.head())
     
