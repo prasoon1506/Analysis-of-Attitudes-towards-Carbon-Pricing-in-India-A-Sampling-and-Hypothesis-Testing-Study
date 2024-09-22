@@ -481,7 +481,7 @@ def process_uploaded_file(uploaded_file):
         try:
             file_content = uploaded_file.read()
             wb = openpyxl.load_workbook(BytesIO(file_content))
-            ws = wb.get_sheet_by_name("All India")
+            ws = wb.active
 
             hidden_cols = [idx for idx, col in enumerate(ws.column_dimensions, 1) if ws.column_dimensions[col].hidden]
             df = pd.read_excel(BytesIO(file_content), header=2)
