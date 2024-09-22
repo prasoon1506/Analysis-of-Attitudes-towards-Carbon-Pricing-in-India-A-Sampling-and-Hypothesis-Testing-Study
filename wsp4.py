@@ -643,19 +643,21 @@ def Home():
     """)
     st.markdown('</div>', unsafe_allow_html=True)
 
-
 def process_uploaded_file(uploaded_file):
-    if uploaded_file and not st.session_state.file_processed:
+    if (isinstance(uploaded_file, pd.DataFrame) or uploaded_file) and not st.session_state.file_processed:
         try:
-            file_content = uploaded_file.read()
-            wb = openpyxl.load_workbook(BytesIO(file_content))
-            ws = wb.active
+            if isinstance(uploaded_file, pd.DataFrame):
+                df = uploaded_file
+            else:
+                file_content = uploaded_file.read()
+                wb = openpyxl.load_workbook(BytesIO(file_content))
+                ws = wb.active
 
-            hidden_cols = [idx for idx, col in enumerate(ws.column_dimensions, 1) if ws.column_dimensions[col].hidden]
-            df = pd.read_excel(BytesIO(file_content), header=2)
-            df = df.dropna(axis=1, how='all')
-            
-            df = df.drop(columns=df.columns[hidden_cols], errors='ignore')
+                hidden_cols = [idx for idx, col in enumerate(ws.column_dimensions, 1) if ws.column_dimensions[col].hidden]
+                df = pd.read_excel(BytesIO(file_content), header=2)
+                df = df.dropna(axis=1, how='all')
+                
+                df = df.drop(columns=df.columns[hidden_cols], errors='ignore')
 
             if df.empty:
                 st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
@@ -664,7 +666,6 @@ def process_uploaded_file(uploaded_file):
                 brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
                 brand_columns = [col for col in st.session_state.df.columns if any(brand in str(col) for brand in brands)]
                 num_weeks = len(brand_columns) // len(brands)
-
                 if num_weeks > 0:
                     st.markdown("### Enter Week Names")
                     num_columns = max(1, num_weeks)
