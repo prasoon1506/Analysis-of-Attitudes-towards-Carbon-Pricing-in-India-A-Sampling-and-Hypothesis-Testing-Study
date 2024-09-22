@@ -539,27 +539,6 @@ def update_week_name(index):
         st.session_state.all_weeks_filled = all(st.session_state.week_names_input)
     return callback
 
-def process_uploaded_file(df):
-    if not df.empty and not st.session_state.file_processed:
-        try:
-            st.session_state.df = df
-            brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
-            brand_columns = [col for col in st.session_state.df.columns if any(brand in str(col) for brand in brands)]
-            num_weeks = len(brand_columns) // len(brands)
-            if num_weeks > 0:
-                if 'week_names_input' not in st.session_state or len(st.session_state.week_names_input) != num_weeks:
-                    st.session_state.week_names_input = [''] * num_weeks
-                st.session_state.num_weeks = num_weeks
-            else:
-                st.warning("No weeks detected in the uploaded file. Please check the file content.")
-                st.session_state.week_names_input = []
-                st.session_state.num_weeks = 0
-        except Exception as e:
-            st.error(f"Error processing file: {e}")
-            st.exception(e)
-    else:
-        st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
-
 def Home():
     st.markdown("""
     <style>
@@ -601,6 +580,7 @@ def Home():
     </style>
     """, unsafe_allow_html=True)
     st.markdown('<div class="title"><span>Welcome to the WSP Analysis Dashboard</span></div>', unsafe_allow_html=True)
+    
     # Load Lottie animation
     lottie_url = "https://assets9.lottiefiles.com/packages/lf20_jcikwtux.json" 
     lottie_json = load_lottie_url(lottie_url)
@@ -624,8 +604,6 @@ def Home():
     4. **Select your analysis settings** and generate insights!
     """)
     st.markdown('</div>', unsafe_allow_html=True)
-    
-
     st.markdown('<div class="upload-section">', unsafe_allow_html=True)
     st.subheader("Upload Your Data")
     
@@ -633,10 +611,8 @@ def Home():
         st.session_state.file_processed = False
     if 'all_weeks_filled' not in st.session_state:
         st.session_state.all_weeks_filled = False
-    if 'num_weeks' not in st.session_state:
-        st.session_state.num_weeks = 0
 
-    uploaded_file = None
+    # Check if there's an edited file from the Excel Editor
     if 'edited_df' in st.session_state and 'edited_file_name' in st.session_state and not st.session_state.edited_df.empty:
         st.success(f"Edited file uploaded: {st.session_state.edited_file_name}")
         st.write("Preview of the edited data:")
@@ -645,32 +621,12 @@ def Home():
             if st.button("Process Edited File"):
                 process_uploaded_file(st.session_state.edited_df)
     else:
-        uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx"])
-        if uploaded_file and not st.session_state.file_processed:
-            st.success(f"File uploaded: {uploaded_file.name}")
-            df = pd.read_excel(uploaded_file, header=2)
-            process_uploaded_file(df)
-
-    if st.session_state.num_weeks > 0:
-        st.markdown("### Enter Week Names")
-        num_columns = max(1, st.session_state.num_weeks)
-        week_cols = st.columns(num_columns)
-
-        for i in range(st.session_state.num_weeks):
-            with week_cols[i % num_columns]:
-                st.session_state.week_names_input[i] = st.text_input(
-                    f'Week {i+1}', 
-                    value=st.session_state.week_names_input[i],
-                    key=f'week_{i}'
-                )
-
-        if st.button("Confirm Week Names"):
-            if all(st.session_state.week_names_input):
-                st.session_state.file_processed = True
-                st.success("File processed successfully! You can now proceed to the analysis sections.")
-            else:
-                st.warning("Please fill in all week names before confirming.")
-
+        if not st.session_state.file_processed:
+            uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx"])
+            if uploaded_file:
+                st.success(f"File uploaded: {uploaded_file.name}")
+                process_uploaded_file(uploaded_file)
+    
     st.markdown('</div>', unsafe_allow_html=True)
     if st.session_state.file_processed:
         st.success("File processed successfully! You can now proceed to the analysis sections.")
@@ -684,6 +640,64 @@ def Home():
     Happy analyzing!
     """)
     st.markdown('</div>', unsafe_allow_html=True)
+def process_uploaded_file(uploaded_file):
+    if (isinstance(uploaded_file, pd.DataFrame) or uploaded_file) and not st.session_state.file_processed:
+        try:
+            if isinstance(uploaded_file, pd.DataFrame):
+                buffer = BytesIO()
+                uploaded_file.to_excel(buffer, index=False)
+                buffer.seek(0)
+                file_content = buffer.getvalue()
+                df = pd.read_excel(BytesIO(file_content), header=2)
+            else:
+                file_content = uploaded_file.read()
+                wb = openpyxl.load_workbook(BytesIO(file_content))
+                ws = wb.active
+
+                hidden_cols = [idx for idx, col in enumerate(ws.column_dimensions, 1) if ws.column_dimensions[col].hidden]
+                df = pd.read_excel(BytesIO(file_content), header=2)
+                df = df.dropna(axis=1, how='all')
+                
+                df = df.drop(columns=df.columns[hidden_cols], errors='ignore')
+
+            if df.empty:
+                st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
+            else:
+                st.session_state.df = df
+                brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
+                brand_columns = [col for col in st.session_state.df.columns if any(brand in str(col) for brand in brands)]
+                num_weeks = len(brand_columns) // len(brands)
+                if num_weeks > 0:
+                    st.markdown("### Enter Week Names")
+                    num_columns = max(1, num_weeks)
+                    week_cols = st.columns(num_columns)
+
+                    if 'week_names_input' not in st.session_state or len(st.session_state.week_names_input) != num_weeks:
+                        st.session_state.week_names_input = [''] * num_weeks
+
+                    for i in range(num_weeks):
+                        with week_cols[i % num_columns]:
+                            st.text_input(
+                                f'Week {i+1}', 
+                                value=st.session_state.week_names_input[i] if i < len(st.session_state.week_names_input) else '',
+                                key=f'week_{i}',
+                                on_change=update_week_name(i)
+                            )
+                    
+                    if st.button("Confirm Week Names"):
+                        if all(st.session_state.week_names_input):
+                            st.session_state.file_processed = True
+                            st.success("File processed successfully! You can now proceed to the analysis sections.")
+                        else:
+                            st.warning("Please fill in all week names before confirming.")
+                else:
+                    st.warning("No weeks detected in the uploaded file. Please check the file content.")
+                    st.session_state.week_names_input = []
+                    st.session_state.file_processed = False
+        except Exception as e:
+            st.error(f"Error processing file: {e}")
+            st.exception(e)
+            st.session_state.file_processed = False
 
 
 
