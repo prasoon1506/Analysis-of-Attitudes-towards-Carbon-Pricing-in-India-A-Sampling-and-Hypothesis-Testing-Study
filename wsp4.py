@@ -660,15 +660,23 @@ def process_uploaded_file(uploaded_file):
     if (isinstance(uploaded_file, pd.DataFrame) or uploaded_file) and not st.session_state.file_processed:
         try:
             if isinstance(uploaded_file, pd.DataFrame):
-                df = uploaded_file
+                # Convert DataFrame to Excel file in memory
+                buffer = BytesIO()
+                uploaded_file.to_excel(buffer, index=False)
+                buffer.seek(0)
+                file_content = buffer.getvalue()
             else:
                 file_content = uploaded_file.read()
-                wb = openpyxl.load_workbook(BytesIO(file_content))
-                ws = wb.active
-                hidden_cols = [idx for idx, col in enumerate(ws.column_dimensions, 1) if ws.column_dimensions[col].hidden]
-                df = pd.read_excel(BytesIO(file_content), header=2)
-                df = df.dropna(axis=1, how='all')
-                df = df.drop(columns=df.columns[hidden_cols], errors='ignore')
+
+            # Load workbook to check for hidden columns
+            wb = openpyxl.load_workbook(BytesIO(file_content))
+            ws = wb.active
+            hidden_cols = [idx for idx, col in enumerate(ws.column_dimensions, 1) if ws.column_dimensions[col].hidden]
+
+            # Read Excel file with header=2 for both cases
+            df = pd.read_excel(BytesIO(file_content), header=2)
+            df = df.dropna(axis=1, how='all')
+            df = df.drop(columns=df.columns[hidden_cols], errors='ignore')
 
             if df.empty:
                 st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
@@ -692,7 +700,6 @@ def process_uploaded_file(uploaded_file):
             st.error(f"Error processing file: {e}")
             st.exception(e)
             st.session_state.file_processed = False
-
 def wsp_analysis_dashboard():
     st.markdown("""
     <style>
