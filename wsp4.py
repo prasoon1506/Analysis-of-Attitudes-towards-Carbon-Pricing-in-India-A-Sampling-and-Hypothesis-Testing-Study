@@ -538,7 +538,6 @@ def update_week_name(index):
             st.warning(f"Attempted to update week {index + 1}, but only {len(st.session_state.week_names_input)} weeks are available.")
         st.session_state.all_weeks_filled = all(st.session_state.week_names_input)
     return callback
-
 def Home():
     st.markdown("""
     <style>
@@ -606,22 +605,45 @@ def Home():
     st.markdown('</div>', unsafe_allow_html=True)
     st.markdown('<div class="upload-section">', unsafe_allow_html=True)
     st.subheader("Upload Your Data")
+
+    if 'file_processed' not in st.session_state:
+        st.session_state.file_processed = False
     if 'file_ready' not in st.session_state:
         st.session_state.file_ready = False
 
+    # Always show the file uploader
+    uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx"])
+
+    # Check if there's an edited file from the Excel Editor
     if 'edited_df' in st.session_state and 'edited_file_name' in st.session_state and not st.session_state.edited_df.empty:
         st.success(f"Edited file uploaded: {st.session_state.edited_file_name}")
         st.write("Preview of the edited data:")
         st.dataframe(st.session_state.edited_df.head())
-        if not st.session_state.file_ready:
+        
+        col1, col2 = st.columns([3, 1])
+        with col1:
             if st.button("Process Edited File"):
                 process_uploaded_file(st.session_state.edited_df)
-    else:
-        if not st.session_state.file_ready:
-            uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx"])
-            if uploaded_file:
-                st.success(f"File uploaded: {uploaded_file.name}")
+        with col2:
+            if st.button("❌ Delete Edited File"):
+                del st.session_state.edited_df
+                del st.session_state.edited_file_name
+                st.session_state.file_ready = False
+                st.session_state.file_processed = False
+                st.experimental_rerun()
+
+    elif uploaded_file:
+        st.success(f"File uploaded: {uploaded_file.name}")
+        
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            if st.button("Process Uploaded File"):
                 process_uploaded_file(uploaded_file)
+        with col2:
+            if st.button("❌ Delete Uploaded File"):
+                st.session_state.file_ready = False
+                st.session_state.file_processed = False
+                st.experimental_rerun()
 
     if st.session_state.file_ready:
         st.markdown("### Enter Week Names")
@@ -649,7 +671,7 @@ def Home():
     else:
         st.info("Please upload a file and fill in all week names to proceed with the analysis.")
 
-    st.markdown('<div class="section-box">', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
     st.subheader("Need Help?")
     st.markdown("""
     If you need any assistance or have questions about using the app, don't hesitate to reach out to our support team.
