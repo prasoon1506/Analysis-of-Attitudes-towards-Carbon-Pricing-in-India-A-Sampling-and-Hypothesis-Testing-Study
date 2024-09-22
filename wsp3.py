@@ -6,7 +6,9 @@ import matplotlib.pyplot as plt
 from io import BytesIO
 import base64
 import matplotlib.backends.backend_pdf
+
 st.set_page_config(page_title="WSP Analysis", layout="wide")
+
 # Custom CSS for the entire app
 st.markdown("""
 <style>
@@ -93,6 +95,59 @@ if 'file_processed' not in st.session_state:
     st.session_state.file_processed = False
 if 'diff_week' not in st.session_state:
     st.session_state.diff_week = 0
+
+def load_data(uploaded_file):
+    file_content = uploaded_file.read()
+    wb = openpyxl.load_workbook(BytesIO(file_content))
+    ws = wb.active
+    
+    hidden_cols = [idx for idx, col in enumerate(ws.column_dimensions, 1) if ws.column_dimensions[col].hidden]
+    
+    df = pd.read_excel(BytesIO(file_content))
+    
+    if df.empty:
+        st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
+        return None
+    
+    df.drop(df.columns[hidden_cols], axis=1, inplace=True)
+    return df
+
+def data_editor(df):
+    st.subheader("Data Editor")
+    
+    # Display the first few rows of the dataframe
+    st.write("First few rows of the data:")
+    st.write(df.head())
+    
+    # Multi-select for columns to delete
+    columns_to_delete = st.multiselect("Select columns to delete", df.columns)
+    
+    if columns_to_delete:
+        df = df.drop(columns=columns_to_delete)
+        st.success(f"Deleted columns: {', '.join(columns_to_delete)}")
+    
+    # Display the updated dataframe
+    st.write("Updated data:")
+    st.write(df)
+    
+    # Skip the first two rows after editing
+    df = df.iloc[2:].reset_index(drop=True)
+    st.write("Data after skipping first two rows:")
+    st.write(df.head())
+    
+    return df
+
+def get_week_names(num_weeks):
+    st.subheader("Enter Week Names")
+    week_names = []
+    num_columns = 3  # Number of columns for week name inputs
+    for i in range(0, num_weeks, num_columns):
+        cols = st.columns(num_columns)
+        for j in range(num_columns):
+            if i + j < num_weeks:
+                week_name = cols[j].text_input(f"Week {i+j+1}", key=f"week_{i+j}")
+                week_names.append(week_name)
+    return week_names
 
 def transform_data(df, week_names_input):
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
@@ -205,67 +260,53 @@ def plot_district_graph(df, district_names, benchmark_brands_dict, desired_diff_
         plt.tight_layout()
 
         text_str = ''
-        if district_name in benchmark_brands_dict:
-            brand_texts = []
-            max_left_length = 0
-            for benchmark_brand in benchmark_brands_dict[district_name]:
-                jklc_prices = [district_df[f"JKLC ({week})"].iloc[0] for week in week_names if f"JKLC ({week})" in district_df.columns]
-                benchmark_prices = [district_df[f"{benchmark_brand} ({week})"].iloc[0] for week in week_names if f"{benchmark_brand} ({week})" in district_df.columns]
-                actual_diff = np.nan
-                if jklc_prices and benchmark_prices:
-                    for i in range(len(jklc_prices) - 1, -1, -1):
-                        if not np.isnan(jklc_prices[i]) and not np.isnan(benchmark_prices[i]):
-                            actual_diff = jklc_prices[i] - benchmark_prices[i]
-                            break
-                desired_diff_str = f" ({desired_diff_dict[district_name][benchmark_brand]:.0f} Rs.)" if district_name in desired_diff_dict and benchmark_brand in desired_diff_dict[district_name] else ""
-                brand_text = [f"Benchmark Brand: {benchmark_brand}{desired_diff_str}", f"Actual Diff: {actual_diff:+.2f} Rs."]
-                brand_texts.append(brand_text)
-                max_left_length = max(max_left_length, len(brand_text[0]))
-            num_brands = len(brand_texts)
-            if num_brands == 1:
-                text_str = "\n".join(brand_texts[0])
-            elif num_brands > 1:
-                half_num_brands = num_brands // 2
-                left_side = brand_texts[:half_num_brands]
-                right_side = brand_texts[half_num_brands:]
-                lines = []
-                for i in range(2):
-                    left_text = left_side[0][i] if i < len(left_side[0]) else ""
-                    right_text = right_side[0][i] if i < len(right_side[0]) else ""
-                    lines.append(f"{left_text.ljust(max_left_length)} \u2502 {right_text.rjust(max_left_length)}")
-                text_str = "\n".join(lines)
-        plt.text(0.5, -0.3, text_str, weight='bold', ha='center', va='center', transform=plt.gca().transAxes, bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.5'))
-        plt.subplots_adjust(bottom=0.25)
-        if download_pdf:
-            pdf.savefig(fig, bbox_inches='tight')
-        st.pyplot(fig)
-        buf = BytesIO()
-        plt.savefig(buf, format='png', bbox_inches='tight')
-        buf.seek(0)
-        b64_data = base64.b64encode(buf.getvalue()).decode()
-        st.markdown(f'<a download="district_plot_{district_name}.png" href="data:image/png;base64,{b64_data}">Download Plot as PNG</a>', unsafe_allow_html=True)
-        plt.close()
-    
+    if district_name in benchmark_brands_dict:
+        brand_texts = []
+        max_left_length = 0
+        for benchmark_brand in benchmark_brands_dict[district_name]:
+            jklc_prices = [district_df[f"JKLC ({week})"].iloc[0] for week in week_names if f"JKLC ({week})" in district_df.columns]
+            benchmark_prices = [district_df[f"{benchmark_brand} ({week})"].iloc[0] for week in week_names if f"{benchmark_brand} ({week})" in district_df.columns]
+            actual_diff = np.nan
+            if jklc_prices and benchmark_prices:
+                for i in range(len(jklc_prices) - 1, -1, -1):
+                    if not np.isnan(jklc_prices[i]) and not np.isnan(benchmark_prices[i]):
+                        actual_diff = jklc_prices[i] - benchmark_prices[i]
+                        break
+            desired_diff_str = f" ({desired_diff_dict[district_name][benchmark_brand]:.0f} Rs.)" if district_name in desired_diff_dict and benchmark_brand in desired_diff_dict[district_name] else ""
+            brand_text = [f"Benchmark Brand: {benchmark_brand}{desired_diff_str}", f"Actual Diff: {actual_diff:+.2f} Rs."]
+            brand_texts.append(brand_text)
+            max_left_length = max(max_left_length, len(brand_text[0]))
+        num_brands = len(brand_texts)
+        if num_brands == 1:
+            text_str = "\n".join(brand_texts[0])
+        elif num_brands > 1:
+            half_num_brands = num_brands // 2
+            left_side = brand_texts[:half_num_brands]
+            right_side = brand_texts[half_num_brands:]
+            lines = []
+            for i in range(2):
+                left_text = left_side[0][i] if i < len(left_side[0]) else ""
+                right_text = right_side[0][i] if i < len(right_side[0]) else ""
+                lines.append(f"{left_text.ljust(max_left_length)} \u2502 {right_text.rjust(max_left_length)}")
+            text_str = "\n".join(lines)
+    plt.text(0.5, -0.3, text_str, weight='bold', ha='center', va='center', transform=plt.gca().transAxes, bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.5'))
+    plt.subplots_adjust(bottom=0.25)
+    if download_pdf:
+        pdf.savefig(fig, bbox_inches='tight')
+    st.pyplot(fig)
+    buf = BytesIO()
+    plt.savefig(buf, format='png', bbox_inches='tight')
+    buf.seek(0)
+    b64_data = base64.b64encode(buf.getvalue()).decode()
+    st.markdown(f'<a download="district_plot_{district_name}.png" href="data:image/png;base64,{b64_data}">Download Plot as PNG</a>', unsafe_allow_html=True)
+    plt.close()
+
     if download_pdf:
         pdf.close()
         with open("district_plots.pdf", "rb") as f:
             pdf_data = f.read()
         b64_pdf = base64.b64encode(pdf_data).decode()
         st.markdown(f'<a download="{region_name}.pdf" href="data:application/pdf;base64,{b64_pdf}">Download All Plots as PDF</a>', unsafe_allow_html=True)
-
-def process_file():
-    st.session_state.file_processed = True
-
-def update_week_name(index):
-    def callback():
-        if index < len(st.session_state.week_names_input):
-            st.session_state.week_names_input[index] = st.session_state[f'week_{index}']
-        else:
-            st.warning(f"Attempted to update week {index + 1}, but only {len(st.session_state.week_names_input)} weeks are available.")
-        if all(st.session_state.week_names_input):
-            process_file()
-    return callback
-
 
 def wsp_analysis_dashboard():
     st.markdown("""
@@ -290,64 +331,30 @@ def wsp_analysis_dashboard():
     </style>
     """, unsafe_allow_html=True)
 
-    # Display the stylized title
     st.markdown('<div class="title"><span>WSP Analysis Dashboard</span></div>', unsafe_allow_html=True)
-
 
     uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx"])
     if uploaded_file:
         st.markdown(f'<div class="uploadedFile">File uploaded: {uploaded_file.name}</div>', unsafe_allow_html=True)
-    if uploaded_file and not st.session_state.file_processed:
-        try:
-            file_content = uploaded_file.read()
-            wb = openpyxl.load_workbook(BytesIO(file_content))
-            ws = wb.active
+        df = load_data(uploaded_file)
+        
+        if df is not None:
+            # Data editing
+            df = data_editor(df)
             
-            hidden_cols = [idx for idx, col in enumerate(ws.column_dimensions, 1) if ws.column_dimensions[col].hidden]
+            # Get week names
+            brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
+            brand_columns = [col for col in df.columns if any(brand in col for brand in brands)]
+            num_weeks = len(brand_columns) // len(brands)
             
-            st.session_state.df = pd.read_excel(BytesIO(file_content), skiprows=2)
+            week_names = get_week_names(num_weeks)
             
-            if st.session_state.df.empty:
-                st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
-            else:
-                
-                st.session_state.df.drop(st.session_state.df.columns[hidden_cols], axis=1, inplace=True)
-
-                brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
-                brand_columns = [col for col in st.session_state.df.columns if any(brand in col for brand in brands)]
-
-                num_weeks = len(brand_columns) // len(brands)
-                
-                if num_weeks > 0:
-                    st.markdown("### Enter Week Names")
-                    num_columns = max(1, num_weeks)
-                    week_cols = st.columns(num_columns)
-                    
-                    if 'week_names_input' not in st.session_state or len(st.session_state.week_names_input) != num_weeks:
-                        st.session_state.week_names_input = [''] * num_weeks
-                    
-                    for i in range(num_weeks):
-                        with week_cols[i % num_columns]:
-                            st.text_input(
-                                f'Week {i+1}', 
-                                value=st.session_state.week_names_input[i] if i < len(st.session_state.week_names_input) else '',
-                                key=f'week_{i}',
-                                on_change=update_week_name(i)
-                            )
-                else:
-                    st.warning("No weeks detected in the uploaded file. Please check the file content.")
-                    st.session_state.week_names_input = []
-
-        except Exception as e:
-            st.error(f"Error processing file: {e}")
-            st.exception(e)
-    
-   
-    
+            if all(week_names):
+                st.session_state.week_names_input = week_names
+                st.session_state.df = transform_data(df, week_names)
+                st.session_state.file_processed = True
     
     if st.session_state.file_processed:
-        st.session_state.df = transform_data(st.session_state.df, st.session_state.week_names_input)
-        
         st.markdown("### Analysis Settings")
         
         st.session_state.diff_week = st.slider("Select Week for Difference Calculation", 
@@ -442,8 +449,7 @@ def wsp_analysis_dashboard():
 
 def main():
     st.sidebar.title("Navigation")
-    app_mode = st.sidebar.selectbox("Contents",
-        ["WSP Analysis Dashboard"])
+    app_mode = st.sidebar.selectbox("Contents", ["WSP Analysis Dashboard"])
     if app_mode == "WSP Analysis Dashboard":
         wsp_analysis_dashboard()
 
