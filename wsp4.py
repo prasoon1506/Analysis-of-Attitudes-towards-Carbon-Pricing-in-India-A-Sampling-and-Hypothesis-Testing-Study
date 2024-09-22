@@ -643,7 +643,7 @@ def Home():
             if st.button("❌ Delete Uploaded File"):
                 st.session_state.file_ready = False
                 st.session_state.file_processed = False
-                st.experimental_rerun()
+                st.rerun()
 
     if st.session_state.file_ready:
         st.markdown("### Enter Week Names")
