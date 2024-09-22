@@ -653,11 +653,9 @@ def process_uploaded_file(uploaded_file):
                 file_content = uploaded_file.read()
                 wb = openpyxl.load_workbook(BytesIO(file_content))
                 ws = wb.active
-
                 hidden_cols = [idx for idx, col in enumerate(ws.column_dimensions, 1) if ws.column_dimensions[col].hidden]
                 df = pd.read_excel(BytesIO(file_content), header=2)
                 df = df.dropna(axis=1, how='all')
-                
                 df = df.drop(columns=df.columns[hidden_cols], errors='ignore')
 
             if df.empty:
@@ -698,10 +696,6 @@ def process_uploaded_file(uploaded_file):
             st.error(f"Error processing file: {e}")
             st.exception(e)
             st.session_state.file_processed = False
-
-
-
-
 def wsp_analysis_dashboard():
     st.markdown("""
     <style>
