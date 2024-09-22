@@ -363,6 +363,9 @@ def wsp_analysis_dashboard():
             excel_view = create_excel_like_view(df, merged_cells, worksheet)
             st.markdown(excel_view, unsafe_allow_html=True)
             
+            # Data editor
+            df = data_editor(df)
+            
             # Get week names
             brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
             brand_columns = [col for col in df.columns if any(brand in col for brand in brands)]
@@ -374,10 +377,18 @@ def wsp_analysis_dashboard():
                 st.session_state.week_names_input = week_names
                 st.session_state.df = transform_data(df, week_names)
                 st.session_state.file_processed = True
-    
+
     if st.session_state.file_processed:
         st.markdown("### Analysis Settings")
         
+        if not isinstance(st.session_state.df, pd.DataFrame):
+            st.error("Error: Data not properly loaded. Please upload a valid Excel file and process it.")
+            return
+
+        if st.session_state.df.empty:
+            st.error("Error: The processed data is empty. Please check your Excel file and ensure it contains valid data.")
+            return
+
         st.session_state.diff_week = st.slider("Select Week for Difference Calculation", 
                                                min_value=0, 
                                                max_value=len(st.session_state.week_names_input) - 1, 
@@ -394,6 +405,7 @@ def wsp_analysis_dashboard():
             filtered_df = st.session_state.df[st.session_state.df["Zone"] == selected_zone]
             region_names = filtered_df["REGION"].unique().tolist()
             selected_region = st.selectbox("Select Region", region_names, key="region_select")
+
         
         filtered_df = filtered_df[filtered_df["REGION"] == selected_region]
         district_names = filtered_df["Dist Name"].unique().tolist()
