@@ -617,18 +617,12 @@ def Home():
     # Check if there's an edited file from the Excel Editor
     if 'edited_df' in st.session_state and 'edited_file_name' in st.session_state and not st.session_state.edited_df.empty:
         st.success(f"Edited file uploaded: {st.session_state.edited_file_name}")
-        
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            if st.button("Process Edited File"):
+        if st.button("Process Edited File"):
                 process_uploaded_file(st.session_state.edited_df)
 
     elif uploaded_file:
         st.success(f"File uploaded: {uploaded_file.name}")
-        
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            if st.button("Process Uploaded File"):
+        if st.button("Process Uploaded File"):
                 process_uploaded_file(uploaded_file)
        
 
