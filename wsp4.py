@@ -609,27 +609,25 @@ def Home():
     st.markdown('</div>', unsafe_allow_html=True)
     st.markdown('<div class="upload-section">', unsafe_allow_html=True)
     st.subheader("Upload Your Data")
-    
-    # Check if there's an edited file from the Excel Editor
+    if 'file_processed' not in st.session_state:
+        st.session_state.file_processed = False
     if 'edited_df' in st.session_state and 'edited_file_name' in st.session_state and not st.session_state.edited_df.empty:
         st.success(f"Edited file uploaded: {st.session_state.edited_file_name}")
         st.write("Preview of the edited data:")
         st.dataframe(st.session_state.edited_df.head())
-        if st.button("Process Edited File"):
-            process_uploaded_file(st.session_state.edited_df)
-            st.success("Edited file processed successfully!")
-            # Clear the edited file from session state after processing
-            del st.session_state.edited_df
-            del st.session_state.edited_file_name
+        if not st.session_state.file_processed:
+            if st.button("Process Edited File"):
+                process_uploaded_file(st.session_state.edited_df)
+                st.session_state.file_processed = True
+                st.success("Edited file processed successfully!")
     else:
-        uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx"])
-        if uploaded_file:
-            st.success(f"File uploaded: {uploaded_file.name}")
-            process_uploaded_file(uploaded_file)
+        if not st.session_state.file_processed:
+            uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx"])
+            if uploaded_file:
+                st.success(f"File uploaded: {uploaded_file.name}")
+                process_uploaded_file(uploaded_file)
     
     st.markdown('</div>', unsafe_allow_html=True)
-
-    
     if st.session_state.file_processed:
         st.success("File processed successfully! You can now proceed to the analysis sections.")
     else:
@@ -667,6 +665,7 @@ def process_uploaded_file(uploaded_file):
                 st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
             else:
                 st.session_state.df = df
+                st.session_state.file_processed = True 
                 brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
                 brand_columns = [col for col in st.session_state.df.columns if any(brand in str(col) for brand in brands)]
                 num_weeks = len(brand_columns) // len(brands)
