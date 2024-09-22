@@ -42,20 +42,6 @@ st.markdown("""
 .stButton>button {
     width: 100%;
 }
-.premium-share-slider {
-    position: fixed;
-    right: 2rem;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 1000;
-    background-color: white;
-    padding: 1rem;
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-.premium-share-slider .stSlider {
-    height: 300px;
-}
 </style>
 """, unsafe_allow_html=True)
 
@@ -104,20 +90,8 @@ if uploaded_file is not None:
     # Update session state
     st.session_state.analysis_type = analysis_type
 
-    # Create a container for the graph and slider
-    graph_container = st.container()
-
-    # Premium share slider (now on the right side)
-    st.markdown(
-        """
-        <div class='premium-share-slider'>
-            <h3>Adjust Premium Share</h3>
-            <div id='premium-share-value'></div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-    premium_share = st.slider("", 0, 100, 50, 1, key="premium_share", label_visibility="collapsed")
+    # Create two columns: one for the graph and one for the slider
+    col1, col2 = st.columns([4, 1])
 
     # Filter the dataframe
     filtered_df = df[(df['Region'] == region) & (df['Brand'] == brand) &
@@ -138,6 +112,10 @@ if uploaded_file is not None:
         filtered_df[overall_col] = (filtered_df['Normal Quantity'] * filtered_df[cols[0]] +
                                     filtered_df['Premium Quantity'] * filtered_df[cols[1]]) / (
                                         filtered_df['Normal Quantity'] + filtered_df['Premium Quantity'])
+        
+        # Premium share slider (now on the right side)
+        with col2:
+            premium_share = st.slider("", 0, 100, 50, 1, key="premium_share")
         
         # Calculate imaginary overall based on slider
         imaginary_col = f'Imaginary {overall_col}'
@@ -177,7 +155,7 @@ if uploaded_file is not None:
             xaxis=dict(tickmode='array', tickvals=list(range(len(x_labels))), ticktext=x_labels)
         )
         
-        with graph_container:
+        with col1:
             st.plotly_chart(fig, use_container_width=True)
         
         # Display descriptive statistics
@@ -210,18 +188,3 @@ else:
 # Add a footer
 st.markdown("---")
 st.markdown("Created with ❤️ by Prasoon Bajpai")
-
-# JavaScript for continuous slider update
-st.markdown("""
-<script>
-const slider = document.querySelector('div[data-testid="stSlider"] input');
-const valueDisplay = document.getElementById('premium-share-value');
-
-function updateValue() {
-    valueDisplay.textContent = slider.value + '%';
-}
-
-slider.addEventListener('input', updateValue);
-updateValue();
-</script>
-""", unsafe_allow_html=True)
