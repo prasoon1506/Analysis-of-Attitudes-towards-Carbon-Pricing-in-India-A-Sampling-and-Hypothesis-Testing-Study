@@ -65,33 +65,7 @@ if uploaded_file is not None:
     # Read the Excel file
     df = pd.read_excel(uploaded_file)
     
-    # File editing section
-    st.markdown("<div class='edit-section'>", unsafe_allow_html=True)
-    st.subheader("Edit Your Data")
-    st.markdown("Make changes to your data below. You can edit values, delete rows, or remove columns.")
-    
-    # Column selection
-    st.subheader("Select columns to delete")
-    col_to_delete = st.multiselect("Choose columns to delete", df.columns.tolist())
-    if st.button("Delete Selected Columns"):
-        df = df.drop(columns=col_to_delete)
-        st.success(f"Deleted {len(col_to_delete)} column(s)")
 
-    # Row selection
-    st.subheader("Select rows to delete")
-    row_to_delete = st.multiselect("Choose rows to delete", df.index.tolist())
-    if st.button("Delete Selected Rows"):
-        df = df.drop(index=row_to_delete)
-        st.success(f"Deleted {len(row_to_delete)} row(s)")
-
-    # Display editable dataframe
-    st.subheader("Edit individual cells")
-    edited_df = st.data_editor(df, num_rows="dynamic")
-    
-    # Add a submit button
-    if st.button("Submit Edited Data"):
-        st.success("Data submitted successfully!")
-        df = edited_df  # Update the main dataframe with edited data
         
         # Continue with the analysis
         st.markdown("<div class='analysis-section'>", unsafe_allow_html=True)
