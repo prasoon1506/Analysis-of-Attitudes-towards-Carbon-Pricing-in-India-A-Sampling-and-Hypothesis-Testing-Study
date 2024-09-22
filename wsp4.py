@@ -607,18 +607,20 @@ def Home():
     4. **Select your analysis settings** and generate insights!
     """)
     st.markdown('</div>', unsafe_allow_html=True)
-    
     st.markdown('<div class="upload-section">', unsafe_allow_html=True)
     st.subheader("Upload Your Data")
     
     # Check if there's an edited file from the Excel Editor
-    if 'edited_df' in st.session_state and 'edited_file_name' in st.session_state:
+    if 'edited_df' in st.session_state and 'edited_file_name' in st.session_state and not st.session_state.edited_df.empty:
         st.success(f"Edited file uploaded: {st.session_state.edited_file_name}")
         st.write("Preview of the edited data:")
         st.dataframe(st.session_state.edited_df.head())
         if st.button("Process Edited File"):
             process_uploaded_file(st.session_state.edited_df)
             st.success("Edited file processed successfully!")
+            # Clear the edited file from session state after processing
+            del st.session_state.edited_df
+            del st.session_state.edited_file_name
     else:
         uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx"])
         if uploaded_file:
@@ -626,6 +628,7 @@ def Home():
             process_uploaded_file(uploaded_file)
     
     st.markdown('</div>', unsafe_allow_html=True)
+
     
     if st.session_state.file_processed:
         st.success("File processed successfully! You can now proceed to the analysis sections.")
