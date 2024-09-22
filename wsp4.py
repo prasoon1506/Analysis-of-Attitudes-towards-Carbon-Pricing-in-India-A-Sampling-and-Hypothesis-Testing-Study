@@ -686,7 +686,7 @@ def process_uploaded_file(uploaded_file):
                                 on_change=update_week_name(i)
                             )
                     if all(st.session_state.week_names_input):
-                        st.session_state.file_processed = True
+                        st.session_state.file_processed = False
                     else:
                         st.warning("Please fill in all week names to process the file.")
                 else:
