@@ -444,7 +444,7 @@ def main():
     st.sidebar.title("Navigation")
     app_mode = st.sidebar.selectbox("Contents",
         ["WSP Analysis Dashboard"])
-    elif app_mode == "WSP Analysis Dashboard":
+    if app_mode == "WSP Analysis Dashboard":
         wsp_analysis_dashboard()
 
 if __name__ == "__main__":
