@@ -535,10 +535,9 @@ def update_week_name(index):
     def callback():
         if index < len(st.session_state.week_names_input):
             st.session_state.week_names_input[index] = st.session_state[f'week_{index}']
+            st.session_state.week_names_input=False
         else:
             st.warning(f"Attempted to update week {index + 1}, but only {len(st.session_state.week_names_input)} weeks are available.")
-        
-        # Check if all weeks are filled
         st.session_state.all_weeks_filled = all(st.session_state.week_names_input)
     return callback
 
