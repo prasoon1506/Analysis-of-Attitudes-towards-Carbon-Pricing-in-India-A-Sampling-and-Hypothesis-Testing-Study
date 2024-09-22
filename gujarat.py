@@ -63,11 +63,7 @@ st.markdown("</div>", unsafe_allow_html=True)
 
 if uploaded_file is not None:
     # Read the Excel file
-    df = pd.read_excel(uploaded_file)
-    
-
-        
-        # Continue with the analysis
+        df = pd.read_excel(uploaded_file)
         st.markdown("<div class='analysis-section'>", unsafe_allow_html=True)
         
         # Display Lottie animation or static image
