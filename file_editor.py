@@ -8,7 +8,7 @@ import openpyxl
 # Set page config
 st.set_page_config(page_title="Excel Editor", layout="wide")
 
-# Custom CSS for styling
+# Custom CSS for styling (unchanged)
 st.markdown("""
 <style>
     .main .block-container {
@@ -94,23 +94,30 @@ if uploaded_file is not None:
     # Get merged column groups
     merged_groups = get_merged_column_groups(sheet)
 
-    # Read as pandas DataFrame for further processing
-    df = pd.read_excel(uploaded_file, header=None)
-    
-    # Set the first row as the header
-    df.columns = df.iloc[0]
-    df = df.drop(df.index[0])
+    # Create a list of column headers, considering merged cells
+    column_headers = []
+    for col in range(1, sheet.max_column + 1):
+        cell_value = sheet.cell(1, col).value
+        if cell_value is not None:
+            column_headers.append(cell_value)
+        else:
+            # If the cell is empty, it's part of a merged cell, so use the previous header
+            column_headers.append(column_headers[-1])
+
+    # Read as pandas DataFrame using the correct column headers
+    df = pd.read_excel(uploaded_file, header=None, names=column_headers)
+    df = df.iloc[1:]  # Remove the first row as it's now our header
 
     # Column selection for deletion
     st.subheader("Select columns to delete")
-    all_columns = df.columns.tolist()
+    all_columns = list(set(column_headers))  # Use set to get unique column names
     cols_to_delete = st.multiselect("Choose columns to remove", all_columns)
     
     if cols_to_delete:
         columns_to_remove = set()
         for col in cols_to_delete:
             if col in merged_groups:
-                columns_to_remove.update([df.columns[i-1] for i in merged_groups[col]])
+                columns_to_remove.update([column_headers[i-1] for i in merged_groups[col]])
             else:
                 columns_to_remove.add(col)
         
