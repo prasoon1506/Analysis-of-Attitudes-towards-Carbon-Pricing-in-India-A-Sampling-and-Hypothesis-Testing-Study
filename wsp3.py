@@ -101,16 +101,39 @@ def load_data(uploaded_file):
     wb = openpyxl.load_workbook(BytesIO(file_content))
     ws = wb.active
     
-    hidden_cols = [idx for idx, col in enumerate(ws.column_dimensions, 1) if ws.column_dimensions[col].hidden]
+    data = []
+    merged_cells = ws.merged_cells.ranges
+
+    for row in ws.iter_rows(values_only=True):
+        data.append(list(row))
+
+    df = pd.DataFrame(data)
     
-    df = pd.read_excel(BytesIO(file_content))
+    return df, merged_cells, ws
+
+def create_excel_like_view(df, merged_cells, worksheet):
+    html = '<table style="border-collapse: collapse;">'
     
-    if df.empty:
-        st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
-        return None
+    for row_index, row in df.iterrows():
+        html += '<tr>'
+        for col_index, value in enumerate(row):
+            cell = worksheet.cell(row_index + 1, col_index + 1)
+            
+            # Check if the cell is part of a merged range
+            merged_cell = next((rng for rng in merged_cells if cell.coordinate in rng), None)
+            
+            if merged_cell:
+                if cell.coordinate == merged_cell.start_cell.coordinate:
+                    rowspan = merged_cell.max_row - merged_cell.min_row + 1
+                    colspan = merged_cell.max_col - merged_cell.min_col + 1
+                    html += f'<td rowspan="{rowspan}" colspan="{colspan}" style="border: 1px solid black; padding: 5px;">{value if value is not None else ""}</td>'
+            else:
+                html += f'<td style="border: 1px solid black; padding: 5px;">{value if value is not None else ""}</td>'
+        
+        html += '</tr>'
     
-    df.drop(df.columns[hidden_cols], axis=1, inplace=True)
-    return df
+    html += '</table>'
+    return html
 
 def data_editor(df):
     st.subheader("Data Editor")
@@ -215,7 +238,6 @@ def transform_data(df, week_names_input):
     transformed_df = transformed_df.loc[:, ~transformed_df.columns.str.contains('_\d+$')]
     
     return transformed_df
-
 def plot_district_graph(df, district_names, benchmark_brands_dict, desired_diff_dict, week_names, diff_week, download_pdf=False):
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
     num_weeks = len(df.columns[4:]) // len(brands)
@@ -307,7 +329,6 @@ def plot_district_graph(df, district_names, benchmark_brands_dict, desired_diff_
             pdf_data = f.read()
         b64_pdf = base64.b64encode(pdf_data).decode()
         st.markdown(f'<a download="{region_name}.pdf" href="data:application/pdf;base64,{b64_pdf}">Download All Plots as PDF</a>', unsafe_allow_html=True)
-
 def wsp_analysis_dashboard():
     st.markdown("""
     <style>
@@ -332,15 +353,15 @@ def wsp_analysis_dashboard():
     """, unsafe_allow_html=True)
 
     st.markdown('<div class="title"><span>WSP Analysis Dashboard</span></div>', unsafe_allow_html=True)
-
     uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx"])
     if uploaded_file:
         st.markdown(f'<div class="uploadedFile">File uploaded: {uploaded_file.name}</div>', unsafe_allow_html=True)
-        df = load_data(uploaded_file)
+        df, merged_cells, worksheet = load_data(uploaded_file)
         
         if df is not None:
-            # Data editing
-            df = data_editor(df)
+            st.subheader("Excel-like View of the Data")
+            excel_view = create_excel_like_view(df, merged_cells, worksheet)
+            st.markdown(excel_view, unsafe_allow_html=True)
             
             # Get week names
             brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
