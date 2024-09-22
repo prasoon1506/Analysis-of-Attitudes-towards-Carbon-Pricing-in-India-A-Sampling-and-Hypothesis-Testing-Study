@@ -530,7 +530,6 @@ def plot_district_graph(df, district_names, benchmark_brands_dict, desired_diff_
             pdf_data = f.read()
         b64_pdf = base64.b64encode(pdf_data).decode()
         st.markdown(f'<a download="{region_name}.pdf" href="data:application/pdf;base64,{b64_pdf}">Download All Plots as PDF</a>', unsafe_allow_html=True)
-
 def update_week_name(index):
     def callback():
         if index < len(st.session_state.week_names_input):
@@ -539,6 +538,7 @@ def update_week_name(index):
             st.warning(f"Attempted to update week {index + 1}, but only {len(st.session_state.week_names_input)} weeks are available.")
         st.session_state.all_weeks_filled = all(st.session_state.week_names_input)
     return callback
+
 
 def Home():
     st.markdown("""
@@ -621,7 +621,6 @@ def Home():
         if not st.session_state.file_processed:
             if st.button("Process Edited File"):
                 process_uploaded_file(st.session_state.edited_df)
-                st.success("Edited file processed successfully!")
     else:
         if not st.session_state.file_processed:
             uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx"])
@@ -662,12 +661,10 @@ def process_uploaded_file(uploaded_file):
                 df = df.dropna(axis=1, how='all')
                 
                 df = df.drop(columns=df.columns[hidden_cols], errors='ignore')
-
             if df.empty:
                 st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
             else:
                 st.session_state.df = df
-                st.session_state.file_processed = True 
                 brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
                 brand_columns = [col for col in st.session_state.df.columns if any(brand in str(col) for brand in brands)]
                 num_weeks = len(brand_columns) // len(brands)
@@ -687,10 +684,13 @@ def process_uploaded_file(uploaded_file):
                                 key=f'week_{i}',
                                 on_change=update_week_name(i)
                             )
-                    if all(st.session_state.week_names_input):
-                        st.session_state.file_processed = True
-                    else:
-                        st.warning("Please fill in all week names to process the file.")
+                    
+                    if st.button("Confirm Week Names"):
+                        if all(st.session_state.week_names_input):
+                            st.session_state.file_processed = True
+                            st.success("File processed successfully! You can now proceed to the analysis sections.")
+                        else:
+                            st.warning("Please fill in all week names before confirming.")
                 else:
                     st.warning("No weeks detected in the uploaded file. Please check the file content.")
                     st.session_state.week_names_input = []
@@ -699,6 +699,7 @@ def process_uploaded_file(uploaded_file):
             st.error(f"Error processing file: {e}")
             st.exception(e)
             st.session_state.file_processed = False
+            
 
 def wsp_analysis_dashboard():
     st.markdown("""
