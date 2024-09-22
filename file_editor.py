@@ -8,7 +8,7 @@ import openpyxl
 # Set page config
 st.set_page_config(page_title="Excel Editor", layout="wide")
 
-# Custom CSS for styling (unchanged)
+# Custom CSS for styling
 st.markdown("""
 <style>
     .main .block-container {
@@ -46,19 +46,19 @@ st.markdown("""
 # Title
 st.title("Interactive Excel Editor")
 
-# Function to create HTML representation of Excel structure
-def create_excel_structure_html(sheet):
+# Function to create HTML representation of Excel structure (first 5 rows)
+def create_excel_structure_html(sheet, max_rows=5):
     html = "<table class='excel-table'>"
     merged_cells = sheet.merged_cells.ranges
 
-    for row in sheet.iter_rows():
+    for idx, row in enumerate(sheet.iter_rows(max_row=max_rows)):
         html += "<tr>"
         for cell in row:
             merged = False
             for merged_range in merged_cells:
                 if cell.coordinate in merged_range:
                     if cell.coordinate == merged_range.start_cell.coordinate:
-                        rowspan = merged_range.max_row - merged_range.min_row + 1
+                        rowspan = min(merged_range.max_row - merged_range.min_row + 1, max_rows - idx)
                         colspan = merged_range.max_col - merged_range.min_col + 1
                         html += f"<td rowspan='{rowspan}' colspan='{colspan}'>{cell.value}</td>"
                     merged = True
@@ -86,9 +86,9 @@ if uploaded_file is not None:
     excel_file = openpyxl.load_workbook(uploaded_file)
     sheet = excel_file.active
 
-    # Display original Excel structure
-    st.subheader("Original Excel Structure")
-    excel_html = create_excel_structure_html(sheet)
+    # Display original Excel structure (first 5 rows)
+    st.subheader("Original Excel Structure (First 5 Rows)")
+    excel_html = create_excel_structure_html(sheet, max_rows=5)
     st.markdown(excel_html, unsafe_allow_html=True)
 
     # Get merged column groups
@@ -130,7 +130,7 @@ if uploaded_file is not None:
     st.write("You can edit individual cell values directly in the table below:")
     
     # Replace NaN values with None and convert dataframe to a dictionary
-    df_dict = df.where(pd.notnull(df), None).to_dict('list')
+    df_dict = df.where(pd.notnull(df), None).to_dict('records')
     
     # Use st.data_editor with the processed dictionary
     edited_data = st.data_editor(df_dict)
@@ -161,7 +161,7 @@ st.markdown("""
 ---
 ### Instructions:
 1. Upload an Excel file using the file uploader at the top of the page.
-2. View the original Excel structure, including merged cells.
+2. View the original Excel structure (first 5 rows), including merged cells.
 3. Select columns to delete. For merged headers, selecting any part will delete the entire merged group.
 4. Specify the number of rows to delete from the start, if any.
 5. Edit individual cell values directly in the editable table.
