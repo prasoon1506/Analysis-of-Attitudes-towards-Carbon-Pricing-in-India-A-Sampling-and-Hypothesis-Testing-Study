@@ -47,7 +47,7 @@ st.markdown("""
 
 # Title and description
 st.title("📊 Interactive Data Analysis App")
-st.markdown("Upload your Excel file, edit the data, and analyze it with interactive visualizations.")
+st.markdown("Upload your Excel file and analyze it with interactive visualizations.")
 st.markdown("<div class='upload-section'>", unsafe_allow_html=True)
 col1, col2 = st.columns([2, 1])
 with col1:
