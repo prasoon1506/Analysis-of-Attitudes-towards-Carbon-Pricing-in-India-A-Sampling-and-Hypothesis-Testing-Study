@@ -647,8 +647,11 @@ def process_uploaded_file(uploaded_file):
     if (isinstance(uploaded_file, pd.DataFrame) or uploaded_file) and not st.session_state.file_processed:
         try:
             if isinstance(uploaded_file, pd.DataFrame):
-              df = uploaded_file.iloc[1:]  # Skip first two rows
-              df = df.reset_index(drop=True)
+                buffer = BytesIO()
+                uploaded_file.to_excel(buffer, index=False)
+                buffer.seek(0)
+                file_content = buffer.getvalue()
+                df = pd.read_excel(BytesIO(file_content), header=2)
             else:
                 file_content = uploaded_file.read()
                 wb = openpyxl.load_workbook(BytesIO(file_content))
