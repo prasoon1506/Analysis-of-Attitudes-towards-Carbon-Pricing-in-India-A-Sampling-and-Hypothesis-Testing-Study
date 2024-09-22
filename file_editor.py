@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 import base64
 from io import BytesIO
 import openpyxl
@@ -128,9 +129,11 @@ if uploaded_file is not None:
     st.subheader("Edit Data")
     st.write("You can edit individual cell values directly in the table below:")
     
-    # Convert dataframe to a dictionary for st.data_editor
-    data_dict = df.to_dict('list')
-    edited_data = st.data_editor(data_dict)
+    # Replace NaN values with None and convert dataframe to a dictionary
+    df_dict = df.where(pd.notnull(df), None).to_dict('list')
+    
+    # Use st.data_editor with the processed dictionary
+    edited_data = st.data_editor(df_dict)
     
     # Convert edited data back to dataframe
     edited_df = pd.DataFrame(edited_data)
