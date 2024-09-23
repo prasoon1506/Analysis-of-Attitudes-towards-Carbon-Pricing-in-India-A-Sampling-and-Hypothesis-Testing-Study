@@ -2098,7 +2098,6 @@ def process_dataframe(df):
     return df
 
     pass
-
 def display_data(df, selected_regions, selected_districts, selected_channels, show_whole_region):
     def color_growth(val):
         try:
@@ -2137,6 +2136,7 @@ def display_data(df, selected_regions, selected_districts, selected_channels, sh
         else:
             filtered_data = df[df['Region'].isin(selected_regions)].copy()
         grouped_data = filtered_data
+
     for selected_channel in selected_channels:
         if selected_channel == 'Trade':
             columns_to_display = ['24-Aug Trade','23-Aug Trade','Growth/Degrowth(MTD) Trade','FY 2024 till Aug Trade', 'FY 2023 till Aug Trade','Growth/Degrowth(YTD) Trade','Q3 2023 Trade','Q3 2024 till August Trade', 'Quarterly Requirement Trade']
@@ -2176,8 +2176,14 @@ def display_data(df, selected_regions, selected_districts, selected_channels, sh
         # Add a line chart for monthly trends including September 2024
         months = ['Apr', 'May', 'Jun', 'Jul', 'Aug']
         fig_trend = go.Figure()
-        for year in ['23','24']:
-            y_values = [grouped_data[f'{year}-{month}{suffix}'].sum() for month in months]
+        for year in ['23', '24']:
+            y_values = []
+            for month in months:
+                column_name = f'{year}-{month}{suffix}'
+                if column_name in grouped_data.columns:
+                    y_values.append(grouped_data[column_name].sum())
+                else:
+                    y_values.append(None)
             
             fig_trend.add_trace(go.Scatter(
                 x=months, 
@@ -2195,6 +2201,7 @@ def display_data(df, selected_regions, selected_districts, selected_channels, sh
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
         )
         st.plotly_chart(fig_trend)
+
 def main():
     st.sidebar.title("Menu")
     app_mode = st.sidebar.selectbox("Contents",
