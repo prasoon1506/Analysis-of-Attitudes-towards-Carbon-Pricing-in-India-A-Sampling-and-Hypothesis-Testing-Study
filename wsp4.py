@@ -2214,11 +2214,11 @@ def load_lottieurl(url: str):
         return None
 def trade():
 # Load Lottie animations
-lottie_analysis = load_lottieurl("https://assets4.lottiefiles.com/packages/lf20_qp1q7mct.json")
-lottie_upload = load_lottieurl("https://assets9.lottiefiles.com/packages/lf20_ABViugg1T8.json")
+ lottie_analysis = load_lottieurl("https://assets4.lottiefiles.com/packages/lf20_qp1q7mct.json")
+ lottie_upload = load_lottieurl("https://assets9.lottiefiles.com/packages/lf20_ABViugg1T8.json")
 
 # Custom CSS
-st.markdown("""
+ st.markdown("""
 <style>
 .main {
     background-color: #f0f2f6;
@@ -2241,20 +2241,20 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Title and description
-st.title("📊 Normal Vs. Premium Product Analysis")
-st.markdown("Upload your Excel file and analyze it with interactive visualizations.")
-st.markdown("<div class='upload-section'>", unsafe_allow_html=True)
-col1, col2 = st.columns([2, 1])
-with col1:
+ st.title("📊 Normal Vs. Premium Product Analysis")
+ st.markdown("Upload your Excel file and analyze it with interactive visualizations.")
+ st.markdown("<div class='upload-section'>", unsafe_allow_html=True)
+ col1, col2 = st.columns([2, 1])
+ with col1:
     uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
-with col2:
+ with col2:
     if lottie_upload:
         st_lottie(lottie_upload, height=150, key="upload")
     else:
         st.image("https://cdn-icons-png.flaticon.com/512/4503/4503700.png", width=150)
-st.markdown("</div>", unsafe_allow_html=True)
+ st.markdown("</div>", unsafe_allow_html=True)
 
-if uploaded_file is not None:
+ if uploaded_file is not None:
     # Read the Excel file
         df = pd.read_excel(uploaded_file)
         st.markdown("<div class='analysis-section'>", unsafe_allow_html=True)
@@ -2371,12 +2371,10 @@ if uploaded_file is not None:
         
         st.markdown("</div>", unsafe_allow_html=True)
     
-else:
+ else:
     st.info("Please upload an Excel file to begin the analysis.")
 
-# Add a footer
-st.markdown("---")
-st.markdown("Created with ❤️ by Prasoon Bajpai")
+
 def main():
     st.sidebar.title("Menu")
     app_mode = st.sidebar.selectbox("Contents",
