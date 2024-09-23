@@ -2099,7 +2099,6 @@ def process_dataframe(df):
 
     pass
 
-
 def display_data(df, selected_regions, selected_districts, selected_channels, show_whole_region):
     def color_growth(val):
         try:
@@ -2110,101 +2109,110 @@ def display_data(df, selected_regions, selected_districts, selected_channels, sh
             return 'color: black'
 
     # Helper function to find columns
-    def find_columns(pattern):
-        return [col for col in df.columns if pattern.lower() in col.lower()]
+    def find_columns(dataframe, pattern):
+        return [col for col in dataframe.columns if pattern.lower() in col.lower()]
 
-    if show_whole_region:
-        filtered_data = df[df['Region'].isin(selected_regions)].copy()
-        
-        # Find relevant columns
-        year_columns = find_columns('20') + find_columns('fy')
-        sum_columns = year_columns + find_columns('q3')
-        grouped_data = filtered_data.groupby('Region')[sum_columns].sum().reset_index()
-    else:
-        if selected_districts:
-            filtered_data = df[df['Dist Name'].isin(selected_districts)].copy()
-        else:
+    try:
+        if show_whole_region:
             filtered_data = df[df['Region'].isin(selected_regions)].copy()
-        grouped_data = filtered_data
-
-    for selected_channel in selected_channels:
-        suffix = ' Trade' if selected_channel == 'Trade' else ' Non-Trade' if selected_channel == 'Non-Trade' else ''
-        
-        # Find relevant columns for display
-        current_year_col = find_columns('24-aug' + suffix)
-        previous_year_col = find_columns('23-aug' + suffix)
-        current_ytd_col = find_columns('fy 2024' + suffix)
-        previous_ytd_col = find_columns('fy 2023' + suffix)
-        q3_current_col = find_columns('q3 2024' + suffix)
-        q3_previous_col = find_columns('q3 2023' + suffix)
-
-        columns_to_display = (
-            current_year_col + previous_year_col + 
-            current_ytd_col + previous_ytd_col + 
-            q3_current_col + q3_previous_col
-        )
-
-        if not columns_to_display:
-            st.warning(f"No data available for {selected_channel}")
-            continue
-
-        st.subheader(f"{selected_channel} Sales Data")
-        
-        display_columns = ['Region' if show_whole_region else 'Dist Name'] + columns_to_display
-        display_df = grouped_data[display_columns].copy()
-        display_df.set_index('Region' if show_whole_region else 'Dist Name', inplace=True)
-        
-        # Calculate growth rates if possible
-        if len(current_year_col) == 1 and len(previous_year_col) == 1:
-            display_df['Growth/Degrowth(MTD)'] = (display_df[current_year_col[0]] - display_df[previous_year_col[0]]) / display_df[previous_year_col[0]] * 100
-        if len(current_ytd_col) == 1 and len(previous_ytd_col) == 1:
-            display_df['Growth/Degrowth(YTD)'] = (display_df[current_ytd_col[0]] - display_df[previous_ytd_col[0]]) / display_df[previous_ytd_col[0]] * 100
-        
-        # Style the dataframe
-        styled_df = display_df.style.format({
-            col: '{:,.0f}' if 'Growth' not in col else '{:.2f}%' for col in display_df.columns
-        }).applymap(color_growth, subset=[col for col in display_df.columns if 'Growth' in col])
-        
-        st.dataframe(styled_df)
-
-        # Bar chart for YTD comparison
-        if len(current_ytd_col) == 1 and len(previous_ytd_col) == 1:
-            fig = go.Figure(data=[
-                go.Bar(name='FY 2023', x=grouped_data['Region' if show_whole_region else 'Dist Name'], y=grouped_data[previous_ytd_col[0]]),
-                go.Bar(name='FY 2024', x=grouped_data['Region' if show_whole_region else 'Dist Name'], y=grouped_data[current_ytd_col[0]]),
-            ])
-            fig.update_layout(barmode='group', title=f'{selected_channel} YTD Comparison')
-            st.plotly_chart(fig)
-
-        # Line chart for monthly trends
-        months = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep']
-        fig_trend = go.Figure()
-        for year in ['23', '24']:
-            y_values = []
-            for month in months:
-                column_name = find_columns(f'{year}-{month}{suffix}')
-                if column_name:
-                    value = grouped_data[column_name[0]].sum() if show_whole_region else grouped_data[column_name[0]].mean()
-                    y_values.append(value)
-                else:
-                    y_values.append(None)
             
-            fig_trend.add_trace(go.Scatter(
-                x=months, 
-                y=y_values, 
-                mode='lines+markers+text',
-                name=f'FY 20{year}',
-                text=[f'{y:,.0f}' if y is not None else '' for y in y_values],
-                textposition='top center'
-            ))
-        
-        fig_trend.update_layout(
-            title=f'{selected_channel} Monthly Trends', 
-            xaxis_title='Month', 
-            yaxis_title='Sales',
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
-        )
-        st.plotly_chart(fig_trend)
+            # Find relevant columns
+            year_columns = find_columns(filtered_data, '20') + find_columns(filtered_data, 'fy')
+            sum_columns = year_columns + find_columns(filtered_data, 'q3')
+            grouped_data = filtered_data.groupby('Region')[sum_columns].sum().reset_index()
+        else:
+            if selected_districts:
+                filtered_data = df[df['Dist Name'].isin(selected_districts)].copy()
+            else:
+                filtered_data = df[df['Region'].isin(selected_regions)].copy()
+            grouped_data = filtered_data
+
+        for selected_channel in selected_channels:
+            suffix = ' Trade' if selected_channel == 'Trade' else ' Non-Trade' if selected_channel == 'Non-Trade' else ''
+            
+            # Find relevant columns for display
+            current_year_col = find_columns(grouped_data, '24-aug' + suffix)
+            previous_year_col = find_columns(grouped_data, '23-aug' + suffix)
+            current_ytd_col = find_columns(grouped_data, 'fy 2024' + suffix)
+            previous_ytd_col = find_columns(grouped_data, 'fy 2023' + suffix)
+            q3_current_col = find_columns(grouped_data, 'q3 2024' + suffix)
+            q3_previous_col = find_columns(grouped_data, 'q3 2023' + suffix)
+
+            columns_to_display = (
+                current_year_col + previous_year_col + 
+                current_ytd_col + previous_ytd_col + 
+                q3_current_col + q3_previous_col
+            )
+
+            if not columns_to_display:
+                st.warning(f"No data available for {selected_channel}")
+                continue
+
+            st.subheader(f"{selected_channel} Sales Data")
+            
+            display_columns = ['Region' if show_whole_region else 'Dist Name'] + columns_to_display
+            display_df = grouped_data[display_columns].copy()
+            display_df.set_index('Region' if show_whole_region else 'Dist Name', inplace=True)
+            
+            # Calculate growth rates if possible
+            if len(current_year_col) == 1 and len(previous_year_col) == 1:
+                display_df['Growth/Degrowth(MTD)'] = (display_df[current_year_col[0]] - display_df[previous_year_col[0]]) / display_df[previous_year_col[0]] * 100
+            if len(current_ytd_col) == 1 and len(previous_ytd_col) == 1:
+                display_df['Growth/Degrowth(YTD)'] = (display_df[current_ytd_col[0]] - display_df[previous_ytd_col[0]]) / display_df[previous_ytd_col[0]] * 100
+            
+            # Style the dataframe
+            styled_df = display_df.style.format({
+                col: '{:,.0f}' if 'Growth' not in col else '{:.2f}%' for col in display_df.columns
+            }).applymap(color_growth, subset=[col for col in display_df.columns if 'Growth' in col])
+            
+            st.dataframe(styled_df)
+
+            # Bar chart for YTD comparison
+            if len(current_ytd_col) == 1 and len(previous_ytd_col) == 1:
+                fig = go.Figure(data=[
+                    go.Bar(name='FY 2023', x=grouped_data['Region' if show_whole_region else 'Dist Name'], y=grouped_data[previous_ytd_col[0]]),
+                    go.Bar(name='FY 2024', x=grouped_data['Region' if show_whole_region else 'Dist Name'], y=grouped_data[current_ytd_col[0]]),
+                ])
+                fig.update_layout(barmode='group', title=f'{selected_channel} YTD Comparison')
+                st.plotly_chart(fig)
+
+            # Line chart for monthly trends
+            months = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep']
+            fig_trend = go.Figure()
+            for year in ['23', '24']:
+                y_values = []
+                for month in months:
+                    column_name = find_columns(grouped_data, f'{year}-{month}{suffix}')
+                    if column_name:
+                        value = grouped_data[column_name[0]].sum() if show_whole_region else grouped_data[column_name[0]].mean()
+                        y_values.append(value)
+                    else:
+                        y_values.append(None)
+                
+                fig_trend.add_trace(go.Scatter(
+                    x=months, 
+                    y=y_values, 
+                    mode='lines+markers+text',
+                    name=f'FY 20{year}',
+                    text=[f'{y:,.0f}' if y is not None else '' for y in y_values],
+                    textposition='top center'
+                ))
+            
+            fig_trend.update_layout(
+                title=f'{selected_channel} Monthly Trends', 
+                xaxis_title='Month', 
+                yaxis_title='Sales',
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+            )
+            st.plotly_chart(fig_trend)
+    
+    except Exception as e:
+        st.error(f"An error occurred: {str(e)}")
+        st.write("DataFrame columns:", df.columns.tolist())
+        st.write("Selected regions:", selected_regions)
+        st.write("Selected districts:", selected_districts)
+        st.write("Selected channels:", selected_channels)
+        st.write("Show whole region:", show_whole_region)
 def main():
     st.sidebar.title("Menu")
     app_mode = st.sidebar.selectbox("Contents",
