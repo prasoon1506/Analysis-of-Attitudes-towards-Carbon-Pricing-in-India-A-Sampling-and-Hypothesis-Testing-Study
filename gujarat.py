@@ -64,7 +64,7 @@ st.markdown("</div>", unsafe_allow_html=True)
 
 if uploaded_file is not None:
     # Read the Excel file
-    df = pd.read_excel(uploaded_file)
+    df = pd.read_excel(uploaded_file, parse_dates=['Month'])
     st.markdown("<div class='analysis-section'>", unsafe_allow_html=True)
     
     # Display Lottie animation or static image
@@ -75,31 +75,18 @@ if uploaded_file is not None:
     
     # Create sidebar for user inputs with cascading filters
     st.sidebar.header("Filter Options")
-    region = st.sidebar.selectbox("Select Region", options=['All'] + list(df['Region'].unique()))
+    region = st.sidebar.selectbox("Select Region", options=df['Region'].unique())
     
     # Filter brands based on selected region
-    if region != 'All':
-        brand_options = ['All'] + list(df[df['Region'] == region]['Brand'].unique())
-    else:
-        brand_options = ['All'] + list(df['Brand'].unique())
+    brand_options = df[df['Region'] == region]['Brand'].unique()
     brand = st.sidebar.selectbox("Select Brand", options=brand_options)
     
     # Filter types based on selected region and brand
-    if region != 'All' and brand != 'All':
-        type_options = ['All'] + list(df[(df['Region'] == region) & (df['Brand'] == brand)]['Type'].unique())
-    elif region != 'All':
-        type_options = ['All'] + list(df[df['Region'] == region]['Type'].unique())
-    elif brand != 'All':
-        type_options = ['All'] + list(df[df['Brand'] == brand]['Type'].unique())
-    else:
-        type_options = ['All'] + list(df['Type'].unique())
+    type_options = df[(df['Region'] == region) & (df['Brand'] == brand)]['Type'].unique()
     product_type = st.sidebar.selectbox("Select Type", options=type_options)
     
     # Filter region subsets based on selected region
-    if region != 'All':
-        region_subset_options = ['All'] + list(df[df['Region'] == region]['Region subsets'].unique())
-    else:
-        region_subset_options = ['All'] + list(df['Region subsets'].unique())
+    region_subset_options = df[df['Region'] == region]['Region subsets'].unique()
     region_subset = st.sidebar.selectbox("Select Region Subset", options=region_subset_options)
     
     # Analysis type selection using radio buttons
@@ -118,15 +105,10 @@ if uploaded_file is not None:
     premium_share = st.sidebar.slider("Adjust Premium Share (%)", 0, 100, 50)
 
     # Filter the dataframe
-    filtered_df = df.copy()
-    if region != 'All':
-        filtered_df = filtered_df[filtered_df['Region'] == region]
-    if brand != 'All':
-        filtered_df = filtered_df[filtered_df['Brand'] == brand]
-    if product_type != 'All':
-        filtered_df = filtered_df[filtered_df['Type'] == product_type]
-    if region_subset != 'All':
-        filtered_df = filtered_df[filtered_df['Region subsets'] == region_subset]
+    filtered_df = df[(df['Region'] == region) & 
+                     (df['Brand'] == brand) & 
+                     (df['Type'] == product_type) & 
+                     (df['Region subsets'] == region_subset)].copy()
     
     if not filtered_df.empty:
         if analysis_type == 'NSR Analysis':
@@ -170,7 +152,7 @@ if uploaded_file is not None:
                                  line=dict(color='brown', dash='dot')))
         
         # Customize x-axis labels to include the differences
-        x_labels = [f"{month}<br>(P-N: {diff:.2f})<br>(I-O: {i_diff:.2f})" for month, diff, i_diff in 
+        x_labels = [f"{month.strftime('%Y-%m')}<br>(P-N: {diff:.2f})<br>(I-O: {i_diff:.2f})" for month, diff, i_diff in 
                     zip(filtered_df['Month'], filtered_df['Difference'], filtered_df['Imaginary vs Overall Difference'])]
         
         fig.update_layout(
@@ -179,7 +161,7 @@ if uploaded_file is not None:
             yaxis_title='Value',
             legend_title='Metrics',
             hovermode="x unified",
-            xaxis=dict(tickmode='array', tickvals=list(range(len(x_labels))), ticktext=x_labels)
+            xaxis=dict(tickmode='array', tickvals=filtered_df['Month'], ticktext=x_labels)
         )
         
         st.plotly_chart(fig, use_container_width=True)
@@ -210,7 +192,6 @@ if uploaded_file is not None:
         # Prepare data for ML model
         le = LabelEncoder()
         df_ml = df.copy()
-        df_ml['Month'] = pd.to_datetime(df_ml['Month'])
         df_ml['Month_num'] = df_ml['Month'].dt.month + df_ml['Month'].dt.year * 12
         df_ml['Region'] = le.fit_transform(df_ml['Region'])
         df_ml['Brand'] = le.fit_transform(df_ml['Brand'])
