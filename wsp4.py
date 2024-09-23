@@ -2098,6 +2098,7 @@ def process_dataframe(df):
     return df
 
     pass
+
 def display_data(df, selected_regions, selected_districts, selected_channels, show_whole_region):
     def color_growth(val):
         try:
@@ -2110,26 +2111,15 @@ def display_data(df, selected_regions, selected_districts, selected_channels, sh
     if show_whole_region:
         filtered_data = df[df['Region'].isin(selected_regions)].copy()
         
-        # Calculate sums for relevant columns first
-        sum_columns = ['24-Aug', '23-Aug', 'FY 2024 till Aug', 'FY 2023 till Aug', 'Q3 2023', 'Q3 2024 till August', 
-                        '24-Aug Trade', '23-Aug Trade', 'FY 2024 till Aug Trade', 'FY 2023 till Aug Trade', 
-                        'Q3 2023 Trade', 'Q3 2024 till August Trade',
-                        '24-Aug Non-Trade', '23-Aug Non-Trade', 'FY 2024 till Aug Non-Trade', 'FY 2023 till Aug Non-Trade', 
-                        'Q3 2023 Non-Trade', 'Q3 2024 till August Non-Trade']
+        # Calculate sums for all relevant columns
+        sum_columns = [col for col in filtered_data.columns if col.startswith(('23-', '24-')) or col in ['FY 2024 till Aug', 'FY 2023 till Aug', 'Q3 2023', 'Q3 2024 till August']]
         grouped_data = filtered_data.groupby('Region')[sum_columns].sum().reset_index()
 
-        # Then calculate Growth/Degrowth based on the summed values
-        grouped_data['Growth/Degrowth(MTD)'] = (grouped_data['24-Aug'] - grouped_data['23-Aug']) / grouped_data['23-Aug'] * 100
-        grouped_data['Growth/Degrowth(YTD)'] = (grouped_data['FY 2024 till Aug'] - grouped_data['FY 2023 till Aug']) / grouped_data['FY 2023 till Aug'] * 100
-        grouped_data['Quarterly Requirement'] = grouped_data['Q3 2023'] - grouped_data['Q3 2024 till August']
-
-        grouped_data['Growth/Degrowth(MTD) Trade'] = (grouped_data['24-Aug Trade'] - grouped_data['23-Aug Trade']) / grouped_data['23-Aug Trade'] * 100
-        grouped_data['Growth/Degrowth(YTD) Trade'] = (grouped_data['FY 2024 till Aug Trade'] - grouped_data['FY 2023 till Aug Trade']) / grouped_data['FY 2023 till Aug Trade'] * 100
-        grouped_data['Quarterly Requirement Trade'] = grouped_data['Q3 2023 Trade'] - grouped_data['Q3 2024 till August Trade']
-
-        grouped_data['Growth/Degrowth(MTD) Non-Trade'] = (grouped_data['24-Aug Non-Trade'] - grouped_data['23-Aug Non-Trade']) / grouped_data['23-Aug Non-Trade'] * 100
-        grouped_data['Growth/Degrowth(YTD) Non-Trade'] = (grouped_data['FY 2024 till Aug Non-Trade'] - grouped_data['FY 2023 till Aug Non-Trade']) / grouped_data['FY 2023 till Aug Non-Trade'] * 100
-        grouped_data['Quarterly Requirement Non-Trade'] = grouped_data['Q3 2023 Non-Trade'] - grouped_data['Q3 2024 till August Non-Trade']
+        # Calculate Growth/Degrowth columns
+        for channel in ['', ' Trade', ' Non-Trade']:
+            grouped_data[f'Growth/Degrowth(MTD){channel}'] = (grouped_data[f'24-Aug{channel}'] - grouped_data[f'23-Aug{channel}']) / grouped_data[f'23-Aug{channel}'] * 100
+            grouped_data[f'Growth/Degrowth(YTD){channel}'] = (grouped_data[f'FY 2024 till Aug{channel}'] - grouped_data[f'FY 2023 till Aug{channel}']) / grouped_data[f'FY 2023 till Aug{channel}'] * 100
+            grouped_data[f'Quarterly Requirement{channel}'] = grouped_data[f'Q3 2023{channel}'] - grouped_data[f'Q3 2024 till August{channel}']
     else:
         if selected_districts:
             filtered_data = df[df['Dist Name'].isin(selected_districts)].copy()
@@ -2173,15 +2163,18 @@ def display_data(df, selected_regions, selected_districts, selected_channels, sh
         fig.update_layout(barmode='group', title=f'{selected_channel} YTD Comparison')
         st.plotly_chart(fig)
 
-        # Add a line chart for monthly trends including September 2024
-        months = ['Apr', 'May', 'Jun', 'Jul', 'Aug']
+        # Add a line chart for monthly trends
+        months = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep']
         fig_trend = go.Figure()
         for year in ['23', '24']:
             y_values = []
             for month in months:
                 column_name = f'{year}-{month}{suffix}'
                 if column_name in grouped_data.columns:
-                    y_values.append(grouped_data[column_name].sum())
+                    if show_whole_region:
+                        y_values.append(grouped_data[column_name].sum())
+                    else:
+                        y_values.append(grouped_data[column_name].mean())
                 else:
                     y_values.append(None)
             
@@ -2201,7 +2194,6 @@ def display_data(df, selected_regions, selected_districts, selected_channels, sh
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
         )
         st.plotly_chart(fig_trend)
-
 def main():
     st.sidebar.title("Menu")
     app_mode = st.sidebar.selectbox("Contents",
