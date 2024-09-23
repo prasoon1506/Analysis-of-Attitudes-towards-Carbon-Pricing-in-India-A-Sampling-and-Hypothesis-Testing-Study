@@ -2099,6 +2099,8 @@ def process_dataframe(df):
 
     pass
 
+import datetime
+
 def display_data(df, selected_regions, selected_districts, selected_channels, show_whole_region):
     def color_growth(val):
         try:
@@ -2110,7 +2112,9 @@ def display_data(df, selected_regions, selected_districts, selected_channels, sh
 
     # Helper function to find columns
     def find_columns(dataframe, pattern):
-        return [col for col in dataframe.columns if pattern.lower() in col.lower()]
+        return [col for col in dataframe.columns if 
+                (isinstance(col, str) and pattern.lower() in col.lower()) or
+                (isinstance(col, datetime.datetime) and pattern.lower() in col.strftime('%Y-%m-%d').lower())]
 
     try:
         if show_whole_region:
@@ -2209,6 +2213,7 @@ def display_data(df, selected_regions, selected_districts, selected_channels, sh
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
         st.write("DataFrame columns:", df.columns.tolist())
+        st.write("DataFrame column types:", df.dtypes.to_dict())
         st.write("Selected regions:", selected_regions)
         st.write("Selected districts:", selected_districts)
         st.write("Selected channels:", selected_channels)
