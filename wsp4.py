@@ -2111,7 +2111,7 @@ def display_data(df, selected_regions, selected_districts, selected_channels, sh
         filtered_data = df[df['Region'].isin(selected_regions)].copy()
         
         # Calculate sums for relevant columns first
-        sum_columns = ['24-Jul','24-Aug','23-Jul', '23-Aug', 'FY 2024 till Aug', 'FY 2023 till Aug', 'Q3 2023', 'Q3 2024 till August', 
+        sum_columns = ['24-Apr','24-May','24-Jun','24-Jul','24-Aug','23-Apr','23-May','23-Jun','23-Jul', '23-Aug', 'FY 2024 till Aug', 'FY 2023 till Aug', 'Q3 2023', 'Q3 2024 till August', 
                         '24-Aug Trade', '23-Aug Trade', 'FY 2024 till Aug Trade', 'FY 2023 till Aug Trade', 
                         'Q3 2023 Trade', 'Q3 2024 till August Trade',
                         '24-Aug Non-Trade', '23-Aug Non-Trade', 'FY 2024 till Aug Non-Trade', 'FY 2023 till Aug Non-Trade', 
