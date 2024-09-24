@@ -2544,10 +2544,6 @@ import streamlit as st
 from streamlit_option_menu import option_menu
 import base64
 
-def load_image(image_file):
-    img = Image.open(image_file)
-    return img
-
 def main():
     # Custom CSS for the sidebar and main content
     st.markdown("""
@@ -2577,15 +2573,6 @@ def main():
     </style>
     """, unsafe_allow_html=True)
 
-    logo_path = "C:/Users/Prasoon.bajpai/Downloads/streamlitappimage.jpg"
-    if os.path.exists(logo_path):
-        logo = Image.open(logo_path)
-        st.sidebar.image(logo, use_column_width=True)
-    else:
-        st.sidebar.warning("Logo file not found. Please check the file path.")
-    
-
-    # Sidebar title
     st.sidebar.title("Analytics Dashboard")
 
     # Sidebar menu using streamlit-option-menu
