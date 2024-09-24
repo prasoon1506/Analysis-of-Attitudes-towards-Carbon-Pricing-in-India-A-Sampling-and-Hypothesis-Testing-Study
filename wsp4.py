@@ -2544,8 +2544,19 @@ import streamlit as st
 from streamlit_option_menu import option_menu
 import base64
 
+def create_logo():
+    # Create a simple SVG logo
+    svg_logo = '''
+    <svg xmlns="http://www.w3.org/2000/svg" width="200" height="100" viewBox="0 0 200 100">
+      <rect width="200" height="100" fill="#2e7bcf"/>
+      <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="24" font-family="Arial, sans-serif">Analytics Pro</text>
+      <path d="M30 70 L50 30 L70 50 L90 20 L110 60 L130 40 L150 70" stroke="white" stroke-width="3" fill="none"/>
+    </svg>
+    '''
+    return f"data:image/svg+xml;base64,{base64.b64encode(svg_logo.encode()).decode()}"
+
 def main():
-    # Custom CSS for the sidebar
+    # Custom CSS for the sidebar and main content
     st.markdown("""
     <style>
     .sidebar .sidebar-content {
@@ -2564,12 +2575,18 @@ def main():
     .stProgress .st-bp {
         background-color: white;
     }
+    .settings-container {
+        background-color: #f0f2f6;
+        padding: 20px;
+        border-radius: 10px;
+        margin-top: 20px;
+    }
     </style>
     """, unsafe_allow_html=True)
 
-    # Sidebar logo (replace with your own logo URL)
-    logo_url = "https://your-logo-url.com/logo.png"
-    st.sidebar.image(logo_url, width=200)
+    # Sidebar logo
+    logo_url = create_logo()
+    st.sidebar.image(logo_url, use_column_width=True)
 
     # Sidebar title
     st.sidebar.title("Analytics Dashboard")
@@ -2637,12 +2654,50 @@ def main():
         elif prediction_menu == "Sales Prediction":
             sales_prediction_app()
     elif selected == "Settings":
-        st.write("Settings page")  # Placeholder for settings page
+        st.title("Settings")
+        st.markdown('<div class="settings-container">', unsafe_allow_html=True)
+        
+        # User Settings
+        st.subheader("User Settings")
+        username = st.text_input("Username", value="JohnDoe")
+        email = st.text_input("Email", value="johndoe@example.com")
+        st.button("Update Profile")
+        
+        # Appearance Settings
+        st.subheader("Appearance")
+        theme = st.selectbox("Theme", ["Light", "Dark", "System Default"])
+        chart_color = st.color_picker("Default Chart Color", "#2e7bcf")
+        
+        # Notification Settings
+        st.subheader("Notifications")
+        email_notifications = st.checkbox("Receive Email Notifications", value=True)
+        notification_frequency = st.select_slider("Notification Frequency", options=["Daily", "Weekly", "Monthly"])
+        
+        # Data Settings
+        st.subheader("Data Settings")
+        data_refresh_rate = st.slider("Data Refresh Rate (minutes)", min_value=5, max_value=60, value=15, step=5)
+        max_rows_display = st.number_input("Maximum Rows to Display", min_value=100, max_value=10000, value=1000, step=100)
+        
+        # Export Settings
+        st.subheader("Export Settings")
+        default_export_format = st.radio("Default Export Format", ["CSV", "Excel", "JSON"])
+        
+        # Save Settings Button
+        if st.button("Save Settings"):
+            st.success("Settings saved successfully!")
+        
+        st.markdown('</div>', unsafe_allow_html=True)
 
     # Add a progress bar to show app loading status
     progress_bar = st.sidebar.progress(0)
     for i in range(100):
         progress_bar.progress(i + 1)
+
+    # Add some additional information or quick stats in the sidebar
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("Quick Stats")
+    st.sidebar.metric(label="Total Sales", value="$1.2M", delta="8%")
+    st.sidebar.metric(label="Active Users", value="1,234", delta="-2%")
 
     # Add a feedback section
     st.sidebar.markdown("---")
