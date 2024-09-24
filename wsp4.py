@@ -2577,7 +2577,7 @@ def main():
     </style>
     """, unsafe_allow_html=True)
 
-    logo_path = "C:\Users\Prasoon.bajpai\Downloads\streamlit app image.jpg" 
+    logo_path = "C:\Users\Prasoon.bajpai\Downloads\streamlitappimage.jpg"
     if os.path.exists(logo_path):
         logo = Image.open(logo_path)
         st.sidebar.image(logo, use_column_width=True)
