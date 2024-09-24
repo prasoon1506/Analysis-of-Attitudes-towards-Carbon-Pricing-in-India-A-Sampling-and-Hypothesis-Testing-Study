@@ -136,7 +136,7 @@ if uploaded_file is not None:
                                      mode='lines+markers', name=overall_col, line=dict(dash='dash')))
             
             fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[imaginary_col],
-                                     mode='lines+markers', name=f'Imaginary {overall_col} ({green_share}% Green & {yellow_share)%)',
+                                     mode='lines+markers', name=f'Imaginary {overall_col} ({green_share}% Green & {yellow_share}%)',
                                      line=dict(color='brown', dash='dot')))
             
             # Customize x-axis labels to include the differences
