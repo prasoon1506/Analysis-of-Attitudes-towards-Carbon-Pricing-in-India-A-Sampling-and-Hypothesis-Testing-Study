@@ -2544,16 +2544,9 @@ import streamlit as st
 from streamlit_option_menu import option_menu
 import base64
 
-def create_logo():
-    # Create a simple SVG logo
-    svg_logo = '''
-    <svg xmlns="http://www.w3.org/2000/svg" width="200" height="100" viewBox="0 0 200 100">
-      <rect width="200" height="100" fill="#2e7bcf"/>
-      <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="24" font-family="Arial, sans-serif">Analytics Pro</text>
-      <path d="M30 70 L50 30 L70 50 L90 20 L110 60 L130 40 L150 70" stroke="white" stroke-width="3" fill="none"/>
-    </svg>
-    '''
-    return f"data:image/svg+xml;base64,{base64.b64encode(svg_logo.encode()).decode()}"
+def load_image(image_file):
+    img = Image.open(image_file)
+    return img
 
 def main():
     # Custom CSS for the sidebar and main content
@@ -2584,9 +2577,13 @@ def main():
     </style>
     """, unsafe_allow_html=True)
 
-    # Sidebar logo
-    logo_url = create_logo()
-    st.sidebar.image(logo_url, use_column_width=True)
+    logo_path = ""C:\Users\Prasoon.bajpai\Downloads\streamlit app image.jpg""  # Replace with the path to your logo file
+    if os.path.exists(logo_path):
+        logo = Image.open(logo_path)
+        st.sidebar.image(logo, use_column_width=True)
+    else:
+        st.sidebar.warning("Logo file not found. Please check the file path.")
+    
 
     # Sidebar title
     st.sidebar.title("Analytics Dashboard")
