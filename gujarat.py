@@ -165,8 +165,8 @@ if uploaded_file is not None:
             
             share_df = pd.DataFrame({
                 'Month': filtered_df['Month'],
-                'Normal Share (%)': trade_share,
-                'Premium Share (%)': nontrade_share
+                'Trade Share (%)': trade_share,
+                'Non-Trade Share (%)': nontrade_share
             })
             
             st.dataframe(share_df.set_index('Month'), use_container_width=True)
