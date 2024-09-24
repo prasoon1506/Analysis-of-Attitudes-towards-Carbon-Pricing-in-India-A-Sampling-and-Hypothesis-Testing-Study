@@ -109,7 +109,7 @@ if uploaded_file is not None:
             
             # Calculate weighted average based on actual quantities
             filtered_df[overall_col] = (filtered_df['Green'] * filtered_df[cols[0]] +
-                                        filtered_df['Yellow'] * filtered_df[cols[1]] + filtered_df['Red']*filtered_df[colS[2]]) / (
+                                        filtered_df['Yellow'] * filtered_df[cols[1]] + filtered_df['Red']*filtered_df[cols[2]]) / (
                                             filtered_df['Green'] + filtered_df['Yellow']+filtered_df['Red'])
             
             # Calculate imaginary overall based on slider
