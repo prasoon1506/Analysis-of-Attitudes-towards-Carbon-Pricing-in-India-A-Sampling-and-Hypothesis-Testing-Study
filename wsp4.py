@@ -2383,32 +2383,29 @@ def load_lottieurl(url: str):
     except:
         return None
 def trade():
-
  lottie_analysis = load_lottieurl("https://assets4.lottiefiles.com/packages/lf20_qp1q7mct.json")
  lottie_upload = load_lottieurl("https://assets9.lottiefiles.com/packages/lf20_ABViugg1T8.json")
-
-
  st.markdown("""
-<style>
-.main {
+ <style>
+ .main {
     background-color: #f0f2f6;
-}
-.stApp {
+ }
+ .stApp {
     max-width: 1200px;
     margin: 0 auto;
-}
-.upload-section, .analysis-section, .edit-section {
+ }
+ .upload-section, .analysis-section, .edit-section {
     background-color: #ffffff;
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     margin-top: 20px;
-}
-.stButton>button {
+ }
+ .stButton>button {
     width: 100%;
-}
-</style>
-""", unsafe_allow_html=True)
+ }
+ </style>
+ """, unsafe_allow_html=True)
 
 # Title and description
  st.title("📊 Trade Vs. Non-Trade Analysis")
