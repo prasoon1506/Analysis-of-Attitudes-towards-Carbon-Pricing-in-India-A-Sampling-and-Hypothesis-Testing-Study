@@ -83,14 +83,14 @@ if uploaded_file is not None:
         
         # Use session state to store the selected analysis type
         if 'analysis_type' not in st.session_state:
-            st.session_state.analysis_type = "NSR Analysis"
+            st.session_state.analysis_type = "EBITDA Analysis"
         
         analysis_type = st.sidebar.radio("Select Analysis Type", analysis_options, index=analysis_options.index(st.session_state.analysis_type))
         
         # Update session state
         st.session_state.analysis_type = analysis_type
 
-        premium_share = st.sidebar.slider("Adjust Premium Share (%)", 0, 100, 50)
+        trade_share = st.sidebar.slider("Adjust Premium Share (%)", 0, 100, 50)
 
         # Filter the dataframe
         filtered_df = df[(df['Region'] == region) & (df['Brand'] == brand) &
@@ -98,27 +98,27 @@ if uploaded_file is not None:
         
         if not filtered_df.empty:
             if analysis_type == 'NSR Analysis':
-                cols = ['Normal NSR', 'Premium NSR']
+                cols = ['Trade NSR', 'Non-Trade NSR']
                 overall_col = 'Overall NSR'
             elif analysis_type == 'Contribution Analysis':
-                cols = ['Normal Contribution', 'Premium Contribution']
+                cols = ['Trade Contribution', 'Non-Trade Contribution']
                 overall_col = 'Overall Contribution'
             elif analysis_type == 'EBITDA Analysis':
-                cols = ['Normal EBITDA', 'Premium EBITDA']
+                cols = ['Trade EBITDA', 'Non-Trade EBITDA']
                 overall_col = 'Overall EBITDA'
             
             # Calculate weighted average based on actual quantities
-            filtered_df[overall_col] = (filtered_df['Normal Quantity'] * filtered_df[cols[0]] +
-                                        filtered_df['Premium Quantity'] * filtered_df[cols[1]]) / (
-                                            filtered_df['Normal Quantity'] + filtered_df['Premium Quantity'])
+            filtered_df[overall_col] = (filtered_df['Trade'] * filtered_df[cols[0]] +
+                                        filtered_df['Non-Trade'] * filtered_df[cols[1]]) / (
+                                            filtered_df['Trade'] + filtered_df['Non-Trade'])
             
             # Calculate imaginary overall based on slider
             imaginary_col = f'Imaginary {overall_col}'
-            filtered_df[imaginary_col] = ((1 - premium_share/100) * filtered_df[cols[0]] +
-                                          (premium_share/100) * filtered_df[cols[1]])
+            filtered_df[imaginary_col] = ((1 - trade_share/100) * filtered_df[cols[1]] +
+                                          (trade_share/100) * filtered_df[cols[0]])
             
             # Calculate difference between Premium and Normal
-            filtered_df['Difference'] = filtered_df[cols[1]] - filtered_df[cols[0]]
+            filtered_df['Difference'] = filtered_df[cols[0]] - filtered_df[cols[1]]
             
             # Calculate difference between Imaginary and Overall
             filtered_df['Imaginary vs Overall Difference'] = filtered_df[imaginary_col] - filtered_df[overall_col]
@@ -134,7 +134,7 @@ if uploaded_file is not None:
                                      mode='lines+markers', name=overall_col, line=dict(dash='dash')))
             
             fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[imaginary_col],
-                                     mode='lines+markers', name=f'Imaginary {overall_col} ({premium_share}% Premium)',
+                                     mode='lines+markers', name=f'Imaginary {overall_col} ({trade_share}% Premium)',
                                      line=dict(color='brown', dash='dot')))
             
             # Customize x-axis labels to include the differences
@@ -143,7 +143,7 @@ if uploaded_file is not None:
             
             fig.update_layout(
                 title=analysis_type,
-                xaxis_title='Month (P-N: Premium - Normal, I-O: Imaginary - Overall)',
+                xaxis_title='Month (T-NT: Trade - Non-Trade, I-O: Imaginary - Overall)',
                 yaxis_title='Value',
                 legend_title='Metrics',
                 hovermode="x unified",
@@ -158,15 +158,15 @@ if uploaded_file is not None:
             st.dataframe(desc_stats.style.format("{:.2f}"), use_container_width=True)
             
             # Display share of Normal and Premium Products
-            st.subheader("Share of Normal and Premium Products")
-            total_quantity = filtered_df['Normal Quantity'] + filtered_df['Premium Quantity']
-            normal_share = (filtered_df['Normal Quantity'] / total_quantity * 100).round(2)
-            premium_share = (filtered_df['Premium Quantity'] / total_quantity * 100).round(2)
+            st.subheader("Share of Trade and Non-Trade Channel")
+            total_quantity = filtered_df['Trade'] + filtered_df['Non-Trade']
+            trade_share = (filtered_df['Trade'] / total_quantity * 100).round(2)
+            nontrade_share = (filtered_df['Non-Trade'] / total_quantity * 100).round(2)
             
             share_df = pd.DataFrame({
                 'Month': filtered_df['Month'],
-                'Normal Share (%)': normal_share,
-                'Premium Share (%)': premium_share
+                'Normal Share (%)': trade_share,
+                'Premium Share (%)': nontrade_share
             })
             
             st.dataframe(share_df.set_index('Month'), use_container_width=True)
