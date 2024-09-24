@@ -2540,31 +2540,123 @@ def trade():
     
  else:
     st.info("Please upload an Excel file to begin the analysis.")
+import streamlit as st
+from streamlit_option_menu import option_menu
+import base64
 
 def main():
-    st.sidebar.title("Menu")
-    app_mode = st.sidebar.selectbox("Contents",
-        ["Home","Editor", "WSP Analysis Dashboard", "Descriptive Statistics and Prediction","Sales Dashboard","Sales Prediction","Premium vs Normal","Trade vs Non-Trade","File Manager"])
-    
-    if app_mode == "Home":
-        Home()
-    elif app_mode=="Editor":
-        excel_editor_menu()
-    elif app_mode == "WSP Analysis Dashboard":
-        wsp_analysis_dashboard()
-    elif app_mode == "Descriptive Statistics and Prediction":
-        descriptive_statistics_and_prediction()
-    elif app_mode == "Sales Dashboard":
-        sales_dashboard()
-    elif app_mode == "Sales Prediction":
-        sales_prediction_app()
-    elif app_mode=="Premium vs Normal":
-        normal()
-    elif app_mode=="Trade vs Non-Trade":
-        trade()
-    elif app_mode =="File Manager":
-        folder_menu()
+    # Custom CSS for the sidebar
+    st.markdown("""
+    <style>
+    .sidebar .sidebar-content {
+        background-image: linear-gradient(#2e7bcf,#2e7bcf);
+        color: white;
+    }
+    .sidebar-text {
+        color: white !important;
+    }
+    .stButton>button {
+        width: 100%;
+    }
+    .stProgress .st-bo {
+        background-color: #2e7bcf;
+    }
+    .stProgress .st-bp {
+        background-color: white;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
+    # Sidebar logo (replace with your own logo URL)
+    logo_url = "https://your-logo-url.com/logo.png"
+    st.sidebar.image(logo_url, width=200)
+
+    # Sidebar title
+    st.sidebar.title("Analytics Dashboard")
+
+    # Sidebar menu using streamlit-option-menu
+    with st.sidebar:
+        selected = option_menu(
+            menu_title="Main Menu",
+            options=[
+                "Home", 
+                "Data Management", 
+                "Analysis Dashboards", 
+                "Predictions", 
+                "Settings"
+            ],
+            icons=[
+                "house", 
+                "database-gear", 
+                "graph-up", 
+                "lightbulb", 
+                "gear"
+            ],
+            menu_icon="cast",
+            default_index=0,
+        )
+
+    # Submenu based on main selection
+    if selected == "Home":
+        Home()
+    elif selected == "Data Management":
+        data_management_menu = option_menu(
+            menu_title="Data Management",
+            options=["Editor", "File Manager"],
+            icons=["pencil-square", "folder"],
+            orientation="horizontal",
+        )
+        if data_management_menu == "Editor":
+            excel_editor_menu()
+        elif data_management_menu == "File Manager":
+            folder_menu()
+    elif selected == "Analysis Dashboards":
+        analysis_menu = option_menu(
+            menu_title="Analysis Dashboards",
+            options=["WSP Analysis", "Sales Dashboard", "Premium vs Normal", "Trade vs Non-Trade"],
+            icons=["clipboard-data", "cash", "arrow-up-right", "shuffle"],
+            orientation="horizontal",
+        )
+        if analysis_menu == "WSP Analysis":
+            wsp_analysis_dashboard()
+        elif analysis_menu == "Sales Dashboard":
+            sales_dashboard()
+        elif analysis_menu == "Premium vs Normal":
+            normal()
+        elif analysis_menu == "Trade vs Non-Trade":
+            trade()
+    elif selected == "Predictions":
+        prediction_menu = option_menu(
+            menu_title="Predictions",
+            options=["Descriptive Statistics", "Sales Prediction"],
+            icons=["bar-chart", "graph-up-arrow"],
+            orientation="horizontal",
+        )
+        if prediction_menu == "Descriptive Statistics":
+            descriptive_statistics_and_prediction()
+        elif prediction_menu == "Sales Prediction":
+            sales_prediction_app()
+    elif selected == "Settings":
+        st.write("Settings page")  # Placeholder for settings page
+
+    # Add a progress bar to show app loading status
+    progress_bar = st.sidebar.progress(0)
+    for i in range(100):
+        progress_bar.progress(i + 1)
+
+    # Add some additional information or quick stats in the sidebar
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("Quick Stats")
+    st.sidebar.metric(label="Total Sales", value="$1.2M", delta="8%")
+    st.sidebar.metric(label="Active Users", value="1,234", delta="-2%")
+
+    # Add a feedback section
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("Feedback")
+    feedback = st.sidebar.text_area("Share your thoughts:")
+    if st.sidebar.button("Submit Feedback"):
+        # Here you would typically send this feedback to a database or email
+        st.sidebar.success("Thank you for your feedback!")
 
 if __name__ == "__main__":
     main()
