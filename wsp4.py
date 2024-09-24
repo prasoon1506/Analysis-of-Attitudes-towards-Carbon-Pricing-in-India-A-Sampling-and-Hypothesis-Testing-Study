@@ -2644,12 +2644,6 @@ def main():
     for i in range(100):
         progress_bar.progress(i + 1)
 
-    # Add some additional information or quick stats in the sidebar
-    st.sidebar.markdown("---")
-    st.sidebar.subheader("Quick Stats")
-    st.sidebar.metric(label="Total Sales", value="$1.2M", delta="8%")
-    st.sidebar.metric(label="Active Users", value="1,234", delta="-2%")
-
     # Add a feedback section
     st.sidebar.markdown("---")
     st.sidebar.subheader("Feedback")
