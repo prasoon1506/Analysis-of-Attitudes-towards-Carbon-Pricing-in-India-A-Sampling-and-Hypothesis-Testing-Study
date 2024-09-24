@@ -1552,7 +1552,6 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
     color = get_color(total_change)
     ax3.text(0.21, 0.9, f"August 2024: {total_aug_current:.0f}", fontsize=14, fontweight='bold', ha='center')
     ax3.text(0.22, 0.85, f"vs August 2023: {total_aug_last:.0f} ({total_change:.1f}% {arrow})", fontsize=12, color=color, ha='center')
-
     for i, (channel, value_current, value_last) in enumerate(channel_data):
         percentage = (value_current / monthly_achievement_aug) * 100
         change = ((value_current - value_last) / value_last) * 100
