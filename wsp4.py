@@ -2246,7 +2246,7 @@ def normal():
  st.markdown("<div class='upload-section'>", unsafe_allow_html=True)
  col1, col2 = st.columns([2, 1])
  with col1:
-    uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
+    uploaded_file = st.file_uploader("Choose an Excel file for Normal vs Premium analysis", type="xlsx", key="normal_vs_premium_uploader")
  with col2:
     if lottie_upload:
         st_lottie(lottie_upload, height=150, key="upload")
