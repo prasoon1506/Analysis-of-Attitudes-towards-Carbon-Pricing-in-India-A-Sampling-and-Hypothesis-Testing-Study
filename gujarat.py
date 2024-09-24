@@ -98,13 +98,13 @@ if uploaded_file is not None:
         
         if not filtered_df.empty:
             if analysis_type == 'NSR Analysis':
-                cols = ['Trade NSR', 'Non-Trade NSR']
+                cols = ['Green NSR', 'Yellow NSR', 'Red NSR']
                 overall_col = 'Overall NSR'
             elif analysis_type == 'Contribution Analysis':
-                cols = ['Trade Contribution', 'Non-Trade Contribution']
+                cols = ['Green Contribution', 'Yellow Contribution','Red Contribution']
                 overall_col = 'Overall Contribution'
             elif analysis_type == 'EBITDA Analysis':
-                cols = ['Trade EBITDA', 'Non-Trade EBITDA']
+                cols = ['Green EBITDA', 'Yellow EBITDA','Red EBITDA']
                 overall_col = 'Overall EBITDA'
             
             # Calculate weighted average based on actual quantities
