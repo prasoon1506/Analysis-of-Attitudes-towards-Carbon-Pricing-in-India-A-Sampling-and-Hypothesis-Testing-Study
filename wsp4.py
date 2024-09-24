@@ -2500,7 +2500,7 @@ def trade():
                                      line=dict(color='brown', dash='dot')))
             
             # Customize x-axis labels to include the differences
-            x_labels = [f"{month}<br>(P-N: {diff:.2f})<br>(I-O: {i_diff:.2f})" for month, diff, i_diff in 
+            x_labels = [f"{month}<br>(T-NT: {diff:.2f})<br>(I-O: {i_diff:.2f})" for month, diff, i_diff in 
                         zip(filtered_df['Month'], filtered_df['Difference'], filtered_df['Imaginary vs Overall Difference'])]
             
             fig.update_layout(
