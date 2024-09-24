@@ -115,7 +115,7 @@ if uploaded_file is not None:
             # Calculate imaginary overall based on slider
             imaginary_col = f'Imaginary {overall_col}'
             filtered_df[imaginary_col] = ((1 - green_share-yellow_share/100) * filtered_df[cols[2]] +
-                                          (green_share/100) * filtered_df[cols[0]] + (yellow_share/100) * filtered_df[cols[1]]
+                                          (green_share/100) * filtered_df[cols[0]] + (yellow_share/100) * filtered_df[cols[1]])
             
             # Calculate difference between Premium and Normal
             filtered_df['G-Y Difference'] = filtered_df[cols[0]] - filtered_df[cols[1]]
