@@ -2673,15 +2673,6 @@ def main():
         email_notifications = st.checkbox("Receive Email Notifications", value=True)
         notification_frequency = st.select_slider("Notification Frequency", options=["Daily", "Weekly", "Monthly"])
         
-        # Data Settings
-        st.subheader("Data Settings")
-        data_refresh_rate = st.slider("Data Refresh Rate (minutes)", min_value=5, max_value=60, value=15, step=5)
-        max_rows_display = st.number_input("Maximum Rows to Display", min_value=100, max_value=10000, value=1000, step=100)
-        
-        # Export Settings
-        st.subheader("Export Settings")
-        default_export_format = st.radio("Default Export Format", ["CSV", "Excel", "JSON"])
-        
         # Save Settings Button
         if st.button("Save Settings"):
             st.success("Settings saved successfully!")
@@ -2693,11 +2684,7 @@ def main():
     for i in range(100):
         progress_bar.progress(i + 1)
 
-    # Add some additional information or quick stats in the sidebar
-    st.sidebar.markdown("---")
-    st.sidebar.subheader("Quick Stats")
-    st.sidebar.metric(label="Total Sales", value="$1.2M", delta="8%")
-    st.sidebar.metric(label="Active Users", value="1,234", delta="-2%")
+
 
     # Add a feedback section
     st.sidebar.markdown("---")
