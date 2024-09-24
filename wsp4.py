@@ -2421,7 +2421,7 @@ def trade():
         st.image("https://cdn-icons-png.flaticon.com/512/4503/4503700.png", width=150)
  st.markdown("</div>", unsafe_allow_html=True)
 
- if uploaded_file is not None:
+ if uploaded_file1 is not None:
     # Read the Excel file
         df = pd.read_excel(uploaded_file1)
         st.markdown("<div class='analysis-section'>", unsafe_allow_html=True)
