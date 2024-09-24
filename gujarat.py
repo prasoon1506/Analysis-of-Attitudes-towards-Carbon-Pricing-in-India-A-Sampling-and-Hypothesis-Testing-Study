@@ -91,7 +91,7 @@ if uploaded_file is not None:
         st.session_state.analysis_type = analysis_type
 
         green_share = st.sidebar.slider("Adjust Green Share (%)", 0, 100, 50)
-        yellow_share = st.sidebar.slider("Adjust Yellow Share (%)", 0, 100-green_share,0)
+        yellow_share = st.sidebar.slider("Adjust Yellow Share (%)", 0, 100-green_share+0.00000000000001,0)
         # Filter the dataframe
         filtered_df = df[(df['Region'] == region) & (df['Brand'] == brand) &
                          (df['Type'] == product_type) & (df['Region subsets'] == region_subset)].copy()
