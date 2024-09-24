@@ -90,7 +90,7 @@ if uploaded_file is not None:
         # Update session state
         st.session_state.analysis_type = analysis_type
 
-        trade_share = st.sidebar.slider("Adjust Premium Share (%)", 0, 100, 50)
+        trade_share = st.sidebar.slider("Adjust Trade Share (%)", 0, 100, 50)
 
         # Filter the dataframe
         filtered_df = df[(df['Region'] == region) & (df['Brand'] == brand) &
@@ -134,7 +134,7 @@ if uploaded_file is not None:
                                      mode='lines+markers', name=overall_col, line=dict(dash='dash')))
             
             fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[imaginary_col],
-                                     mode='lines+markers', name=f'Imaginary {overall_col} ({trade_share}% Premium)',
+                                     mode='lines+markers', name=f'Imaginary {overall_col} ({trade_share}% Trade)',
                                      line=dict(color='brown', dash='dot')))
             
             # Customize x-axis labels to include the differences
