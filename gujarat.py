@@ -94,17 +94,17 @@ if uploaded_file is not None:
         yellow_share = st.sidebar.slider("Adjust Yellow Share (%)", 0, 100, 25)
         # Filter the dataframe
         filtered_df = df[(df['Region'] == region) & (df['Brand'] == brand) &
-                         (df['Type'] == product_type) & (df['Region subsets'] == region_subset)].copy()
+                         (df['Type'] == product_type) & (df['Region subsets'] == region_subset) & (df['Month'] == Month)].copy()
         
         if not filtered_df.empty:
             if analysis_type == 'NSR Analysis':
-                cols = ['Month','Green NSR', 'Yellow NSR', 'Red NSR']
+                cols = ['Green NSR', 'Yellow NSR', 'Red NSR']
                 overall_col = 'Overall NSR'
             elif analysis_type == 'Contribution Analysis':
-                cols = ['Month','Green Contribution', 'Yellow Contribution','Red Contribution']
+                cols = ['Green Contribution', 'Yellow Contribution','Red Contribution']
                 overall_col = 'Overall Contribution'
             elif analysis_type == 'EBITDA Analysis':
-                cols = ['Month','Green EBITDA', 'Yellow EBITDA','Red EBITDA']
+                cols = ['Green EBITDA', 'Yellow EBITDA','Red EBITDA']
                 overall_col = 'Overall EBITDA'
             
             # Calculate weighted average based on actual quantities
