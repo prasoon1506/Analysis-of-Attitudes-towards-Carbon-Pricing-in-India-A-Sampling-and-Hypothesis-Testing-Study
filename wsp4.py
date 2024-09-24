@@ -1727,7 +1727,7 @@ def sales_prediction_app():
         st.write("This app helps you predict and visualize sales achievements for different regions and brands.")
         st.write("Use the sidebar to navigate between pages and upload your data to get started!")
         
-        uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
+        uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx",key="Sales_Prediction_uploader")
         if uploaded_file is not None:
             with st.spinner("Loading data..."):
                 df, regions, brands = load_data(uploaded_file)
@@ -2019,7 +2019,7 @@ def sales_dashboard():
         """)
 
     # File upload
-    uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
+    uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx",key="Sales_Dashboard_uploader")
     st.markdown('<div class="section-box">', unsafe_allow_html=True)
     if uploaded_file is not None:
         df = pd.read_excel(uploaded_file)
