@@ -46,7 +46,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Title and description
-st.title("📊 Trade Vs. Non-Trade Analysis")
+st.title("📊 GYR Analysis")
 st.markdown("Upload your Excel file and analyze it with interactive visualizations.")
 st.markdown("<div class='upload-section'>", unsafe_allow_html=True)
 col1, col2 = st.columns([2, 1])
@@ -90,8 +90,8 @@ if uploaded_file is not None:
         # Update session state
         st.session_state.analysis_type = analysis_type
 
-        trade_share = st.sidebar.slider("Adjust Trade Share (%)", 0, 100, 50)
-
+        green_share = st.sidebar.slider("Adjust Green Share (%)", 0, 100, 50)
+        yellow_share = st.sidebar.slider("Adjust Yellow Share (%)", 0, 100, 25)
         # Filter the dataframe
         filtered_df = df[(df['Region'] == region) & (df['Brand'] == brand) &
                          (df['Type'] == product_type) & (df['Region subsets'] == region_subset)].copy()
@@ -108,17 +108,19 @@ if uploaded_file is not None:
                 overall_col = 'Overall EBITDA'
             
             # Calculate weighted average based on actual quantities
-            filtered_df[overall_col] = (filtered_df['Trade'] * filtered_df[cols[0]] +
-                                        filtered_df['Non-Trade'] * filtered_df[cols[1]]) / (
-                                            filtered_df['Trade'] + filtered_df['Non-Trade'])
+            filtered_df[overall_col] = (filtered_df['Green'] * filtered_df[cols[0]] +
+                                        filtered_df['Yellow'] * filtered_df[cols[1]] + filtered_df['Red']*filtered_df[cold[2]]) / (
+                                            filtered_df['Green'] + filtered_df['Yellow']+filtered_df['Red'])
             
             # Calculate imaginary overall based on slider
             imaginary_col = f'Imaginary {overall_col}'
-            filtered_df[imaginary_col] = ((1 - trade_share/100) * filtered_df[cols[1]] +
-                                          (trade_share/100) * filtered_df[cols[0]])
+            filtered_df[imaginary_col] = ((1 - green_share-yellow_share/100) * filtered_df[cols[2]] +
+                                          (green_share/100) * filtered_df[cols[0]] + (yellow_share/100) * filtered_df[cols[1]]
             
             # Calculate difference between Premium and Normal
-            filtered_df['Difference'] = filtered_df[cols[0]] - filtered_df[cols[1]]
+            filtered_df['G-Y Difference'] = filtered_df[cols[0]] - filtered_df[cols[1]]
+            filtered_df['G-R Difference'] = filtered_df[cols[0]] - filtered_df[cols[2]]
+            filtered_df['Y-R Difference'] = filtered_df[cols[1]] - filtered_df[cols[2]]
             
             # Calculate difference between Imaginary and Overall
             filtered_df['Imaginary vs Overall Difference'] = filtered_df[imaginary_col] - filtered_df[overall_col]
@@ -134,16 +136,16 @@ if uploaded_file is not None:
                                      mode='lines+markers', name=overall_col, line=dict(dash='dash')))
             
             fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[imaginary_col],
-                                     mode='lines+markers', name=f'Imaginary {overall_col} ({trade_share}% Trade)',
+                                     mode='lines+markers', name=f'Imaginary {overall_col} ({green_share}% Green & {yellow_share)%)',
                                      line=dict(color='brown', dash='dot')))
             
             # Customize x-axis labels to include the differences
-            x_labels = [f"{month}<br>(P-N: {diff:.2f})<br>(I-O: {i_diff:.2f})" for month, diff, i_diff in 
-                        zip(filtered_df['Month'], filtered_df['Difference'], filtered_df['Imaginary vs Overall Difference'])]
+            x_labels = [f"{month}<br>(G-Y: {diff:.2f})<br>(G-R: {i_diff:.2f})<br>(Y-R: {j_diff:.2f})<br>(I-O: {k_diff:.2f})" for month, diff, i_diff, j_diff, k_diff in 
+                        zip(filtered_df['Month'], filtered_df['G-Y Difference'], filtered_df['G-R Difference'], filtered_df['Y-R Difference'], filtered_df['Imaginary vs Overall Difference'])]
             
             fig.update_layout(
                 title=analysis_type,
-                xaxis_title='Month (T-NT: Trade - Non-Trade, I-O: Imaginary - Overall)',
+                xaxis_title='Month (G-Y: Green - Red,G-R: Green - Red,Y-R: Yellow - Red, I-O: Imaginary - Overall)',
                 yaxis_title='Value',
                 legend_title='Metrics',
                 hovermode="x unified",
@@ -159,14 +161,16 @@ if uploaded_file is not None:
             
             # Display share of Normal and Premium Products
             st.subheader("Share of Trade and Non-Trade Channel")
-            total_quantity = filtered_df['Trade'] + filtered_df['Non-Trade']
-            trade_share = (filtered_df['Trade'] / total_quantity * 100).round(2)
-            nontrade_share = (filtered_df['Non-Trade'] / total_quantity * 100).round(2)
+            total_quantity = filtered_df['Green'] + filtered_df['Yellow'] + filtered_df['Red']
+            green_share = (filtered_df['Green'] / total_quantity * 100).round(2)
+            yellow_share = (filtered_df['Yellow'] / total_quantity * 100).round(2)
+            red_share = (filtered_df['Red'] / total_quantity * 100).round(2)
             
             share_df = pd.DataFrame({
                 'Month': filtered_df['Month'],
-                'Trade Share (%)': trade_share,
-                'Non-Trade Share (%)': nontrade_share
+                'Green Share (%)': green_share,
+                'Yellow Share (%)': yellow_share,
+                'Red Share (%)': red_share
             })
             
             st.dataframe(share_df.set_index('Month'), use_container_width=True)
