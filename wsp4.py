@@ -538,71 +538,117 @@ def update_week_name(index):
             st.warning(f"Attempted to update week {index + 1}, but only {len(st.session_state.week_names_input)} weeks are available.")
         st.session_state.all_weeks_filled = all(st.session_state.week_names_input)
     return callback
+import streamlit as st
+from streamlit_lottie import st_lottie
+import requests
+
+def load_lottie_url(url: str):
+    r = requests.get(url)
+    if r.status_code != 200:
+        return None
+    return r.json()
+
 def Home():
+    # Custom CSS with more modern and professional styling
     st.markdown("""
     <style>
-    .title {
-        font-size: 50px;
-        font-weight: bold;
-        color: #3366cc;
-        text-align: center;
-        padding: 20px;
-        border-radius: 10px;
-        background: linear-gradient(to right, #f0f8ff, #e6f3ff);
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        margin-bottom: 30px;
-        font-family: 'Arial', sans-serif;
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap');
+    
+    body {
+        font-family: 'Roboto', sans-serif;
+        background-color: #f5f7fa;
+        color: #333;
     }
-    .title span {
-        background: linear-gradient(45deg, #3366cc, #6699ff);
+    .title {
+        font-size: 3.5rem;
+        font-weight: 700;
+        color: #2c3e50;
+        text-align: center;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        background: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
     }
+    .subtitle {
+        font-size: 1.5rem;
+        font-weight: 300;
+        color: #34495e;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
     .section-box {
-        background-color: #f9f9f9;
-        border-radius: 10px;
-        padding: 20px;
-        margin-bottom: 20px;
+        background-color: #ffffff;
+        border-radius: 8px;
+        padding: 2rem;
+        margin-bottom: 2rem;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         transition: all 0.3s ease;
     }
     .section-box:hover {
         transform: translateY(-5px);
-        box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
     }
     .upload-section {
-        background-color: #e6f3ff;
-        padding: 20px;
-        border-radius: 10px;
-        margin-bottom: 20px;
+        background: linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%);
+        padding: 2rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+    }
+    .btn-primary {
+        background-color: #3498db;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 5px;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+    .btn-primary:hover {
+        background-color: #2980b9;
     }
     </style>
     """, unsafe_allow_html=True)
-    st.markdown('<div class="title"><span>Welcome to the WSP Analysis Dashboard</span></div>', unsafe_allow_html=True)
-    
-    # Load Lottie animation
-    lottie_url = "https://assets9.lottiefiles.com/packages/lf20_jcikwtux.json" 
+
+    # Main title and subtitle
+    st.markdown('<h1 class="title">WSP Analysis Dashboard</h1>', unsafe_allow_html=True)
+    st.markdown('<p class="subtitle">Unlock insights from your Whole Sale Price data across brands, regions, and districts.</p>', unsafe_allow_html=True)
+
+    # Load and display Lottie animation
+    lottie_url = "https://assets9.lottiefiles.com/packages/lf20_jcikwtux.json"
     lottie_json = load_lottie_url(lottie_url)
-    
+
     col1, col2 = st.columns([1, 2])
     with col1:
-        st_lottie(lottie_json, height=200, key="home_animation")
+        st_lottie(lottie_json, height=250, key="home_animation")
     with col2:
         st.markdown("""
-        Welcome to our interactive WSP Analysis Dashboard! 
-        This powerful tool helps you analyze Whole Sale Price (WSP) data for various brands across different regions and districts.
-        Let's get started with your data analysis journey!
-        """)
-    
-    st.markdown('<div class="section-box">', unsafe_allow_html=True)
-    st.subheader("How to use this app:")
+        <div class="section-box">
+        <h3>Welcome to Your Data Analysis Journey!</h3>
+        <p>Our interactive dashboard empowers you to:</p>
+        <ul>
+            <li>Upload and process your WSP data effortlessly</li>
+            <li>Visualize trends across different brands and regions</li>
+            <li>Generate descriptive statistics and predictions</li>
+            <li>Make data-driven decisions with confidence</li>
+        </ul>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # How to use section
     st.markdown("""
-    1. **Upload your Excel file** containing the WSP data.
-    2. **Enter the week names** for each column in your data.
-    3. **Navigate to the WSP Analysis Dashboard** or **Descriptive Statistics and Prediction** sections.
-    4. **Select your analysis settings** and generate insights!
-    """)
-    st.markdown('</div>', unsafe_allow_html=True)
+    <div class="section-box">
+    <h3>How to Use This Dashboard</h3>
+    <ol>
+        <li><strong>Upload Your Data:</strong> Start by uploading your Excel file containing the WSP data.</li>
+        <li><strong>Enter Week Names:</strong> Provide names for each week column in your dataset.</li>
+        <li><strong>Choose Your Analysis:</strong> Navigate to either the WSP Analysis Dashboard or Descriptive Statistics and Prediction sections.</li>
+        <li><strong>Customize and Explore:</strong> Select your analysis parameters and generate valuable insights!</li>
+    </ol>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # File upload section
     st.markdown('<div class="upload-section">', unsafe_allow_html=True)
     st.subheader("Upload Your Data")
 
@@ -611,25 +657,22 @@ def Home():
     if 'file_ready' not in st.session_state:
         st.session_state.file_ready = False
 
-    # Always show the file uploader
     uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx"])
 
-    # Check if there's an edited file from the Excel Editor
     if 'edited_df' in st.session_state and 'edited_file_name' in st.session_state and not st.session_state.edited_df.empty:
         st.success(f"Edited file uploaded: {st.session_state.edited_file_name}")
-        if st.button("Process Edited File"):
-                process_uploaded_file(st.session_state.edited_df)
+        if st.button("Process Edited File", key="process_edited"):
+            process_uploaded_file(st.session_state.edited_df)
 
     elif uploaded_file:
         st.success(f"File uploaded: {uploaded_file.name}")
-        if st.button("Process Uploaded File"):
-                process_uploaded_file(uploaded_file)
-       
+        if st.button("Process Uploaded File", key="process_uploaded"):
+            process_uploaded_file(uploaded_file)
 
     if st.session_state.file_ready:
         st.markdown("### Enter Week Names")
         num_weeks = st.session_state.num_weeks
-        num_columns = max(1, num_weeks)
+        num_columns = min(4, num_weeks)  # Limit to 4 columns for better layout
         week_cols = st.columns(num_columns)
 
         for i in range(num_weeks):
@@ -640,7 +683,7 @@ def Home():
                     key=f'week_{i}'
                 )
         
-        if st.button("Confirm Week Names"):
+        if st.button("Confirm Week Names", key="confirm_weeks"):
             if all(st.session_state.week_names_input):
                 st.session_state.file_processed = True
                 st.success("File processed successfully! You can now proceed to the analysis sections.")
@@ -653,12 +696,24 @@ def Home():
         st.info("Please upload a file and fill in all week names to proceed with the analysis.")
 
     st.markdown('</div>', unsafe_allow_html=True)
-    st.subheader("Need Help?")
+
+    # Help section
     st.markdown("""
-    If you need any assistance or have questions about using the app, don't hesitate to reach out to our support team.
-    Happy analyzing!
-    """)
-    st.markdown('</div>', unsafe_allow_html=True)
+    <div class="section-box">
+    <h3>Need Assistance?</h3>
+    <p>If you have any questions or need help using the dashboard, our support team is here for you. Don't hesitate to reach out!</p>
+    <p>Email: support@wspanalysis.com</p>
+    <p>Phone: +91 9219393559</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Footer
+    st.markdown("""
+    <div style="text-align: center; margin-top: 2rem; padding: 1rem; background-color: #34495e; color: #ecf0f1;">
+    <p>© 2024 WSP Analysis Dashboard. All rights reserved.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
 def process_uploaded_file(uploaded_file):
     if (isinstance(uploaded_file, pd.DataFrame) or uploaded_file) and not st.session_state.file_processed:
         try:
