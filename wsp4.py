@@ -2378,7 +2378,7 @@ def trade():
 def main():
     st.sidebar.title("Menu")
     app_mode = st.sidebar.selectbox("Contents",
-        ["Home","Editor", "WSP Analysis Dashboard", "Descriptive Statistics and Prediction","Sales Dashboard","Sales Prediction","Trade vs Non Trade","File Manager"])
+        ["Home","Editor", "WSP Analysis Dashboard", "Descriptive Statistics and Prediction","Sales Dashboard","Sales Prediction","Premium vs Normal","File Manager"])
     
     if app_mode == "Home":
         Home()
@@ -2392,7 +2392,7 @@ def main():
         sales_dashboard()
     elif app_mode == "Sales Prediction":
         sales_prediction_app()
-    elif app_mode=="Trade vs Non Trade":
+    elif app_mode=="Premium vs Normal":
         trade()
     elif app_mode =="File Manager":
         folder_menu()
