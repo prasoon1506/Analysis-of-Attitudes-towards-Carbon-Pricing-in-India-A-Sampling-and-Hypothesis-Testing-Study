@@ -2413,7 +2413,7 @@ def trade():
  st.markdown("<div class='upload-section'>", unsafe_allow_html=True)
  col1, col2 = st.columns([2, 1])
  with col1:
-    uploaded_file1 = st.file_uploader("Choose an Excel file", type="xlsx")
+    uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
  with col2:
     if lottie_upload:
         st_lottie(lottie_upload, height=150, key="upload")
@@ -2421,9 +2421,9 @@ def trade():
         st.image("https://cdn-icons-png.flaticon.com/512/4503/4503700.png", width=150)
  st.markdown("</div>", unsafe_allow_html=True)
 
- if uploaded_file1 is not None:
+ if uploaded_file is not None:
     # Read the Excel file
-        df = pd.read_excel(uploaded_file1)
+        df = pd.read_excel(uploaded_file)
         st.markdown("<div class='analysis-section'>", unsafe_allow_html=True)
         
         # Display Lottie animation or static image
