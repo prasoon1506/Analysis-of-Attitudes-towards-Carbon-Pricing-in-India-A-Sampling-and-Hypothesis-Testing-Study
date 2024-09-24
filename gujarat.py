@@ -94,7 +94,7 @@ if uploaded_file is not None:
         yellow_share = st.sidebar.slider("Adjust Yellow Share (%)", 0, 100, 25)
         # Filter the dataframe
         filtered_df = df[(df['Region'] == region) & (df['Brand'] == brand) &
-                         (df['Type'] == product_type) & (df['Region subsets'] == region_subset) & (df['Month'] == Month)].copy()
+                         (df['Type'] == product_type) & (df['Region subsets'] == region_subset)].copy()
         
         if not filtered_df.empty:
             if analysis_type == 'NSR Analysis':
