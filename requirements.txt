@@ -17,3 +17,4 @@ seaborn
 xlrd
 streamlit_option_menu
 lightbgm
+pip install --upgrade pip
