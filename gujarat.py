@@ -266,7 +266,5 @@ elif selected == "About":
     - Dynamic visualizations with Plotly
     - Descriptive statistics and share analysis
     - Customizable Green and Yellow share adjustments
-    
-    For more information or support, please contact our team.
     """)
    
