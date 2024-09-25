@@ -108,8 +108,7 @@ if selected == "Home":
         if uploaded_file is not None:
             st.session_state.uploaded_file = uploaded_file
             st.success("File successfully uploaded! Please go to the Analysis page to view results.")
-    with col2:
-        if lottie_upload:
+
     with col2:
         if lottie_upload:
             st_lottie(lottie_upload, height=150, key="upload")
