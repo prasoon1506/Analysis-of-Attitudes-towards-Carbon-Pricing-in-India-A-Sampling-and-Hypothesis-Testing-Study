@@ -96,7 +96,13 @@ with st.sidebar:
         menu_icon="cast",
         default_index=0,
     )
-
+if 'green_share' not in st.session_state:
+            st.session_state.green_share = 50
+if 'yellow_share' not in st.session_state:
+            st.session_state.yellow_share = 25
+def update_sliders():
+            st.session_state.green_share = green_share
+            st.session_state.yellow_share = yellow_share
 if selected == "Home":
     st.title("📊 Advanced GYR Analysis")
     st.markdown("Welcome to our advanced data analysis platform. Upload your Excel file to get started with interactive visualizations and insights.")
@@ -115,8 +121,7 @@ if selected == "Home":
         else:
             st.image("https://cdn-icons-png.flaticon.com/512/4503/4503700.png", width=150)
     st.markdown("</div>", unsafe_allow_html=True)
-
-elif selected == "Analysis":
+if selected == "Analysis":
     st.title("📈 Data Analysis Dashboard")
     
     if 'uploaded_file' not in st.session_state or st.session_state.uploaded_file is None:
@@ -137,12 +142,14 @@ elif selected == "Analysis":
         product_type = st.sidebar.selectbox("Select Type", options=df['Type'].unique())
         region_subset = st.sidebar.selectbox("Select Region Subset", options=df['Region subsets'].unique())
         
+        # Move sliders to sidebar and update session state
+        st.sidebar.header("Adjust Shares")
+        green_share = st.sidebar.slider("Green Share (%)", 0, 99, st.session_state.green_share, on_change=update_sliders)
+        yellow_share = st.sidebar.slider("Yellow Share (%)", 0, 100-green_share, st.session_state.yellow_share, on_change=update_sliders)
+        
         # Analysis type selection using tabs
         analysis_options = ["NSR Analysis", "Contribution Analysis", "EBITDA Analysis"]
         analysis_type = st.tabs(analysis_options)
-        
-        green_share = st.sidebar.slider("Adjust Green Share (%)", 0, 99, 50)
-        yellow_share = st.sidebar.slider("Adjust Yellow Share (%)", 0, 100-green_share, 25)
         
         # Filter the dataframe
         filtered_df = df[(df['Region'] == region) & (df['Brand'] == brand) &
@@ -256,4 +263,5 @@ elif selected == "About":
     
     For more information or support, please contact our team.
     """)
+
 
