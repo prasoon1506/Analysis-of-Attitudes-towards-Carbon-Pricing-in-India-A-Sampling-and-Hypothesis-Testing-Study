@@ -87,6 +87,19 @@ h1, h2, h3 {
 </style>
 """, unsafe_allow_html=True)
 
+# Initialize session state variables if they don't exist
+if 'green_share' not in st.session_state:
+    st.session_state.green_share = 50
+if 'yellow_share' not in st.session_state:
+    st.session_state.yellow_share = 25
+
+# Function to update sliders
+def update_sliders():
+    total = st.session_state.green_share + st.session_state.yellow_share
+    if total > 100:
+        st.session_state.yellow_share = max(0, 100 - st.session_state.green_share)
+    st.session_state.red_share = 100 - st.session_state.green_share - st.session_state.yellow_share
+
 # Sidebar navigation
 with st.sidebar:
     selected = option_menu(
@@ -96,13 +109,7 @@ with st.sidebar:
         menu_icon="cast",
         default_index=0,
     )
-if 'green_share' not in st.session_state:
-            st.session_state.green_share = 50
-if 'yellow_share' not in st.session_state:
-            st.session_state.yellow_share = 25
-def update_sliders():
-            st.session_state.green_share = green_share
-            st.session_state.yellow_share = yellow_share
+
 if selected == "Home":
     st.title("📊 Advanced GYR Analysis")
     st.markdown("Welcome to our advanced data analysis platform. Upload your Excel file to get started with interactive visualizations and insights.")
@@ -121,7 +128,8 @@ if selected == "Home":
         else:
             st.image("https://cdn-icons-png.flaticon.com/512/4503/4503700.png", width=150)
     st.markdown("</div>", unsafe_allow_html=True)
-if selected == "Analysis":
+
+elif selected == "Analysis":
     st.title("📈 Data Analysis Dashboard")
     
     if 'uploaded_file' not in st.session_state or st.session_state.uploaded_file is None:
@@ -144,8 +152,17 @@ if selected == "Analysis":
         
         # Move sliders to sidebar and update session state
         st.sidebar.header("Adjust Shares")
-        green_share = st.sidebar.slider("Green Share (%)", 0, 99, st.session_state.green_share, on_change=update_sliders)
-        yellow_share = st.sidebar.slider("Yellow Share (%)", 0, 100-green_share, st.session_state.yellow_share, on_change=update_sliders)
+        green_share = st.sidebar.slider("Green Share (%)", 0, 100, int(st.session_state.green_share), step=1, key="green_slider")
+        yellow_share = st.sidebar.slider("Yellow Share (%)", 0, 100-green_share, int(st.session_state.yellow_share), step=1, key="yellow_slider")
+        
+        # Update session state
+        st.session_state.green_share = green_share
+        st.session_state.yellow_share = yellow_share
+        update_sliders()
+        
+        # Display red share
+        red_share = 100 - green_share - yellow_share
+        st.sidebar.text(f"Red Share: {red_share}%")
         
         # Analysis type selection using tabs
         analysis_options = ["NSR Analysis", "Contribution Analysis", "EBITDA Analysis"]
@@ -263,5 +280,3 @@ elif selected == "About":
     
     For more information or support, please contact our team.
     """)
-
-
