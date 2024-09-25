@@ -219,28 +219,28 @@ elif selected == "Analysis":
             
             st.plotly_chart(fig, use_container_width=True)
             st.subheader("Descriptive Statistics")
-                    desc_stats = filtered_df[cols + [overall_col, imaginary_col]].describe()
-                    st.dataframe(desc_stats.style.format("{:.2f}").background_gradient(cmap='Blues'), use_container_width=True)
+            desc_stats = filtered_df[cols + [overall_col, imaginary_col]].describe()
+            st.dataframe(desc_stats.style.format("{:.2f}").background_gradient(cmap='Blues'), use_container_width=True)
                     
                     # Display share of Green, Yellow, and Red Products
-                    st.subheader("Share of Green, Yellow, and Red Products")
-                    total_quantity = filtered_df['Green'] + filtered_df['Yellow'] + filtered_df['Red']
-                    green_share = (filtered_df['Green'] / total_quantity * 100).round(2)
-                    yellow_share = (filtered_df['Yellow'] / total_quantity * 100).round(2)
-                    red_share = (filtered_df['Red'] / total_quantity * 100).round(2)
+            st.subheader("Share of Green, Yellow, and Red Products")
+            total_quantity = filtered_df['Green'] + filtered_df['Yellow'] + filtered_df['Red']
+            green_share = (filtered_df['Green'] / total_quantity * 100).round(2)
+            yellow_share = (filtered_df['Yellow'] / total_quantity * 100).round(2)
+            red_share = (filtered_df['Red'] / total_quantity * 100).round(2)
                     
-                    share_df = pd.DataFrame({
+            share_df = pd.DataFrame({
                         'Month': filtered_df['Month'],
                         'Green Share (%)': green_share,
                         'Yellow Share (%)': yellow_share,
                         'Red Share (%)': red_share
                     })
                     
-                    fig_pie = px.pie(share_df, values=[green_share.mean(), yellow_share.mean(), red_share.mean()], 
+            fig_pie = px.pie(share_df, values=[green_share.mean(), yellow_share.mean(), red_share.mean()], 
                                      names=['Green', 'Yellow', 'Red'], title='Average Share Distribution')
-                    st.plotly_chart(fig_pie, use_container_width=True)
+            st.plotly_chart(fig_pie, use_container_width=True)
                     
-                    st.dataframe(share_df.set_index('Month').style.format("{:.2f}").background_gradient(cmap='RdYlGn'), use_container_width=True)
+            st.dataframe(share_df.set_index('Month').style.format("{:.2f}").background_gradient(cmap='RdYlGn'), use_container_width=True)
         
         
         else:
