@@ -141,6 +141,38 @@ def xgboost_explanation():
     This example demonstrates how to use XGBoost for a regression task, including model training, 
     prediction, evaluation, and examining feature importance.
     """)
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+import xgboost as xgb
+import lightgbm as lgb
+from catboost import CatBoostRegressor
+from sklearn.ensemble import VotingRegressor
+
+@st.cache_resource
+def train_advanced_model(X_train, y_train):
+    # XGBoost model
+    xgb_model = xgb.XGBRegressor(n_estimators=100, learning_rate=0.1, random_state=42)
+    
+    # LightGBM model
+    lgb_model = lgb.LGBMRegressor(n_estimators=100, learning_rate=0.1, random_state=42)
+    
+    # CatBoost model
+    cat_model = CatBoostRegressor(iterations=100, learning_rate=0.1, random_seed=42, verbose=False)
+    
+    # Create the ensemble model
+    ensemble_model = VotingRegressor([
+        ('xgb', xgb_model),
+        ('lgb', lgb_model),
+        ('cat', cat_model)
+    ])
+    
+    # Train the ensemble model
+    ensemble_model.fit(X_train, y_train)
+    
+    return ensemble_model
+
 def predict_and_visualize(df, region, brand):
     try:
         region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)].copy()
@@ -158,14 +190,15 @@ def predict_and_visualize(df, region, brand):
             
             X_train, X_val, y_train, y_val = train_test_split(X_reshaped, y_reshaped, test_size=0.2, random_state=42)
             
-            model = train_model(X_train, y_train)
+            model = train_advanced_model(X_train, y_train)
             
             val_predictions = model.predict(X_val)
-            rmse = math.sqrt(mean_squared_error(y_val, val_predictions))
+            rmse = np.sqrt(mean_squared_error(y_val, val_predictions))
             
             sept_target = region_data['Month Tgt (Sep)'].iloc[-1]
             sept_prediction = model.predict([[sept_target]])[0]
             
+            # Calculate confidence interval
             n = len(X_train)
             degrees_of_freedom = n - 2
             t_value = stats.t.ppf(0.975, degrees_of_freedom)
