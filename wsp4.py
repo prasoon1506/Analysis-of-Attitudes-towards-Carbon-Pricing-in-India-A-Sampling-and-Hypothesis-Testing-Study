@@ -1671,7 +1671,8 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
         cell.set_edgecolor('brown')
     
     ax5.set_title('Quarterly Requirements for September 2024', fontsize=16, fontweight='bold')
-    
+    plt.tight_layout()
+    return fig
 
 def create_advanced_visualization(region_data, region, brand, months, sept_target, sept_achievement, lower_achievement, upper_achievement, rmse):
     st.title(f"{region} ({brand}) Performance")
