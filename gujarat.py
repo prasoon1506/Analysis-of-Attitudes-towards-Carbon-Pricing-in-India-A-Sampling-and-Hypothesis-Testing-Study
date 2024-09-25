@@ -195,13 +195,13 @@ elif selected == "Analysis":
             
             
             if cols[0] in cols:
-                  fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[col],
+                  fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[cols[0]],
                                          mode='lines+markers', name=col,line_color="green"))
             if cols[1] in cols:
-                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[col],
+                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[cols[1]],
                                          mode='lines+markers', name=col,line_color="yellow"))
             if cols[2] in cols:
-                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[col],
+                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[cols[2]],
                                          mode='lines+markers', name=col,line_color="red"))
             
             fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[overall_col],
