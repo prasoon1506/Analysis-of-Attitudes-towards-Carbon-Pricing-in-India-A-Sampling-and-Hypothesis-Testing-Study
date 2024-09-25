@@ -1461,7 +1461,7 @@ def predict_and_visualize(df, region, brand):
             upper_achievement = upper_bound * sept_target
             
             fig = create_visualization(region_data, region, brand, months, sept_target, sept_achievement, lower_achievement, upper_achievement, rmse)
-            fig = creat_advanced_visualization(region_data, region, brand, months, sept_target, sept_achievement, lower_achievement, upper_achievement, rmse)
+            fig = create_advanced_visualization(region_data, region, brand, months, sept_target, sept_achievement, lower_achievement, upper_achievement, rmse)
             
             return fig, sept_achievement, lower_achievement, upper_achievement, rmse
         else:
