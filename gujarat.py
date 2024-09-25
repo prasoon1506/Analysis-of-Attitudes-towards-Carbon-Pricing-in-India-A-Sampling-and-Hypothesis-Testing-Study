@@ -213,7 +213,9 @@ elif selected == "Analysis":
                     fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[overall_col],
                                              mode='lines+markers', name=overall_col, line=dict(dash='dash')))
                     
-                    
+                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[imaginary_col],
+                                             mode='lines+markers', 
+                                             line=dict(color='brown', dash='dot')))
                     
                     # Customize x-axis labels to include the differences
                     x_labels = [f"{month}<br>(G-Y: {diff:.2f})<br>(G-R: {i_diff:.2f})<br>(Y-R: {j_diff:.2f})<br>(I-O: {k_diff:.2f})" 
