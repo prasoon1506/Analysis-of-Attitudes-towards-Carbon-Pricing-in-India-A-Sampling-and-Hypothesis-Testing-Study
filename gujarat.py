@@ -87,11 +87,7 @@ h1, h2, h3 {
 </style>
 """, unsafe_allow_html=True)
 
-# Initialize session state variables if they don't exist
-if 'green_share' not in st.session_state:
-    st.session_state.green_share = 50
-if 'yellow_share' not in st.session_state:
-    st.session_state.yellow_share = 25
+
 
 # Function to update sliders
 def update_sliders():
