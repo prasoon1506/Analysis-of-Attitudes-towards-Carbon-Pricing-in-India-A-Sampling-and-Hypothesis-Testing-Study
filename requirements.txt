@@ -17,4 +17,4 @@ seaborn
 xlrd
 streamlit_option_menu
 lightgbm
-_catboost
+catboost
