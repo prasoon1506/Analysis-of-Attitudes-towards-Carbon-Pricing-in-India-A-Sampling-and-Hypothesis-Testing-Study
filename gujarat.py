@@ -152,8 +152,8 @@ elif selected == "Analysis":
         
         # Move sliders to sidebar and update session state
         st.sidebar.header("Adjust Shares")
-        green_share = st.sidebar.slider("Green Share (%)", 0, 100, int(st.session_state.green_share), step=1, key="green_slider")
-        yellow_share = st.sidebar.slider("Yellow Share (%)", 0, 100-green_share, int(st.session_state.yellow_share), step=1, key="yellow_slider")
+        green_share = st.sidebar.slider("Green Share (%)", 0, 100, st.session_state.green_share, step=1, key="green_slider")
+        yellow_share = st.sidebar.slider("Yellow Share (%)", 0, 100-green_share,st.session_state.yellow_share, step=1, key="yellow_slider")
         
         # Update session state
         st.session_state.green_share = green_share
