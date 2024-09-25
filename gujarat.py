@@ -193,13 +193,16 @@ elif selected == "Analysis":
             # Create the plot
             fig = go.Figure()
             
-    
-            if col[0] in cols:
+            for col in cols:
+               if col[0]:
                   fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[col],
                                          mode='lines+markers', name=col,line_color="green"))
-            if col[1] in cols:
+               if col[1]:
                     fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[col],
                                          mode='lines+markers', name=col,line_color="yellow"))
+                if col[2]:
+                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[col],
+                                         mode='lines+markers', name=col,line_color="red"))
             
             fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[overall_col],
                                      mode='lines+markers', name=overall_col, line=dict(dash='dash')))
