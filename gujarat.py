@@ -200,7 +200,7 @@ elif selected == "Analysis":
                if col[1]:
                     fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[col],
                                          mode='lines+markers', name=col,line_color="yellow"))
-                if col[2]:
+               if col[2]:
                     fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[col],
                                          mode='lines+markers', name=col,line_color="red"))
             
