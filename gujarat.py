@@ -133,7 +133,6 @@ elif selected == "Analysis":
             st_lottie(lottie_analysis, height=200, key="analysis")
         else:
             st.image("https://cdn-icons-png.flaticon.com/512/2756/2756778.png", width=200)
-        
         # Create sidebar for user inputs
         st.sidebar.header("Filter Options")
         region = st.sidebar.selectbox("Select Region", options=df['Region'].unique())
@@ -141,116 +140,108 @@ elif selected == "Analysis":
         product_type = st.sidebar.selectbox("Select Type", options=df['Type'].unique())
         region_subset = st.sidebar.selectbox("Select Region Subset", options=df['Region subsets'].unique())
         
-        # Move sliders to sidebar and update session state
-        st.sidebar.header("Adjust Shares")
-        green_share = st.sidebar.slider("Green Share (%)", 0, 99, step=1, value=st.session_state.green_share, key="green_slider")
-        yellow_share = st.sidebar.slider("Yellow Share (%)", 0, 100-green_share, step=1, value=st.session_state.yellow_share, key="yellow_slider")
+        # Analysis type selection using radio buttons
+        st.sidebar.header("Analysis on")
+        analysis_options = ["NSR Analysis", "Contribution Analysis", "EBITDA Analysis"]
+        
+        # Use session state to store the selected analysis type
+        if 'analysis_type' not in st.session_state:
+            st.session_state.analysis_type = "EBITDA Analysis"
+        
+        analysis_type = st.sidebar.radio("Select Analysis Type", analysis_options, index=analysis_options.index(st.session_state.analysis_type))
         
         # Update session state
-        st.session_state.green_share = green_share
-        st.session_state.yellow_share = yellow_share
-        
-        
-        # Display red share
-        red_share = 100 - green_share - yellow_share
-        st.sidebar.text(f"Red Share: {red_share}%")
-        
-        # Analysis type selection using tabs
-        analysis_options = ["NSR Analysis", "Contribution Analysis", "EBITDA Analysis"]
-        analysis_type = st.tabs(analysis_options)
-        
+        st.session_state.analysis_type = analysis_type
+
+        green_share = st.sidebar.slider("Adjust Green Share (%)", 0, 99, 50)
+        yellow_share = st.sidebar.slider("Adjust Yellow Share (%)", 0, 100-green_share,0)
         # Filter the dataframe
         filtered_df = df[(df['Region'] == region) & (df['Brand'] == brand) &
                          (df['Type'] == product_type) & (df['Region subsets'] == region_subset)].copy()
         
         if not filtered_df.empty:
-            for idx, analysis in enumerate(analysis_options):
-                with analysis_type[idx]:
-                    if analysis == 'NSR Analysis':
-                        cols = ['Green NSR', 'Yellow NSR', 'Red NSR']
-                        overall_col = 'Overall NSR'
-                    elif analysis == 'Contribution Analysis':
-                        cols = ['Green Contribution', 'Yellow Contribution', 'Red Contribution']
-                        overall_col = 'Overall Contribution'
-                    elif analysis == 'EBITDA Analysis':
-                        cols = ['Green EBITDA', 'Yellow EBITDA', 'Red EBITDA']
-                        overall_col = 'Overall EBITDA'
+            if analysis_type == 'NSR Analysis':
+                cols = ['Green NSR', 'Yellow NSR', 'Red NSR']
+                overall_col = 'Overall NSR'
+            elif analysis_type == 'Contribution Analysis':
+                cols = ['Green Contribution', 'Yellow Contribution','Red Contribution']
+                overall_col = 'Overall Contribution'
+            elif analysis_type == 'EBITDA Analysis':
+                cols = ['Green EBITDA', 'Yellow EBITDA','Red EBITDA']
+                overall_col = 'Overall EBITDA'
+            
+            # Calculate weighted average based on actual quantities
+            filtered_df[overall_col] = (filtered_df['Green'] * filtered_df[cols[0]] +
+                                        filtered_df['Yellow'] * filtered_df[cols[1]] + filtered_df['Red']*filtered_df[cols[2]]) / (
+                                            filtered_df['Green'] + filtered_df['Yellow']+filtered_df['Red'])
+            
+            # Calculate imaginary overall based on slider
+            imaginary_col = f'Imaginary {overall_col}'
+            filtered_df[imaginary_col] = ((1 - (green_share+yellow_share)/100) * filtered_df[cols[2]] +
+                                          (green_share/100) * filtered_df[cols[0]] + (yellow_share/100) * filtered_df[cols[1]])
+            
+            # Calculate difference between Premium and Normal
+            filtered_df['G-Y Difference'] = filtered_df[cols[0]] - filtered_df[cols[1]]
+            filtered_df['G-R Difference'] = filtered_df[cols[0]] - filtered_df[cols[2]]
+            filtered_df['Y-R Difference'] = filtered_df[cols[1]] - filtered_df[cols[2]]
+            
+            # Calculate difference between Imaginary and Overall
+            filtered_df['Imaginary vs Overall Difference'] = filtered_df[imaginary_col] - filtered_df[overall_col]
+            
+            # Create the plot
+            fig = go.Figure()
+            
+            for col in cols:
+                fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[col],
+                                         mode='lines+markers', name=col))
+            
+            fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[overall_col],
+                                     mode='lines+markers', name=overall_col, line=dict(dash='dash')))
+            
+            fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[imaginary_col],
+                                     mode='lines+markers', name=f'Imaginary {overall_col} ({green_share}% Green & {yellow_share}%)',
+                                     line=dict(color='brown', dash='dot')))
+            
+            # Customize x-axis labels to include the differences
+            x_labels = [f"{month}<br>(G-Y: {diff:.2f})<br>(G-R: {i_diff:.2f})<br>(Y-R: {j_diff:.2f})<br>(I-O: {k_diff:.2f})" for month, diff, i_diff, j_diff, k_diff in 
+                        zip(filtered_df['Month'], filtered_df['G-Y Difference'], filtered_df['G-R Difference'], filtered_df['Y-R Difference'], filtered_df['Imaginary vs Overall Difference'])]
+            
+            fig.update_layout(
+                title=analysis_type,
+                xaxis_title='Month (G-Y: Green - Red,G-R: Green - Red,Y-R: Yellow - Red, I-O: Imaginary - Overall)',
+                yaxis_title='Value',
+                legend_title='Metrics',
+                hovermode="x unified",
+                xaxis=dict(tickmode='array', tickvals=list(range(len(x_labels))), ticktext=x_labels)
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
+            
+            # Display descriptive statistics
+            st.subheader("Descriptive Statistics")
+            desc_stats = filtered_df[cols + [overall_col, imaginary_col]].describe()
+            st.dataframe(desc_stats.style.format("{:.2f}"), use_container_width=True)
+            
+            # Display share of Normal and Premium Products
+            st.subheader("Share of Trade and Non-Trade Channel")
+            total_quantity = filtered_df['Green'] + filtered_df['Yellow'] + filtered_df['Red']
+            green_share = (filtered_df['Green'] / total_quantity * 100).round(2)
+            yellow_share = (filtered_df['Yellow'] / total_quantity * 100).round(2)
+            red_share = (filtered_df['Red'] / total_quantity * 100).round(2)
+            
+            share_df = pd.DataFrame({
+                'Month': filtered_df['Month'],
+                'Green Share (%)': green_share,
+                'Yellow Share (%)': yellow_share,
+                'Red Share (%)': red_share
+            })
+        
                     
-                    # Calculate weighted average based on actual quantities
-                    filtered_df[overall_col] = (filtered_df['Green'] * filtered_df[cols[0]] +
-                                                filtered_df['Yellow'] * filtered_df[cols[1]] + 
-                                                filtered_df['Red'] * filtered_df[cols[2]]) / (
-                                                    filtered_df['Green'] + filtered_df['Yellow'] + filtered_df['Red'])
-                    
-                    # Calculate imaginary overall based on slider
-                    imaginary_col = f'Imaginary {overall_col}'
-                    filtered_df[imaginary_col] = ((red_share / 100) * filtered_df[cols[2]] +
-                                                  (green_share / 100) * filtered_df[cols[0]] + 
-                                                  (yellow_share / 100) * filtered_df[cols[1]])
-                    
-                    # Calculate differences
-                    filtered_df['G-Y Difference'] = filtered_df[cols[0]] - filtered_df[cols[1]]
-                    filtered_df['G-R Difference'] = filtered_df[cols[0]] - filtered_df[cols[2]]
-                    filtered_df['Y-R Difference'] = filtered_df[cols[1]] - filtered_df[cols[2]]
-                    filtered_df['Imaginary vs Overall Difference'] = filtered_df[imaginary_col] - filtered_df[overall_col]
-                    
-                    # Create the plot
-                    fig = go.Figure()
-                    
-                    for col in cols:
-                        fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[col],
-                                                 mode='lines+markers', name=col))
-                    
-                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[overall_col],
-                                             mode='lines+markers', name=overall_col, line=dict(dash='dash')))
-                    
-                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[imaginary_col],
-                                             mode='lines+markers', 
-                                             name=f'Imaginary {overall_col} ({green_share}% Green, {yellow_share}% Yellow, {red_share}% Red)',
-                                             line=dict(color='brown', dash='dot')))
-                    
-                    # Customize x-axis labels to include the differences
-                    x_labels = [f"{month}<br>(G-Y: {diff:.2f})<br>(G-R: {i_diff:.2f})<br>(Y-R: {j_diff:.2f})<br>(I-O: {k_diff:.2f})" 
-                                for month, diff, i_diff, j_diff, k_diff in 
-                                zip(filtered_df['Month'], filtered_df['G-Y Difference'], 
-                                    filtered_df['G-R Difference'], filtered_df['Y-R Difference'], 
-                                    filtered_df['Imaginary vs Overall Difference'])]
-                    
-                    fig.update_layout(
-                        title=analysis,
-                        xaxis_title='Month',
-                        yaxis_title='Value',
-                        legend_title='Metrics',
-                        hovermode="x unified",
-                        xaxis=dict(tickmode='array', tickvals=list(range(len(x_labels))), ticktext=x_labels)
-                    )
-                    
-                    st.plotly_chart(fig, use_container_width=True)
-                    
-                    # Display descriptive statistics
-                    st.subheader("Descriptive Statistics")
-                    desc_stats = filtered_df[cols + [overall_col, imaginary_col]].describe()
-                    st.dataframe(desc_stats.style.format("{:.2f}").background_gradient(cmap='Blues'), use_container_width=True)
-                    
-                    # Display share of Green, Yellow, and Red Products
-                    st.subheader("Share of Green, Yellow, and Red Products")
-                    total_quantity = filtered_df['Green'] + filtered_df['Yellow'] + filtered_df['Red']
-                    green_share = (filtered_df['Green'] / total_quantity * 100).round(2)
-                    yellow_share = (filtered_df['Yellow'] / total_quantity * 100).round(2)
-                    red_share = (filtered_df['Red'] / total_quantity * 100).round(2)
-                    
-                    share_df = pd.DataFrame({
-                        'Month': filtered_df['Month'],
-                        'Green Share (%)': green_share,
-                        'Yellow Share (%)': yellow_share,
-                        'Red Share (%)': red_share
-                    })
-                    
-                    fig_pie = px.pie(share_df, values=[green_share.mean(), yellow_share.mean(), red_share.mean()], 
+            fig_pie = px.pie(share_df, values=[green_share.mean(), yellow_share.mean(), red_share.mean()], 
                                      names=['Green', 'Yellow', 'Red'], title='Average Share Distribution')
-                    st.plotly_chart(fig_pie, use_container_width=True)
+            st.plotly_chart(fig_pie, use_container_width=True)
                     
-                    st.dataframe(share_df.set_index('Month').style.format("{:.2f}").background_gradient(cmap='RdYlGn'), use_container_width=True)
+            st.dataframe(share_df.set_index('Month').style.format("{:.2f}").background_gradient(cmap='RdYlGn'), use_container_width=True)
         
         else:
             st.warning("No data available for the selected combination.")
@@ -271,3 +262,4 @@ elif selected == "About":
     
     For more information or support, please contact our team.
     """)
+   
