@@ -658,7 +658,7 @@ def Home():
     if 'file_ready' not in st.session_state:
         st.session_state.file_ready = False
 
-    uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx"])
+    uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx"],key="wsp_data")
 
     if 'edited_df' in st.session_state and 'edited_file_name' in st.session_state and not st.session_state.edited_df.empty:
         st.success(f"Edited file uploaded: {st.session_state.edited_file_name}")
