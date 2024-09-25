@@ -1607,12 +1607,14 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
 
     # Additional Insights
     st.header("Additional Insights")
-    
-    total_aug_current=region_data['Monthly Achievement(Aug)']
-    print(total_aug_current)
-    total_aug_last=region_data['Total Aug 2023']
+    total_aug_current = region_data['Monthly Achievement(Aug)'].mean()  # or use .sum() as needed
+    total_aug_last = region_data['Total Aug 2023'].mean()  # or use .sum() as needed
     yoy_growth = ((total_aug_current - total_aug_last) / total_aug_last) * 100
+
+    # Now this should work without raising an error
     st.metric("Year-over-Year Growth", f"{yoy_growth:.1f}%", delta=f"{yoy_growth:.1f}%")
+
+
 
     # Trend Analysis
     trend_data = region_data[[f'Monthly Achievement({month})' for month in months]].iloc[-1].values
