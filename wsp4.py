@@ -1,4 +1,5 @@
 import os
+from streamlit_option_menu import option_menu
 import shutil
 import streamlit as st
 import openpyxl
@@ -2597,57 +2598,114 @@ def trade():
 
 
 def green():
+# Load Lottie animations
  lottie_analysis = load_lottieurl("https://assets4.lottiefiles.com/packages/lf20_qp1q7mct.json")
  lottie_upload = load_lottieurl("https://assets9.lottiefiles.com/packages/lf20_ABViugg1T8.json")
 
 # Custom CSS
  st.markdown("""
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400;700&display=swap');
+
+html, body, [class*="css"] {
+    font-family: 'Roboto', sans-serif;
+}
+
 .main {
     background-color: #f0f2f6;
 }
+
 .stApp {
     max-width: 1200px;
     margin: 0 auto;
 }
+
 .upload-section, .analysis-section, .edit-section {
     background-color: #ffffff;
-    padding: 20px;
-    border-radius: 10px;
+    padding: 30px;
+    border-radius: 15px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    margin-top: 20px;
+    margin-top: 30px;
+    transition: all 0.3s ease;
 }
+
+.upload-section:hover, .analysis-section:hover, .edit-section:hover {
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+
 .stButton>button {
     width: 100%;
+    border-radius: 5px;
+    font-weight: 500;
+    transition: all 0.3s ease;
 }
+
+.stButton>button:hover {
+    background-color: #4CAF50;
+    color: white;
+}
+
+h1, h2, h3 {
+    color: #2C3E50;
+}
+
+.stPlotlyChart {
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.stDataFrame {
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
 </style>
 """, unsafe_allow_html=True)
 
-# Title and description
- st.title("📊 GYR Analysis")
- st.markdown("Upload your Excel file and analyze it with interactive visualizations.")
- st.markdown("<div class='upload-section'>", unsafe_allow_html=True)
- col1, col2 = st.columns([2, 1])
- with col1:
-    uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
- with col2:
-    if lottie_upload:
-        st_lottie(lottie_upload, height=150, key="upload")
-    else:
-        st.image("https://cdn-icons-png.flaticon.com/512/4503/4503700.png", width=150)
- st.markdown("</div>", unsafe_allow_html=True)
+ with st.sidebar:
+    selected = option_menu(
+        menu_title="Navigation",
+        options=["Home", "Analysis", "About"],
+        icons=["house", "graph-up", "info-circle"],
+        menu_icon="cast",
+        default_index=0,
+    )
 
- if uploaded_file is not None:
-    # Read the Excel file
-        df = pd.read_excel(uploaded_file)
+ if selected == "Home":
+    st.title("📊 Advanced GYR Analysis")
+    st.markdown("Welcome to our advanced data analysis platform. Upload your Excel file to get started with interactive visualizations and insights.")
+    
+    st.markdown("<div class='upload-section'>", unsafe_allow_html=True)
+    col1, col2 = st.columns([2, 1])
+    with col1:
+        uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
+        if uploaded_file is not None:
+            st.session_state.uploaded_file = uploaded_file
+            st.success("File successfully uploaded! Please go to the Analysis page to view results.")
+
+    with col2:
+        if lottie_upload:
+            st_lottie(lottie_upload, height=150, key="upload")
+        else:
+            st.image("https://cdn-icons-png.flaticon.com/512/4503/4503700.png", width=150)
+    st.markdown("</div>", unsafe_allow_html=True)
+
+ elif selected == "Analysis":
+    st.title("📈 Data Analysis Dashboard")
+    
+    if 'uploaded_file' not in st.session_state or st.session_state.uploaded_file is None:
+        st.warning("Please upload an Excel file on the Home page to begin the analysis.")
+    else:
+        df = pd.read_excel(st.session_state.uploaded_file)
         st.markdown("<div class='analysis-section'>", unsafe_allow_html=True)
         
-        # Display Lottie animation or static image
         if lottie_analysis:
             st_lottie(lottie_analysis, height=200, key="analysis")
         else:
             st.image("https://cdn-icons-png.flaticon.com/512/2756/2756778.png", width=200)
-        
         # Create sidebar for user inputs
         st.sidebar.header("Filter Options")
         region = st.sidebar.selectbox("Select Region", options=df['Region'].unique())
@@ -2670,6 +2728,8 @@ def green():
 
         green_share = st.sidebar.slider("Adjust Green Share (%)", 0, 99, 50)
         yellow_share = st.sidebar.slider("Adjust Yellow Share (%)", 0, 100-green_share,0)
+        red_share = 100 - green_share - yellow_share
+        st.sidebar.text(f"Red Share: {red_share}%")
         # Filter the dataframe
         filtered_df = df[(df['Region'] == region) & (df['Brand'] == brand) &
                          (df['Type'] == product_type) & (df['Region subsets'] == region_subset)].copy()
@@ -2706,15 +2766,22 @@ def green():
             # Create the plot
             fig = go.Figure()
             
-            for col in cols:
-                fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[col],
-                                         mode='lines+markers', name=col))
+            
+            if cols[0] in cols:
+                  fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[cols[0]],
+                                         mode='lines+markers', name=cols[0],line_color="green"))
+            if cols[1] in cols:
+                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[cols[1]],
+                                         mode='lines+markers', name=cols[1],line_color="yellow"))
+            if cols[2] in cols:
+                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[cols[2]],
+                                         mode='lines+markers', name=cols[2],line_color="red"))
             
             fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[overall_col],
                                      mode='lines+markers', name=overall_col, line=dict(dash='dash')))
             
             fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[imaginary_col],
-                                     mode='lines+markers', name=f'Imaginary {overall_col} ({green_share}% Green & {yellow_share}%)',
+                                     mode='lines+markers', name=f'Imaginary {overall_col} ({green_share}% Green & {yellow_share}% Yellow)',
                                      line=dict(color='brown', dash='dot')))
             
             # Customize x-axis labels to include the differences
@@ -2731,40 +2798,48 @@ def green():
             )
             
             st.plotly_chart(fig, use_container_width=True)
-            
-            # Display descriptive statistics
             st.subheader("Descriptive Statistics")
             desc_stats = filtered_df[cols + [overall_col, imaginary_col]].describe()
-            st.dataframe(desc_stats.style.format("{:.2f}"), use_container_width=True)
-            
-            # Display share of Normal and Premium Products
-            st.subheader("Share of Trade and Non-Trade Channel")
+            st.dataframe(desc_stats.style.format("{:.2f}").background_gradient(cmap='Blues'), use_container_width=True)
+                    
+                    # Display share of Green, Yellow, and Red Products
+            st.subheader("Share of Green, Yellow, and Red Products")
             total_quantity = filtered_df['Green'] + filtered_df['Yellow'] + filtered_df['Red']
             green_share = (filtered_df['Green'] / total_quantity * 100).round(2)
             yellow_share = (filtered_df['Yellow'] / total_quantity * 100).round(2)
             red_share = (filtered_df['Red'] / total_quantity * 100).round(2)
-            
+                    
             share_df = pd.DataFrame({
-                'Month': filtered_df['Month'],
-                'Green Share (%)': green_share,
-                'Yellow Share (%)': yellow_share,
-                'Red Share (%)': red_share
-            })
-            
-            st.dataframe(share_df.set_index('Month'), use_container_width=True)
-            
+                        'Month': filtered_df['Month'],
+                        'Green Share (%)': green_share,
+                        'Yellow Share (%)': yellow_share,
+                        'Red Share (%)': red_share
+                    })
+                    
+            fig_pie = px.pie(share_df, values=[green_share.mean(), yellow_share.mean(), red_share.mean()], 
+                                     names=['Green', 'Yellow', 'Red'], title='Average Share Distribution',color=["G","Y","R"],color_discrete_map={"G":"green","Y":"yellow","R":"red"},hole=0.5)
+            st.plotly_chart(fig_pie, use_container_width=True)
+                    
+            st.dataframe(share_df.set_index('Month').style.format("{:.2f}").background_gradient(cmap='RdYlGn'), use_container_width=True)
+        
+        
         else:
             st.warning("No data available for the selected combination.")
         
         st.markdown("</div>", unsafe_allow_html=True)
+
+ elif selected == "About":
+    st.title("About the GYR Analysis App")
+    st.markdown("""
+    This advanced data analysis application is designed to provide insightful visualizations and statistics for your GYR (Green, Yellow, Red) data. 
     
- else:
-    st.info("Please upload an Excel file to begin the analysis.")
-
-import streamlit as st
-from streamlit_option_menu import option_menu
-import base64
-
+    Key features include:
+    - Interactive data filtering
+    - Multiple analysis types (NSR, Contribution, EBITDA)
+    - Dynamic visualizations with Plotly
+    - Descriptive statistics and share analysis
+    - Customizable Green and Yellow share adjustments
+    """)
 def main():
     # Custom CSS for the sidebar and main content
     st.markdown("""
