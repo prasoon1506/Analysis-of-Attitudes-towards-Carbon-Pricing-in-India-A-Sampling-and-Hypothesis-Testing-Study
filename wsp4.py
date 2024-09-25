@@ -1476,7 +1476,7 @@ import plotly.subplots as sp
 import pandas as pd
 import numpy as np
 from scipy import stats
-def create_advanced_visualization(region_data, region, brand, months, sept_target, sept_achievement, lower_achievement, upper_achievement, rmse):
+def create_visualization(region_data, region, brand, months, sept_target, sept_achievement, lower_achievement, upper_achievement, rmse):
     fig = plt.figure(figsize=(20, 28))  # Increased height to accommodate new table
     gs = fig.add_gridspec(7, 2, height_ratios=[0.5, 0.5, 0.5, 3, 1, 2, 1])
     ax_region = fig.add_subplot(gs[0, :])
@@ -1671,7 +1671,7 @@ def create_advanced_visualization(region_data, region, brand, months, sept_targe
         cell.set_edgecolor('brown')
     
     ax5.set_title('Quarterly Requirements for September 2024', fontsize=16, fontweight='bold')
-def create_visualization(region_data, region, brand, months, sept_target, sept_achievement, lower_achievement, upper_achievement, rmse):
+def create_advanced_visualization(region_data, region, brand, months, sept_target, sept_achievement, lower_achievement, upper_achievement, rmse):
     st.title(f"{region} ({brand}) Performance Dashboard")
 
     # Current Month Sales Data
