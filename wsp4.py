@@ -1675,7 +1675,7 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
     return fig
 
 def create_advanced_visualization(region_data, region, brand, months, sept_target, sept_achievement, lower_achievement, upper_achievement, rmse):
-    st.title(f"{region} ({brand}) Performance Dashboard")
+    st.title(f"{region} ({brand}) Performance")
 
     # Current Month Sales Data
     st.header("Current Month Sales Overview")
@@ -1712,10 +1712,10 @@ def create_advanced_visualization(region_data, region, brand, months, sept_targe
     all_achievements = actual_achievements + [sept_achievement]
     all_targets = actual_targets + [sept_target]
 
-    fig = go.Figure()
-    fig.add_trace(go.Bar(x=all_months, y=all_targets, name='Target', marker_color='rgba(255, 192, 203, 0.8)'))
-    fig.add_trace(go.Bar(x=all_months, y=all_achievements, name='Achievement', marker_color='rgba(255, 255, 0, 0.8)'))
-    fig.add_trace(go.Scatter(x=['Sep'], y=[sept_achievement], mode='markers', name='September Prediction',
+    fig1 = go.Figure()
+    fig1.add_trace(go.Bar(x=all_months, y=all_targets, name='Target', marker_color='rgba(255, 192, 203, 0.8)'))
+    fig1.add_trace(go.Bar(x=all_months, y=all_achievements, name='Achievement', marker_color='rgba(255, 255, 0, 0.8)'))
+    fig1.add_trace(go.Scatter(x=['Sep'], y=[sept_achievement], mode='markers', name='September Prediction',
                              marker=dict(color='red', size=10), error_y=dict(
                                  type='data',
                                  symmetric=False,
@@ -1727,12 +1727,12 @@ def create_advanced_visualization(region_data, region, brand, months, sept_targe
     for i, (target, achievement) in enumerate(zip(all_targets, all_achievements)):
         percentage = (achievement / target) * 100
         color = 'green' if percentage >= 100 else 'red'
-        fig.add_annotation(x=all_months[i], y=max(target, achievement),
+        fig1.add_annotation(x=all_months[i], y=max(target, achievement),
                            text=f'{percentage:.1f}%',
                            showarrow=False,
                            font=dict(size=10, color=color))
 
-    fig.update_layout(barmode='group', title='Monthly Targets and Achievements', 
+    fig1.update_layout(barmode='group', title='Monthly Targets and Achievements', 
                       xaxis_title='Month', yaxis_title='Value')
     st.plotly_chart(fig, use_container_width=True)
 
