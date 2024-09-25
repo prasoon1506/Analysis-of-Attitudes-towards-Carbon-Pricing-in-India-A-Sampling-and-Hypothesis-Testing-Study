@@ -152,8 +152,8 @@ elif selected == "Analysis":
         
         # Move sliders to sidebar and update session state
         st.sidebar.header("Adjust Shares")
-        green_share = st.sidebar.slider("Green Share (%)", 0, 99, step=1, key="green_slider")
-        yellow_share = st.sidebar.slider("Yellow Share (%)", 0, 100-green_share, step=1, key="yellow_slider")
+        green_share = st.sidebar.slider("Green Share (%)", 0, 99, step=1, value=st.session_state.green_share, key="green_slider")
+        yellow_share = st.sidebar.slider("Yellow Share (%)", 0, 100-green_share, step=1, value=st.session_state.yellow_share, key="yellow_slider")
         
         # Update session state
         st.session_state.green_share = green_share
@@ -193,7 +193,7 @@ elif selected == "Analysis":
                     
                     # Calculate imaginary overall based on slider
                     imaginary_col = f'Imaginary {overall_col}'
-                    filtered_df[imaginary_col] = ((100 - green_share - yellow_share) / 100 * filtered_df[cols[2]] +
+                    filtered_df[imaginary_col] = ((red_share / 100) * filtered_df[cols[2]] +
                                                   (green_share / 100) * filtered_df[cols[0]] + 
                                                   (yellow_share / 100) * filtered_df[cols[1]])
                     
@@ -215,6 +215,7 @@ elif selected == "Analysis":
                     
                     fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[imaginary_col],
                                              mode='lines+markers', 
+                                             name=f'Imaginary {overall_col} ({green_share}% Green, {yellow_share}% Yellow, {red_share}% Red)',
                                              line=dict(color='brown', dash='dot')))
                     
                     # Customize x-axis labels to include the differences
