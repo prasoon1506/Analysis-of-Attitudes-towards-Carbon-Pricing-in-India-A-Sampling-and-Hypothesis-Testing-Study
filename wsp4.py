@@ -758,56 +758,70 @@ def process_uploaded_file(uploaded_file):
             st.error(f"Error processing file: {e}")
             st.exception(e)
             st.session_state.file_processed = False
+import streamlit as st
+from streamlit_option_menu import option_menu
+from streamlit_extras.app_logo import add_logo
+
 def wsp_analysis_dashboard():
+    # Custom CSS for enhanced styling
     st.markdown("""
     <style>
-    .title {
-        font-size: 50px;
-        font-weight: bold;
-        color: #3366cc;
+    .stApp {
+        background-color: #f0f5ff;
+    }
+    .main-title {
+        font-size: 3rem;
+        font-weight: 700;
+        color: #1e3a8a;
         text-align: center;
-        padding: 20px;
-        border-radius: 10px;
-        background: linear-gradient(to right, #f0f8ff, #e6f3ff);
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        margin-bottom: 30px;
-        font-family: 'Arial', sans-serif;
+        padding: 2rem 0;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
     }
-    .title span {
-        background: linear-gradient(45deg, #3366cc, #6699ff);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+    .section-title {
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: #2c5282;
+        margin-bottom: 1rem;
+        border-bottom: 2px solid #4299e1;
+        padding-bottom: 0.5rem;
     }
-    .section-box {
-        background-color: #f9f9f9;
+    .card {
+        background-color: white;
         border-radius: 10px;
-        padding: 20px;
-        margin-bottom: 20px;
+        padding: 1.5rem;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
         transition: all 0.3s ease;
     }
-    .section-box:hover {
+    .card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
     }
     .stSelectbox, .stMultiSelect {
         background-color: white;
         border-radius: 8px;
-        margin-bottom: 10px;
+        margin-bottom: 1rem;
     }
     .stButton>button {
         border-radius: 20px;
-        padding: 10px 20px;
+        padding: 0.5rem 1rem;
         font-weight: bold;
+        background-color: #4299e1;
+        color: white;
         transition: all 0.3s ease;
     }
     .stButton>button:hover {
+        background-color: #2b6cb0;
         transform: scale(1.05);
     }
     </style>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="title"><span>WSP Analysis Dashboard</span></div>', unsafe_allow_html=True)
+    # App header
+    st.markdown('<h1 class="main-title">WSP Analysis Dashboard</h1>', unsafe_allow_html=True)
+
+    # Add logo
+    add_logo("path_to_your_logo.png", height=150)
 
     if not st.session_state.file_processed:
         st.warning("Please upload a file and fill in all week names in the Home section before using this dashboard.")
@@ -815,146 +829,156 @@ def wsp_analysis_dashboard():
 
     st.session_state.df = transform_data(st.session_state.df, st.session_state.week_names_input)
     
-    st.markdown('<div class="section-box">', unsafe_allow_html=True)
-    st.subheader("Analysis Settings")
+    # Navigation
+    selected = option_menu(
+        menu_title=None,
+        options=["Analysis Settings", "Benchmark Settings", "Generate Analysis"],
+        icons=["gear", "graph-up", "play-circle"],
+        menu_icon="cast",
+        default_index=0,
+        orientation="horizontal",
+    )
     
-    st.session_state.diff_week = st.slider("Select Week for Difference Calculation", 
-                                           min_value=0, 
-                                           max_value=len(st.session_state.week_names_input) - 1, 
-                                           value=st.session_state.diff_week, 
-                                           key="diff_week_slider") 
-    download_pdf = st.checkbox("Download Plots as PDF",value=True)   
-    col1, col2 = st.columns(2)
-    with col1:
-        zone_names = st.session_state.df["Zone"].unique().tolist()
-        selected_zone = st.selectbox("Select Zone", zone_names, key="zone_select")
-    with col2:
-        filtered_df = st.session_state.df[st.session_state.df["Zone"] == selected_zone]
-        region_names = filtered_df["REGION"].unique().tolist()
-        selected_region = st.selectbox("Select Region", region_names, key="region_select")
+    if selected == "Analysis Settings":
+        st.markdown('<h2 class="section-title">Analysis Settings</h2>', unsafe_allow_html=True)
+        with st.container():
+            col1, col2 = st.columns(2)
+            with col1:
+                st.markdown('<div class="card">', unsafe_allow_html=True)
+                st.session_state.diff_week = st.slider(
+                    "Select Week for Difference Calculation", 
+                    min_value=0, 
+                    max_value=len(st.session_state.week_names_input) - 1, 
+                    value=st.session_state.diff_week, 
+                    key="diff_week_slider"
+                )
+                st.markdown('</div>', unsafe_allow_html=True)
+            with col2:
+                st.markdown('<div class="card">', unsafe_allow_html=True)
+                download_pdf = st.checkbox("Download Plots as PDF", value=True)
+                st.markdown('</div>', unsafe_allow_html=True)
         
-    filtered_df = filtered_df[filtered_df["REGION"] == selected_region]
-    district_names = filtered_df["Dist Name"].unique().tolist()
-    if selected_region in ["Rajasthan", "Madhya Pradesh(West)","Madhya Pradesh(East)","Chhattisgarh","Maharashtra(East)","Odisha","North-I","North-II","Gujarat"]:
-        suggested_districts = []
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        col1, col2 = st.columns(2)
+        with col1:
+            zone_names = st.session_state.df["Zone"].unique().tolist()
+            selected_zone = st.selectbox("Select Zone", zone_names, key="zone_select")
+        with col2:
+            filtered_df = st.session_state.df[st.session_state.df["Zone"] == selected_zone]
+            region_names = filtered_df["REGION"].unique().tolist()
+            selected_region = st.selectbox("Select Region", region_names, key="region_select")
+        st.markdown('</div>', unsafe_allow_html=True)
         
-        if selected_region == "Rajasthan":
-            rajasthan_districts = ["Alwar", "Jodhpur", "Udaipur", "Jaipur", "Kota", "Bikaner"]
-            suggested_districts = [d for d in rajasthan_districts if d in district_names]
-        elif selected_region == "Madhya Pradesh(West)":
-            mp_west_districts = ["Indore", "Neemuch","Ratlam","Dhar"]
-            suggested_districts = [d for d in mp_west_districts if d in district_names]
-        elif selected_region == "Madhya Pradesh(East)":
-            mp_west_districts = ["Jabalpur","Balaghat","Chhindwara"]
-            suggested_districts = [d for d in mp_west_districts if d in district_names]
-        elif selected_region == "Chhattisgarh":
-            mp_west_districts = ["Durg","Raipur","Bilaspur","Raigarh","Rajnandgaon"]
-            suggested_districts = [d for d in mp_west_districts if d in district_names]
-        elif selected_region == "Maharashtra(East)":
-            mp_west_districts = ["Nagpur","Gondiya"]
-            suggested_districts = [d for d in mp_west_districts if d in district_names]
-        elif selected_region == "Odisha":
-            mp_west_districts = ["Cuttack","Sambalpur","Khorda"]
-            suggested_districts = [d for d in mp_west_districts if d in district_names]
-        elif selected_region == "North-I":
-            mp_west_districts = ["East","Gurugram","Sonipat","Hisar","Yamunanagar","Bathinda"]
-            suggested_districts = [d for d in mp_west_districts if d in district_names]
-        elif selected_region == "North-II":
-            mp_west_districts = ["Ghaziabad","Meerut"]
-            suggested_districts = [d for d in mp_west_districts if d in district_names]
-        elif selected_region == "Gujarat":
-            mp_west_districts = ["Ahmadabad","Mahesana","Rajkot","Vadodara","Surat"]
-            suggested_districts = [d for d in mp_west_districts if d in district_names]
+        filtered_df = filtered_df[filtered_df["REGION"] == selected_region]
+        district_names = filtered_df["Dist Name"].unique().tolist()
         
-        
-        
-        if suggested_districts:
-            st.markdown(f"### Suggested Districts for {selected_region}")
-            select_all = st.checkbox(f"Select all suggested districts for {selected_region}")
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        if selected_region in ["Rajasthan", "Madhya Pradesh(West)", "Madhya Pradesh(East)", "Chhattisgarh", "Maharashtra(East)", "Odisha", "North-I", "North-II", "Gujarat"]:
+            suggested_districts = get_suggested_districts(selected_region, district_names)
             
-            if select_all:
-                selected_districts = st.multiselect("Select District(s)", district_names, default=suggested_districts, key="district_select")
+            if suggested_districts:
+                st.markdown(f"### Suggested Districts for {selected_region}")
+                select_all = st.checkbox(f"Select all suggested districts for {selected_region}")
+                
+                if select_all:
+                    selected_districts = st.multiselect("Select District(s)", district_names, default=suggested_districts, key="district_select")
+                else:
+                    selected_districts = st.multiselect("Select District(s)", district_names, key="district_select")
             else:
                 selected_districts = st.multiselect("Select District(s)", district_names, key="district_select")
         else:
             selected_districts = st.multiselect("Select District(s)", district_names, key="district_select")
-    else:
-        selected_districts = st.multiselect("Select District(s)", district_names, key="district_select")
+        st.markdown('</div>', unsafe_allow_html=True)
     
-
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
-    benchmark_brands = [brand for brand in brands if brand != 'JKLC']
+    elif selected == "Benchmark Settings":
+        st.markdown('<h2 class="section-title">Benchmark Settings</h2>', unsafe_allow_html=True)
+        brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
+        benchmark_brands = [brand for brand in brands if brand != 'JKLC']
         
-    benchmark_brands_dict = {}
-    desired_diff_dict = {}
+        benchmark_brands_dict = {}
+        desired_diff_dict = {}
         
-    if selected_districts:
-        st.markdown("### Benchmark Settings")
-        use_same_benchmarks = st.checkbox("Use same benchmarks for all districts", value=True)
-        
-        if use_same_benchmarks:
-            selected_benchmarks = st.multiselect("Select Benchmark Brands for all districts", benchmark_brands, key="unified_benchmark_select")
-            for district in selected_districts:
-                benchmark_brands_dict[district] = selected_benchmarks
-                desired_diff_dict[district] = {}
+        if selected_districts:
+            st.markdown('<div class="card">', unsafe_allow_html=True)
+            use_same_benchmarks = st.checkbox("Use same benchmarks for all districts", value=True)
+            
+            if use_same_benchmarks:
+                selected_benchmarks = st.multiselect("Select Benchmark Brands for all districts", benchmark_brands, key="unified_benchmark_select")
+                for district in selected_districts:
+                    benchmark_brands_dict[district] = selected_benchmarks
+                    desired_diff_dict[district] = {}
 
-            if selected_benchmarks:
-                st.markdown("#### Desired Differences")
-                num_cols = min(len(selected_benchmarks), 3)
-                diff_cols = st.columns(num_cols)
-                for i, brand in enumerate(selected_benchmarks):
-                    with diff_cols[i % num_cols]:
-                        value = st.number_input(
-                            f"{brand}",
-                            min_value=-100.00,
-                            step=0.1,
-                            format="%.2f",
-                            key=f"unified_{brand}"
-                        )
-                        for district in selected_districts:
-                            desired_diff_dict[district][brand] = value
-            else:
-                st.warning("Please select at least one benchmark brand.")
-        else:
-            for district in selected_districts:
-                st.subheader(f"Settings for {district}")
-                benchmark_brands_dict[district] = st.multiselect(
-                    f"Select Benchmark Brands for {district}",
-                    benchmark_brands,
-                    key=f"benchmark_select_{district}"
-                )
-                desired_diff_dict[district] = {}
-                
-                if benchmark_brands_dict[district]:
-                    num_cols = min(len(benchmark_brands_dict[district]), 3)
+                if selected_benchmarks:
+                    st.markdown("#### Desired Differences")
+                    num_cols = min(len(selected_benchmarks), 3)
                     diff_cols = st.columns(num_cols)
-                    for i, brand in enumerate(benchmark_brands_dict[district]):
+                    for i, brand in enumerate(selected_benchmarks):
                         with diff_cols[i % num_cols]:
-                            desired_diff_dict[district][brand] = st.number_input(
+                            value = st.number_input(
                                 f"{brand}",
                                 min_value=-100.00,
                                 step=0.1,
                                 format="%.2f",
-                                key=f"{district}_{brand}"
+                                key=f"unified_{brand}"
                             )
+                            for district in selected_districts:
+                                desired_diff_dict[district][brand] = value
                 else:
-                    st.warning(f"No benchmark brands selected for {district}.")
+                    st.warning("Please select at least one benchmark brand.")
+            else:
+                for district in selected_districts:
+                    st.subheader(f"Settings for {district}")
+                    benchmark_brands_dict[district] = st.multiselect(
+                        f"Select Benchmark Brands for {district}",
+                        benchmark_brands,
+                        key=f"benchmark_select_{district}"
+                    )
+                    desired_diff_dict[district] = {}
+                    
+                    if benchmark_brands_dict[district]:
+                        num_cols = min(len(benchmark_brands_dict[district]), 3)
+                        diff_cols = st.columns(num_cols)
+                        for i, brand in enumerate(benchmark_brands_dict[district]):
+                            with diff_cols[i % num_cols]:
+                                desired_diff_dict[district][brand] = st.number_input(
+                                    f"{brand}",
+                                    min_value=-100.00,
+                                    step=0.1,
+                                    format="%.2f",
+                                    key=f"{district}_{brand}"
+                                )
+                    else:
+                        st.warning(f"No benchmark brands selected for {district}.")
+            st.markdown('</div>', unsafe_allow_html=True)
     
-    st.markdown("### Generate Analysis")
-    
-    if st.button('Generate Plots', key='generate_plots', use_container_width=True):
-        with st.spinner('Generating plots...'):
-            plot_district_graph(filtered_df, selected_districts, benchmark_brands_dict, 
-                                desired_diff_dict, 
-                                st.session_state.week_names_input, 
-                                st.session_state.diff_week, 
-                                download_pdf)
-            st.success('Plots generated successfully!')
+    elif selected == "Generate Analysis":
+        st.markdown('<h2 class="section-title">Generate Analysis</h2>', unsafe_allow_html=True)
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        if st.button('Generate Plots', key='generate_plots', use_container_width=True):
+            with st.spinner('Generating plots...'):
+                plot_district_graph(filtered_df, selected_districts, benchmark_brands_dict, 
+                                    desired_diff_dict, 
+                                    st.session_state.week_names_input, 
+                                    st.session_state.diff_week, 
+                                    download_pdf)
+                st.success('Plots generated successfully!')
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    else:
-        st.warning("Please upload a file in the Home section before using this dashboard.")
+def get_suggested_districts(region, district_names):
+    region_districts = {
+        "Rajasthan": ["Alwar", "Jodhpur", "Udaipur", "Jaipur", "Kota", "Bikaner"],
+        "Madhya Pradesh(West)": ["Indore", "Neemuch", "Ratlam", "Dhar"],
+        "Madhya Pradesh(East)": ["Jabalpur", "Balaghat", "Chhindwara"],
+        "Chhattisgarh": ["Durg", "Raipur", "Bilaspur", "Raigarh", "Rajnandgaon"],
+        "Maharashtra(East)": ["Nagpur", "Gondiya"],
+        "Odisha": ["Cuttack", "Sambalpur", "Khorda"],
+        "North-I": ["East", "Gurugram", "Sonipat", "Hisar", "Yamunanagar", "Bathinda"],
+        "North-II": ["Ghaziabad", "Meerut"],
+        "Gujarat": ["Ahmadabad", "Mahesana", "Rajkot", "Vadodara", "Surat"]
+    }
+    return [d for d in region_districts.get(region, []) if d in district_names]
+
+# Make sure to import the required libraries and define the necessary functions (transform_data, plot_district_graph) elsewhere in your code.
 def descriptive_statistics_and_prediction():
     st.markdown("""
     <style>
