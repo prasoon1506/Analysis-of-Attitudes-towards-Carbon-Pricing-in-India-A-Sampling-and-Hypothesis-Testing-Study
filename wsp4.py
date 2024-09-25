@@ -1285,7 +1285,6 @@ def generate_shareable_link(file_path):
     file_name = os.path.basename(file_path)
     encoded_file_name = quote(file_name)
     return f"https://your-file-sharing-service.com/files/{encoded_file_name}"
-
 def get_online_editor_url(file_extension):
     """Get the appropriate online editor URL based on file extension."""
     extension_mapping = {
