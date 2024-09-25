@@ -16,6 +16,5 @@ plotly
 seaborn
 xlrd
 streamlit_option_menu
-upgrade pip
 lightgbm
 
