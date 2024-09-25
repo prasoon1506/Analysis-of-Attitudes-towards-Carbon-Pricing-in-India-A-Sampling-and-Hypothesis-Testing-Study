@@ -147,7 +147,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 import xgboost as xgb
 import lightgbm as lgb
-from catboost import CatBoostRegressor
+
 from sklearn.ensemble import VotingRegressor
 
 @st.cache_resource
@@ -158,14 +158,13 @@ def train_advanced_model(X_train, y_train):
     # LightGBM model
     lgb_model = lgb.LGBMRegressor(n_estimators=100, learning_rate=0.1, random_state=42)
     
-    # CatBoost model
-    cat_model = CatBoostRegressor(iterations=100, learning_rate=0.1, random_seed=42, verbose=False)
+
     
     # Create the ensemble model
     ensemble_model = VotingRegressor([
         ('xgb', xgb_model),
         ('lgb', lgb_model),
-        ('cat', cat_model)
+        
     ])
     
     # Train the ensemble model
