@@ -105,6 +105,11 @@ if selected == "Home":
     col1, col2 = st.columns([2, 1])
     with col1:
         uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
+        if uploaded_file is not None:
+            st.session_state.uploaded_file = uploaded_file
+            st.success("File successfully uploaded! Please go to the Analysis page to view results.")
+    with col2:
+        if lottie_upload:
     with col2:
         if lottie_upload:
             st_lottie(lottie_upload, height=150, key="upload")
@@ -253,9 +258,3 @@ elif selected == "About":
     For more information or support, please contact our team.
     """)
 
-# Store the uploaded file in session state
-if 'uploaded_file' not in st.session_state:
-    st.session_state.uploaded_file = None
-
-if uploaded_file is not None:
-    st.session_state.uploaded_file = uploaded_file
