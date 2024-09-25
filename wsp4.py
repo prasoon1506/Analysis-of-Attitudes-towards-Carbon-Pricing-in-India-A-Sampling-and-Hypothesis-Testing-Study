@@ -1734,7 +1734,7 @@ def create_advanced_visualization(region_data, region, brand, months, sept_targe
 
     fig1.update_layout(barmode='group', title='Monthly Targets and Achievements', 
                       xaxis_title='Month', yaxis_title='Value')
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig1, use_container_width=True)
 
     # Percentage Achievement Line Chart
     st.header("Percentage Achievement Trend")
