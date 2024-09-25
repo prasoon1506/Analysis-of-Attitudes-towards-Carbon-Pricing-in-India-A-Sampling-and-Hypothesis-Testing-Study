@@ -1481,8 +1481,9 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
     ax_current = fig.add_subplot(gs[1, :])
     ax_current.axis('off')
     current_data = [
-                ['Total Sales\nTill Now', 'Commitment\nfor Today', 'Asking\nfor Today', 'Yesterday\nSales', 'Yesterday\nCommitment'],
+                ['Total Sales\nTill Now','Trade %', 'Commitment\nfor Today', 'Asking\nfor Today', 'Yesterday\nSales', 'Yesterday\nCommitment'],
                 [f"{region_data['Till Yesterday Total Sales'].iloc[-1]:.0f}",
+                 f"{region_data['Till Yesterday Total sales in Trade'].iloc[-1]/region_data['Till Yesterday Total Sales'].iloc[-1]*100:.0f}",
                  f"{region_data['Commitment for Today'].iloc[-1]:.0f}",
                  f"{region_data['Asking for Today'].iloc[-1]:.0f}",
                  f"{region_data['Yesterday Sales'].iloc[-1]:.0f}",
