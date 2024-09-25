@@ -155,6 +155,8 @@ elif selected == "Analysis":
 
         green_share = st.sidebar.slider("Adjust Green Share (%)", 0, 99, 50)
         yellow_share = st.sidebar.slider("Adjust Yellow Share (%)", 0, 100-green_share,0)
+        red_share = 100 - green_share - yellow_share
+        st.sidebar.text(f"Red Share: {red_share}%")
         # Filter the dataframe
         filtered_df = df[(df['Region'] == region) & (df['Brand'] == brand) &
                          (df['Type'] == product_type) & (df['Region subsets'] == region_subset)].copy()
@@ -199,7 +201,7 @@ elif selected == "Analysis":
                                      mode='lines+markers', name=overall_col, line=dict(dash='dash')))
             
             fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[imaginary_col],
-                                     mode='lines+markers', name=f'Imaginary {overall_col} ({green_share}% Green & {yellow_share}%)',
+                                     mode='lines+markers', name=f'Imaginary {overall_col} ({green_share}% Green & {yellow_share}% Yellow)',
                                      line=dict(color='brown', dash='dot')))
             
             # Customize x-axis labels to include the differences
