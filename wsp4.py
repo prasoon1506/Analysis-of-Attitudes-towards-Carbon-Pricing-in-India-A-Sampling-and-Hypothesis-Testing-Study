@@ -2667,7 +2667,7 @@ h1, h2, h3 {
 
  with st.sidebar:
     selected = option_menu(
-        menu_title="Navigation",
+        menu_title="Navigation for GYR Analaysis App",
         options=["Home", "Analysis", "About"],
         icons=["house", "graph-up", "info-circle"],
         menu_icon="cast",
