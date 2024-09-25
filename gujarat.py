@@ -89,12 +89,7 @@ h1, h2, h3 {
 
 
 
-# Function to update sliders
-def update_sliders():
-    total = st.session_state.green_share + st.session_state.yellow_share
-    if total > 100:
-        st.session_state.yellow_share = max(0, 100 - st.session_state.green_share)
-    st.session_state.red_share = 100 - st.session_state.green_share - st.session_state.yellow_share
+
 
 # Sidebar navigation
 with st.sidebar:
@@ -154,7 +149,7 @@ elif selected == "Analysis":
         # Update session state
         st.session_state.green_share = green_share
         st.session_state.yellow_share = yellow_share
-        update_sliders()
+        
         
         # Display red share
         red_share = 100 - green_share - yellow_share
