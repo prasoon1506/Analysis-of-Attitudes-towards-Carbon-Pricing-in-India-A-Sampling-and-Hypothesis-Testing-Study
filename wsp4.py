@@ -1476,7 +1476,7 @@ import pandas as pd
 import numpy as np
 from scipy import stats
 
-def create_advanced_visualization(region_data, region, brand, months, sept_target, sept_achievement, lower_achievement, upper_achievement, rmse):
+def create_visualization(region_data, region, brand, months, sept_target, sept_achievement, lower_achievement, upper_achievement, rmse):
     st.title(f"{region} ({brand}) Performance Dashboard")
 
     # Current Month Sales Data
