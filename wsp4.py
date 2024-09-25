@@ -760,7 +760,7 @@ def process_uploaded_file(uploaded_file):
             st.session_state.file_processed = False
 import streamlit as st
 from streamlit_option_menu import option_menu
-from streamlit_extras.app_logo import add_logo
+
 
 def wsp_analysis_dashboard():
     # Custom CSS for enhanced styling
@@ -819,9 +819,6 @@ def wsp_analysis_dashboard():
 
     # App header
     st.markdown('<h1 class="main-title">WSP Analysis Dashboard</h1>', unsafe_allow_html=True)
-
-    # Add logo
-    add_logo("path_to_your_logo.png", height=150)
 
     if not st.session_state.file_processed:
         st.warning("Please upload a file and fill in all week names in the Home section before using this dashboard.")
