@@ -53,7 +53,7 @@ from collections import OrderedDict
 import plotly.express as px
 
 def excel_editor_menu():
-    st.set_page_config(layout="wide")
+    
     st.title("Advanced Excel Editor and Analyzer")
     
     # Custom CSS for a more professional look
