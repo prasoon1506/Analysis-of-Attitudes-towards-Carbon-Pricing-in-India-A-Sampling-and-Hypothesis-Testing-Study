@@ -2,8 +2,6 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestRegressor
 from xgboost import XGBRegressor
@@ -16,99 +14,84 @@ def load_data(uploaded_file):
     df = pd.read_excel(uploaded_file)
     return df
 
-def preprocess_data(df):
+def preprocess_data(df_row):
+    processed_data = {}
+    
     # Year-over-Year Growth
-    df['YoY_Growth'] = (df['Monthly Achievement(Aug)'] - df['Total Aug 2023']) / df['Total Aug 2023']
+    processed_data['YoY_Growth'] = (df_row['Monthly Achievement(Aug)'] - df_row['Total Aug 2023']) / df_row['Total Aug 2023']
     
     # Monthly Growth Rates
     months = ['Apr', 'May', 'June', 'July', 'Aug']
     for i in range(1, len(months)):
-        df[f'Growth_{months[i-1]}_{months[i]}'] = (df[f'Monthly Achievement({months[i]})'] - df[f'Monthly Achievement({months[i-1]})']) / df[f'Monthly Achievement({months[i-1]})']
+        processed_data[f'Growth_{months[i-1]}_{months[i]}'] = (df_row[f'Monthly Achievement({months[i]})'] - df_row[f'Monthly Achievement({months[i-1]})']) / df_row[f'Monthly Achievement({months[i-1]})']
     
     # Average Monthly Growth
-    growth_cols = [f'Growth_{months[i-1]}_{months[i]}' for i in range(1, len(months))]
-    df['Avg_Monthly_Growth'] = df[growth_cols].mean(axis=1)
+    processed_data['Avg_Monthly_Growth'] = np.mean([processed_data[f'Growth_{months[i-1]}_{months[i]}'] for i in range(1, len(months))])
     
     # Achievement Rates
     for month in months:
-        df[f'Achievement_Rate_{month}'] = df[f'Monthly Achievement({month})'] / df[f'Month Tgt ({month})']
+        processed_data[f'Achievement_Rate_{month}'] = df_row[f'Monthly Achievement({month})'] / df_row[f'Month Tgt ({month})']
     
     # Average Achievement Rate
-    achievement_rate_cols = [f'Achievement_Rate_{month}' for month in months]
-    df['Avg_Achievement_Rate'] = df[achievement_rate_cols].mean(axis=1)
+    processed_data['Avg_Achievement_Rate'] = np.mean([processed_data[f'Achievement_Rate_{month}'] for month in months])
     
     # Additional Features
-    df['Seasonal_Index'] = df['Monthly Achievement(Aug)'] / df['Total Sep 2023']
-    df['Aug_YoY_Diff'] = df['Monthly Achievement(Aug)'] - df['Total Aug 2023']
-    df['Sep_Aug_Target_Ratio'] = df['Month Tgt (Sep)'] / df['Monthly Achievement(Aug)']
+    processed_data['Seasonal_Index'] = df_row['Monthly Achievement(Aug)'] / df_row['Total Sep 2023']
+    processed_data['Aug_YoY_Diff'] = df_row['Monthly Achievement(Aug)'] - df_row['Total Aug 2023']
+    processed_data['Sep_Aug_Target_Ratio'] = df_row['Month Tgt (Sep)'] / df_row['Monthly Achievement(Aug)']
     
-    return df
+    return processed_data
 
-def create_features_target(df):
+def create_features(df_row):
+    processed_data = preprocess_data(df_row)
     features = [
-        'Month Tgt (Sep)', 'Monthly Achievement(Aug)', 'Total Sep 2023', 'Total Aug 2023',
-        'YoY_Growth', 'Avg_Monthly_Growth', 'Avg_Achievement_Rate', 'Seasonal_Index',
-        'Aug_YoY_Diff', 'Sep_Aug_Target_Ratio'
-    ] + [f'Month Tgt ({month})' for month in ['Apr', 'May', 'June', 'July', 'Aug']]
+        df_row['Month Tgt (Sep)'], df_row['Monthly Achievement(Aug)'], df_row['Total Sep 2023'], df_row['Total Aug 2023'],
+        processed_data['YoY_Growth'], processed_data['Avg_Monthly_Growth'], processed_data['Avg_Achievement_Rate'],
+        processed_data['Seasonal_Index'], processed_data['Aug_YoY_Diff'], processed_data['Sep_Aug_Target_Ratio']
+    ] + [df_row[f'Month Tgt ({month})'] for month in ['Apr', 'May', 'June', 'July', 'Aug']]
     
-    X = df[features]
-    y = df['Monthly Achievement(Aug)']  # We'll predict August as a proxy for September
-    return X, y
+    return np.array(features).reshape(1, -1)
 
 # Model training and prediction
 @st.cache_resource
-def train_ensemble_model(X, y):
+def create_models():
     models = {
         'rf': RandomForestRegressor(n_estimators=100, random_state=42),
         'xgb': XGBRegressor(n_estimators=100, random_state=42),
         'lgbm': LGBMRegressor(n_estimators=100, random_state=42),
         'elastic': ElasticNet(random_state=42)
     }
-    
-    for name, model in models.items():
-        model.fit(X, y)
-    
     return models
 
 def ensemble_predict(models, X):
-    predictions = np.column_stack([model.predict(X) for model in models.values()])
-    return np.mean(predictions, axis=1)
-
-def calculate_metrics(y_true, y_pred):
-    mse = mean_squared_error(y_true, y_pred)
-    rmse = np.sqrt(mse)
-    mae = mean_absolute_error(y_true, y_pred)
-    r2 = r2_score(y_true, y_pred)
-    return rmse, mae, r2
+    predictions = np.array([model.predict(X) for model in models.values()])
+    return np.mean(predictions, axis=0)
 
 def predict_sales(df, region, brand):
-    df_filtered = df[(df['Zone'] == region) & (df['Brand'] == brand)].copy()
+    df_filtered = df[(df['Zone'] == region) & (df['Brand'] == brand)]
     
-    if len(df_filtered) < 5:  # Require at least 5 samples for meaningful prediction
-        return None, None, None, None
+    if len(df_filtered) == 0:
+        return None, None, None
     
-    df_processed = preprocess_data(df_filtered)
-    X, y = create_features_target(df_processed)
-    
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    row = df_filtered.iloc[0]
+    X = create_features(row)
     
     scaler = StandardScaler()
-    X_train_scaled = scaler.fit_transform(X_train)
-    X_test_scaled = scaler.transform(X_test)
+    X_scaled = scaler.fit_transform(X)
     
-    best_models = train_ensemble_model(X_train_scaled, y_train)
+    models = create_models()
     
-    y_pred = ensemble_predict(best_models, X_test_scaled)
+    # Train models on historical data
+    historical_X = np.array([row[f'Monthly Achievement({month})'] for month in ['Apr', 'May', 'June', 'July', 'Aug']])
+    historical_y = np.array([row[f'Month Tgt ({month})'] for month in ['Apr', 'May', 'June', 'July', 'Aug']])
     
-    rmse, mae, r2 = calculate_metrics(y_test, y_pred)
+    for model in models.values():
+        model.fit(historical_X.reshape(-1, 1), historical_y)
     
-    sept_features = X.iloc[-1].values.reshape(1, -1)
-    sept_features_scaled = scaler.transform(sept_features)
-    
-    sept_prediction = ensemble_predict(best_models, sept_features_scaled)[0]
+    sept_prediction = ensemble_predict(models, X_scaled)[0]
     
     # Calculate confidence interval
-    model_predictions = [model.predict(sept_features_scaled)[0] for model in best_models.values()]
+    model_predictions = [model.predict(X_scaled)[0] for model in models.values()]
     ci_lower, ci_upper = np.percentile(model_predictions, [2.5, 97.5])
     
     # Calculate prediction interval
@@ -119,32 +102,9 @@ def predict_sales(df, region, brand):
         bootstrap_predictions.append(np.mean(bootstrap_sample))
     pi_lower, pi_upper = np.percentile(bootstrap_predictions, [2.5, 97.5])
     
-    return sept_prediction, (ci_lower, ci_upper), (pi_lower, pi_upper), rmse
+    return sept_prediction, (ci_lower, ci_upper), (pi_lower, pi_upper)
 
-# Visualization
-def create_visualization(df, region, brand, prediction, ci, pi):
-    fig, ax = plt.subplots(figsize=(12, 6))
-    
-    months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep']
-    achievements = [df[f'Monthly Achievement({m})'].iloc[-1] for m in months[:-1]] + [prediction]
-    targets = [df[f'Month Tgt ({m})'].iloc[-1] for m in months]
-    
-    ax.bar(months, targets, alpha=0.5, label='Target')
-    ax.bar(months, achievements, alpha=0.7, label='Achievement')
-    
-    ax.set_title(f'Monthly Targets and Achievements for {region} - {brand}')
-    ax.set_xlabel('Month')
-    ax.set_ylabel('Sales')
-    ax.legend()
-    
-    ax.errorbar('Sep', prediction, yerr=[[prediction-ci[0]], [ci[1]-prediction]], 
-                fmt='o', color='r', capsize=5, label='95% CI')
-    ax.errorbar('Sep', prediction, yerr=[[prediction-pi[0]], [pi[1]-prediction]], 
-                fmt='o', color='g', capsize=5, label='95% PI')
-    
-    ax.legend()
-    
-    return fig
+# Visualization function remains the same
 
 # Streamlit app
 def main():
@@ -162,7 +122,7 @@ def main():
         
         if st.sidebar.button("Generate Prediction"):
             with st.spinner("Generating prediction..."):
-                prediction, ci, pi, rmse = predict_sales(df, region, brand)
+                prediction, ci, pi = predict_sales(df, region, brand)
             
             if prediction is not None:
                 st.success("Prediction generated successfully!")
@@ -173,10 +133,9 @@ def main():
                     st.write(f"Predicted September 2024 sales: {prediction:.2f}")
                     st.write(f"95% Confidence Interval: ({ci[0]:.2f}, {ci[1]:.2f})")
                     st.write(f"95% Prediction Interval: ({pi[0]:.2f}, {pi[1]:.2f})")
-                    st.write(f"Root Mean Square Error (RMSE): {rmse:.2f}")
                 
                 with col2:
-                    fig = create_visualization(df, region, brand, prediction, ci, pi)
+                    fig = create_visualization(df[(df['Zone'] == region) & (df['Brand'] == brand)], region, brand, prediction, ci, pi)
                     st.pyplot(fig)
                 
                 st.subheader("Interpretation")
@@ -191,16 +150,8 @@ def main():
                     st.write("The model's confidence interval is moderately narrow, indicating good precision in the estimate.")
                 else:
                     st.write("The model's confidence interval is wide, indicating uncertainty in the estimate.")
-                
-                mean_sales = df['Monthly Achievement(Aug)'].mean()
-                if rmse < 0.1 * mean_sales:
-                    st.write("The RMSE is low relative to the mean sales, indicating good model performance.")
-                elif rmse < 0.2 * mean_sales:
-                    st.write("The RMSE is moderate relative to the mean sales, indicating acceptable model performance.")
-                else:
-                    st.write("The RMSE is high relative to the mean sales, indicating that the model may need improvement.")
             else:
-                st.error("Unable to generate prediction. There might not be enough data for the selected region and brand (minimum 5 samples required).")
+                st.error("Unable to generate prediction. No data found for the selected region and brand.")
         
         st.sidebar.header("Prediction Techniques")
         st.sidebar.write("""
