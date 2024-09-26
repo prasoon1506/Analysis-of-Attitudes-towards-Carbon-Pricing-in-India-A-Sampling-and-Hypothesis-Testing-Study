@@ -47,27 +47,42 @@ import re
 
 def excel_editor_menu():
     st.header("Excel Editor")
-
-    # Custom CSS for styling
     st.markdown("""
     <style>
+        .stApp {
+            background-color: #f0f2f6;
+        }
         .excel-table {
             border-collapse: collapse;
             width: 100%;
+            font-family: Arial, sans-serif;
         }
         .excel-table th, .excel-table td {
-            border: 1px solid #ddd;
+            border: 1px solid #b0b0b0;
             padding: 8px;
             text-align: left;
         }
         .excel-table tr:nth-child(even) {
-            background-color: #f2f2f2;
+            background-color: #f8f8f8;
         }
         .excel-table th {
             padding-top: 12px;
             padding-bottom: 12px;
             background-color: #4CAF50;
             color: white;
+        }
+        .stButton>button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
         }
     </style>
     """, unsafe_allow_html=True)
