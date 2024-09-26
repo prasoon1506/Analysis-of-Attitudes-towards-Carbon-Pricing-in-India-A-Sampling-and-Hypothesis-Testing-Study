@@ -39,35 +39,38 @@ def load_lottie_url(url: str):
 from sklearn.ensemble import VotingRegressor
 @st.cache_resource
 def train_advanced_model(X_train, y_train):
+    # Feature scaling
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
 
-    # Define models with some regularization
+    # Initialize models
     models = {
-        'XGBoost': xgb.XGBRegressor(random_state=42, reg_alpha=0.1, reg_lambda=0.1),
-        'LightGBM': lgb.LGBMRegressor(random_state=42, reg_alpha=0.1, reg_lambda=0.1),
-        'RandomForest': RandomForestRegressor(random_state=42, min_samples_leaf=3)
+        'XGBoost': xgb.XGBRegressor(random_state=42),
+        'LightGBM': lgb.LGBMRegressor(random_state=42),
+        'RandomForest': RandomForestRegressor(random_state=42)
     }
 
-    # Use cross-validation to evaluate models
-    cv_scores = {}
+    # Train and evaluate models
+    best_model = None
+    best_score = float('-inf')
+
     for name, model in models.items():
+        # If we have very few samples, use a simple fit instead of cross-validation
         if X_train.shape[0] < 5:
             model.fit(X_train_scaled, y_train)
-            cv_scores[name] = model.score(X_train_scaled, y_train)
+            score = model.score(X_train_scaled, y_train)
         else:
-            scores = cross_val_score(model, X_train_scaled, y_train, cv=min(5, X_train.shape[0]), scoring='neg_mean_squared_error')
-            cv_scores[name] = -np.mean(scores)  # Convert to positive MSE
+            scores = cross_val_score(model, X_train_scaled, y_train, cv=min(5, X_train.shape[0]))
+            score = np.mean(scores)
 
-    # Select the best model
-    best_model_name = min(cv_scores, key=cv_scores.get)
-    best_model = models[best_model_name]
+        if score > best_score:
+            best_score = score
+            best_model = model
 
     # Fit the best model on all training data
     best_model.fit(X_train_scaled, y_train)
 
-    return best_model, scaler, cv_scores
-
+    return best_model, scaler
 
 def predict_and_visualize(df, region, brand):
     try:
