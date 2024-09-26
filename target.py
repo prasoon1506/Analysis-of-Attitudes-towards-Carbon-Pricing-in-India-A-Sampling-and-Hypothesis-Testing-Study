@@ -14,6 +14,15 @@ import time
 import requests
 from streamlit_lottie import st_lottie
 from concurrent.futures import ThreadPoolExecutor
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor, ExtraTreesRegressor, VotingRegressor
+from sklearn.linear_model import ElasticNet
+import xgboost as xgb
+import lightgbm as lgb
+from scipy import stats
 
 # Cache the data loading
 @st.cache_data
@@ -141,15 +150,6 @@ def xgboost_explanation():
     This example demonstrates how to use XGBoost for a regression task, including model training, 
     prediction, evaluation, and examining feature importance.
     """)
-import pandas as pd
-import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error
-import xgboost as xgb
-import lightgbm as lgb
-
-from sklearn.ensemble import VotingRegressor
-
 @st.cache_resource
 def train_advanced_model(X_train, y_train):
     # XGBoost model
@@ -158,13 +158,26 @@ def train_advanced_model(X_train, y_train):
     # LightGBM model
     lgb_model = lgb.LGBMRegressor(n_estimators=100, learning_rate=0.1, random_state=42)
     
-
+    # Random Forest model
+    rf_model = RandomForestRegressor(n_estimators=100, random_state=42)
+    
+    # Gradient Boosting model
+    gb_model = GradientBoostingRegressor(n_estimators=100, learning_rate=0.1, random_state=42)
+    
+    # Extra Trees model
+    et_model = ExtraTreesRegressor(n_estimators=100, random_state=42)
+    
+    # ElasticNet model
+    en_model = ElasticNet(random_state=42)
     
     # Create the ensemble model
     ensemble_model = VotingRegressor([
         ('xgb', xgb_model),
         ('lgb', lgb_model),
-        
+        ('rf', rf_model),
+        ('gb', gb_model),
+        ('et', et_model),
+        ('en', en_model)
     ])
     
     # Train the ensemble model
@@ -181,13 +194,10 @@ def predict_and_visualize(df, region, brand):
             for month in months:
                 region_data[f'Achievement({month})'] = region_data[f'Monthly Achievement({month})'] / region_data[f'Month Tgt ({month})']
             
-            X = region_data[[f'Month Tgt ({month})' for month in months]]
+            X = region_data[[f'Month Tgt ({month})' for month in months] + ['Total Sep 2023']]
             y = region_data[[f'Achievement({month})' for month in months]]
             
-            X_reshaped = X.values.reshape(-1, 1)
-            y_reshaped = y.values.ravel()
-            
-            X_train, X_val, y_train, y_val = train_test_split(X_reshaped, y_reshaped, test_size=0.2, random_state=42)
+            X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
             
             model = train_advanced_model(X_train, y_train)
             
@@ -195,20 +205,20 @@ def predict_and_visualize(df, region, brand):
             rmse = np.sqrt(mean_squared_error(y_val, val_predictions))
             
             sept_target = region_data['Month Tgt (Sep)'].iloc[-1]
-            sept_prediction = model.predict([[sept_target]])[0]
+            sept_2023 = region_data['Total Sep 2023'].iloc[-1]
+            sept_prediction = model.predict([[sept_target] + [sept_2023]])[0]
             
-            # Calculate confidence interval
-            n = len(X_train)
-            degrees_of_freedom = n - 2
-            t_value = stats.t.ppf(0.975, degrees_of_freedom)
+            # Calculate confidence interval using bootstrap
+            n_bootstrap = 1000
+            bootstrap_predictions = []
+            for _ in range(n_bootstrap):
+                boot_idx = np.random.choice(len(X_train), size=len(X_train), replace=True)
+                boot_model = train_advanced_model(X_train.iloc[boot_idx], y_train.iloc[boot_idx])
+                boot_pred = boot_model.predict([[sept_target] + [sept_2023]])[0]
+                bootstrap_predictions.append(boot_pred)
             
-            residuals = y_train - model.predict(X_train)
-            std_error = np.sqrt(np.sum(residuals**2) / degrees_of_freedom)
-            
-            margin_of_error = t_value * std_error * np.sqrt(1 + 1/n + (sept_target - np.mean(X_train))**2 / np.sum((X_train - np.mean(X_train))**2))
-            
-            lower_bound = max(0, sept_prediction - margin_of_error)
-            upper_bound = sept_prediction + margin_of_error
+            confidence_level = 0.95
+            lower_bound, upper_bound = np.percentile(bootstrap_predictions, [(1-confidence_level)/2 * 100, (1+confidence_level)/2 * 100])
             
             sept_achievement = sept_prediction * sept_target
             lower_achievement = lower_bound * sept_target
