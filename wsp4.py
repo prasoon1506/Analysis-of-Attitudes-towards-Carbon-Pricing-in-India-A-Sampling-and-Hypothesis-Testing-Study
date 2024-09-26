@@ -127,10 +127,35 @@ def excel_editor_menu():
             analyze_data(df)
 
 def create_excel_structure_html(sheet, max_rows=5):
-    # ... (keep the existing implementation)
+        html = "<table class='excel-table'>"
+        merged_cells = sheet.merged_cells.ranges
 
+        for idx, row in enumerate(sheet.iter_rows(max_row=max_rows)):
+            html += "<tr>"
+            for cell in row:
+                merged = False
+                for merged_range in merged_cells:
+                    if cell.coordinate in merged_range:
+                        if cell.coordinate == merged_range.start_cell.coordinate:
+                            rowspan = min(merged_range.max_row - merged_range.min_row + 1, max_rows - idx)
+                            colspan = merged_range.max_col - merged_range.min_col + 1
+                            html += f"<td rowspan='{rowspan}' colspan='{colspan}'>{cell.value}</td>"
+                        merged = True
+                        break
+                if not merged:
+                    html += f"<td>{cell.value}</td>"
+            html += "</tr>"
+        html += "</table>"
+        return html
+
+    # Function to get merged column groups
 def get_merged_column_groups(sheet):
-    # ... (keep the existing implementation)
+        merged_groups = {}
+        for merged_range in sheet.merged_cells.ranges:
+            if merged_range.min_row == 1:  # Only consider merged cells in the first row (header)
+                main_col = sheet.cell(1, merged_range.min_col).value
+                merged_groups[main_col] = list(range(merged_range.min_col, merged_range.max_col + 1))
+        return merged_groups
 
 def prepare_dataframe(uploaded_file):
     excel_file = openpyxl.load_workbook(uploaded_file)
