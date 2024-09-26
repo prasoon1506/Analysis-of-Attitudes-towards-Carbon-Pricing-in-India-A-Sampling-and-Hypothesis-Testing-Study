@@ -10,6 +10,7 @@ import seaborn as sns
 import xgboost as xgb
 from io import BytesIO
 import base64
+from sklearn.model_selection import cross_val_score
 import time
 import requests
 from streamlit_lottie import st_lottie
