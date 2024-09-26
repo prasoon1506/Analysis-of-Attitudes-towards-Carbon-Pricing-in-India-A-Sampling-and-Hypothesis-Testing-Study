@@ -1,3 +1,202 @@
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split, cross_val_score, RandomizedSearchCV
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+from xgboost import XGBRegressor
+from lightgbm import LGBMRegressor
+from sklearn.linear_model import ElasticNet
+from sklearn.svm import SVR
+from scipy.stats import randint, uniform
+
+def load_and_preprocess_data(df):
+    # Assuming df is your input DataFrame
+    df['YoY_Growth'] = (df['Monthly Achievement(Aug)'] - df['Total Aug 2023']) / df['Total Aug 2023']
+    
+    # Create month-to-month growth rates
+    months = ['Apr', 'May', 'June', 'July', 'Aug']
+    for i in range(1, len(months)):
+        df[f'Growth_{months[i-1]}_{months[i]}'] = (df[f'Monthly Achievement({months[i]})'] - df[f'Monthly Achievement({months[i-1]})']) / df[f'Monthly Achievement({months[i-1]})']
+    
+    # Calculate average monthly growth rate
+    growth_cols = [f'Growth_{months[i-1]}_{months[i]}' for i in range(1, len(months))]
+    df['Avg_Monthly_Growth'] = df[growth_cols].mean(axis=1)
+    
+    # Calculate achievement rates
+    for month in months:
+        df[f'Achievement_Rate_{month}'] = df[f'Monthly Achievement({month})'] / df[f'Month Tgt ({month})']
+    
+    # Calculate average achievement rate
+    achievement_rate_cols = [f'Achievement_Rate_{month}' for month in months]
+    df['Avg_Achievement_Rate'] = df[achievement_rate_cols].mean(axis=1)
+    
+    # Create seasonal index (assuming September is similar to August)
+    df['Seasonal_Index'] = df['Monthly Achievement(Aug)'] / df['Total Sep 2023']
+    
+    # Feature for the difference between this year's and last year's August achievement
+    df['Aug_YoY_Diff'] = df['Monthly Achievement(Aug)'] - df['Total Aug 2023']
+    
+    # Ratio of September target to August achievement
+    df['Sep_Aug_Target_Ratio'] = df['Month Tgt (Sep)'] / df['Monthly Achievement(Aug)']
+    
+    return df
+
+def create_features_target(df):
+    features = [
+        'Month Tgt (Sep)', 'Monthly Achievement(Aug)', 'Total Sep 2023', 'Total Aug 2023',
+        'YoY_Growth', 'Avg_Monthly_Growth', 'Avg_Achievement_Rate', 'Seasonal_Index',
+        'Aug_YoY_Diff', 'Sep_Aug_Target_Ratio'
+    ] + [f'Month Tgt ({month})' for month in ['Apr', 'May', 'June', 'July', 'Aug']]
+    
+    X = df[features]
+    y = df['Monthly Achievement(Aug)']  # We'll use August achievement as a proxy for September
+    
+    return X, y
+
+def train_ensemble_model(X, y):
+    # Define base models
+    models = {
+        'rf': RandomForestRegressor(random_state=42),
+        'gb': GradientBoostingRegressor(random_state=42),
+        'xgb': XGBRegressor(random_state=42),
+        'lgbm': LGBMRegressor(random_state=42),
+        'elastic': ElasticNet(random_state=42),
+        'svr': SVR()
+    }
+    
+    # Define hyperparameter spaces
+    param_spaces = {
+        'rf': {
+            'n_estimators': randint(100, 1000),
+            'max_depth': randint(5, 30),
+            'min_samples_split': randint(2, 20),
+            'min_samples_leaf': randint(1, 10)
+        },
+        'gb': {
+            'n_estimators': randint(100, 1000),
+            'learning_rate': uniform(0.01, 0.3),
+            'max_depth': randint(3, 10),
+            'min_samples_split': randint(2, 20),
+            'min_samples_leaf': randint(1, 10)
+        },
+        'xgb': {
+            'n_estimators': randint(100, 1000),
+            'learning_rate': uniform(0.01, 0.3),
+            'max_depth': randint(3, 10),
+            'min_child_weight': randint(1, 10),
+            'subsample': uniform(0.5, 0.5),
+            'colsample_bytree': uniform(0.5, 0.5)
+        },
+        'lgbm': {
+            'n_estimators': randint(100, 1000),
+            'learning_rate': uniform(0.01, 0.3),
+            'max_depth': randint(3, 10),
+            'num_leaves': randint(20, 3000),
+            'min_child_samples': randint(1, 50)
+        },
+        'elastic': {
+            'alpha': uniform(0, 1),
+            'l1_ratio': uniform(0, 1)
+        },
+        'svr': {
+            'C': uniform(0.1, 10),
+            'epsilon': uniform(0.01, 0.1),
+            'gamma': uniform(0.001, 0.1)
+        }
+    }
+    
+    # Perform RandomizedSearchCV for each model
+    best_models = {}
+    for name, model in models.items():
+        random_search = RandomizedSearchCV(model, param_spaces[name], n_iter=50, cv=5, n_jobs=-1, random_state=42)
+        random_search.fit(X, y)
+        best_models[name] = random_search.best_estimator_
+    
+    return best_models
+
+def ensemble_predict(models, X):
+    predictions = np.column_stack([model.predict(X) for model in models.values()])
+    return np.mean(predictions, axis=1)
+
+def calculate_metrics(y_true, y_pred):
+    mse = mean_squared_error(y_true, y_pred)
+    rmse = np.sqrt(mse)
+    mae = mean_absolute_error(y_true, y_pred)
+    r2 = r2_score(y_true, y_pred)
+    return rmse, mae, r2
+
+def predict_sales(df, region, brand):
+    df_filtered = df[(df['Zone'] == region) & (df['Brand'] == brand)].copy()
+    
+    if len(df_filtered) == 0:
+        return None, None, None, None
+    
+    df_processed = load_and_preprocess_data(df_filtered)
+    X, y = create_features_target(df_processed)
+    
+    # Split the data
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    
+    # Scale the features
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
+    
+    # Train the ensemble model
+    best_models = train_ensemble_model(X_train_scaled, y_train)
+    
+    # Make predictions
+    y_pred = ensemble_predict(best_models, X_test_scaled)
+    
+    # Calculate metrics
+    rmse, mae, r2 = calculate_metrics(y_test, y_pred)
+    
+    # Predict September 2024 sales
+    sept_features = X.iloc[-1].values.reshape(1, -1)
+    sept_features_scaled = scaler.transform(sept_features)
+    sept_prediction = ensemble_predict(best_models, sept_features_scaled)[0]
+    
+    # Calculate confidence interval
+    predictions = np.array([model.predict(sept_features_scaled)[0] for model in best_models.values()])
+    ci_lower, ci_upper = np.percentile(predictions, [2.5, 97.5])
+    
+    return sept_prediction, ci_lower, ci_upper, rmse
+
+def interpret_results(sept_prediction, confidence_interval, prediction_interval, rmse):
+    ci_lower, ci_upper = confidence_interval
+    pi_lower, pi_upper = prediction_interval
+    
+    print(f"Predicted September 2024 sales: {sept_prediction:.2f}")
+    print(f"95% Confidence Interval: ({ci_lower:.2f}, {ci_upper:.2f})")
+    print(f"95% Prediction Interval: ({pi_lower:.2f}, {pi_upper:.2f})")
+    print(f"Root Mean Square Error (RMSE): {rmse:.2f}")
+    
+    ci_width = ci_upper - ci_lower
+    pi_width = pi_upper - pi_lower
+    
+    print(f"\nConfidence Interval width: {ci_width:.2f}")
+    print(f"Prediction Interval width: {pi_width:.2f}")
+    
+    relative_ci_width = ci_width / sept_prediction * 100
+    relative_pi_width = pi_width / sept_prediction * 100
+    
+    print(f"\nRelative Confidence Interval width: {relative_ci_width:.2f}%")
+    print(f"Relative Prediction Interval width: {relative_pi_width:.2f}%")
+    
+    if relative_ci_width < 10:
+        print("\nThe model's confidence interval is narrow, indicating high precision in the estimate.")
+    elif relative_ci_width < 20:
+        print("\nThe model's confidence interval is moderately narrow, indicating good precision in the estimate.")
+    else:
+        print("\nThe model's confidence interval is wide, indicating uncertainty in the estimate.")
+    
+    if rmse < 0.1 * np.mean(y):
+        print("The RMSE is low relative to the mean sales, indicating good model performance.")
+    elif rmse < 0.2 * np.mean(y):
+        print("The RMSE is moderate relative to the mean sales, indicating acceptable model performance.")
+    else:
+        print("The RMSE is high relative to the mean sales, indicating that the model may need improvement.")
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -188,6 +387,7 @@ def train_advanced_model(X, y):
     ensemble_model.fit(X, y)
     
     return ensemble_model
+
 def predict_and_visualize(df, region, brand):
     try:
         region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)].copy()
@@ -205,35 +405,39 @@ def predict_and_visualize(df, region, brand):
             # Handle RMSE estimation based on dataset size
             if len(X) > 1:
                 if len(X) < 5:
+                    # Use Leave-One-Out cross-validation for very small datasets
                     cv = LeaveOneOut()
                 else:
+                    # Use 5-fold cross-validation for larger datasets
                     cv = 5
                 
                 cv_scores = cross_val_score(model, X, y, cv=cv, scoring='neg_mean_squared_error')
                 rmse = np.sqrt(-cv_scores.mean())
             else:
+                # For single sample, use the training error as a rough estimate
                 pred = model.predict(X)
                 rmse = np.sqrt(mean_squared_error(y, pred))
             
-            # Create a feature vector for September prediction
-            sept_features = [region_data[f'Month Tgt ({month})'].iloc[-1] for month in months] + [region_data['Total Sep 2023'].iloc[-1]]
             sept_target = region_data['Month Tgt (Sep)'].iloc[-1]
-            sept_prediction = model.predict([sept_features])[0]
+            sept_2023 = region_data['Total Sep 2023'].iloc[-1]
+            sept_prediction = model.predict([[sept_target] + [sept_2023]])[0]
             
             # Calculate confidence interval
             if len(X) > 1:
+                # Use bootstrap method for datasets with more than one sample
                 n_bootstrap = 1000
                 bootstrap_predictions = []
                 for _ in range(n_bootstrap):
                     boot_idx = np.random.choice(len(X), size=len(X), replace=True)
                     boot_model = train_advanced_model(X.iloc[boot_idx], y.iloc[boot_idx])
-                    boot_pred = boot_model.predict([sept_features])[0]
+                    boot_pred = boot_model.predict([[sept_target] + [sept_2023]])[0]
                     bootstrap_predictions.append(boot_pred)
                 
                 confidence_level = 0.95
                 lower_bound, upper_bound = np.percentile(bootstrap_predictions, [(1-confidence_level)/2 * 100, (1+confidence_level)/2 * 100])
             else:
-                margin = 0.2 * sept_prediction
+                # For single sample, use a simple margin of error
+                margin = 0.2 * sept_prediction  # 20% margin
                 lower_bound = max(0, sept_prediction - margin)
                 upper_bound = sept_prediction + margin
             
