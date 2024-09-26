@@ -188,7 +188,6 @@ def train_advanced_model(X, y):
     ensemble_model.fit(X, y)
     
     return ensemble_model
-
 def predict_and_visualize(df, region, brand):
     try:
         region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)].copy()
@@ -206,39 +205,35 @@ def predict_and_visualize(df, region, brand):
             # Handle RMSE estimation based on dataset size
             if len(X) > 1:
                 if len(X) < 5:
-                    # Use Leave-One-Out cross-validation for very small datasets
                     cv = LeaveOneOut()
                 else:
-                    # Use 5-fold cross-validation for larger datasets
                     cv = 5
                 
                 cv_scores = cross_val_score(model, X, y, cv=cv, scoring='neg_mean_squared_error')
                 rmse = np.sqrt(-cv_scores.mean())
             else:
-                # For single sample, use the training error as a rough estimate
                 pred = model.predict(X)
                 rmse = np.sqrt(mean_squared_error(y, pred))
             
+            # Create a feature vector for September prediction
+            sept_features = [region_data[f'Month Tgt ({month})'].iloc[-1] for month in months] + [region_data['Total Sep 2023'].iloc[-1]]
             sept_target = region_data['Month Tgt (Sep)'].iloc[-1]
-            sept_2023 = region_data['Total Sep 2023'].iloc[-1]
-            sept_prediction = model.predict([[sept_target] + [sept_2023]])[0]
+            sept_prediction = model.predict([sept_features])[0]
             
             # Calculate confidence interval
             if len(X) > 1:
-                # Use bootstrap method for datasets with more than one sample
                 n_bootstrap = 1000
                 bootstrap_predictions = []
                 for _ in range(n_bootstrap):
                     boot_idx = np.random.choice(len(X), size=len(X), replace=True)
                     boot_model = train_advanced_model(X.iloc[boot_idx], y.iloc[boot_idx])
-                    boot_pred = boot_model.predict([[sept_target] + [sept_2023]])[0]
+                    boot_pred = boot_model.predict([sept_features])[0]
                     bootstrap_predictions.append(boot_pred)
                 
                 confidence_level = 0.95
                 lower_bound, upper_bound = np.percentile(bootstrap_predictions, [(1-confidence_level)/2 * 100, (1+confidence_level)/2 * 100])
             else:
-                # For single sample, use a simple margin of error
-                margin = 0.2 * sept_prediction  # 20% margin
+                margin = 0.2 * sept_prediction
                 lower_bound = max(0, sept_prediction - margin)
                 upper_bound = sept_prediction + margin
             
