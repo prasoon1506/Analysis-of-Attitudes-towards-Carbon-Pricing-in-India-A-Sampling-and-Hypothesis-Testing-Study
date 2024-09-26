@@ -144,6 +144,16 @@ def xgboost_explanation():
     This example demonstrates how to use XGBoost for a regression task, including model training, 
     prediction, evaluation, and examining feature importance.
     """)
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import cross_val_score, LeaveOneOut
+from sklearn.metrics import mean_squared_error
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor, ExtraTreesRegressor, VotingRegressor
+from sklearn.linear_model import ElasticNet
+import xgboost as xgb
+import lightgbm as lgb
+from scipy import stats
+
 @st.cache_resource
 def train_advanced_model(X, y):
     # XGBoost model
@@ -193,25 +203,44 @@ def predict_and_visualize(df, region, brand):
             
             model = train_advanced_model(X, y)
             
-            # Use cross-validation for RMSE estimation
-            cv_scores = cross_val_score(model, X, y, cv=min(5, len(X)), scoring='neg_mean_squared_error')
-            rmse = np.sqrt(-cv_scores.mean())
+            # Handle RMSE estimation based on dataset size
+            if len(X) > 1:
+                if len(X) < 5:
+                    # Use Leave-One-Out cross-validation for very small datasets
+                    cv = LeaveOneOut()
+                else:
+                    # Use 5-fold cross-validation for larger datasets
+                    cv = 5
+                
+                cv_scores = cross_val_score(model, X, y, cv=cv, scoring='neg_mean_squared_error')
+                rmse = np.sqrt(-cv_scores.mean())
+            else:
+                # For single sample, use the training error as a rough estimate
+                pred = model.predict(X)
+                rmse = np.sqrt(mean_squared_error(y, pred))
             
             sept_target = region_data['Month Tgt (Sep)'].iloc[-1]
             sept_2023 = region_data['Total Sep 2023'].iloc[-1]
             sept_prediction = model.predict([[sept_target] + [sept_2023]])[0]
             
-            # Calculate confidence interval using bootstrap
-            n_bootstrap = 1000
-            bootstrap_predictions = []
-            for _ in range(n_bootstrap):
-                boot_idx = np.random.choice(len(X), size=len(X), replace=True)
-                boot_model = train_advanced_model(X.iloc[boot_idx], y.iloc[boot_idx])
-                boot_pred = boot_model.predict([[sept_target] + [sept_2023]])[0]
-                bootstrap_predictions.append(boot_pred)
-            
-            confidence_level = 0.95
-            lower_bound, upper_bound = np.percentile(bootstrap_predictions, [(1-confidence_level)/2 * 100, (1+confidence_level)/2 * 100])
+            # Calculate confidence interval
+            if len(X) > 1:
+                # Use bootstrap method for datasets with more than one sample
+                n_bootstrap = 1000
+                bootstrap_predictions = []
+                for _ in range(n_bootstrap):
+                    boot_idx = np.random.choice(len(X), size=len(X), replace=True)
+                    boot_model = train_advanced_model(X.iloc[boot_idx], y.iloc[boot_idx])
+                    boot_pred = boot_model.predict([[sept_target] + [sept_2023]])[0]
+                    bootstrap_predictions.append(boot_pred)
+                
+                confidence_level = 0.95
+                lower_bound, upper_bound = np.percentile(bootstrap_predictions, [(1-confidence_level)/2 * 100, (1+confidence_level)/2 * 100])
+            else:
+                # For single sample, use a simple margin of error
+                margin = 0.2 * sept_prediction  # 20% margin
+                lower_bound = max(0, sept_prediction - margin)
+                upper_bound = sept_prediction + margin
             
             sept_achievement = sept_prediction * sept_target
             lower_achievement = lower_bound * sept_target
@@ -225,7 +254,6 @@ def predict_and_visualize(df, region, brand):
     except Exception as e:
         st.error(f"Error in predict_and_visualize: {str(e)}")
         raise
-
 
 def create_visualization(region_data, region, brand, months, sept_target, sept_achievement, lower_achievement, upper_achievement, rmse):
     fig = plt.figure(figsize=(20, 28))  # Increased height to accommodate new table
