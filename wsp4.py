@@ -51,46 +51,34 @@ from io import BytesIO
 import base64
 from collections import OrderedDict
 import plotly.express as px
-
-import streamlit as st
-import pandas as pd
-import openpyxl
-from io import BytesIO
-import base64
-from collections import OrderedDict
-import plotly.express as px
-
 def excel_editor_menu():
-    
-    st.title("Advanced Excel Editor and Analyzer")
-    
-    # Custom CSS for a more professional look
+    st.header("Excel Editor")
     st.markdown("""
     <style>
         .stApp {
-            background-color: #f8f9fa;
+            background-color: #f0f2f6;
         }
         .excel-table {
             border-collapse: collapse;
             width: 100%;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: Arial, sans-serif;
         }
         .excel-table th, .excel-table td {
-            border: 1px solid #dee2e6;
+            border: 1px solid #b0b0b0;
             padding: 8px;
             text-align: left;
         }
         .excel-table tr:nth-child(even) {
-            background-color: #f8f9fa;
+            background-color: #f8f8f8;
         }
         .excel-table th {
             padding-top: 12px;
             padding-bottom: 12px;
-            background-color: #007bff;
+            background-color: #4CAF50;
             color: white;
         }
         .stButton>button {
-            background-color: #007bff;
+            background-color: #4CAF50;
             color: white;
             border: none;
             padding: 10px 24px;
@@ -101,13 +89,41 @@ def excel_editor_menu():
             margin: 4px 2px;
             cursor: pointer;
             border-radius: 4px;
-            transition: background-color 0.3s;
-        }
-        .stButton>button:hover {
-            background-color: #0056b3;
         }
     </style>
     """, unsafe_allow_html=True)
+
+    # Function to create HTML representation of Excel structure (first 5 rows)
+    def create_excel_structure_html(sheet, max_rows=5):
+        html = "<table class='excel-table'>"
+        merged_cells = sheet.merged_cells.ranges
+
+        for idx, row in enumerate(sheet.iter_rows(max_row=max_rows)):
+            html += "<tr>"
+            for cell in row:
+                merged = False
+                for merged_range in merged_cells:
+                    if cell.coordinate in merged_range:
+                        if cell.coordinate == merged_range.start_cell.coordinate:
+                            rowspan = min(merged_range.max_row - merged_range.min_row + 1, max_rows - idx)
+                            colspan = merged_range.max_col - merged_range.min_col + 1
+                            html += f"<td rowspan='{rowspan}' colspan='{colspan}'>{cell.value}</td>"
+                        merged = True
+                        break
+                if not merged:
+                    html += f"<td>{cell.value}</td>"
+            html += "</tr>"
+        html += "</table>"
+        return html
+
+    # Function to get merged column groups
+    def get_merged_column_groups(sheet):
+        merged_groups = {}
+        for merged_range in sheet.merged_cells.ranges:
+            if merged_range.min_row == 1:  # Only consider merged cells in the first row (header)
+                main_col = sheet.cell(1, merged_range.min_col).value
+                merged_groups[main_col] = list(range(merged_range.min_col, merged_range.max_col + 1))
+        return merged_groups
 
     # File uploader
     uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
@@ -122,175 +138,85 @@ def excel_editor_menu():
         excel_html = create_excel_structure_html(sheet, max_rows=5)
         st.markdown(excel_html, unsafe_allow_html=True)
 
-        # Get merged column groups and prepare DataFrame
-        df = prepare_dataframe(uploaded_file)
+        # Get merged column groups
+        merged_groups = get_merged_column_groups(sheet)
 
-        # Create tabs for different functionalities
-        tabs = st.tabs(["Edit Data", "Analyze Data"])
+        # Create a list of column headers, considering merged cells
+        column_headers = []
+        column_indices = OrderedDict()  # To store the column indices for each header
+        for col in range(1, sheet.max_column + 1):
+            cell_value = sheet.cell(1, col).value
+            if cell_value is not None:
+                column_headers.append(cell_value)
+                if cell_value not in column_indices:
+                    column_indices[cell_value] = []
+                column_indices[cell_value].append(col - 1)  # pandas uses 0-based index
+            else:
+                # If the cell is empty, it's part of a merged cell, so use the previous header
+                prev_header = column_headers[-1]
+                column_headers.append(prev_header)
+                column_indices[prev_header].append(col - 1)
 
-        with tabs[0]:
-            edited_df = edit_data(df)
+        # Read as pandas DataFrame using the correct column headers
+        df = pd.read_excel(uploaded_file, header=None, names=column_headers)
+        df = df.iloc[1:]  # Remove the first row as it's now our header
 
-        with tabs[1]:
-            analyze_data(edited_df)
+        # Column selection for deletion
+        st.subheader("Select columns to delete")
+        all_columns = list(column_indices.keys())  # Use OrderedDict keys to maintain order
+        cols_to_delete = st.multiselect("Choose columns to remove", all_columns)
+        
+        if cols_to_delete:
+            columns_to_remove = []
+            for col in cols_to_delete:
+                columns_to_remove.extend(column_indices[col])
+            
+            df = df.drop(df.columns[columns_to_remove], axis=1)
+            st.success(f"Deleted columns: {', '.join(cols_to_delete)}")
 
-def create_excel_structure_html(sheet, max_rows=5):
-    html = "<table class='excel-table'>"
-    merged_cells = sheet.merged_cells.ranges
+        # Row deletion
+        st.subheader("Delete rows")
+        num_rows = st.number_input("Enter the number of rows to delete from the start", min_value=0, max_value=len(df)-1, value=0)
+        
+        if num_rows > 0:
+            df = df.iloc[num_rows:]
+            st.success(f"Deleted first {num_rows} rows")
+        
+        # Display editable dataframe
+        st.subheader("Edit Data")
+        st.write("You can edit individual cell values directly in the table below:")
+        
+        # Replace NaN values with None and convert dataframe to a dictionary
+        df_dict = df.where(pd.notnull(df), None).to_dict('records')
+        
+        # Use st.data_editor with the processed dictionary
+        edited_data = st.data_editor(df_dict)
+        
+        # Convert edited data back to dataframe
+        edited_df = pd.DataFrame(edited_data)
+        st.subheader("Edited Data")
+        st.dataframe(edited_df)
+        
+        # Download button
+        def get_excel_download_link(df):
+            output = BytesIO()
+            with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                df.to_excel(writer, index=False)
+            excel_data = output.getvalue()
+            b64 = base64.b64encode(excel_data).decode()
+            return f'<a href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64}" download="edited_file.xlsx">Download Edited Excel File</a>'
+        
+        st.markdown(get_excel_download_link(edited_df), unsafe_allow_html=True)
 
-    for idx, row in enumerate(sheet.iter_rows(max_row=max_rows)):
-        html += "<tr>"
-        for cell in row:
-            merged = False
-            for merged_range in merged_cells:
-                if cell.coordinate in merged_range:
-                    if cell.coordinate == merged_range.start_cell.coordinate:
-                        rowspan = min(merged_range.max_row - merged_range.min_row + 1, max_rows - idx)
-                        colspan = merged_range.max_col - merged_range.min_col + 1
-                        html += f"<td rowspan='{rowspan}' colspan='{colspan}'>{cell.value}</td>"
-                    merged = True
-                    break
-            if not merged:
-                html += f"<td>{cell.value}</td>"
-        html += "</tr>"
-    html += "</table>"
-    return html
+        # New button to upload edited file to Home
+        if st.button("Upload Edited File to Home"):
+            # Save the edited DataFrame to session state
+            st.session_state.edited_df = edited_df
+            st.session_state.edited_file_name = "edited_" + uploaded_file.name
+            st.success("Edited file has been uploaded to Home. Please switch to the Home tab to see the uploaded file.")
 
-def get_merged_column_groups(sheet):
-    merged_groups = {}
-    for merged_range in sheet.merged_cells.ranges:
-        if merged_range.min_row == 1:  # Only consider merged cells in the first row (header)
-            main_col = sheet.cell(1, merged_range.min_col).value
-            merged_groups[main_col] = list(range(merged_range.min_col, merged_range.max_col + 1))
-    return merged_groups
-
-def prepare_dataframe(uploaded_file):
-    excel_file = openpyxl.load_workbook(uploaded_file)
-    sheet = excel_file.active
-    merged_groups = get_merged_column_groups(sheet)
-
-    # Create a list of column headers, considering merged cells
-    column_headers = []
-    column_indices = OrderedDict()
-    for col in range(1, sheet.max_column + 1):
-        cell_value = sheet.cell(1, col).value
-        if cell_value is not None:
-            column_headers.append(cell_value)
-            if cell_value not in column_indices:
-                column_indices[cell_value] = []
-            column_indices[cell_value].append(col - 1)
-        else:
-            prev_header = column_headers[-1]
-            column_headers.append(prev_header)
-            column_indices[prev_header].append(col - 1)
-
-    # Read as pandas DataFrame using the correct column headers
-    df = pd.read_excel(uploaded_file, header=None, names=column_headers)
-    df = df.iloc[1:]  # Remove the first row as it's now our header
-    return df
-
-def edit_data(df):
-    st.header("Edit Data")
-
-    # Column selection for deletion
-    st.subheader("Select columns to delete")
-    all_columns = df.columns.tolist()
-    cols_to_delete = st.multiselect("Choose columns to remove", all_columns)
-    
-    if cols_to_delete:
-        df = df.drop(columns=cols_to_delete)
-        st.success(f"Deleted columns: {', '.join(cols_to_delete)}")
-
-    # Row deletion
-    st.subheader("Delete rows")
-    num_rows = st.number_input("Enter the number of rows to delete from the start", min_value=0, max_value=len(df)-1, value=0)
-    
-    if num_rows > 0:
-        df = df.iloc[num_rows:]
-        st.success(f"Deleted first {num_rows} rows")
-    
-    # Display editable dataframe
-    st.subheader("Edit Data")
-    st.write("You can edit individual cell values directly in the table below:")
-    
-    # Replace NaN values with None and convert dataframe to a dictionary
-    df_dict = df.where(pd.notnull(df), None).to_dict('records')
-    
-    # Use st.data_editor with the processed dictionary
-    edited_data = st.data_editor(df_dict)
-    
-    # Convert edited data back to dataframe
-    edited_df = pd.DataFrame(edited_data)
-    st.subheader("Edited Data")
-    st.dataframe(edited_df)
-    
-    # Download button
-    st.download_button(
-        label="Download Edited Excel File",
-        data=to_excel(edited_df),
-        file_name="edited_file.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
-
-    # New button to upload edited file to Home
-    if st.button("Upload Edited File to Home"):
-        st.session_state.edited_df = edited_df
-        st.session_state.edited_file_name = "edited_file.xlsx"
-        st.success("Edited file has been uploaded to Home. Please switch to the Home tab to see the uploaded file.")
-
-    return edited_df
-
-def analyze_data(df):
-    st.header("Analyze Data")
-
-    # Select columns for analysis
-    numeric_columns = df.select_dtypes(include=['int64', 'float64']).columns.tolist()
-    categorical_columns = df.select_dtypes(include=['object']).columns.tolist()
-
-    # Basic statistics
-    st.subheader("Basic Statistics")
-    st.write(df.describe())
-
-    # Data visualization
-    st.subheader("Data Visualization")
-    chart_type = st.selectbox("Select chart type", ["Histogram", "Box Plot", "Scatter Plot", "Bar Chart"])
-
-    if chart_type == "Histogram":
-        column = st.selectbox("Select a numeric column", numeric_columns)
-        fig = px.histogram(df, x=column)
-        st.plotly_chart(fig)
-
-    elif chart_type == "Box Plot":
-        column = st.selectbox("Select a numeric column", numeric_columns)
-        fig = px.box(df, y=column)
-        st.plotly_chart(fig)
-
-    elif chart_type == "Scatter Plot":
-        x_column = st.selectbox("Select X-axis column", numeric_columns)
-        y_column = st.selectbox("Select Y-axis column", numeric_columns)
-        fig = px.scatter(df, x=x_column, y=y_column)
-        st.plotly_chart(fig)
-
-    elif chart_type == "Bar Chart":
-        x_column = st.selectbox("Select X-axis column", categorical_columns)
-        y_column = st.selectbox("Select Y-axis column", numeric_columns)
-        fig = px.bar(df, x=x_column, y=y_column)
-        st.plotly_chart(fig)
-
-    # Correlation matrix
-    if len(numeric_columns) > 1:
-        st.subheader("Correlation Matrix")
-        correlation_matrix = df[numeric_columns].corr()
-        fig = px.imshow(correlation_matrix, text_auto=True, aspect="auto")
-        st.plotly_chart(fig)
-
-def to_excel(df):
-    output = BytesIO()
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        df.to_excel(writer, index=False)
-    return output.getvalue()
-
-
+    else:
+        st.info("Please upload an Excel file to begin editing.")
 def create_stats_pdf(stats_data, district):
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
