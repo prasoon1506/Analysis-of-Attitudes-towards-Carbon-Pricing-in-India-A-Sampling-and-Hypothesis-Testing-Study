@@ -32,13 +32,6 @@ def load_data(uploaded_file):
     brands = df['Brand'].unique().tolist()
     return df, regions, brands
 
-# Cache the model training
-@st.cache_resource
-def train_model(X_train, y_train):
-    model = xgb.XGBRegressor(n_estimators=100, learning_rate=0.1, random_state=42)
-    model.fit(X_train, y_train)
-    return model
-
 def load_lottie_url(url: str):
     r = requests.get(url)
     if r.status_code != 200:
@@ -151,7 +144,7 @@ def xgboost_explanation():
     prediction, evaluation, and examining feature importance.
     """)
 @st.cache_resource
-def train_advanced_model(X_train, y_train):
+def train_advanced_model(X, y):
     # XGBoost model
     xgb_model = xgb.XGBRegressor(n_estimators=100, learning_rate=0.1, random_state=42)
     
@@ -181,7 +174,7 @@ def train_advanced_model(X_train, y_train):
     ])
     
     # Train the ensemble model
-    ensemble_model.fit(X_train, y_train)
+    ensemble_model.fit(X, y)
     
     return ensemble_model
 
@@ -195,14 +188,13 @@ def predict_and_visualize(df, region, brand):
                 region_data[f'Achievement({month})'] = region_data[f'Monthly Achievement({month})'] / region_data[f'Month Tgt ({month})']
             
             X = region_data[[f'Month Tgt ({month})' for month in months] + ['Total Sep 2023']]
-            y = region_data[[f'Achievement({month})' for month in months]]
+            y = region_data[[f'Achievement({month})' for month in months]].mean(axis=1)
             
-            X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
+            model = train_advanced_model(X, y)
             
-            model = train_advanced_model(X_train, y_train)
-            
-            val_predictions = model.predict(X_val)
-            rmse = np.sqrt(mean_squared_error(y_val, val_predictions))
+            # Use cross-validation for RMSE estimation
+            cv_scores = cross_val_score(model, X, y, cv=min(5, len(X)), scoring='neg_mean_squared_error')
+            rmse = np.sqrt(-cv_scores.mean())
             
             sept_target = region_data['Month Tgt (Sep)'].iloc[-1]
             sept_2023 = region_data['Total Sep 2023'].iloc[-1]
@@ -212,8 +204,8 @@ def predict_and_visualize(df, region, brand):
             n_bootstrap = 1000
             bootstrap_predictions = []
             for _ in range(n_bootstrap):
-                boot_idx = np.random.choice(len(X_train), size=len(X_train), replace=True)
-                boot_model = train_advanced_model(X_train.iloc[boot_idx], y_train.iloc[boot_idx])
+                boot_idx = np.random.choice(len(X), size=len(X), replace=True)
+                boot_model = train_advanced_model(X.iloc[boot_idx], y.iloc[boot_idx])
                 boot_pred = boot_model.predict([[sept_target] + [sept_2023]])[0]
                 bootstrap_predictions.append(boot_pred)
             
