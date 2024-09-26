@@ -2,17 +2,13 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split, RandomizedSearchCV
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from sklearn.preprocessing import StandardScaler
-from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+from sklearn.ensemble import RandomForestRegressor
 from xgboost import XGBRegressor
 from lightgbm import LGBMRegressor
 from sklearn.linear_model import ElasticNet
-from sklearn.svm import SVR
-from scipy.stats import randint, uniform
-import base64
-from io import BytesIO
 
 # Load and preprocess data
 @st.cache_data
@@ -21,21 +17,27 @@ def load_data(uploaded_file):
     return df
 
 def preprocess_data(df):
+    # Year-over-Year Growth
     df['YoY_Growth'] = (df['Monthly Achievement(Aug)'] - df['Total Aug 2023']) / df['Total Aug 2023']
     
+    # Monthly Growth Rates
     months = ['Apr', 'May', 'June', 'July', 'Aug']
     for i in range(1, len(months)):
         df[f'Growth_{months[i-1]}_{months[i]}'] = (df[f'Monthly Achievement({months[i]})'] - df[f'Monthly Achievement({months[i-1]})']) / df[f'Monthly Achievement({months[i-1]})']
     
+    # Average Monthly Growth
     growth_cols = [f'Growth_{months[i-1]}_{months[i]}' for i in range(1, len(months))]
     df['Avg_Monthly_Growth'] = df[growth_cols].mean(axis=1)
     
+    # Achievement Rates
     for month in months:
         df[f'Achievement_Rate_{month}'] = df[f'Monthly Achievement({month})'] / df[f'Month Tgt ({month})']
     
+    # Average Achievement Rate
     achievement_rate_cols = [f'Achievement_Rate_{month}' for month in months]
     df['Avg_Achievement_Rate'] = df[achievement_rate_cols].mean(axis=1)
     
+    # Additional Features
     df['Seasonal_Index'] = df['Monthly Achievement(Aug)'] / df['Total Sep 2023']
     df['Aug_YoY_Diff'] = df['Monthly Achievement(Aug)'] - df['Total Aug 2023']
     df['Sep_Aug_Target_Ratio'] = df['Month Tgt (Sep)'] / df['Monthly Achievement(Aug)']
@@ -50,37 +52,23 @@ def create_features_target(df):
     ] + [f'Month Tgt ({month})' for month in ['Apr', 'May', 'June', 'July', 'Aug']]
     
     X = df[features]
-    y = df['Monthly Achievement(Aug)']
+    y = df['Monthly Achievement(Aug)']  # We'll predict August as a proxy for September
     return X, y
 
 # Model training and prediction
 @st.cache_resource
 def train_ensemble_model(X, y):
     models = {
-        'rf': RandomForestRegressor(random_state=42),
-        'gb': GradientBoostingRegressor(random_state=42),
-        'xgb': XGBRegressor(random_state=42),
-        'lgbm': LGBMRegressor(random_state=42),
-        'elastic': ElasticNet(random_state=42),
-        'svr': SVR()
+        'rf': RandomForestRegressor(n_estimators=100, random_state=42),
+        'xgb': XGBRegressor(n_estimators=100, random_state=42),
+        'lgbm': LGBMRegressor(n_estimators=100, random_state=42),
+        'elastic': ElasticNet(random_state=42)
     }
     
-    param_spaces = {
-        'rf': {'n_estimators': randint(100, 1000), 'max_depth': randint(5, 30)},
-        'gb': {'n_estimators': randint(100, 1000), 'learning_rate': uniform(0.01, 0.3)},
-        'xgb': {'n_estimators': randint(100, 1000), 'learning_rate': uniform(0.01, 0.3)},
-        'lgbm': {'n_estimators': randint(100, 1000), 'learning_rate': uniform(0.01, 0.3)},
-        'elastic': {'alpha': uniform(0, 1), 'l1_ratio': uniform(0, 1)},
-        'svr': {'C': uniform(0.1, 10), 'epsilon': uniform(0.01, 0.1)}
-    }
-    
-    best_models = {}
     for name, model in models.items():
-        random_search = RandomizedSearchCV(model, param_spaces[name], n_iter=20, cv=5, n_jobs=-1, random_state=42)
-        random_search.fit(X, y)
-        best_models[name] = random_search.best_estimator_
+        model.fit(X, y)
     
-    return best_models
+    return models
 
 def ensemble_predict(models, X):
     predictions = np.column_stack([model.predict(X) for model in models.values()])
@@ -96,7 +84,7 @@ def calculate_metrics(y_true, y_pred):
 def predict_sales(df, region, brand):
     df_filtered = df[(df['Zone'] == region) & (df['Brand'] == brand)].copy()
     
-    if len(df_filtered) == 0:
+    if len(df_filtered) < 5:  # Require at least 5 samples for meaningful prediction
         return None, None, None, None
     
     df_processed = preprocess_data(df_filtered)
@@ -117,27 +105,18 @@ def predict_sales(df, region, brand):
     sept_features = X.iloc[-1].values.reshape(1, -1)
     sept_features_scaled = scaler.transform(sept_features)
     
-    model_predictions = []
-    for model in best_models.values():
-        try:
-            pred = model.predict(sept_features_scaled)[0]
-            model_predictions.append(pred)
-        except Exception as e:
-            st.error(f"Error in model prediction: {str(e)}")
+    sept_prediction = ensemble_predict(best_models, sept_features_scaled)[0]
     
-    if not model_predictions:
-        return None, None, None, None
-    
-    sept_prediction = np.mean(model_predictions)
-    
+    # Calculate confidence interval
+    model_predictions = [model.predict(sept_features_scaled)[0] for model in best_models.values()]
     ci_lower, ci_upper = np.percentile(model_predictions, [2.5, 97.5])
     
+    # Calculate prediction interval
     n_iterations = 1000
     bootstrap_predictions = []
     for _ in range(n_iterations):
         bootstrap_sample = np.random.choice(model_predictions, size=len(model_predictions), replace=True)
         bootstrap_predictions.append(np.mean(bootstrap_sample))
-    
     pi_lower, pi_upper = np.percentile(bootstrap_predictions, [2.5, 97.5])
     
     return sept_prediction, (ci_lower, ci_upper), (pi_lower, pi_upper), rmse
@@ -221,18 +200,14 @@ def main():
                 else:
                     st.write("The RMSE is high relative to the mean sales, indicating that the model may need improvement.")
             else:
-                st.error("Unable to generate prediction. Please check your data and selected filters.")
+                st.error("Unable to generate prediction. There might not be enough data for the selected region and brand (minimum 5 samples required).")
         
         st.sidebar.header("Prediction Techniques")
         st.sidebar.write("""
         1. Ensemble Learning: Combines predictions from multiple models to reduce bias and variance.
-           $f_{ensemble}(x) = \frac{1}{M} \sum_{i=1}^M f_i(x)$
-
         2. Feature Engineering: Creates new features to capture complex patterns in the data.
-           e.g., YoY Growth = $\frac{Aug_{2024} - Aug_{2023}}{Aug_{2023}}$
-
-        3. Hyperparameter Tuning: Uses RandomizedSearchCV to optimize model parameters.
-           $\theta^* = \arg\min_{\theta} \sum_{i=1}^n L(y_i, f(x_i; \theta))$
+        3. Historical Data Utilization: Incorporates previous year's data and monthly trends.
+        4. Confidence and Prediction Intervals: Provides a range of possible outcomes.
         """)
 
 if __name__ == "__main__":
