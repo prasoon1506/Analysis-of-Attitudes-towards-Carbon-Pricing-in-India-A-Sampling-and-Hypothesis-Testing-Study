@@ -1,6 +1,8 @@
+import streamlit as st
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split, cross_val_score, RandomizedSearchCV
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split, RandomizedSearchCV
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
@@ -9,35 +11,33 @@ from lightgbm import LGBMRegressor
 from sklearn.linear_model import ElasticNet
 from sklearn.svm import SVR
 from scipy.stats import randint, uniform
+import base64
+from io import BytesIO
 
-def load_and_preprocess_data(df):
-    # Assuming df is your input DataFrame
+# Load and preprocess data
+@st.cache_data
+def load_data(uploaded_file):
+    df = pd.read_excel(uploaded_file)
+    return df
+
+def preprocess_data(df):
     df['YoY_Growth'] = (df['Monthly Achievement(Aug)'] - df['Total Aug 2023']) / df['Total Aug 2023']
     
-    # Create month-to-month growth rates
     months = ['Apr', 'May', 'June', 'July', 'Aug']
     for i in range(1, len(months)):
         df[f'Growth_{months[i-1]}_{months[i]}'] = (df[f'Monthly Achievement({months[i]})'] - df[f'Monthly Achievement({months[i-1]})']) / df[f'Monthly Achievement({months[i-1]})']
     
-    # Calculate average monthly growth rate
     growth_cols = [f'Growth_{months[i-1]}_{months[i]}' for i in range(1, len(months))]
     df['Avg_Monthly_Growth'] = df[growth_cols].mean(axis=1)
     
-    # Calculate achievement rates
     for month in months:
         df[f'Achievement_Rate_{month}'] = df[f'Monthly Achievement({month})'] / df[f'Month Tgt ({month})']
     
-    # Calculate average achievement rate
     achievement_rate_cols = [f'Achievement_Rate_{month}' for month in months]
     df['Avg_Achievement_Rate'] = df[achievement_rate_cols].mean(axis=1)
     
-    # Create seasonal index (assuming September is similar to August)
     df['Seasonal_Index'] = df['Monthly Achievement(Aug)'] / df['Total Sep 2023']
-    
-    # Feature for the difference between this year's and last year's August achievement
     df['Aug_YoY_Diff'] = df['Monthly Achievement(Aug)'] - df['Total Aug 2023']
-    
-    # Ratio of September target to August achievement
     df['Sep_Aug_Target_Ratio'] = df['Month Tgt (Sep)'] / df['Monthly Achievement(Aug)']
     
     return df
@@ -50,12 +50,12 @@ def create_features_target(df):
     ] + [f'Month Tgt ({month})' for month in ['Apr', 'May', 'June', 'July', 'Aug']]
     
     X = df[features]
-    y = df['Monthly Achievement(Aug)']  # We'll use August achievement as a proxy for September
-    
+    y = df['Monthly Achievement(Aug)']
     return X, y
 
+# Model training and prediction
+@st.cache_resource
 def train_ensemble_model(X, y):
-    # Define base models
     models = {
         'rf': RandomForestRegressor(random_state=42),
         'gb': GradientBoostingRegressor(random_state=42),
@@ -65,51 +65,18 @@ def train_ensemble_model(X, y):
         'svr': SVR()
     }
     
-    # Define hyperparameter spaces
     param_spaces = {
-        'rf': {
-            'n_estimators': randint(100, 1000),
-            'max_depth': randint(5, 30),
-            'min_samples_split': randint(2, 20),
-            'min_samples_leaf': randint(1, 10)
-        },
-        'gb': {
-            'n_estimators': randint(100, 1000),
-            'learning_rate': uniform(0.01, 0.3),
-            'max_depth': randint(3, 10),
-            'min_samples_split': randint(2, 20),
-            'min_samples_leaf': randint(1, 10)
-        },
-        'xgb': {
-            'n_estimators': randint(100, 1000),
-            'learning_rate': uniform(0.01, 0.3),
-            'max_depth': randint(3, 10),
-            'min_child_weight': randint(1, 10),
-            'subsample': uniform(0.5, 0.5),
-            'colsample_bytree': uniform(0.5, 0.5)
-        },
-        'lgbm': {
-            'n_estimators': randint(100, 1000),
-            'learning_rate': uniform(0.01, 0.3),
-            'max_depth': randint(3, 10),
-            'num_leaves': randint(20, 3000),
-            'min_child_samples': randint(1, 50)
-        },
-        'elastic': {
-            'alpha': uniform(0, 1),
-            'l1_ratio': uniform(0, 1)
-        },
-        'svr': {
-            'C': uniform(0.1, 10),
-            'epsilon': uniform(0.01, 0.1),
-            'gamma': uniform(0.001, 0.1)
-        }
+        'rf': {'n_estimators': randint(100, 1000), 'max_depth': randint(5, 30)},
+        'gb': {'n_estimators': randint(100, 1000), 'learning_rate': uniform(0.01, 0.3)},
+        'xgb': {'n_estimators': randint(100, 1000), 'learning_rate': uniform(0.01, 0.3)},
+        'lgbm': {'n_estimators': randint(100, 1000), 'learning_rate': uniform(0.01, 0.3)},
+        'elastic': {'alpha': uniform(0, 1), 'l1_ratio': uniform(0, 1)},
+        'svr': {'C': uniform(0.1, 10), 'epsilon': uniform(0.01, 0.1)}
     }
     
-    # Perform RandomizedSearchCV for each model
     best_models = {}
     for name, model in models.items():
-        random_search = RandomizedSearchCV(model, param_spaces[name], n_iter=50, cv=5, n_jobs=-1, random_state=42)
+        random_search = RandomizedSearchCV(model, param_spaces[name], n_iter=20, cv=5, n_jobs=-1, random_state=42)
         random_search.fit(X, y)
         best_models[name] = random_search.best_estimator_
     
@@ -132,707 +99,140 @@ def predict_sales(df, region, brand):
     if len(df_filtered) == 0:
         return None, None, None, None
     
-    df_processed = load_and_preprocess_data(df_filtered)
+    df_processed = preprocess_data(df_filtered)
     X, y = create_features_target(df_processed)
     
-    # Split the data
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     
-    # Scale the features
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
     
-    # Train the ensemble model
     best_models = train_ensemble_model(X_train_scaled, y_train)
     
-    # Make predictions
     y_pred = ensemble_predict(best_models, X_test_scaled)
     
-    # Calculate metrics
     rmse, mae, r2 = calculate_metrics(y_test, y_pred)
     
-    # Predict September 2024 sales
     sept_features = X.iloc[-1].values.reshape(1, -1)
     sept_features_scaled = scaler.transform(sept_features)
-    sept_prediction = ensemble_predict(best_models, sept_features_scaled)[0]
     
-    # Calculate confidence interval
-    predictions = np.array([model.predict(sept_features_scaled)[0] for model in best_models.values()])
-    ci_lower, ci_upper = np.percentile(predictions, [2.5, 97.5])
+    model_predictions = []
+    for model in best_models.values():
+        try:
+            pred = model.predict(sept_features_scaled)[0]
+            model_predictions.append(pred)
+        except Exception as e:
+            st.error(f"Error in model prediction: {str(e)}")
     
-    return sept_prediction, ci_lower, ci_upper, rmse
-
-def interpret_results(sept_prediction, confidence_interval, prediction_interval, rmse):
-    ci_lower, ci_upper = confidence_interval
-    pi_lower, pi_upper = prediction_interval
+    if not model_predictions:
+        return None, None, None, None
     
-    print(f"Predicted September 2024 sales: {sept_prediction:.2f}")
-    print(f"95% Confidence Interval: ({ci_lower:.2f}, {ci_upper:.2f})")
-    print(f"95% Prediction Interval: ({pi_lower:.2f}, {pi_upper:.2f})")
-    print(f"Root Mean Square Error (RMSE): {rmse:.2f}")
+    sept_prediction = np.mean(model_predictions)
     
-    ci_width = ci_upper - ci_lower
-    pi_width = pi_upper - pi_lower
+    ci_lower, ci_upper = np.percentile(model_predictions, [2.5, 97.5])
     
-    print(f"\nConfidence Interval width: {ci_width:.2f}")
-    print(f"Prediction Interval width: {pi_width:.2f}")
+    n_iterations = 1000
+    bootstrap_predictions = []
+    for _ in range(n_iterations):
+        bootstrap_sample = np.random.choice(model_predictions, size=len(model_predictions), replace=True)
+        bootstrap_predictions.append(np.mean(bootstrap_sample))
     
-    relative_ci_width = ci_width / sept_prediction * 100
-    relative_pi_width = pi_width / sept_prediction * 100
+    pi_lower, pi_upper = np.percentile(bootstrap_predictions, [2.5, 97.5])
     
-    print(f"\nRelative Confidence Interval width: {relative_ci_width:.2f}%")
-    print(f"Relative Prediction Interval width: {relative_pi_width:.2f}%")
+    return sept_prediction, (ci_lower, ci_upper), (pi_lower, pi_upper), rmse
+
+# Visualization
+def create_visualization(df, region, brand, prediction, ci, pi):
+    fig, ax = plt.subplots(figsize=(12, 6))
     
-    if relative_ci_width < 10:
-        print("\nThe model's confidence interval is narrow, indicating high precision in the estimate.")
-    elif relative_ci_width < 20:
-        print("\nThe model's confidence interval is moderately narrow, indicating good precision in the estimate.")
-    else:
-        print("\nThe model's confidence interval is wide, indicating uncertainty in the estimate.")
+    months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep']
+    achievements = [df[f'Monthly Achievement({m})'].iloc[-1] for m in months[:-1]] + [prediction]
+    targets = [df[f'Month Tgt ({m})'].iloc[-1] for m in months]
     
-    if rmse < 0.1 * np.mean(y):
-        print("The RMSE is low relative to the mean sales, indicating good model performance.")
-    elif rmse < 0.2 * np.mean(y):
-        print("The RMSE is moderate relative to the mean sales, indicating acceptable model performance.")
-    else:
-        print("The RMSE is high relative to the mean sales, indicating that the model may need improvement.")
-import streamlit as st
-import pandas as pd
-import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error
-import math
-from scipy import stats
-import matplotlib.pyplot as plt
-import seaborn as sns
-import xgboost as xgb
-from io import BytesIO
-import base64
-from sklearn.model_selection import cross_val_score
-import time
-import requests
-from streamlit_lottie import st_lottie
-from concurrent.futures import ThreadPoolExecutor
-import pandas as pd
-import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error
-from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor, ExtraTreesRegressor, VotingRegressor
-from sklearn.linear_model import ElasticNet
-import xgboost as xgb
-import lightgbm as lgb
-from scipy import stats
-
-# Cache the data loading
-@st.cache_data
-def load_data(uploaded_file):
-    df = pd.read_excel(uploaded_file)
-    regions = df['Zone'].unique().tolist()
-    brands = df['Brand'].unique().tolist()
-    return df, regions, brands
-
-def load_lottie_url(url: str):
-    r = requests.get(url)
-    if r.status_code != 200:
-        return None
-    return r.json()
-def xgboost_explanation():
-    st.title("Understanding XGBoost")
-    st.write("""
-    XGBoost (eXtreme Gradient Boosting) is an advanced implementation of gradient boosting algorithms. 
-    It's known for its speed and performance, particularly with structured/tabular data.
-    """)
-
-    st.header("Key Concepts")
-    st.subheader("1. Ensemble Learning")
-    st.write("""
-    XGBoost is an ensemble learning method. It combines multiple weak learners (typically decision trees) 
-    to create a strong predictor.
-    """)
-
-    st.subheader("2. Gradient Boosting")
-    st.write("""
-    XGBoost builds trees sequentially, with each new tree correcting the errors of the combined existing trees.
-    """)
-
-    st.latex(r'''
-    F_m(x) = F_{m-1}(x) + \gamma_m h_m(x)
-    ''')
-    st.write("""
-    Where:
-    - F_m(x) is the model after m iterations
-    - h_m(x) is the new tree
-    - γ_m is the weight of the new tree
-    """)
-
-    st.subheader("3. Loss Function and Gradient")
-    st.write("""
-    XGBoost aims to minimize a loss function. The gradient of the loss function is used to identify the best direction 
-    for improvement.
-    """)
-
-    st.latex(r'''
-    L = \sum_{i=1}^n l(y_i, \hat{y}_i) + \sum_{k=1}^K \Omega(f_k)
-    ''')
-    st.write("""
-    Where:
-    - L is the loss function
-    - l is a differentiable convex loss function
-    - Ω is a regularization term
-    """)
-
-    st.subheader("4. Feature Importance")
-    st.write("""
-    XGBoost provides a measure of feature importance based on how often a feature is used to split the data across all trees.
-    """)
-
-    # Create a simple diagram to illustrate XGBoost
-    fig, ax = plt.subplots(figsize=(10, 6))
-    ax.set_title("XGBoost: Sequential Tree Building")
-    ax.set_xlabel("Features")
-    ax.set_ylabel("Target")
-    ax.scatter(np.random.rand(100), np.random.rand(100), alpha=0.5, label="Data points")
+    ax.bar(months, targets, alpha=0.5, label='Target')
+    ax.bar(months, achievements, alpha=0.7, label='Achievement')
     
-    for i in range(3):
-        rect = plt.Rectangle((0.1 + i*0.3, 0.1), 0.2, 0.8, fill=False, label=f"Tree {i+1}")
-        ax.add_patch(rect)
+    ax.set_title(f'Monthly Targets and Achievements for {region} - {brand}')
+    ax.set_xlabel('Month')
+    ax.set_ylabel('Sales')
+    ax.legend()
+    
+    ax.errorbar('Sep', prediction, yerr=[[prediction-ci[0]], [ci[1]-prediction]], 
+                fmt='o', color='r', capsize=5, label='95% CI')
+    ax.errorbar('Sep', prediction, yerr=[[prediction-pi[0]], [pi[1]-prediction]], 
+                fmt='o', color='g', capsize=5, label='95% PI')
     
     ax.legend()
-    st.pyplot(fig)
-
-    st.header("Advantages of XGBoost")
-    advantages = [
-        "High performance and fast execution",
-        "Handles missing values automatically",
-        "Built-in regularization to prevent overfitting",
-        "Supports parallel and distributed computing",
-        "Flexibility (can solve regression, classification, and ranking problems)"
-    ]
-    for adv in advantages:
-        st.write(f"- {adv}")
-
-    st.header("Example: XGBoost in Action")
-    st.code("""
-    import xgboost as xgb
-    from sklearn.datasets import make_regression
-    from sklearn.model_selection import train_test_split
-
-    # Create sample data
-    X, y = make_regression(n_samples=1000, n_features=10, noise=0.1)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
-
-    # Create and train the model
-    model = xgb.XGBRegressor(n_estimators=100, learning_rate=0.1)
-    model.fit(X_train, y_train)
-
-    # Make predictions
-    predictions = model.predict(X_test)
-
-    # Evaluate the model
-    mse = mean_squared_error(y_test, predictions)
-    print(f"Mean Squared Error: {mse}")
-
-    # Feature importance
-    importance = model.feature_importances_
-    for i, imp in enumerate(importance):
-        print(f"Feature {i} importance: {imp}")
-    """, language="python")
-
-    st.write("""
-    This example demonstrates how to use XGBoost for a regression task, including model training, 
-    prediction, evaluation, and examining feature importance.
-    """)
-import pandas as pd
-import numpy as np
-from sklearn.model_selection import cross_val_score, LeaveOneOut
-from sklearn.metrics import mean_squared_error
-from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor, ExtraTreesRegressor, VotingRegressor
-from sklearn.linear_model import ElasticNet
-import xgboost as xgb
-import lightgbm as lgb
-from scipy import stats
-
-@st.cache_resource
-def train_advanced_model(X, y):
-    # XGBoost model
-    xgb_model = xgb.XGBRegressor(n_estimators=100, learning_rate=0.1, random_state=42)
     
-    # LightGBM model
-    lgb_model = lgb.LGBMRegressor(n_estimators=100, learning_rate=0.1, random_state=42)
-    
-    # Random Forest model
-    rf_model = RandomForestRegressor(n_estimators=100, random_state=42)
-    
-    # Gradient Boosting model
-    gb_model = GradientBoostingRegressor(n_estimators=100, learning_rate=0.1, random_state=42)
-    
-    # Extra Trees model
-    et_model = ExtraTreesRegressor(n_estimators=100, random_state=42)
-    
-    # ElasticNet model
-    en_model = ElasticNet(random_state=42)
-    
-    # Create the ensemble model
-    ensemble_model = VotingRegressor([
-        ('xgb', xgb_model),
-        ('lgb', lgb_model),
-        ('rf', rf_model),
-        ('gb', gb_model),
-        ('et', et_model),
-        ('en', en_model)
-    ])
-    
-    # Train the ensemble model
-    ensemble_model.fit(X, y)
-    
-    return ensemble_model
-
-def predict_and_visualize(df, region, brand):
-    try:
-        region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)].copy()
-        
-        if len(region_data) > 0:
-            months = ['Apr', 'May', 'June', 'July', 'Aug']
-            for month in months:
-                region_data[f'Achievement({month})'] = region_data[f'Monthly Achievement({month})'] / region_data[f'Month Tgt ({month})']
-            
-            X = region_data[[f'Month Tgt ({month})' for month in months] + ['Total Sep 2023']]
-            y = region_data[[f'Achievement({month})' for month in months]].mean(axis=1)
-            
-            model = train_advanced_model(X, y)
-            
-            # Handle RMSE estimation based on dataset size
-            if len(X) > 1:
-                if len(X) < 5:
-                    # Use Leave-One-Out cross-validation for very small datasets
-                    cv = LeaveOneOut()
-                else:
-                    # Use 5-fold cross-validation for larger datasets
-                    cv = 5
-                
-                cv_scores = cross_val_score(model, X, y, cv=cv, scoring='neg_mean_squared_error')
-                rmse = np.sqrt(-cv_scores.mean())
-            else:
-                # For single sample, use the training error as a rough estimate
-                pred = model.predict(X)
-                rmse = np.sqrt(mean_squared_error(y, pred))
-            
-            sept_target = region_data['Month Tgt (Sep)'].iloc[-1]
-            sept_2023 = region_data['Total Sep 2023'].iloc[-1]
-            sept_prediction = model.predict([[sept_target] + [sept_2023]])[0]
-            
-            # Calculate confidence interval
-            if len(X) > 1:
-                # Use bootstrap method for datasets with more than one sample
-                n_bootstrap = 1000
-                bootstrap_predictions = []
-                for _ in range(n_bootstrap):
-                    boot_idx = np.random.choice(len(X), size=len(X), replace=True)
-                    boot_model = train_advanced_model(X.iloc[boot_idx], y.iloc[boot_idx])
-                    boot_pred = boot_model.predict([[sept_target] + [sept_2023]])[0]
-                    bootstrap_predictions.append(boot_pred)
-                
-                confidence_level = 0.95
-                lower_bound, upper_bound = np.percentile(bootstrap_predictions, [(1-confidence_level)/2 * 100, (1+confidence_level)/2 * 100])
-            else:
-                # For single sample, use a simple margin of error
-                margin = 0.2 * sept_prediction  # 20% margin
-                lower_bound = max(0, sept_prediction - margin)
-                upper_bound = sept_prediction + margin
-            
-            sept_achievement = sept_prediction * sept_target
-            lower_achievement = lower_bound * sept_target
-            upper_achievement = upper_bound * sept_target
-            
-            fig = create_visualization(region_data, region, brand, months, sept_target, sept_achievement, lower_achievement, upper_achievement, rmse)
-            
-            return fig, sept_achievement, lower_achievement, upper_achievement, rmse
-        else:
-            return None, None, None, None, None
-    except Exception as e:
-        st.error(f"Error in predict_and_visualize: {str(e)}")
-        raise
-
-def create_visualization(region_data, region, brand, months, sept_target, sept_achievement, lower_achievement, upper_achievement, rmse):
-    fig = plt.figure(figsize=(20, 28))  # Increased height to accommodate new table
-    gs = fig.add_gridspec(7, 2, height_ratios=[0.5, 0.5, 0.5, 3, 1, 2, 1])
-    ax_region = fig.add_subplot(gs[0, :])
-    ax_region.axis('off')
-    ax_region.text(0.5, 0.5, f'{region}({brand})', fontsize=28, fontweight='bold', ha='center', va='center')
-            
-    # New table for current month sales data
-    ax_current = fig.add_subplot(gs[1, :])
-    ax_current.axis('off')
-    current_data = [
-                ['Total Sales\nTill Now', 'Commitment\nfor Today', 'Asking\nfor Today', 'Yesterday\nSales', 'Yesterday\nCommitment'],
-                [f"{region_data['Till Yesterday Total Sales'].iloc[-1]:.0f}",
-                 f"{region_data['Commitment for Today'].iloc[-1]:.0f}",
-                 f"{region_data['Asking for Today'].iloc[-1]:.0f}",
-                 f"{region_data['Yesterday Sales'].iloc[-1]:.0f}",
-                 f"{region_data['Yesterday Commitment'].iloc[-1]:.0f}"]
-            ]
-    current_table = ax_current.table(cellText=current_data[1:], colLabels=current_data[0], cellLoc='center', loc='center')
-    current_table.auto_set_font_size(False)
-    current_table.set_fontsize(10)
-    current_table.scale(1, 1.7)
-    for (row, col), cell in current_table.get_celld().items():
-                if row == 0:
-                    cell.set_text_props(fontweight='bold', color='black')
-                    cell.set_facecolor('goldenrod')
-                cell.set_edgecolor('brown')
-            
-            # Existing table (same as before)
-    ax_table = fig.add_subplot(gs[2, :])
-    ax_table.axis('off')
-    table_data = [
-                ['Month Target\n(Sep)', 'Monthly Achievement\n(Aug)', 'Predicted Achievement\n(Sept)(using XGBoost Algorithm)', 'CI', 'RMSE'],
-                [f"{sept_target:.2f}", f"{region_data['Monthly Achievement(Aug)'].iloc[-1]:.2f}", 
-                 f"{sept_achievement:.2f}", f"({lower_achievement:.2f}, {upper_achievement:.2f})", f"{rmse:.4f}"]
-            ]
-    table = ax_table.table(cellText=table_data[1:], colLabels=table_data[0], cellLoc='center', loc='center')
-    table.auto_set_font_size(False)
-    table.set_fontsize(10)
-    table.scale(1, 1.7)
-    for (row, col), cell in table.get_celld().items():
-                if row == 0:
-                    cell.set_text_props(fontweight='bold', color='black')
-                    cell.set_facecolor('goldenrod')
-                cell.set_edgecolor('brown')
-
-    
-    
-    
-    # Main bar chart (same as before)
-    ax1 = fig.add_subplot(gs[3, :])
-    
-    actual_achievements = [region_data[f'Monthly Achievement({month})'].iloc[-1] for month in months]
-    actual_targets = [region_data[f'Month Tgt ({month})'].iloc[-1] for month in months]
-    all_months = months + ['Sep']
-    all_achievements = actual_achievements + [sept_achievement]
-    all_targets = actual_targets + [sept_target]
-    
-    x = np.arange(len(all_months))
-    width = 0.35
-    
-    rects1 = ax1.bar(x - width/2, all_targets, width, label='Target', color='pink', alpha=0.8)
-    rects2 = ax1.bar(x + width/2, all_achievements, width, label='Achievement', color='yellow', alpha=0.8)
-    
-    ax1.bar(x[-1] + width/2, sept_achievement, width, color='red', alpha=0.8)
-    
-    ax1.set_ylabel('Target and Achievement', fontsize=12, fontweight='bold')
-    ax1.set_title(f"Monthly Targets and Achievements for FY 2025", fontsize=18, fontweight='bold')
-    ax1.set_xticks(x)
-    ax1.set_xticklabels(all_months)
-    ax1.legend()
-    
-    def autolabel(rects):
-        for rect in rects:
-            height = rect.get_height()
-            ax1.annotate(f'{height:.0f}',
-                        xy=(rect.get_x() + rect.get_width() / 2, height),
-                        xytext=(0, 3),
-                        textcoords="offset points",
-                        ha='center', va='bottom', fontsize=8)
-    
-    autolabel(rects1)
-    autolabel(rects2)
-    
-    for i, (target, achievement) in enumerate(zip(all_targets, all_achievements)):
-        percentage = (achievement / target) * 100
-        color = 'green' if percentage >= 100 else 'red'
-        ax1.text(i, (max(target, achievement)+min(target,achievement))/2, f'{percentage:.1f}%', 
-                 ha='center', va='bottom', fontsize=10, color=color, fontweight='bold')
-    
-    ax1.errorbar(x[-1] + width/2, sept_achievement, 
-                 yerr=[[sept_achievement - lower_achievement], [upper_achievement - sept_achievement]],
-                 fmt='o', color='darkred', capsize=5, capthick=2, elinewidth=2)
-    
-    # Percentage achievement line chart (same as before)
-    ax2 = fig.add_subplot(gs[4, :])
-    percent_achievements = [((ach / tgt) * 100) for ach, tgt in zip(all_achievements, all_targets)]
-    ax2.plot(x, percent_achievements, marker='o', linestyle='-', color='purple')
-    ax2.axhline(y=100, color='r', linestyle='--', alpha=0.7)
-    ax2.set_xlabel('Month', fontsize=12, fontweight='bold')
-    ax2.set_ylabel('% Achievement', fontsize=12, fontweight='bold')
-    ax2.set_xticks(x)
-    ax2.set_xticklabels(all_months)
-    
-    for i, pct in enumerate(percent_achievements):
-        ax2.annotate(f'{pct:.1f}%', (i, pct), xytext=(0, 5), textcoords='offset points', 
-                     ha='center', va='bottom', fontsize=8)
-    ax3 = fig.add_subplot(gs[5, :])
-    ax3.axis('off')
-    
-    current_year = 2024  # Assuming the current year is 2024
-    last_year = 2023
-
-    channel_data = [
-        ('Trade', region_data['Trade Aug'].iloc[-1], region_data['Trade Aug 2023'].iloc[-1]),
-        ('Premium', region_data['Premium Aug'].iloc[-1], region_data['Premium Aug 2023'].iloc[-1]),
-        ('Blended', region_data['Blended Aug'].iloc[-1], region_data['Blended Aug 2023'].iloc[-1])
-    ]
-    monthly_achievement_aug = region_data['Monthly Achievement(Aug)'].iloc[-1]
-    total_aug_current = region_data['Monthly Achievement(Aug)'].iloc[-1]
-    total_aug_last = region_data['Total Aug 2023'].iloc[-1]
-    
-    ax3.text(0.2, 1, f'\nAugust {current_year} Sales Breakdown:-', fontsize=16, fontweight='bold', ha='center', va='center')
-    
-    # Helper function to create arrow
-    def get_arrow(value):
-        return '↑' if value > 0 else '↓' if value < 0 else '→'
-
-    # Helper function to get color
-    def get_color(value):
-        return 'green' if value > 0 else 'red' if value < 0 else 'black'
-
-    # Display total sales
-    total_change = ((total_aug_current - total_aug_last) / total_aug_last) * 100
-    arrow = get_arrow(total_change)
-    color = get_color(total_change)
-    ax3.text(0.21, 0.9, f"August 2024: {total_aug_current:.0f}", fontsize=14, fontweight='bold', ha='center')
-    ax3.text(0.22, 0.85, f"vs August 2023: {total_aug_last:.0f} ({total_change:.1f}% {arrow})", fontsize=12, color=color, ha='center')
-
-    for i, (channel, value_current, value_last) in enumerate(channel_data):
-        percentage = (value_current / monthly_achievement_aug) * 100
-        change = ((value_current - value_last) / value_last) * 100
-        arrow = get_arrow(change)
-        color = get_color(change)
-        
-        y_pos = 0.75 - i*0.25
-        ax3.text(0.1, y_pos, f"{channel}:", fontsize=14, fontweight='bold')
-        ax3.text(0.2, y_pos, f"{value_current:.0f} ({percentage:.1f}%)", fontsize=14)
-        ax3.text(0.1, y_pos-0.05, f"vs Last Year: {value_last:.0f}", fontsize=12)
-        ax3.text(0.2, y_pos-0.05, f"({change:.1f}% {arrow})", fontsize=12, color=color)
-
-    
-
-    
-    # Updated: August Region Type Breakdown with values
-    ax4 = fig.add_subplot(gs[5, 1])
-    region_type_data = [
-        region_data['Green Aug'].iloc[-1],
-        region_data['Yellow Aug'].iloc[-1],
-        region_data['Red Aug'].iloc[-1],
-        region_data['Unidentified Aug'].iloc[-1]
-    ]
-    region_type_labels = ['Green', 'Yellow', 'Red', 'Unidentified']
-    colors = ['green', 'yellow', 'red', 'gray']
-    
-    def make_autopct(values):
-        def my_autopct(pct):
-            total = sum(values)
-            val = int(round(pct*total/100.0))
-            return f'{pct:.1f}%\n({val:.0f})'
-        return my_autopct
-    
-    ax4.pie(region_type_data, labels=region_type_labels, colors=colors,
-            autopct=make_autopct(region_type_data), startangle=90)
-    ax4.set_title('August 2024 Region Type Breakdown:-', fontsize=16, fontweight='bold')
-    ax5 = fig.add_subplot(gs[6, :])
-    ax5.axis('off')
-    
-    q3_table_data = [
-        ['Overall Requirement', 'Requirement in\nTrade Channel', 'Requirement in\nBlednded Product Category', 'Requirement for\nPremium Product'],
-        [f"{region_data['Q3 2023'].iloc[-1]:.0f}", f"{region_data['Q3 2023 Trade'].iloc[-1]:.0f}", 
-         f"{region_data['Q3 2023 Blended'].iloc[-1]:.0f}", f"{region_data['Q3 2023 Premium'].iloc[-1]:.0f}"]
-    ]
-    
-    q3_table = ax5.table(cellText=q3_table_data[1:], colLabels=q3_table_data[0], cellLoc='center', loc='center')
-    q3_table.auto_set_font_size(False)
-    q3_table.set_fontsize(10)
-    q3_table.scale(1, 1.7)
-    for (row, col), cell in q3_table.get_celld().items():
-        if row == 0:
-            cell.set_text_props(fontweight='bold', color='black')
-            cell.set_facecolor('goldenrod')
-        cell.set_edgecolor('brown')
-    
-    ax5.set_title('Quarterly Requirements for September 2024', fontsize=16, fontweight='bold')
-    
-    plt.tight_layout()
     return fig
-    plt.tight_layout()
-    return fig
-def generate_combined_report(df, regions, brands):
-    main_table_data = [['Region', 'Brand', 'Month Target\n(Sep)', 'Monthly Achievement\n(Aug)', 'Predicted\nAchievement(Sept)', 'CI', 'RMSE']]
-    additional_table_data = [['Region', 'Brand', 'Till Yesterday\nTotal Sales', 'Commitment\nfor Today', 'Asking\nfor Today', 'Yesterday\nSales', 'Yesterday\nCommitment']]
-    
-    with ThreadPoolExecutor() as executor:
-        futures = []
-        for region in regions:
-            for brand in brands:
-                futures.append(executor.submit(predict_and_visualize, df, region, brand))
-        
-        valid_data = False
-        for future, (region, brand) in zip(futures, [(r, b) for r in regions for b in brands]):
-            try:
-                _, sept_achievement, lower_achievement, upper_achievement, rmse = future.result()
-                if sept_achievement is not None:
-                    region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)]
-                    if not region_data.empty:
-                        sept_target = region_data['Month Tgt (Sep)'].iloc[-1]
-                        aug_achievement = region_data['Monthly Achievement(Aug)'].iloc[-1]
-                        
-                        main_table_data.append([
-                            region, brand, f"{sept_target:.0f}", f"{aug_achievement:.0f}",
-                            f"{sept_achievement:.0f}", f"({lower_achievement:.2f},\n{upper_achievement:.2f})", f"{rmse:.4f}"
-                        ])
-                        
-                        additional_table_data.append([
-                            region, brand, 
-                            f"{region_data['Till Yesterday Total Sales'].iloc[-1]:.0f}",
-                            f"{region_data['Commitment for Today'].iloc[-1]:.0f}",
-                            f"{region_data['Asking for Today'].iloc[-1]:.0f}",
-                            f"{region_data['Yesterday Sales'].iloc[-1]:.0f}",
-                            f"{region_data['Yesterday Commitment'].iloc[-1]:.0f}"
-                        ])
-                        
-                        valid_data = True
-                    else:
-                        st.warning(f"No data available for {region} and {brand}")
-            except Exception as e:
-                st.warning(f"Error processing {region} and {brand}: {str(e)}")
-    
-    if valid_data:
-        num_rows = len(main_table_data) + len(additional_table_data)
-        fig_height = max(12, 2 + 0.5 * num_rows)  # Increased minimum height
-        
-        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, fig_height), gridspec_kw={'height_ratios': [1, 1.5]})
-        fig.suptitle("", fontsize=16, fontweight='bold', y=0.98)
-        
-        # Function to create styled table
-        def create_styled_table(ax, data, title):
-            ax.axis('off')
-            ax.set_title(title, fontsize=14, fontweight='bold', pad=20)
-            
-            table = ax.table(cellText=data[1:], colLabels=data[0], cellLoc='center', loc='center')
-            
-            table.auto_set_font_size(False)
-            table.set_fontsize(8)
-            table.scale(1, 1.5)
-            
-            for (row, col), cell in table.get_celld().items():
-                if row == 0:
-                    cell.set_text_props(fontweight='bold', color='white')
-                    cell.set_facecolor('#4CAF50')
-                elif row % 2 == 0:
-                    cell.set_facecolor('#f2f2f2')
-                
-                cell.set_edgecolor('white')
-                cell.set_text_props(wrap=True)
-                
-            for i in range(len(data[0])):
-                table.auto_set_column_width(i)
-        
-        # Create additional table
-        create_styled_table(ax1, additional_table_data, "Current Month Sales Data")
-        
-        # Create main table
-        create_styled_table(ax2, main_table_data, "Sales Predictions")
-        
-        plt.tight_layout()
-        
-        pdf_buffer = BytesIO()
-        fig.savefig(pdf_buffer, format='pdf', bbox_inches='tight')
-        plt.close(fig)
-        
-        pdf_buffer.seek(0)
-        return base64.b64encode(pdf_buffer.getvalue()).decode()
-    else:
-        st.warning("No valid data available for any region and brand combination.")
-        return None
 
+# Streamlit app
 def main():
     st.set_page_config(page_title="Sales Prediction App", page_icon="📊", layout="wide")
     
-    # Load Lottie animation
-    lottie_url = "https://assets5.lottiefiles.com/packages/lf20_V9t630.json"
-    lottie_json = load_lottie_url(lottie_url)
+    st.title("📊 Sales Prediction App")
     
-    # Sidebar
-    with st.sidebar:
-        st_lottie(lottie_json, height=200)
-        st.title("Navigation")
-        page = st.radio("Go to", ["Home", "Predictions","XGBoost Explained", "About"])
-    
-    if page == "Home":
-        st.title("📊 Welcome to the Sales Prediction App")
-        st.write("This app helps you predict and visualize sales achievements for different regions and brands.")
-        st.write("Use the sidebar to navigate between pages and upload your data to get started!")
+    uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
+    if uploaded_file is not None:
+        df = load_data(uploaded_file)
         
-        uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
-        if uploaded_file is not None:
-            with st.spinner("Loading data..."):
-                df, regions, brands = load_data(uploaded_file)
-            st.session_state['df'] = df
-            st.session_state['regions'] = regions
-            st.session_state['brands'] = brands
-            st.success("File uploaded and processed successfully!")
-    
-    elif page == "Predictions":
-        st.title("🔮 Sales Predictions")
-        if 'df' not in st.session_state:
-            st.warning("Please upload a file on the Home page first.")
-        else:
-            df = st.session_state['df']
-            regions = st.session_state['regions']
-            brands = st.session_state['brands']
+        st.sidebar.header("Filters")
+        region = st.sidebar.selectbox("Select Region", df['Zone'].unique())
+        brand = st.sidebar.selectbox("Select Brand", df['Brand'].unique())
+        
+        if st.sidebar.button("Generate Prediction"):
+            with st.spinner("Generating prediction..."):
+                prediction, ci, pi, rmse = predict_sales(df, region, brand)
             
-            col1, col2 = st.columns(2)
-            with col1:
-                region = st.selectbox("Select Region", regions)
-            with col2:
-                brand = st.selectbox("Select Brand", brands)
-            
-            if st.button("Run Prediction"):
-                with st.spinner("Running prediction..."):
-                    fig, sept_achievement, lower_achievement, upper_achievement, rmse = predict_and_visualize(df, region, brand)
-                if fig:
+            if prediction is not None:
+                st.success("Prediction generated successfully!")
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.subheader("Prediction Results")
+                    st.write(f"Predicted September 2024 sales: {prediction:.2f}")
+                    st.write(f"95% Confidence Interval: ({ci[0]:.2f}, {ci[1]:.2f})")
+                    st.write(f"95% Prediction Interval: ({pi[0]:.2f}, {pi[1]:.2f})")
+                    st.write(f"Root Mean Square Error (RMSE): {rmse:.2f}")
+                
+                with col2:
+                    fig = create_visualization(df, region, brand, prediction, ci, pi)
                     st.pyplot(fig)
-                    
-                    # Individual report download
-                    buf = BytesIO()
-                    fig.savefig(buf, format="pdf")
-                    buf.seek(0)
-                    b64 = base64.b64encode(buf.getvalue()).decode()
-                    st.download_button(
-                        label="Download Individual PDF Report",
-                        data=buf,
-                        file_name=f"prediction_report_{region}_{brand}.pdf",
-                        mime="application/pdf"
-                    )
+                
+                st.subheader("Interpretation")
+                relative_ci_width = (ci[1] - ci[0]) / prediction * 100
+                relative_pi_width = (pi[1] - pi[0]) / prediction * 100
+                st.write(f"Relative Confidence Interval width: {relative_ci_width:.2f}%")
+                st.write(f"Relative Prediction Interval width: {relative_pi_width:.2f}%")
+                
+                if relative_ci_width < 10:
+                    st.write("The model's confidence interval is narrow, indicating high precision in the estimate.")
+                elif relative_ci_width < 20:
+                    st.write("The model's confidence interval is moderately narrow, indicating good precision in the estimate.")
                 else:
-                    st.error(f"No data available for {region} and {brand}")
-            
-            if st.button("Generate Combined Report"):
-                     with st.spinner("Generating combined report..."):
-                         combined_report_data = generate_combined_report(df, regions, brands)
-                     if combined_report_data:
-                          st.download_button(
-                             label="Download Combined PDF Report",
-                             data=base64.b64decode(combined_report_data),
-                             file_name="combined_prediction_report.pdf",
-                             mime="application/pdf"
-                          )
-                     else:
-                        st.error("Unable to generate combined report. Please check the warnings above for more details.")
+                    st.write("The model's confidence interval is wide, indicating uncertainty in the estimate.")
+                
+                mean_sales = df['Monthly Achievement(Aug)'].mean()
+                if rmse < 0.1 * mean_sales:
+                    st.write("The RMSE is low relative to the mean sales, indicating good model performance.")
+                elif rmse < 0.2 * mean_sales:
+                    st.write("The RMSE is moderate relative to the mean sales, indicating acceptable model performance.")
+                else:
+                    st.write("The RMSE is high relative to the mean sales, indicating that the model may need improvement.")
+            else:
+                st.error("Unable to generate prediction. Please check your data and selected filters.")
+        
+        st.sidebar.header("Prediction Techniques")
+        st.sidebar.write("""
+        1. Ensemble Learning: Combines predictions from multiple models to reduce bias and variance.
+           $f_{ensemble}(x) = \frac{1}{M} \sum_{i=1}^M f_i(x)$
 
-    elif page == "XGBoost Explained":
-        xgboost_explanation()
-    
-    elif page == "About":
-        st.title("ℹ️ About the Sales Prediction App")
-        st.write("""
-        This app is designed to help sales teams predict and visualize their performance across different regions and brands.
-        
-        Key features:
-        - Data upload and processing
-        - Individual predictions for each region and brand
-        - Combined report generation
-        - Interactive visualizations
-        
-        For any questions or support, please contact our team at support@salespredictionapp.com
+        2. Feature Engineering: Creates new features to capture complex patterns in the data.
+           e.g., YoY Growth = $\frac{Aug_{2024} - Aug_{2023}}{Aug_{2023}}$
+
+        3. Hyperparameter Tuning: Uses RandomizedSearchCV to optimize model parameters.
+           $\theta^* = \arg\min_{\theta} \sum_{i=1}^n L(y_i, f(x_i; \theta))$
         """)
 
 if __name__ == "__main__":
