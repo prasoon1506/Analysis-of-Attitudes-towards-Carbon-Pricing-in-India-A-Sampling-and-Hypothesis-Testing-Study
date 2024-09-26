@@ -52,6 +52,14 @@ import base64
 from collections import OrderedDict
 import plotly.express as px
 
+import streamlit as st
+import pandas as pd
+import openpyxl
+from io import BytesIO
+import base64
+from collections import OrderedDict
+import plotly.express as px
+
 def excel_editor_menu():
     
     st.title("Advanced Excel Editor and Analyzer")
@@ -121,41 +129,40 @@ def excel_editor_menu():
         tabs = st.tabs(["Edit Data", "Analyze Data"])
 
         with tabs[0]:
-            edit_data(df)
+            edited_df = edit_data(df)
 
         with tabs[1]:
-            analyze_data(df)
+            analyze_data(edited_df)
 
 def create_excel_structure_html(sheet, max_rows=5):
-        html = "<table class='excel-table'>"
-        merged_cells = sheet.merged_cells.ranges
+    html = "<table class='excel-table'>"
+    merged_cells = sheet.merged_cells.ranges
 
-        for idx, row in enumerate(sheet.iter_rows(max_row=max_rows)):
-            html += "<tr>"
-            for cell in row:
-                merged = False
-                for merged_range in merged_cells:
-                    if cell.coordinate in merged_range:
-                        if cell.coordinate == merged_range.start_cell.coordinate:
-                            rowspan = min(merged_range.max_row - merged_range.min_row + 1, max_rows - idx)
-                            colspan = merged_range.max_col - merged_range.min_col + 1
-                            html += f"<td rowspan='{rowspan}' colspan='{colspan}'>{cell.value}</td>"
-                        merged = True
-                        break
-                if not merged:
-                    html += f"<td>{cell.value}</td>"
-            html += "</tr>"
-        html += "</table>"
-        return html
+    for idx, row in enumerate(sheet.iter_rows(max_row=max_rows)):
+        html += "<tr>"
+        for cell in row:
+            merged = False
+            for merged_range in merged_cells:
+                if cell.coordinate in merged_range:
+                    if cell.coordinate == merged_range.start_cell.coordinate:
+                        rowspan = min(merged_range.max_row - merged_range.min_row + 1, max_rows - idx)
+                        colspan = merged_range.max_col - merged_range.min_col + 1
+                        html += f"<td rowspan='{rowspan}' colspan='{colspan}'>{cell.value}</td>"
+                    merged = True
+                    break
+            if not merged:
+                html += f"<td>{cell.value}</td>"
+        html += "</tr>"
+    html += "</table>"
+    return html
 
-    # Function to get merged column groups
 def get_merged_column_groups(sheet):
-        merged_groups = {}
-        for merged_range in sheet.merged_cells.ranges:
-            if merged_range.min_row == 1:  # Only consider merged cells in the first row (header)
-                main_col = sheet.cell(1, merged_range.min_col).value
-                merged_groups[main_col] = list(range(merged_range.min_col, merged_range.max_col + 1))
-        return merged_groups
+    merged_groups = {}
+    for merged_range in sheet.merged_cells.ranges:
+        if merged_range.min_row == 1:  # Only consider merged cells in the first row (header)
+            main_col = sheet.cell(1, merged_range.min_col).value
+            merged_groups[main_col] = list(range(merged_range.min_col, merged_range.max_col + 1))
+    return merged_groups
 
 def prepare_dataframe(uploaded_file):
     excel_file = openpyxl.load_workbook(uploaded_file)
@@ -231,6 +238,8 @@ def edit_data(df):
         st.session_state.edited_file_name = "edited_file.xlsx"
         st.success("Edited file has been uploaded to Home. Please switch to the Home tab to see the uploaded file.")
 
+    return edited_df
+
 def analyze_data(df):
     st.header("Analyze Data")
 
@@ -280,6 +289,8 @@ def to_excel(df):
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
         df.to_excel(writer, index=False)
     return output.getvalue()
+
+
 def create_stats_pdf(stats_data, district):
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
