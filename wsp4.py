@@ -45,7 +45,7 @@ import plotly.graph_objects as go
 import re
 
 def excel_editor_menu():
-    st.set_page_config(layout="wide")
+    
     st.title("Advanced Excel Editor")
 
     # Custom CSS for styling
