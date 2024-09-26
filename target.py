@@ -43,37 +43,34 @@ def train_advanced_model(X_train, y_train):
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
 
-    # XGBoost model
-    xgb_model = xgb.XGBRegressor(random_state=42)
-    
-    # LightGBM model
-    lgb_model = lgb.LGBMRegressor(random_state=42)
-    
-    # Random Forest model
-    rf_model = RandomForestRegressor(random_state=42)
-    
-    # Create the ensemble model
-    ensemble_model = VotingRegressor([
-        ('xgb', xgb_model),
-        ('lgb', lgb_model),
-        ('rf', rf_model)
-    ])
-    
-    # Define parameter grid for GridSearchCV
-    param_grid = {
-        'xgb__n_estimators': [100, 200],
-        'xgb__learning_rate': [0.01, 0.1],
-        'lgb__n_estimators': [100, 200],
-        'lgb__learning_rate': [0.01, 0.1],
-        'rf__n_estimators': [100, 200],
-        'rf__max_depth': [None, 10, 20]
+    # Initialize models
+    models = {
+        'XGBoost': xgb.XGBRegressor(random_state=42),
+        'LightGBM': lgb.LGBMRegressor(random_state=42),
+        'RandomForest': RandomForestRegressor(random_state=42)
     }
-    
-    # Perform GridSearchCV
-    grid_search = GridSearchCV(ensemble_model, param_grid, cv=5, n_jobs=-1, verbose=1)
-    grid_search.fit(X_train_scaled, y_train)
-    
-    return grid_search.best_estimator_, scaler
+
+    # Train and evaluate models
+    best_model = None
+    best_score = float('-inf')
+
+    for name, model in models.items():
+        # If we have very few samples, use a simple fit instead of cross-validation
+        if X_train.shape[0] < 5:
+            model.fit(X_train_scaled, y_train)
+            score = model.score(X_train_scaled, y_train)
+        else:
+            scores = cross_val_score(model, X_train_scaled, y_train, cv=min(5, X_train.shape[0]))
+            score = np.mean(scores)
+
+        if score > best_score:
+            best_score = score
+            best_model = model
+
+    # Fit the best model on all training data
+    best_model.fit(X_train_scaled, y_train)
+
+    return best_model, scaler
 
 def predict_and_visualize(df, region, brand):
     try:
@@ -96,7 +93,11 @@ def predict_and_visualize(df, region, brand):
             
             y = region_data[[f'Monthly Achievement({month})' for month in months]].values.ravel()
             
-            X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
+            # If we have very few samples, use all data for training
+            if X.shape[0] < 5:
+                X_train, X_val, y_train, y_val = X, X, y, y
+            else:
+                X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
             
             model, scaler = train_advanced_model(X_train, y_train)
             
@@ -120,7 +121,7 @@ def predict_and_visualize(df, region, brand):
             y_val_pred = model.predict(scaler.transform(X_val))
             rmse = np.sqrt(mean_squared_error(y_val, y_val_pred))
             
-            # Calculate confidence interval (you may need to adjust this based on your specific needs)
+            # Calculate confidence interval
             confidence = 0.95
             degrees_of_freedom = len(y_train) - X_train.shape[1] - 1
             t_value = stats.t.ppf((1 + confidence) / 2, degrees_of_freedom)
