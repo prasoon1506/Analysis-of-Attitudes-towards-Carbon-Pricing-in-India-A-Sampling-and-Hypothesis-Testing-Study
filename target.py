@@ -81,12 +81,11 @@ def predict_sales(df, region, brand):
     
     models = create_models()
     
-    # Train models on historical data
-    historical_X = np.array([row[f'Monthly Achievement({month})'] for month in ['Apr', 'May', 'June', 'July', 'Aug']])
-    historical_y = np.array([row[f'Month Tgt ({month})'] for month in ['Apr', 'May', 'June', 'July', 'Aug']])
+    # Train models on the created features
+    y = row['Monthly Achievement(Aug)']  # We'll predict August as a proxy for September
     
     for model in models.values():
-        model.fit(historical_X.reshape(-1, 1), historical_y)
+        model.fit(X_scaled, [y])
     
     sept_prediction = ensemble_predict(models, X_scaled)[0]
     
@@ -104,7 +103,30 @@ def predict_sales(df, region, brand):
     
     return sept_prediction, (ci_lower, ci_upper), (pi_lower, pi_upper)
 
-# Visualization function remains the same
+# Visualization function
+def create_visualization(df_row, region, brand, prediction, ci, pi):
+    fig, ax = plt.subplots(figsize=(12, 6))
+    
+    months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep']
+    achievements = [df_row[f'Monthly Achievement({m})'] for m in months[:-1]] + [prediction]
+    targets = [df_row[f'Month Tgt ({m})'] for m in months]
+    
+    ax.bar(months, targets, alpha=0.5, label='Target')
+    ax.bar(months, achievements, alpha=0.7, label='Achievement')
+    
+    ax.set_title(f'Monthly Targets and Achievements for {region} - {brand}')
+    ax.set_xlabel('Month')
+    ax.set_ylabel('Sales')
+    ax.legend()
+    
+    ax.errorbar('Sep', prediction, yerr=[[prediction-ci[0]], [ci[1]-prediction]], 
+                fmt='o', color='r', capsize=5, label='95% CI')
+    ax.errorbar('Sep', prediction, yerr=[[prediction-pi[0]], [pi[1]-prediction]], 
+                fmt='o', color='g', capsize=5, label='95% PI')
+    
+    ax.legend()
+    
+    return fig
 
 # Streamlit app
 def main():
@@ -135,7 +157,7 @@ def main():
                     st.write(f"95% Prediction Interval: ({pi[0]:.2f}, {pi[1]:.2f})")
                 
                 with col2:
-                    fig = create_visualization(df[(df['Zone'] == region) & (df['Brand'] == brand)], region, brand, prediction, ci, pi)
+                    fig = create_visualization(df[(df['Zone'] == region) & (df['Brand'] == brand)].iloc[0], region, brand, prediction, ci, pi)
                     st.pyplot(fig)
                 
                 st.subheader("Interpretation")
