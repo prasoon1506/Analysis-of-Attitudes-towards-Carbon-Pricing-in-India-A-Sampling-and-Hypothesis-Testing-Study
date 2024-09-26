@@ -35,25 +35,9 @@ def load_lottie_url(url: str):
     if r.status_code != 200:
         return None
     return r.json()
-import streamlit as st
-import pandas as pd
-import openpyxl
-from io import BytesIO
-import base64
-from collections import OrderedDict
-import plotly.graph_objects as go
-import re
-import streamlit as st
-import pandas as pd
-import openpyxl
-from io import BytesIO
-import base64
-from collections import OrderedDict
-import plotly.graph_objects as go
 import re
 
 def excel_editor_menu():
-    
     st.title("Advanced Excel Editor")
 
     # Custom CSS for styling (unchanged)
