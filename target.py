@@ -14,7 +14,16 @@ import time
 import requests
 from streamlit_lottie import st_lottie
 from concurrent.futures import ThreadPoolExecutor
-
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error
+import xgboost as xgb
+import lightgbm as lgb
+from sklearn.ensemble import VotingRegressor
+from sklearn.model_selection import GridSearchCV
 # Cache the data loading
 @st.cache_data
 def load_data(uploaded_file):
@@ -27,33 +36,44 @@ def load_lottie_url(url: str):
     if r.status_code != 200:
         return None
     return r.json()
-import pandas as pd
-import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error
-import xgboost as xgb
-import lightgbm as lgb
-
 from sklearn.ensemble import VotingRegressor
-
 @st.cache_resource
 def train_advanced_model(X_train, y_train):
+    # Feature scaling
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+
     # XGBoost model
-    xgb_model = xgb.XGBRegressor(n_estimators=100, learning_rate=0.1, random_state=42)
+    xgb_model = xgb.XGBRegressor(random_state=42)
     
     # LightGBM model
-    lgb_model = lgb.LGBMRegressor(n_estimators=100, learning_rate=0.1, random_state=42)
+    lgb_model = lgb.LGBMRegressor(random_state=42)
+    
+    # Random Forest model
+    rf_model = RandomForestRegressor(random_state=42)
     
     # Create the ensemble model
     ensemble_model = VotingRegressor([
         ('xgb', xgb_model),
         ('lgb', lgb_model),
+        ('rf', rf_model)
     ])
     
-    # Train the ensemble model
-    ensemble_model.fit(X_train, y_train)
+    # Define parameter grid for GridSearchCV
+    param_grid = {
+        'xgb__n_estimators': [100, 200],
+        'xgb__learning_rate': [0.01, 0.1],
+        'lgb__n_estimators': [100, 200],
+        'lgb__learning_rate': [0.01, 0.1],
+        'rf__n_estimators': [100, 200],
+        'rf__max_depth': [None, 10, 20]
+    }
     
-    return ensemble_model
+    # Perform GridSearchCV
+    grid_search = GridSearchCV(ensemble_model, param_grid, cv=5, n_jobs=-1, verbose=1)
+    grid_search.fit(X_train_scaled, y_train)
+    
+    return grid_search.best_estimator_, scaler
 
 def predict_and_visualize(df, region, brand):
     try:
@@ -61,41 +81,59 @@ def predict_and_visualize(df, region, brand):
         
         if len(region_data) > 0:
             months = ['Apr', 'May', 'June', 'July', 'Aug']
-            for month in months:
-                region_data[f'Achievement({month})'] = region_data[f'Monthly Achievement({month})'] / region_data[f'Month Tgt ({month})']
             
-            X = region_data[[f'Month Tgt ({month})' for month in months]]
-            y = region_data[[f'Achievement({month})' for month in months]]
+            # Calculate year-over-year growth
+            region_data['YoY_Growth'] = (region_data['Monthly Achievement(Aug)'] - region_data['Total Aug 2023']) / region_data['Total Aug 2023']
             
-            X_reshaped = X.values.reshape(-1, 1)
-            y_reshaped = y.values.ravel()
+            # Create features
+            X = pd.DataFrame({
+                'Month_Tgt': [region_data[f'Month Tgt ({month})'].iloc[-1] for month in months],
+                'Achievement': [region_data[f'Monthly Achievement({month})'].iloc[-1] for month in months],
+                'YoY_Growth': [region_data['YoY_Growth'].iloc[-1]] * len(months),
+                'Last_Year_Sep_Sales': [region_data['Total Sep 2023'].iloc[-1]] * len(months),
+                'Month_Number': range(4, 9)  # April is 4, August is 8
+            })
             
-            X_train, X_val, y_train, y_val = train_test_split(X_reshaped, y_reshaped, test_size=0.2, random_state=42)
+            y = region_data[[f'Monthly Achievement({month})' for month in months]].values.ravel()
             
-            model = train_advanced_model(X_train, y_train)
+            X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
             
-            val_predictions = model.predict(X_val)
-            rmse = np.sqrt(mean_squared_error(y_val, val_predictions))
+            model, scaler = train_advanced_model(X_train, y_train)
             
+            # Prepare data for September prediction
             sept_target = region_data['Month Tgt (Sep)'].iloc[-1]
-            sept_prediction = model.predict([[sept_target]])[0]
+            sept_data = pd.DataFrame({
+                'Month_Tgt': [sept_target],
+                'Achievement': [region_data['Monthly Achievement(Aug)'].iloc[-1]],  # Use August achievement as a baseline
+                'YoY_Growth': [region_data['YoY_Growth'].iloc[-1]],
+                'Last_Year_Sep_Sales': [region_data['Total Sep 2023'].iloc[-1]],
+                'Month_Number': [9]  # September is 9
+            })
             
-            # Calculate confidence interval
-            n = len(X_train)
-            degrees_of_freedom = n - 2
-            t_value = stats.t.ppf(0.975, degrees_of_freedom)
+            # Scale the data
+            sept_data_scaled = scaler.transform(sept_data)
             
-            residuals = y_train - model.predict(X_train)
-            std_error = np.sqrt(np.sum(residuals**2) / degrees_of_freedom)
+            # Make prediction
+            sept_prediction = model.predict(sept_data_scaled)[0]
             
-            margin_of_error = t_value * std_error * np.sqrt(1 + 1/n + (sept_target - np.mean(X_train))**2 / np.sum((X_train - np.mean(X_train))**2))
+            # Calculate RMSE
+            y_val_pred = model.predict(scaler.transform(X_val))
+            rmse = np.sqrt(mean_squared_error(y_val, y_val_pred))
+            
+            # Calculate confidence interval (you may need to adjust this based on your specific needs)
+            confidence = 0.95
+            degrees_of_freedom = len(y_train) - X_train.shape[1] - 1
+            t_value = stats.t.ppf((1 + confidence) / 2, degrees_of_freedom)
+            
+            prediction_std = np.std(y_val - y_val_pred)
+            margin_of_error = t_value * prediction_std / np.sqrt(len(y_val))
             
             lower_bound = max(0, sept_prediction - margin_of_error)
             upper_bound = sept_prediction + margin_of_error
             
-            sept_achievement = sept_prediction * sept_target
-            lower_achievement = lower_bound * sept_target
-            upper_achievement = upper_bound * sept_target
+            sept_achievement = sept_prediction
+            lower_achievement = lower_bound
+            upper_achievement = upper_bound
             
             fig = create_visualization(region_data, region, brand, months, sept_target, sept_achievement, lower_achievement, upper_achievement, rmse)
             
@@ -105,11 +143,6 @@ def predict_and_visualize(df, region, brand):
     except Exception as e:
         st.error(f"Error in predict_and_visualize: {str(e)}")
         raise
-
-    except Exception as e:
-        st.error(f"Error in predict_and_visualize: {str(e)}")
-        raise
-
 
 def create_visualization(region_data, region, brand, months, sept_target, sept_achievement, lower_achievement, upper_achievement, rmse):
     fig = plt.figure(figsize=(20, 28))  # Increased height to accommodate new table
@@ -306,9 +339,17 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
         cell.set_edgecolor('brown')
     
     ax5.set_title('Quarterly Requirements for September 2024', fontsize=16, fontweight='bold')
+    ax_insights = fig.add_subplot(gs[7, :])
+    ax_insights.axis('off')
     
-    plt.tight_layout()
-    return fig
+    yoy_growth = (region_data['Monthly Achievement(Aug)'].iloc[-1] - region_data['Total Aug 2023'].iloc[-1]) / region_data['Total Aug 2023'].iloc[-1] * 100
+    last_year_sept = region_data['Total Sep 2023'].iloc[-1]
+    predicted_growth = (sept_achievement - last_year_sept) / last_year_sept * 100
+    
+    ax_insights.text(0.1, 0.8, f"Year-over-Year Growth (Aug): {yoy_growth:.2f}%", fontsize=12, fontweight='bold')
+    ax_insights.text(0.1, 0.6, f"Last Year September Sales: {last_year_sept:.0f}", fontsize=12, fontweight='bold')
+    ax_insights.text(0.1, 0.4, f"Predicted Growth (Sep): {predicted_growth:.2f}%", fontsize=12, fontweight='bold')
+
     plt.tight_layout()
     return fig
 def generate_combined_report(df, regions, brands):
