@@ -558,3 +558,11 @@ def main():
                             label="Download Combined PDF Report",
                             data=base64.b64decode(combined_report_data),
                             file_name="combined_prediction_report.pdf",
+                            mime="application/pdf"
+                          )
+                     else:
+                        st.error("Unable to generate combined report. Please check the warnings above for more details.")
+
+
+if __name__ == "__main__":
+    main()
