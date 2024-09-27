@@ -19,3 +19,5 @@ streamlit_option_menu
 lightgbm
 catboost
 smtplib
+random
+string
