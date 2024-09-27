@@ -27,7 +27,7 @@ from email.mime.multipart import MIMEMultipart
 ALLOWED_EMAILS = ['prasoonb45@gmail.com']  # Add your allowed email list here
 SMTP_SERVER = 'smtp.gmail.com'  # Replace with your SMTP server
 SMTP_PORT = 587  # Replace with your SMTP port
-SENDER_EMAIL = 'your_email@gmail.com'  # Replace with your email
+SENDER_EMAIL = 'prasoonbajpai1506@gmail.com'  # Replace with your email
 SENDER_PASSWORD = 'your_app_password'  # Replace with your app password
 
 # Email login functions
