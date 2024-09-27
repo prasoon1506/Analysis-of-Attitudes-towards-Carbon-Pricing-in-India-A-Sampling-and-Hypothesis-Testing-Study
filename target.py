@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 import math
 from scipy import stats
@@ -14,96 +14,49 @@ import time
 import requests
 from streamlit_lottie import st_lottie
 from concurrent.futures import ThreadPoolExecutor
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error
+import xgboost as xgb
 import lightgbm as lgb
-import smtplib
-import random
-import string
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+from sklearn.ensemble import VotingRegressor
+from sklearn.model_selection import GridSearchCV
 
-# Configuration for email login
-ALLOWED_EMAILS = ['prasoonb45@gmail.com']  # Add your allowed email list here
-SMTP_SERVER = 'smtp.gmail.com'  # Replace with your SMTP server
-SMTP_PORT = 587  # Replace with your SMTP port
-SENDER_EMAIL = 'prasoonbajpai1506@gmail.com'  # Replace with your email
-SENDER_PASSWORD = 'your_app_password'  # Replace with your app password
-
-# Email login functions
-def send_otp(receiver_email, otp):
-    message = MIMEMultipart()
-    message['From'] = SENDER_EMAIL
-    message['To'] = receiver_email
-    message['Subject'] = 'OTP for App Access'
-    
-    body = f'Your OTP is: {otp}'
-    message.attach(MIMEText(body, 'plain'))
-    
-    with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-        server.starttls()
-        server.login(SENDER_EMAIL, SENDER_PASSWORD)
-        server.send_message(message)
-
-def generate_otp():
-    return ''.join(random.choices(string.digits, k=6))
-
-def login_signup():
-    st.title('Login/Signup')
-    
-    email = st.text_input('Enter your email')
-    
-    if st.button('Send OTP'):
-        if email in ALLOWED_EMAILS:
-            otp = generate_otp()
-            send_otp(email, otp)
-            st.session_state['otp'] = otp
-            st.success('OTP sent to your email')
-            st.session_state['email'] = email
-        else:
-            st.error('Sorry, you cannot access this app')
-    
-    if 'otp' in st.session_state:
-        entered_otp = st.text_input('Enter OTP', type='password')
-        if st.button('Verify OTP'):
-            if entered_otp == st.session_state['otp']:
-                st.success('Login successful')
-                st.session_state['logged_in'] = True
-            else:
-                st.error('Invalid OTP')
-
-def is_logged_in():
-    return st.session_state.get('logged_in', False)
-
-# Existing functions from your app
+# Cache the data loading
 @st.cache_data
 def load_data(uploaded_file):
     df = pd.read_excel(uploaded_file)
     regions = df['Zone'].unique().tolist()
     brands = df['Brand'].unique().tolist()
     return df, regions, brands
-
 def load_lottie_url(url: str):
     r = requests.get(url)
     if r.status_code != 200:
         return None
     return r.json()
-
+from sklearn.ensemble import VotingRegressor
 @st.cache_resource
 def train_advanced_model(X_train, y_train):
+    # Feature scaling
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
 
+    # Initialize models
     models = {
         'XGBoost': xgb.XGBRegressor(random_state=42),
         'LightGBM': lgb.LGBMRegressor(random_state=42),
         'RandomForest': RandomForestRegressor(random_state=42)
     }
 
+    # Train and evaluate models
     best_model = None
     best_score = float('-inf')
 
     for name, model in models.items():
+        # If we have very few samples, use a simple fit instead of cross-validation
         if X_train.shape[0] < 5:
             model.fit(X_train_scaled, y_train)
             score = model.score(X_train_scaled, y_train)
@@ -115,6 +68,7 @@ def train_advanced_model(X_train, y_train):
             best_score = score
             best_model = model
 
+    # Fit the best model on all training data
     best_model.fit(X_train_scaled, y_train)
 
     return best_model, scaler
@@ -489,22 +443,6 @@ def generate_combined_report(df, regions, brands):
         st.warning("No valid data available for any region and brand combination.")
         return None
 
-def xgboost_explanation():
-    st.title("XGBoost Explained")
-    st.write("""
-    XGBoost (Extreme Gradient Boosting) is an advanced implementation of gradient boosting algorithms. 
-    It's known for its speed and performance, particularly with structured/tabular data.
-
-    Key features of XGBoost:
-    1. Regularization: Helps prevent overfitting.
-    2. Parallel Processing: Can utilize multiple cores for faster computation.
-    3. Handling Missing Values: Has built-in routines for handling missing data.
-    4. Tree Pruning: Uses a 'max_depth' parameter to limit tree growth.
-
-    In our app, XGBoost is used as part of an ensemble to predict sales achievements. 
-    It works alongside other models like LightGBM and Random Forest to provide accurate forecasts.
-    """)
-
 def main():
     st.set_page_config(page_title="Sales Prediction App", page_icon="📊", layout="wide")
     
@@ -516,92 +454,86 @@ def main():
     with st.sidebar:
         st_lottie(lottie_json, height=200)
         st.title("Navigation")
-        if is_logged_in():
-            page = st.radio("Go to", ["Home", "Predictions", "XGBoost Explained", "About"])
-        else:
-            page = "Login"
-
-    if not is_logged_in():
-        login_signup()
-    else:
-        if page == "Home":
-            st.title("📊 Welcome to the Sales Prediction App")
-            st.write("This app helps you predict and visualize sales achievements for different regions and brands.")
-            st.write("Use the sidebar to navigate between pages and upload your data to get started!")
-            
-            uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
-            if uploaded_file is not None:
-                with st.spinner("Loading data..."):
-                    df, regions, brands = load_data(uploaded_file)
-                st.session_state['df'] = df
-                st.session_state['regions'] = regions
-                st.session_state['brands'] = brands
-                st.success("File uploaded and processed successfully!")
+        page = st.radio("Go to", ["Home", "Predictions","XGBoost Explained", "About"])
+    
+    if page == "Home":
+        st.title("📊 Welcome to the Sales Prediction App")
+        st.write("This app helps you predict and visualize sales achievements for different regions and brands.")
+        st.write("Use the sidebar to navigate between pages and upload your data to get started!")
         
-        elif page == "Predictions":
-            st.title("🔮 Sales Predictions")
-            if 'df' not in st.session_state:
-                st.warning("Please upload a file on the Home page first.")
-            else:
-                df = st.session_state['df']
-                regions = st.session_state['regions']
-                brands = st.session_state['brands']
-                
-                col1, col2 = st.columns(2)
-                with col1:
-                    region = st.selectbox("Select Region", regions)
-                with col2:
-                    brand = st.selectbox("Select Brand", brands)
-                
-                if st.button("Run Prediction"):
-                    with st.spinner("Running prediction..."):
-                        fig, sept_achievement, lower_achievement, upper_achievement, rmse = predict_and_visualize(df, region, brand)
-                    if fig:
-                        st.pyplot(fig)
-                        
-                        # Individual report download
-                        buf = BytesIO()
-                        fig.savefig(buf, format="pdf")
-                        buf.seek(0)
-                        b64 = base64.b64encode(buf.getvalue()).decode()
-                        st.download_button(
-                            label="Download Individual PDF Report",
-                            data=buf,
-                            file_name=f"prediction_report_{region}_{brand}.pdf",
-                            mime="application/pdf"
-                        )
-                    else:
-                        st.error(f"No data available for {region} and {brand}")
-                
-                if st.button("Generate Combined Report"):
-                    with st.spinner("Generating combined report..."):
-                        combined_report_data = generate_combined_report(df, regions, brands)
-                    if combined_report_data:
-                        st.download_button(
-                            label="Download Combined PDF Report",
-                            data=base64.b64decode(combined_report_data),
-                            file_name="combined_prediction_report.pdf",
-                            mime="application/pdf"
-                        )
-                    else:
+        uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
+        if uploaded_file is not None:
+            with st.spinner("Loading data..."):
+                df, regions, brands = load_data(uploaded_file)
+            st.session_state['df'] = df
+            st.session_state['regions'] = regions
+            st.session_state['brands'] = brands
+            st.success("File uploaded and processed successfully!")
+    
+    elif page == "Predictions":
+        st.title("🔮 Sales Predictions")
+        if 'df' not in st.session_state:
+            st.warning("Please upload a file on the Home page first.")
+        else:
+            df = st.session_state['df']
+            regions = st.session_state['regions']
+            brands = st.session_state['brands']
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                region = st.selectbox("Select Region", regions)
+            with col2:
+                brand = st.selectbox("Select Brand", brands)
+            
+            if st.button("Run Prediction"):
+                with st.spinner("Running prediction..."):
+                    fig, sept_achievement, lower_achievement, upper_achievement, rmse = predict_and_visualize(df, region, brand)
+                if fig:
+                    st.pyplot(fig)
+                    
+                    # Individual report download
+                    buf = BytesIO()
+                    fig.savefig(buf, format="pdf")
+                    buf.seek(0)
+                    b64 = base64.b64encode(buf.getvalue()).decode()
+                    st.download_button(
+                        label="Download Individual PDF Report",
+                        data=buf,
+                        file_name=f"prediction_report_{region}_{brand}.pdf",
+                        mime="application/pdf"
+                    )
+                else:
+                    st.error(f"No data available for {region} and {brand}")
+            
+            if st.button("Generate Combined Report"):
+                     with st.spinner("Generating combined report..."):
+                         combined_report_data = generate_combined_report(df, regions, brands)
+                     if combined_report_data:
+                          st.download_button(
+                             label="Download Combined PDF Report",
+                             data=base64.b64decode(combined_report_data),
+                             file_name="combined_prediction_report.pdf",
+                             mime="application/pdf"
+                          )
+                     else:
                         st.error("Unable to generate combined report. Please check the warnings above for more details.")
 
-        elif page == "XGBoost Explained":
-            xgboost_explanation()
+    elif page == "XGBoost Explained":
+        xgboost_explanation()
+    
+    elif page == "About":
+        st.title("ℹ️ About the Sales Prediction App")
+        st.write("""
+        This app is designed to help sales teams predict and visualize their performance across different regions and brands.
         
-        elif page == "About":
-            st.title("ℹ️ About the Sales Prediction App")
-            st.write("""
-            This app is designed to help sales teams predict and visualize their performance across different regions and brands.
-            
-            Key features:
-            - Data upload and processing
-            - Individual predictions for each region and brand
-            - Combined report generation
-            - Interactive visualizations
-            
-            For any questions or support, please contact our team at support@salespredictionapp.com
-            """)
+        Key features:
+        - Data upload and processing
+        - Individual predictions for each region and brand
+        - Combined report generation
+        - Interactive visualizations
+        
+        For any questions or support, please contact our team at support@salespredictionapp.com
+        """)
 
 if __name__ == "__main__":
     main()
