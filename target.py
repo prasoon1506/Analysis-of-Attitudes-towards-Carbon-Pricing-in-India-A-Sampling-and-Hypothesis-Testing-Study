@@ -14,21 +14,16 @@ import time
 import requests
 from streamlit_lottie import st_lottie
 from concurrent.futures import ThreadPoolExecutor
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error
+import xgboost as xgb
 import lightgbm as lgb
+from sklearn.ensemble import VotingRegressor
 from sklearn.model_selection import GridSearchCV
-from twilio.rest import Client
-import random
-import os
-
-# Twilio credentials
-TWILIO_ACCOUNT_SID = os.environ.get('ACcb6c78d5f4')
-TWILIO_AUTH_TOKEN = os.environ.get('77bcec17e3fe0d')
-TWILIO_PHONE_NUMBER = os.environ.get('+919219393559')
-
-# List of authorized phone numbers
-AUTHORIZED_NUMBERS = ['+919219393559', '+917800414283']  # Add your authorized numbers here
 
 # Cache the data loading
 @st.cache_data
@@ -37,13 +32,12 @@ def load_data(uploaded_file):
     regions = df['Zone'].unique().tolist()
     brands = df['Brand'].unique().tolist()
     return df, regions, brands
-
 def load_lottie_url(url: str):
     r = requests.get(url)
     if r.status_code != 200:
         return None
     return r.json()
-
+from sklearn.ensemble import VotingRegressor
 @st.cache_resource
 def train_advanced_model(X_train, y_train):
     # Feature scaling
@@ -180,7 +174,7 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
                     cell.set_facecolor('goldenrod')
                 cell.set_edgecolor('brown')
             
-    # Existing table (same as before)
+            # Existing table (same as before)
     ax_table = fig.add_subplot(gs[2, :])
     ax_table.axis('off')
     table_data = [
@@ -197,6 +191,9 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
                     cell.set_text_props(fontweight='bold', color='black')
                     cell.set_facecolor('goldenrod')
                 cell.set_edgecolor('brown')
+
+    
+    
     
     # Main bar chart (same as before)
     ax1 = fig.add_subplot(gs[3, :])
@@ -271,8 +268,6 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
     total_aug_current = region_data['Monthly Achievement(Aug)'].iloc[-1]
     total_aug_last = region_data['Total Aug 2023'].iloc[-1]
     
-    # ... (previous code remains the same)
-
     ax3.text(0.2, 1, f'\nAugust {current_year} Sales Breakdown:-', fontsize=16, fontweight='bold', ha='center', va='center')
     
     # Helper function to create arrow
@@ -302,6 +297,9 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
         ax3.text(0.1, y_pos-0.05, f"vs Last Year: {value_last:.0f}", fontsize=12)
         ax3.text(0.2, y_pos-0.05, f"({change:.1f}% {arrow})", fontsize=12, color=color)
 
+    
+
+    
     # Updated: August Region Type Breakdown with values
     ax4 = fig.add_subplot(gs[5, 1])
     region_type_data = [
@@ -323,7 +321,6 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
     ax4.pie(region_type_data, labels=region_type_labels, colors=colors,
             autopct=make_autopct(region_type_data), startangle=90)
     ax4.set_title('August 2024 Region Type Breakdown:-', fontsize=16, fontweight='bold')
-
     ax5 = fig.add_subplot(gs[6, :])
     ax5.axis('off')
     
@@ -344,7 +341,6 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
         cell.set_edgecolor('brown')
     
     ax5.set_title('Quarterly Requirements for September 2024', fontsize=16, fontweight='bold')
-
     ax_insights = fig.add_subplot(gs[7, :])
     ax_insights.axis('off')
     
@@ -358,7 +354,6 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
 
     plt.tight_layout()
     return fig
-
 def generate_combined_report(df, regions, brands):
     main_table_data = [['Region', 'Brand', 'Month Target\n(Sep)', 'Monthly Achievement\n(Aug)', 'Predicted\nAchievement(Sept)', 'CI', 'RMSE']]
     additional_table_data = [['Region', 'Brand', 'Till Yesterday\nTotal Sales', 'Commitment\nfor Today', 'Asking\nfor Today', 'Yesterday\nSales', 'Yesterday\nCommitment']]
@@ -448,121 +443,97 @@ def generate_combined_report(df, regions, brands):
         st.warning("No valid data available for any region and brand combination.")
         return None
 
-def send_otp(phone_number):
-    client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
-    otp = str(random.randint(1000, 9999))
-    message = client.messages.create(
-        body=f"Your OTP is: {otp}",
-        from_=TWILIO_PHONE_NUMBER,
-        to=phone_number
-    )
-    return otp
-
-def verify_phone_number():
-    if 'authenticated' not in st.session_state:
-        st.session_state.authenticated = False
-
-    if not st.session_state.authenticated:
-        st.title("Phone Number Verification")
-        phone_number = st.text_input("Enter your phone number (with country code):")
-        
-        if st.button("Send OTP"):
-            if phone_number in AUTHORIZED_NUMBERS:
-                st.session_state.otp = send_otp(phone_number)
-                st.success("OTP sent successfully!")
-                st.session_state.phone_number = phone_number
-            else:
-                st.error("Unauthorized phone number. Access denied.")
-                return False
-
-        otp_input = st.text_input("Enter the OTP you received:")
-        if st.button("Verify OTP"):
-            if 'otp' in st.session_state and otp_input == st.session_state.otp:
-                st.success("Phone number verified successfully!")
-                st.session_state.authenticated = True
-                return True
-            else:
-                st.error("Invalid OTP. Please try again.")
-                return False
-    
-    return st.session_state.authenticated
-
 def main():
-    if verify_phone_number():
-        st.set_page_config(page_title="Sales Prediction App", page_icon="📊", layout="wide")
+    st.set_page_config(page_title="Sales Prediction App", page_icon="📊", layout="wide")
+    
+    # Load Lottie animation
+    lottie_url = "https://assets5.lottiefiles.com/packages/lf20_V9t630.json"
+    lottie_json = load_lottie_url(lottie_url)
+    
+    # Sidebar
+    with st.sidebar:
+        st_lottie(lottie_json, height=200)
+        st.title("Navigation")
+        page = st.radio("Go to", ["Home", "Predictions","XGBoost Explained", "About"])
+    
+    if page == "Home":
+        st.title("📊 Welcome to the Sales Prediction App")
+        st.write("This app helps you predict and visualize sales achievements for different regions and brands.")
+        st.write("Use the sidebar to navigate between pages and upload your data to get started!")
         
-        # Load Lottie animation
-        lottie_url = "https://assets5.lottiefiles.com/packages/lf20_V9t630.json"
-        lottie_json = load_lottie_url(lottie_url)
-        
-        # Sidebar
-        with st.sidebar:
-            st_lottie(lottie_json, height=200)
-            st.title("Navigation")
-            page = st.radio("Go to", ["Home", "Predictions", "About"])
-        
-        if page == "Home":
-            st.title("📊 Welcome to the Sales Prediction App")
-            st.write("This app helps you predict and visualize sales achievements for different regions and brands.")
-            st.write("Use the sidebar to navigate between pages and upload your data to get started!")
+        uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
+        if uploaded_file is not None:
+            with st.spinner("Loading data..."):
+                df, regions, brands = load_data(uploaded_file)
+            st.session_state['df'] = df
+            st.session_state['regions'] = regions
+            st.session_state['brands'] = brands
+            st.success("File uploaded and processed successfully!")
+    
+    elif page == "Predictions":
+        st.title("🔮 Sales Predictions")
+        if 'df' not in st.session_state:
+            st.warning("Please upload a file on the Home page first.")
+        else:
+            df = st.session_state['df']
+            regions = st.session_state['regions']
+            brands = st.session_state['brands']
             
-            uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
-            if uploaded_file is not None:
-                with st.spinner("Loading data..."):
-                    df, regions, brands = load_data(uploaded_file)
-                st.session_state['df'] = df
-                st.session_state['regions'] = regions
-                st.session_state['brands'] = brands
-                st.success("File uploaded and processed successfully!")
-        
-        elif page == "Predictions":
-            st.title("🔮 Sales Predictions")
-            if 'df' not in st.session_state:
-                st.warning("Please upload a file on the Home page first.")
-            else:
-                df = st.session_state['df']
-                regions = st.session_state['regions']
-                brands = st.session_state['brands']
-                
-                col1, col2 = st.columns(2)
-                with col1:
-                    region = st.selectbox("Select Region", regions)
-                with col2:
-                    brand = st.selectbox("Select Brand", brands)
-                
-                if st.button("Run Prediction"):
-                    with st.spinner("Running prediction..."):
-                        fig, sept_achievement, lower_achievement, upper_achievement, rmse = predict_and_visualize(df, region, brand)
-                    if fig:
-                        st.pyplot(fig)
-                        
-                        # Individual report download
-                        buf = BytesIO()
-                        fig.savefig(buf, format="pdf")
-                        buf.seek(0)
-                        b64 = base64.b64encode(buf.getvalue()).decode()
-                        st.download_button(
-                            label="Download Individual PDF Report",
-                            data=buf,
-                            file_name=f"prediction_report_{region}_{brand}.pdf",
-                            mime="application/pdf"
-                        )
-                    else:
-                        st.error(f"No data available for {region} and {brand}")
-                
-                if st.button("Generate Combined Report"):
-                    with st.spinner("Generating combined report..."):
-                        combined_report_data = generate_combined_report(df, regions, brands)
-                    if combined_report_data:
-                        st.download_button(
-                            label="Download Combined PDF Report",
-                            data=base64.b64decode(combined_report_data),
-                            file_name="combined_prediction_report.pdf",
-                            mime="application/pdf"
+            col1, col2 = st.columns(2)
+            with col1:
+                region = st.selectbox("Select Region", regions)
+            with col2:
+                brand = st.selectbox("Select Brand", brands)
+            
+            if st.button("Run Prediction"):
+                with st.spinner("Running prediction..."):
+                    fig, sept_achievement, lower_achievement, upper_achievement, rmse = predict_and_visualize(df, region, brand)
+                if fig:
+                    st.pyplot(fig)
+                    
+                    # Individual report download
+                    buf = BytesIO()
+                    fig.savefig(buf, format="pdf")
+                    buf.seek(0)
+                    b64 = base64.b64encode(buf.getvalue()).decode()
+                    st.download_button(
+                        label="Download Individual PDF Report",
+                        data=buf,
+                        file_name=f"prediction_report_{region}_{brand}.pdf",
+                        mime="application/pdf"
+                    )
+                else:
+                    st.error(f"No data available for {region} and {brand}")
+            
+            if st.button("Generate Combined Report"):
+                     with st.spinner("Generating combined report..."):
+                         combined_report_data = generate_combined_report(df, regions, brands)
+                     if combined_report_data:
+                          st.download_button(
+                             label="Download Combined PDF Report",
+                             data=base64.b64decode(combined_report_data),
+                             file_name="combined_prediction_report.pdf",
+                             mime="application/pdf"
                           )
-                    else:
+                     else:
                         st.error("Unable to generate combined report. Please check the warnings above for more details.")
 
+    elif page == "XGBoost Explained":
+        xgboost_explanation()
+    
+    elif page == "About":
+        st.title("ℹ️ About the Sales Prediction App")
+        st.write("""
+        This app is designed to help sales teams predict and visualize their performance across different regions and brands.
+        
+        Key features:
+        - Data upload and processing
+        - Individual predictions for each region and brand
+        - Combined report generation
+        - Interactive visualizations
+        
+        For any questions or support, please contact our team at support@salespredictionapp.com
+        """)
 
 if __name__ == "__main__":
     main()
