@@ -560,7 +560,7 @@ def main():
                             file_name="combined_prediction_report.pdf",
                             mime="application/pdf"
                           )
-                     else:
+                    else:
                         st.error("Unable to generate combined report. Please check the warnings above for more details.")
 
 
