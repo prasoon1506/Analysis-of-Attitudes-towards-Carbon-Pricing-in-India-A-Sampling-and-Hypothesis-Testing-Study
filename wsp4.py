@@ -554,10 +554,7 @@ def update_week_name(index):
             st.warning(f"Attempted to update week {index + 1}, but only {len(st.session_state.week_names_input)} weeks are available.")
         st.session_state.all_weeks_filled = all(st.session_state.week_names_input)
     return callback
-import streamlit as st
-from streamlit_lottie import st_lottie
-import requests
-import particles
+
 
 def load_lottie_url(url: str):
     r = requests.get(url)
