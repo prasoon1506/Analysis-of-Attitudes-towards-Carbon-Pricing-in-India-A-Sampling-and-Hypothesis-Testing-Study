@@ -3182,12 +3182,12 @@ def main():
         text-align: center;
     }
     .visit-counter h3 {
-        color: white;
+        color: pink;
         font-size: 18px;
         margin-bottom: 10px;
     }
     .visit-counter p {
-        color: white;
+        color: brown;
         font-size: 14px;
         margin: 5px 0;
     }
