@@ -557,6 +557,7 @@ def update_week_name(index):
 import streamlit as st
 from streamlit_lottie import st_lottie
 import requests
+import particles
 
 def load_lottie_url(url: str):
     r = requests.get(url)
