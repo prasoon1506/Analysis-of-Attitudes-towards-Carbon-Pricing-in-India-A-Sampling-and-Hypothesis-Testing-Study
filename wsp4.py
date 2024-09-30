@@ -3357,13 +3357,11 @@ def main():
     st.sidebar.markdown("---")
     st.sidebar.subheader("📢 Feedback")
     feedback = st.sidebar.text_area("Share your thoughts:")
-    col1, col2 = st.sidebar.columns(2)
-    if col1.button("Submit Feedback"):
+    col= st.sidebar.columns(1)
+    if col.button("Submit Feedback"):
         # Here you would typically send this feedback to a database or email
         st.sidebar.success("Thank you for your valuable feedback!")
-    if col2.button("Clear"):
-        st.session_state.feedback = ""
-        st.experimental_rerun()
+    
 
     # Display visit counter with animations
     total_visits, daily_visits = update_visit_count()
