@@ -3174,6 +3174,23 @@ def main():
         border-radius: 10px;
         margin-top: 20px;
     }
+    .visit-counter {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 15px;
+        margin-top: 20px;
+        text-align: center;
+    }
+    .visit-counter h3 {
+        color: white;
+        font-size: 18px;
+        margin-bottom: 10px;
+    }
+    .visit-counter p {
+        color: white;
+        font-size: 14px;
+        margin: 5px 0;
+    }
     </style>
     """, unsafe_allow_html=True)
 
