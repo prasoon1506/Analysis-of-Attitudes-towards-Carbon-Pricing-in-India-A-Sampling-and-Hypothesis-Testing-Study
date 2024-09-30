@@ -3147,23 +3147,6 @@ def update_visit_count():
     save_visit_data(visit_data)
     return visit_data['total_visits'], visit_data['daily_visits'][today]
 
-def get_base64_of_bin_file(bin_file):
-    with open(bin_file, 'rb') as f:
-        data = f.read()
-    return base64.b64encode(data).decode()
-
-def set_png_as_page_bg(png_file):
-    bin_str = get_base64_of_bin_file(png_file)
-    page_bg_img = '''
-    <style>
-    .stApp {
-        background-image: url("data:image/png;base64,%s");
-        background-size: cover;
-    }
-    </style>
-    ''' % bin_str
-    st.markdown(page_bg_img, unsafe_allow_html=True)
-
 def main():
     # Set background image (uncomment and replace 'background.png' with your image file)
     # set_png_as_page_bg('background.png')
