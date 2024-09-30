@@ -3175,7 +3175,7 @@ def main():
         margin-top: 20px;
     }
     .visit-counter {
-        background-color: rgba(255, 255, 255, 0.1);
+        background-color: #f0f2f6;
         border-radius: 10px;
         padding: 15px;
         margin-top: 20px;
