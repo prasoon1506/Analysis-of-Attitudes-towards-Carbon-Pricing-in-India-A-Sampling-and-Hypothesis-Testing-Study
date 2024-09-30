@@ -3204,13 +3204,7 @@ def main():
     """, unsafe_allow_html=True)
     # Display visit counter in sidebar
     total_visits, daily_visits = update_visit_count()
-    st.sidebar.markdown("""
-    <div class="visit-counter">
-        <h3>Visit Counter</h3>
-        <p>Total Visits: {}</p>
-        <p>Visits Today: {}</p>
-    </div>
-    """.format(total_visits, daily_visits), unsafe_allow_html=True)
+    
     
     with st.sidebar:
         selected = option_menu(
@@ -3317,6 +3311,15 @@ def main():
     if st.sidebar.button("Submit Feedback"):
         # Here you would typically send this feedback to a database or email
         st.sidebar.success("Thank you for your feedback!")
+    # Display visit counter in sidebar
+    total_visits, daily_visits = update_visit_count()
+    st.sidebar.markdown("""
+    <div class="visit-counter">
+        <h3>Visit Counter</h3>
+        <p>Total Visits: {}</p>
+        <p>Visits Today: {}</p>
+    </div>
+    """.format(total_visits, daily_visits), unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
