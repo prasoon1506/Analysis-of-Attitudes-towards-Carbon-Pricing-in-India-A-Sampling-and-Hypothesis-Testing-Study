@@ -564,68 +564,29 @@ def load_lottie_url(url: str):
         return None
     return r.json()
 
-
 import streamlit as st
 from streamlit_lottie import st_lottie
 import requests
-from streamlit_option_menu import option_menu
 from streamlit_particles import particles
-import plotly.graph_objects as go
-import pandas as pd
-import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_squared_error, r2_score
-import time
 
-# Utility Functions
 def load_lottie_url(url: str):
     r = requests.get(url)
     if r.status_code != 200:
         return None
     return r.json()
 
-def create_sample_ai_chart():
-    x = np.random.rand(100)
-    y = np.random.rand(100)
-    z = np.random.rand(100)
-    
-    trace = go.Scatter3d(
-        x=x, y=y, z=z,
-        mode='markers',
-        marker=dict(
-            size=8,
-            color=z,
-            colorscale='Viridis',
-            opacity=0.8
-        )
-    )
-    
-    layout = go.Layout(
-        scene = dict(
-            xaxis = dict(title='Feature 1'),
-            yaxis = dict(title='Feature 2'),
-            zaxis = dict(title='Target Variable')
-        ),
-        margin=dict(r=0, b=0, l=0, t=0)
-    )
-    
-    fig = go.Figure(data=[trace], layout=layout)
-    return fig
-
-# Main App Functions
 def Home():
-    # CSS Styles
+    # Advanced CSS Styles
     st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
     
     :root {
-        --primary-color: #6C63FF;
-        --secondary-color: #4CAF50;
-        --background-color: #f0f2f6;
-        --text-color: #333;
-        --card-background: rgba(255, 255, 255, 0.7);
+        --primary-color: #3A86FF;
+        --secondary-color: #FF006E;
+        --background-color: #0A1929;
+        --text-color: #ffffff;
+        --card-background: rgba(255, 255, 255, 0.05);
     }
 
     body {
@@ -635,7 +596,7 @@ def Home():
     }
 
     .stApp {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        background: linear-gradient(135deg, #0A1929 0%, #0F2942 100%);
     }
 
     .title {
@@ -652,7 +613,7 @@ def Home():
     .subtitle {
         font-size: 1.5rem;
         font-weight: 300;
-        color: #555;
+        color: #b8c1ec;
         text-align: center;
         margin-bottom: 2rem;
     }
@@ -670,7 +631,7 @@ def Home():
 
     .glassmorphism:hover {
         transform: translateY(-5px);
-        box-shadow: 0 12px 48px 0 rgba(31, 38, 135, 0.5);
+        box-shadow: 0 12px 48px 0 rgba(59, 59, 152, 0.5);
     }
 
     .btn-primary {
@@ -684,29 +645,61 @@ def Home():
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 1px;
+        display: inline-block;
+        margin: 0.5rem;
+        text-decoration: none;
     }
 
-    .btn-primary:hover {
-        background-color: #5753d9;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-    }
-
-    .upload-section {
-        background: linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%);
-        padding: 2rem;
-        border-radius: 10px;
-        margin-bottom: 2rem;
-    }
-
-    /* Custom styles for option menu */
-    .stSelectbox > div > div {
-        background-color: var(--card-background);
-        border: none;
+    .btn-secondary {
+        background-color: var(--secondary-color);
+        color: white;
+        padding: 0.7rem 1.5rem;
         border-radius: 25px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        display: inline-block;
+        margin: 0.5rem;
+        text-decoration: none;
     }
 
-    .stSelectbox > div > div > div {
-        background-color: transparent;
+    .btn-primary:hover, .btn-secondary:hover {
+        opacity: 0.8;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .feature-card {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(255, 255, 255, 0.1);
+    }
+
+    .feature-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        color: var(--primary-color);
+    }
+
+    .feature-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .feature-description {
+        font-size: 0.9rem;
+        color: #b8c1ec;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -715,191 +708,104 @@ def Home():
     particles(
         options={
             "particles": {
-                "number": {"value": 50},
-                "color": {"value": "#6C63FF"},
-                "shape": {"type": "circle"},
-                "opacity": {"value": 0.5, "random": True},
-                "size": {"value": 3, "random": True},
-                "move": {"enable": True, "speed": 2},
+                "number": {"value": 50, "density": {"enable": True, "value_area": 800}},
+                "color": {"value": "#ffffff"},
+                "shape": {"type": "circle", "stroke": {"width": 0, "color": "#000000"}, "polygon": {"nb_sides": 5}},
+                "opacity": {"value": 0.5, "random": False, "anim": {"enable": False, "speed": 1, "opacity_min": 0.1, "sync": False}},
+                "size": {"value": 3, "random": True, "anim": {"enable": False, "speed": 40, "size_min": 0.1, "sync": False}},
+                "line_linked": {"enable": True, "distance": 150, "color": "#ffffff", "opacity": 0.4, "width": 1},
+                "move": {"enable": True, "speed": 6, "direction": "none", "random": False, "straight": False, "out_mode": "out", "bounce": False, "attract": {"enable": False, "rotateX": 600, "rotateY": 1200}}
             },
             "interactivity": {
+                "detect_on": "canvas",
                 "events": {
                     "onhover": {"enable": True, "mode": "repulse"},
                     "onclick": {"enable": True, "mode": "push"},
+                    "resize": True
                 },
+                "modes": {
+                    "grab": {"distance": 400, "line_linked": {"opacity": 1}},
+                    "bubble": {"distance": 400, "size": 40, "duration": 2, "opacity": 8, "speed": 3},
+                    "repulse": {"distance": 200, "duration": 0.4},
+                    "push": {"particles_nb": 4},
+                    "remove": {"particles_nb": 2}
+                }
             },
+            "retina_detect": True
         }
     )
 
     # Main title and subtitle
     st.markdown('<h1 class="title">WSP Analysis Dashboard</h1>', unsafe_allow_html=True)
-    st.markdown('<p class="subtitle">Unlock advanced insights from your Whole Sale Price data with AI-powered analytics.</p>', unsafe_allow_html=True)
+    st.markdown('<p class="subtitle">Empowering decisions with advanced AI-driven analytics</p>', unsafe_allow_html=True)
 
-    # Load and display Lottie animation
-    lottie_url = "https://assets2.lottiefiles.com/packages/lf20_xyadoh9h.json"
-    lottie_json = load_lottie_url(lottie_url)
-
+    # Main content
+    st.markdown('<div class="glassmorphism">', unsafe_allow_html=True)
     col1, col2 = st.columns([1, 2])
     with col1:
-        st_lottie(lottie_json, height=300, key="home_animation")
+        lottie_url = "https://assets3.lottiefiles.com/private_files/lf30_p9tieap9.json"
+        lottie_json = load_lottie_url(lottie_url)
+        st_lottie(lottie_json, height=300, key="dashboard_animation")
     with col2:
         st.markdown("""
-        <div class="glassmorphism">
-        <h3>Welcome to Your Advanced Data Analysis Platform!</h3>
-        <p>Our AI-powered dashboard revolutionizes how you analyze WSP data:</p>
+        <h3>Transform Your WSP Data into Actionable Insights</h3>
+        <p>Our cutting-edge AI-powered platform offers:</p>
         <ul>
-            <li>Upload and process your data with our intelligent ETL pipeline</li>
-            <li>Visualize complex trends with interactive, 3D charts</li>
-            <li>Generate predictive insights using machine learning algorithms</li>
-            <li>Collaborate in real-time with team members</li>
-            <li>Export reports in multiple formats for seamless integration</li>
+            <li>Real-time data processing and analysis</li>
+            <li>Advanced pattern recognition across vast datasets</li>
+            <li>Predictive modeling with high accuracy</li>
+            <li>Customizable dashboards for tailored insights</li>
+            <li>Seamless integration with your existing systems</li>
         </ul>
+        """, unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # Feature highlights
+    st.subheader("Discover Our Powerful Features")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.markdown("""
+        <div class="feature-card">
+            <div class="feature-icon">📊</div>
+            <div class="feature-title">Advanced Analytics</div>
+            <div class="feature-description">Leverage AI-driven insights to make data-informed decisions.</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with col2:
+        st.markdown("""
+        <div class="feature-card">
+            <div class="feature-icon">🔮</div>
+            <div class="feature-title">Predictive Modeling</div>
+            <div class="feature-description">Forecast trends and anticipate market changes with precision.</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with col3:
+        st.markdown("""
+        <div class="feature-card">
+            <div class="feature-icon">🔄</div>
+            <div class="feature-title">Real-Time Updates</div>
+            <div class="feature-description">Stay ahead with live data processing and instant insights.</div>
         </div>
         """, unsafe_allow_html=True)
 
-    # Interactive feature showcase
-    st.markdown('<div class="glassmorphism">', unsafe_allow_html=True)
-    st.subheader("Explore Our Advanced Features")
-    feature = st.selectbox("Select a feature to learn more:", 
-                           ["AI-Powered Analytics", "Real-Time Collaboration", "Custom Report Generation"])
-    
-    if feature == "AI-Powered Analytics":
-        st.write("Our advanced AI algorithms analyze your data to provide deep insights and accurate predictions.")
-        st.plotly_chart(create_sample_ai_chart(), use_container_width=True)
-    elif feature == "Real-Time Collaboration":
-        st.write("Collaborate with your team in real-time, sharing insights and making decisions together.")
-        st.image("https://via.placeholder.com/600x300.png?text=Real-Time+Collaboration+Demo")
-    elif feature == "Custom Report Generation":
-        st.write("Generate tailored reports with just a few clicks, ready for presentation or further analysis.")
-        st.download_button("Download Sample Report", "Sample report content", "sample_report.pdf")
-    
-    st.markdown('</div>', unsafe_allow_html=True)
+    # Call-to-action
+    st.markdown("""
+    <div style="text-align: center; margin-top: 2rem;">
+        <a href="#" class="btn-primary">Start Your Free Trial</a>
+        <a href="#" class="btn-secondary">Schedule a Demo</a>
+    </div>
+    """, unsafe_allow_html=True)
 
-def Upload_Data():
-    st.markdown('<div class="glassmorphism">', unsafe_allow_html=True)
-    st.subheader("Intelligent Data Upload")
-    uploaded_file = st.file_uploader("Upload Your WSP Excel File", type=["xlsx"], key="wsp_data")
-    if uploaded_file:
-        st.success(f"File uploaded: {uploaded_file.name}")
-        st.info("Our AI is analyzing your data structure. Please wait...")
-        
-        progress_bar = st.progress(0)
-        for i in range(100):
-            time.sleep(0.05)
-            progress_bar.progress(i + 1)
-        
-        # Simulate data processing
-        df = pd.read_excel(uploaded_file)
-        st.session_state['data'] = df
-        st.success("File processed successfully! You can now proceed to the Analysis section.")
-        st.write("Preview of your data:")
-        st.dataframe(df.head())
-    st.markdown('</div>', unsafe_allow_html=True)
+    # Testimonial
+    st.markdown("""
+    <div class="glassmorphism" style="text-align: center;">
+        <h4>What Our Clients Say</h4>
+        <p style="font-style: italic;">"The WSP Analysis Dashboard has revolutionized our pricing strategy. We've seen a 30% increase in profitability since implementation."</p>
+        <p><strong>- John Doe, CEO of XYZ Corp</strong></p>
+    </div>
+    """, unsafe_allow_html=True)
 
-def Analysis():
-    st.markdown('<div class="glassmorphism">', unsafe_allow_html=True)
-    st.subheader("WSP Data Analysis")
-    
-    if 'data' not in st.session_state:
-        st.warning("Please upload your data first in the 'Upload Data' section.")
-        return
-    
-    df = st.session_state['data']
-    
-    analysis_type = st.selectbox("Choose analysis type", ["Overview", "Trend Analysis", "Comparative Analysis"])
-    
-    if analysis_type == "Overview":
-        st.write("Basic statistics of your data:")
-        st.write(df.describe())
-        
-        st.write("Data distribution:")
-        fig = go.Figure()
-        for column in df.select_dtypes(include=[np.number]).columns:
-            fig.add_trace(go.Box(y=df[column], name=column))
-        st.plotly_chart(fig)
-        
-    elif analysis_type == "Trend Analysis":
-        st.write("Time series analysis of WSP data:")
-        # Assuming there's a date column
-        date_column = st.selectbox("Select date column", df.columns)
-        value_column = st.selectbox("Select value column for trend analysis", df.select_dtypes(include=[np.number]).columns)
-        
-        df_sorted = df.sort_values(by=date_column)
-        fig = go.Figure(data=go.Scatter(x=df_sorted[date_column], y=df_sorted[value_column], mode='lines+markers'))
-        fig.update_layout(title=f"Trend of {value_column} over time", xaxis_title=date_column, yaxis_title=value_column)
-        st.plotly_chart(fig)
-        
-    elif analysis_type == "Comparative Analysis":
-        st.write("Compare different categories:")
-        category_column = st.selectbox("Select category column", df.select_dtypes(include=['object']).columns)
-        value_column = st.selectbox("Select value column for comparison", df.select_dtypes(include=[np.number]).columns)
-        
-        fig = go.Figure(data=[go.Bar(x=df[category_column], y=df[value_column])])
-        fig.update_layout(title=f"Comparison of {value_column} across {category_column}", xaxis_title=category_column, yaxis_title=value_column)
-        st.plotly_chart(fig)
-    
-    st.markdown('</div>', unsafe_allow_html=True)
-
-def Predictions():
-    st.markdown('<div class="glassmorphism">', unsafe_allow_html=True)
-    st.subheader("AI-Powered Predictions")
-    
-    if 'data' not in st.session_state:
-        st.warning("Please upload your data first in the 'Upload Data' section.")
-        return
-    
-    df = st.session_state['data']
-    
-    st.write("Select features for prediction:")
-    features = st.multiselect("Choose features", df.select_dtypes(include=[np.number]).columns)
-    target = st.selectbox("Choose target variable", df.select_dtypes(include=[np.number]).columns)
-    
-    if len(features) > 0 and target:
-        X = df[features]
-        y = df[target]
-        
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-        
-        model = RandomForestRegressor(n_estimators=100, random_state=42)
-        model.fit(X_train, y_train)
-        
-        y_pred = model.predict(X_test)
-        
-        mse = mean_squared_error(y_test, y_pred)
-        r2 = r2_score(y_test, y_pred)
-        
-        st.write(f"Mean Squared Error: {mse:.2f}")
-        st.write(f"R-squared Score: {r2:.2f}")
-        
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(x=y_test, y=y_pred, mode='markers', name='Predictions'))
-        fig.add_trace(go.Scatter(x=[y_test.min(), y_test.max()], y=[y_test.min(), y_test.max()], mode='lines', name='Ideal'))
-        fig.update_layout(title='Actual vs Predicted Values', xaxis_title='Actual', yaxis_title='Predicted')
-        st.plotly_chart(fig)
-        
-        st.write("Feature Importance:")
-        feature_importance = pd.DataFrame({'feature': features, 'importance': model.feature_importances_})
-        feature_importance = feature_importance.sort_values('importance', ascending=False)
-        fig = go.Figure(data=[go.Bar(x=feature_importance['feature'], y=feature_importance['importance'])])
-        fig.update_layout(title='Feature Importance', xaxis_title='Features', yaxis_title='Importance')
-        st.plotly_chart(fig)
-    
-    st.markdown('</div>', unsafe_allow_html=True)
-
-def Help():
-    st.markdown('<div class="glassmorphism">', unsafe_allow_html=True)
-    st.subheader("Need Assistance?")
-    st.write("If you have any questions or need help using the dashboard, our support team is here for you.")
-    st.write("Email: support@wspanalysis.com")
-    st.write("Phone: +1 (800) 123-4567")
-    
-    st.subheader("FAQ")
-    faq = {
-        "How do I upload my data?": "Navigate to the 'Upload Data' section and use the file uploader to select your Excel file.",
-        "What type of analysis can I perform?": "You can perform overview analysis, trend analysis, and comparative analysis in the 'Analysis' section.",
-        "How accurate are the predictions?": "The accuracy of predictions depends on the quality and quantity of your data. We provide performance metrics like Mean Squared Error and R-squared score to help you assess the accuracy.",
-        "Can I export my analysis results?": "Yes, you can download reports and charts from various sections of the dashboard.",
-        "Is my data secure?": "We take data security seriously. All
+# You can keep your existing main() function and other sections as they are
 def process_uploaded_file(uploaded_file):
     if (isinstance(uploaded_file, pd.DataFrame) or uploaded_file) and not st.session_state.file_processed:
         try:
