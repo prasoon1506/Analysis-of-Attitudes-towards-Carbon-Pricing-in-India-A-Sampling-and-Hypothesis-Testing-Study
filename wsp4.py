@@ -3126,42 +3126,32 @@ h1, h2, h3 {
 
 
 def main():
-    # Custom CSS for the sidebar and main content
     st.markdown("""
     <style>
     .sidebar .sidebar-content {
-        background-image: linear-gradient(#2c3e50, #34495e);
-        color: #ecf0f1;
+        background-image: linear-gradient(#2e7bcf,#2e7bcf);
+        color: white;
     }
     .sidebar-text {
-        color: #ecf0f1 !important;
+        color: white !important;
     }
     .stButton>button {
         width: 100%;
-        background-color: #3498db;
-        color: white;
     }
     .stProgress .st-bo {
-        background-color: #3498db;
+        background-color: #2e7bcf;
     }
     .stProgress .st-bp {
-        background-color: #ecf0f1;
+        background-color: white;
     }
     .settings-container {
-        background-color: #f5f5f5;
+        background-color: #f0f2f6;
         padding: 20px;
         border-radius: 10px;
         margin-top: 20px;
     }
-    .user-info {
-        padding: 10px;
-        background-color: rgba(236, 240, 241, 0.1);
-        border-radius: 5px;
-        margin-bottom: 20px;
-    }
     </style>
     """, unsafe_allow_html=True)
-
     st.sidebar.title("Analytics Dashboard")
 
     # User info display
