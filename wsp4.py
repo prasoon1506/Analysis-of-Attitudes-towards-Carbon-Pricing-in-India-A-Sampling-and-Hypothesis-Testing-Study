@@ -3182,7 +3182,7 @@ def main():
         text-align: center;
     }
     .visit-counter h3 {
-        color: pink;
+        color: black;
         font-size: 18px;
         margin-bottom: 10px;
     }
