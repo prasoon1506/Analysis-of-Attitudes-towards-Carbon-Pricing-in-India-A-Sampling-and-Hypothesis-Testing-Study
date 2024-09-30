@@ -3357,7 +3357,6 @@ def main():
     st.sidebar.markdown("---")
     st.sidebar.subheader("📢 Feedback")
     feedback = st.sidebar.text_area("Share your thoughts:")
-    col= st.sidebar.columns(1)
     if col.button("Submit Feedback"):
         # Here you would typically send this feedback to a database or email
         st.sidebar.success("Thank you for your valuable feedback!")
