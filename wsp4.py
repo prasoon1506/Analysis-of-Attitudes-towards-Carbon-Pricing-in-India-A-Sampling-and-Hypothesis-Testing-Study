@@ -2129,8 +2129,19 @@ def folder_menu():
     st.markdown('<div class="title"><span>Advanced File Manager</span></div>', unsafe_allow_html=True)
 
     # Load Lottie animation
-    lottie_url = "https://assets5.lottie-files.com/packages/lf20_V9t630.json"
-    lottie_json = load_lottie_url(lottie_url)
+    lottie_urls = [
+        "https://assets9.lottiefiles.com/packages/lf20_3vbOcw.json",  # File manager animation
+        "https://assets9.lottiefiles.com/packages/lf20_5lAtR7.json",  # Folder animation
+        "https://assets1.lottiefiles.com/packages/lf20_4djadwfo.json",  # Document management
+        "https://assets6.lottiefiles.com/packages/lf20_2a5yxpci.json"   # File transfer
+    ]
+
+    # Try loading Lottie animations
+    lottie_json = None
+    for url in lottie_urls:
+        lottie_json = load_lottie_url(url)
+        if lottie_json:
+            break
     
     col1, col2 = st.columns([1, 2])
     with col1:
