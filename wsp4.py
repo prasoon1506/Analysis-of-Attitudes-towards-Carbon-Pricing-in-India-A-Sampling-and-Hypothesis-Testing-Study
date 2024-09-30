@@ -3123,6 +3123,31 @@ h1, h2, h3 {
     - Descriptive statistics and share analysis
     - Customizable Green and Yellow share adjustments
     """)
+import streamlit as st
+from streamlit_option_menu import option_menu
+from datetime import datetime
+import json
+
+def load_visit_data():
+    try:
+        with open('visit_data.json', 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {'total_visits': 0, 'daily_visits': {}}
+
+def save_visit_data(data):
+    with open('visit_data.json', 'w') as f:
+        json.dump(data, f)
+
+def update_visit_count():
+    visit_data = load_visit_data()
+    today = datetime.now().strftime('%Y-%m-%d')
+    
+    visit_data['total_visits'] += 1
+    visit_data['daily_visits'][today] = visit_data['daily_visits'].get(today, 0) + 1
+    
+    save_visit_data(visit_data)
+    return visit_data['total_visits'], visit_data['daily_visits'][today]
 def main():
     # Custom CSS for the sidebar and main content
     st.markdown("""
@@ -3161,7 +3186,16 @@ def main():
         <i class="fas fa-user"></i> Logged in as: {st.session_state.username}
     </div>
     """, unsafe_allow_html=True)
-    # Sidebar menu using streamlit-option-menu
+    # Display visit counter in sidebar
+    total_visits, daily_visits = update_visit_count()
+    st.sidebar.markdown("""
+    <div class="visit-counter">
+        <h3>Visit Counter</h3>
+        <p>Total Visits: {}</p>
+        <p>Visits Today: {}</p>
+    </div>
+    """.format(total_visits, daily_visits), unsafe_allow_html=True)
+    
     with st.sidebar:
         selected = option_menu(
             menu_title="Main Menu",
