@@ -567,7 +567,7 @@ def load_lottie_url(url: str):
 import streamlit as st
 from streamlit_lottie import st_lottie
 import requests
-from streamlit_particles import particles
+from streamlit-particles import particles
 
 def load_lottie_url(url: str):
     r = requests.get(url)
