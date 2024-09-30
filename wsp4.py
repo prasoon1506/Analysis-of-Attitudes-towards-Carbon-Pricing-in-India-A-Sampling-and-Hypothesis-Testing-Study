@@ -3123,12 +3123,14 @@ h1, h2, h3 {
     - Descriptive statistics and share analysis
     - Customizable Green and Yellow share adjustments
     """)
+
+
 def main():
     # Custom CSS for the sidebar and main content
     st.markdown("""
     <style>
     .sidebar .sidebar-content {
-        background-image: linear-gradient(#2e7bcf,#2e7bcf);
+        background-image: linear-gradient(#2e7bcf,#1e5a9f);
         color: white;
     }
     .sidebar-text {
@@ -3149,10 +3151,26 @@ def main():
         border-radius: 10px;
         margin-top: 20px;
     }
+    .user-info {
+        padding: 10px;
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
     </style>
     """, unsafe_allow_html=True)
 
     st.sidebar.title("Analytics Dashboard")
+
+    # User info display
+    if 'username' not in st.session_state:
+        st.session_state.username = "Guest"
+
+    st.sidebar.markdown(f"""
+    <div class="user-info">
+        <i class="fas fa-user"></i> Logged in as: {st.session_state.username}
+    </div>
+    """, unsafe_allow_html=True)
 
     # Sidebar menu using streamlit-option-menu
     with st.sidebar:
@@ -3174,6 +3192,12 @@ def main():
             ],
             menu_icon="cast",
             default_index=0,
+            styles={
+                "container": {"padding": "5!important", "background-color":"#1e5a9f"},
+                "icon": {"color": "orange", "font-size": "25px"}, 
+                "nav-link": {"font-size": "16px", "text-align": "left", "margin":"0px", "--hover-color": "#4A4A4A"},
+                "nav-link-selected": {"background-color": "#2e7bcf"},
+            }
         )
 
     # Submenu based on main selection
@@ -3194,7 +3218,7 @@ def main():
         analysis_menu = option_menu(
             menu_title="Analysis Dashboards",
             options=["WSP Analysis", "Sales Dashboard", "Product-Mix", "Segment-Mix","Geo-Mix"],
-            icons=["clipboard-data", "cash", "arrow-up-right", "shuffle"],
+            icons=["clipboard-data", "cash", "arrow-up-right", "shuffle", "globe"],
             orientation="horizontal",
         )
         if analysis_menu == "WSP Analysis":
@@ -3224,9 +3248,11 @@ def main():
         
         # User Settings
         st.subheader("User Settings")
-        username = st.text_input("Username", value="JohnDoe")
+        username = st.text_input("Username", value=st.session_state.username)
         email = st.text_input("Email", value="johndoe@example.com")
-        st.button("Update Profile")
+        if st.button("Update Profile"):
+            st.session_state.username = username
+            st.success("Profile updated successfully!")
         
         # Appearance Settings
         st.subheader("Appearance")
@@ -3249,15 +3275,18 @@ def main():
     for i in range(100):
         progress_bar.progress(i + 1)
 
-
-
     # Add a feedback section
     st.sidebar.markdown("---")
     st.sidebar.subheader("Feedback")
     feedback = st.sidebar.text_area("Share your thoughts:")
     if st.sidebar.button("Submit Feedback"):
-        # Here you would typically send this feedback to a database or email
-        st.sidebar.success("Thank you for your feedback!")
+        if feedback:
+            # Here you would typically store this feedback in a database
+            # For now, we'll just acknowledge it
+            st.sidebar.success("Thank you for your feedback! It has been recorded.")
+            # You can add code here to store the feedback in a database or file
+        else:
+            st.sidebar.warning("Please enter your feedback before submitting.")
 
 if __name__ == "__main__":
     main()
