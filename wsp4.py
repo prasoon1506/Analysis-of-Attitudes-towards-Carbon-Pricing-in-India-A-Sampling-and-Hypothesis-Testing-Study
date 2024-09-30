@@ -3126,12 +3126,53 @@ def update_visit_count():
     
     save_visit_data(visit_data)
     return visit_data['total_visits'], visit_data['daily_visits'][today]
+def load_visit_data():
+    try:
+        with open('visit_data.json', 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {'total_visits': 0, 'daily_visits': {}}
+
+def save_visit_data(data):
+    with open('visit_data.json', 'w') as f:
+        json.dump(data, f)
+
+def update_visit_count():
+    visit_data = load_visit_data()
+    today = datetime.now().strftime('%Y-%m-%d')
+    
+    visit_data['total_visits'] += 1
+    visit_data['daily_visits'][today] = visit_data['daily_visits'].get(today, 0) + 1
+    
+    save_visit_data(visit_data)
+    return visit_data['total_visits'], visit_data['daily_visits'][today]
+
+def get_base64_of_bin_file(bin_file):
+    with open(bin_file, 'rb') as f:
+        data = f.read()
+    return base64.b64encode(data).decode()
+
+def set_png_as_page_bg(png_file):
+    bin_str = get_base64_of_bin_file(png_file)
+    page_bg_img = '''
+    <style>
+    .stApp {
+        background-image: url("data:image/png;base64,%s");
+        background-size: cover;
+    }
+    </style>
+    ''' % bin_str
+    st.markdown(page_bg_img, unsafe_allow_html=True)
+
 def main():
+    # Set background image (uncomment and replace 'background.png' with your image file)
+    # set_png_as_page_bg('background.png')
+
     # Custom CSS for the sidebar and main content
     st.markdown("""
     <style>
     .sidebar .sidebar-content {
-        background-image: linear-gradient(#2e7bcf,#2e7bcf);
+        background-image: linear-gradient(180deg, #2e7bcf 25%, #4527A0 100%);
         color: white;
     }
     .sidebar-text {
@@ -3139,52 +3180,76 @@ def main():
     }
     .stButton>button {
         width: 100%;
+        border-radius: 20px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        padding: 10px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+    .stButton>button:hover {
+        background-color: #45a049;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
     .stProgress .st-bo {
-        background-color: #2e7bcf;
+        background-color: #4CAF50;
     }
     .stProgress .st-bp {
-        background-color: white;
+        background-color: #E0E0E0;
     }
     .settings-container {
-        background-color: #f0f2f6;
+        background-color: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
         padding: 20px;
         border-radius: 10px;
         margin-top: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
     .visit-counter {
-        background-color: mistyrose;
+        background-color: rgba(255, 228, 225, 0.7);
         border-radius: 10px;
         padding: 15px;
         margin-top: 20px;
         text-align: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
     .visit-counter h3 {
-        color: black;
+        color: #333;
         font-size: 18px;
         margin-bottom: 10px;
     }
     .visit-counter p {
-        color: brown;
+        color: #8B4513;
         font-size: 14px;
         margin: 5px 0;
+    }
+    .user-info {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 10px;
+        margin-bottom: 20px;
     }
     </style>
     """, unsafe_allow_html=True)
 
     st.sidebar.title("Analytics Dashboard")
+    
+    # User info with avatar
     if 'username' not in st.session_state:
         st.session_state.username = "Guest"
-
+    
+    # You can replace this with an actual user avatar
+    avatar = Image.open("default_avatar.png")  # Make sure to have a default avatar image
+    st.sidebar.image(avatar, width=100)
+    
     st.sidebar.markdown(f"""
     <div class="user-info">
         <i class="fas fa-user"></i> Logged in as: {st.session_state.username}
     </div>
     """, unsafe_allow_html=True)
-    # Display visit counter in sidebar
-    total_visits, daily_visits = update_visit_count()
-    
-    
+
+    # Main menu with icons and hover effects
     with st.sidebar:
         selected = option_menu(
             menu_title="Main Menu",
@@ -3196,14 +3261,20 @@ def main():
                 "Settings"
             ],
             icons=[
-                "house", 
-                "database-gear", 
-                "graph-up", 
-                "lightbulb", 
-                "gear"
+                "house-fill", 
+                "database-fill-gear", 
+                "graph-up-arrow", 
+                "lightbulb-fill", 
+                "gear-fill"
             ],
             menu_icon="cast",
             default_index=0,
+            styles={
+                "container": {"padding": "0!important", "background-color": "transparent"},
+                "icon": {"color": "orange", "font-size": "20px"}, 
+                "nav-link": {"font-size": "16px", "text-align": "left", "margin":"0px", "--hover-color": "#eee"},
+                "nav-link-selected": {"background-color": "rgba(255, 255, 255, 0.2)"},
+            }
         )
 
     # Submenu based on main selection
@@ -3224,7 +3295,7 @@ def main():
         analysis_menu = option_menu(
             menu_title="Analysis Dashboards",
             options=["WSP Analysis", "Sales Dashboard", "Product-Mix", "Segment-Mix","Geo-Mix"],
-            icons=["clipboard-data", "cash", "arrow-up-right", "shuffle"],
+            icons=["clipboard-data", "cash", "arrow-up-right", "shuffle", "globe"],
             orientation="horizontal",
         )
         if analysis_menu == "WSP Analysis":
@@ -3254,7 +3325,7 @@ def main():
         
         # User Settings
         st.subheader("User Settings")
-        username = st.text_input("Username", value="Guest")
+        username = st.text_input("Username", value=st.session_state.username)
         email = st.text_input("Email", value="johndoe@example.com")
         if st.button("Update Profile"):
             st.session_state.username = username
@@ -3276,29 +3347,48 @@ def main():
         
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # Add a progress bar to show app loading status
-    progress_bar = st.sidebar.progress(0)
-    for i in range(100):
-        progress_bar.progress(i + 1)
+    # Add a stylish progress bar
+    with st.sidebar:
+        st.markdown("### Loading Progress")
+        progress_bar = st.progress(0)
+        for i in range(100):
+            progress_bar.progress(i + 1)
 
-
-
-    # Add a feedback section
+    # Enhanced feedback section
     st.sidebar.markdown("---")
-    st.sidebar.subheader("Feedback")
+    st.sidebar.subheader("📢 Feedback")
     feedback = st.sidebar.text_area("Share your thoughts:")
-    if st.sidebar.button("Submit Feedback"):
+    col1, col2 = st.sidebar.columns(2)
+    if col1.button("Submit Feedback"):
         # Here you would typically send this feedback to a database or email
-        st.sidebar.success("Thank you for your feedback!")
-    # Display visit counter in sidebar
+        st.sidebar.success("Thank you for your valuable feedback!")
+    if col2.button("Clear"):
+        st.session_state.feedback = ""
+        st.experimental_rerun()
+
+    # Display visit counter with animations
     total_visits, daily_visits = update_visit_count()
-    st.sidebar.markdown("""
+    st.sidebar.markdown(f"""
     <div class="visit-counter">
-        <h3>Visit Counter</h3>
-        <p>Total Visits: {}</p>
-        <p>Visits Today: {}</p>
+        <h3>📊 Visit Statistics</h3>
+        <p>Total Visits: <span class="count">{total_visits}</span></p>
+        <p>Visits Today: <span class="count">{daily_visits}</span></p>
     </div>
-    """.format(total_visits, daily_visits), unsafe_allow_html=True)
+    <script>
+        const countElements = document.querySelectorAll('.count');
+        countElements.forEach(element => {{
+            const target = parseInt(element.innerText);
+            let count = 0;
+            const timer = setInterval(() => {{
+                element.innerText = count;
+                if (count === target) {{
+                    clearInterval(timer);
+                }}
+                count++;
+            }}, 20);
+        }});
+    </script>
+    """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
