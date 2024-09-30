@@ -3231,7 +3231,7 @@ def main():
         
         # User Settings
         st.subheader("User Settings")
-        username = st.text_input("Username", value="JohnDoe")
+        username = st.text_input("Username", value="Guest")
         email = st.text_input("Email", value="johndoe@example.com")
         if st.button("Update Profile"):
             st.session_state.username = username
