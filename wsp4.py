@@ -3130,30 +3130,32 @@ def main():
     st.markdown("""
     <style>
     .sidebar .sidebar-content {
-        background-image: linear-gradient(#2e7bcf,#1e5a9f);
-        color: white;
+        background-image: linear-gradient(#2c3e50, #34495e);
+        color: #ecf0f1;
     }
     .sidebar-text {
-        color: white !important;
+        color: #ecf0f1 !important;
     }
     .stButton>button {
         width: 100%;
+        background-color: #3498db;
+        color: white;
     }
     .stProgress .st-bo {
-        background-color: #2e7bcf;
+        background-color: #3498db;
     }
     .stProgress .st-bp {
-        background-color: white;
+        background-color: #ecf0f1;
     }
     .settings-container {
-        background-color: #f0f2f6;
+        background-color: #f5f5f5;
         padding: 20px;
         border-radius: 10px;
         margin-top: 20px;
     }
     .user-info {
         padding: 10px;
-        background-color: rgba(255, 255, 255, 0.1);
+        background-color: rgba(236, 240, 241, 0.1);
         border-radius: 5px;
         margin-bottom: 20px;
     }
@@ -3193,10 +3195,10 @@ def main():
             menu_icon="cast",
             default_index=0,
             styles={
-                "container": {"padding": "5!important", "background-color":"#1e5a9f"},
-                "icon": {"color": "orange", "font-size": "25px"}, 
-                "nav-link": {"font-size": "16px", "text-align": "left", "margin":"0px", "--hover-color": "#4A4A4A"},
-                "nav-link-selected": {"background-color": "#2e7bcf"},
+                "container": {"padding": "5!important", "background-color":"#34495e"},
+                "icon": {"color": "#3498db", "font-size": "25px"}, 
+                "nav-link": {"font-size": "16px", "text-align": "left", "margin":"0px", "--hover-color": "#2c3e50"},
+                "nav-link-selected": {"background-color": "#2c3e50"},
             }
         )
 
@@ -3257,7 +3259,7 @@ def main():
         # Appearance Settings
         st.subheader("Appearance")
         theme = st.selectbox("Theme", ["Light", "Dark", "System Default"])
-        chart_color = st.color_picker("Default Chart Color", "#2e7bcf")
+        chart_color = st.color_picker("Default Chart Color", "#3498db")
         
         # Notification Settings
         st.subheader("Notifications")
@@ -3281,10 +3283,7 @@ def main():
     feedback = st.sidebar.text_area("Share your thoughts:")
     if st.sidebar.button("Submit Feedback"):
         if feedback:
-            # Here you would typically store this feedback in a database
-            # For now, we'll just acknowledge it
             st.sidebar.success("Thank you for your feedback! It has been recorded.")
-            # You can add code here to store the feedback in a database or file
         else:
             st.sidebar.warning("Please enter your feedback before submitting.")
 
