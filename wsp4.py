@@ -3346,13 +3346,6 @@ def main():
         
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # Add a stylish progress bar
-    with st.sidebar:
-        st.markdown("### Loading Progress")
-        progress_bar = st.progress(0)
-        for i in range(100):
-            progress_bar.progress(i + 1)
-
     # Enhanced feedback section
     st.sidebar.markdown("---")
     st.sidebar.subheader("📢 Feedback")
