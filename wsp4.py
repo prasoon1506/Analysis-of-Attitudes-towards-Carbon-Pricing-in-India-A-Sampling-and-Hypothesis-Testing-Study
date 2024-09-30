@@ -1,4 +1,5 @@
 import os
+from PIL import Image
 from datetime import datetime
 from streamlit_option_menu import option_menu
 import shutil
