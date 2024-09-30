@@ -3138,7 +3138,6 @@ def load_visit_data():
 def save_visit_data(data):
     with open('visit_data.json', 'w') as f:
         json.dump(data, f)
-
 def update_visit_count():
     visit_data = load_visit_data()
     today = datetime.now().strftime('%Y-%m-%d')
