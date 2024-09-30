@@ -3240,9 +3240,7 @@ def main():
     if 'username' not in st.session_state:
         st.session_state.username = "Guest"
     
-    # You can replace this with an actual user avatar
-    avatar = Image.open("default_avatar.png")  # Make sure to have a default avatar image
-    st.sidebar.image(avatar, width=100)
+
     
     st.sidebar.markdown(f"""
     <div class="user-info">
