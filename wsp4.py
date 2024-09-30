@@ -2133,7 +2133,10 @@ def folder_menu():
     
     col1, col2 = st.columns([1, 2])
     with col1:
-        st_lottie(lottie_json, height=200, key="file_animation")
+        if lottie_json:
+           st_lottie(lottie_json, height=200, key="file_animation")
+        else:
+           st.image("https://via.placeholder.com/200x200.png?text=File+Manager", use_column_width=True)
     with col2:
         st.markdown("""
         Welcome to the Advanced File Manager! 
