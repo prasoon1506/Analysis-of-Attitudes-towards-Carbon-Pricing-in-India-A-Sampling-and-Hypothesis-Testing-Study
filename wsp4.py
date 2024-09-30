@@ -1301,31 +1301,7 @@ def create_prediction_table(prediction_data):
         ('GRID', (0, 0), (-1, -1), 1, colors.black)
     ]))
     return table
-
-
-
-
 from urllib.parse import quote
-
-def generate_shareable_link(file_path):
-    """Generate a shareable link for the file."""
-    # In a real-world scenario, you would upload the file to a cloud storage service
-    # and generate a shareable link. For this example, we'll create a dummy link.
-    file_name = os.path.basename(file_path)
-    encoded_file_name = quote(file_name)
-    return f"https://your-file-sharing-service.com/files/{encoded_file_name}"
-def get_online_editor_url(file_extension):
-    """Get the appropriate online editor URL based on file extension."""
-    extension_mapping = {
-        '.xlsx': 'https://www.office.com/launch/excel?auth=2',
-        '.xls': 'https://www.office.com/launch/excel?auth=2',
-        '.doc': 'https://www.office.com/launch/word?auth=2',
-        '.docx': 'https://www.office.com/launch/word?auth=2',
-        '.ppt': 'https://www.office.com/launch/powerpoint?auth=2',
-        '.pptx': 'https://www.office.com/launch/powerpoint?auth=2',
-        '.pdf': 'https://documentcloud.adobe.com/link/home/'
-    }
-    return extension_mapping.get(file_extension.lower(), 'https://www.google.com/drive/')
 @st.cache_data
 def load_data(uploaded_file):
     df = pd.read_excel(uploaded_file)
@@ -2061,6 +2037,22 @@ def sales_prediction_app():
         For any questions or support, please contact our team at support@salespredictionapp.com
         """)
 
+def generate_shareable_link(file_path):
+    file_name = os.path.basename(file_path)
+    encoded_file_name = quote(file_name)
+    return f"https://your-file-sharing-service.com/files/{encoded_file_name}"
+
+def get_online_editor_url(file_extension):
+    extension_mapping = {
+        '.xlsx': 'https://www.office.com/launch/excel?auth=2',
+        '.xls': 'https://www.office.com/launch/excel?auth=2',
+        '.doc': 'https://www.office.com/launch/word?auth=2',
+        '.docx': 'https://www.office.com/launch/word?auth=2',
+        '.ppt': 'https://www.office.com/launch/powerpoint?auth=2',
+        '.pptx': 'https://www.office.com/launch/powerpoint?auth=2',
+        '.pdf': 'https://documentcloud.adobe.com/link/home/'
+    }
+    return extension_mapping.get(file_extension.lower(), 'https://www.google.com/drive/')
 
 def folder_menu():
     st.markdown("""
@@ -2109,13 +2101,27 @@ def folder_menu():
         border-radius: 10px;
         margin-bottom: 20px;
     }
+    .todo-section {
+        background-color: #f0f8ff;
+        padding: 20px;
+        border-radius: 10px;
+        margin-top: 20px;
+    }
+    .todo-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    .todo-text {
+        margin-left: 10px;
+    }
     </style>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="title"><span>Interactive File Manager</span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="title"><span>Advanced File Manager</span></div>', unsafe_allow_html=True)
 
     # Load Lottie animation
-    lottie_url = "https://assets5.lottiefiles.com/packages/lf20_V9t630.json"
+    lottie_url = "https://assets5.lottie-files.com/packages/lf20_V9t630.json"
     lottie_json = load_lottie_url(lottie_url)
     
     col1, col2 = st.columns([1, 2])
@@ -2123,9 +2129,9 @@ def folder_menu():
         st_lottie(lottie_json, height=200, key="file_animation")
     with col2:
         st.markdown("""
-        Welcome to the Interactive File Manager! 
+        Welcome to the Advanced File Manager! 
         Here you can upload, download, and manage your files with ease. 
-        Enjoy the smooth animations and user-friendly interface.
+        Enjoy the smooth animations, user-friendly interface, and new features like file search and sorting.
         """)
 
     # Create a folder to store uploaded files if it doesn't exist
@@ -2134,7 +2140,7 @@ def folder_menu():
 
     # File uploader
     st.markdown('<div class="upload-section">', unsafe_allow_html=True)
-    uploaded_file = st.file_uploader("Upload a file", type=["xlsx", "xls", "doc", "docx", "pdf", "ppt", "pptx"])
+    uploaded_file = st.file_uploader("Upload a file", type=["xlsx", "xls", "doc", "docx", "pdf", "ppt", "pptx", "txt", "csv"])
     if uploaded_file is not None:
         file_details = {"FileName": uploaded_file.name, "FileType": uploaded_file.type, "FileSize": uploaded_file.size}
         
@@ -2147,19 +2153,38 @@ def folder_menu():
     # Display uploaded files
     st.subheader("Your Files")
     
+    # File search and sorting
+    search_query = st.text_input("Search files", "")
+    sort_option = st.selectbox("Sort by", ["Name", "Size", "Date Modified"])
+
     # Use session state to track file deletion
     if 'files_to_delete' not in st.session_state:
         st.session_state.files_to_delete = set()
 
-    for filename in os.listdir("uploaded_files"):
+    files = os.listdir("uploaded_files")
+    
+    # Apply search filter
+    if search_query:
+        files = [f for f in files if search_query.lower() in f.lower()]
+    
+    # Apply sorting
+    if sort_option == "Name":
+        files.sort()
+    elif sort_option == "Size":
+        files.sort(key=lambda x: os.path.getsize(os.path.join("uploaded_files", x)), reverse=True)
+    elif sort_option == "Date Modified":
+        files.sort(key=lambda x: os.path.getmtime(os.path.join("uploaded_files", x)), reverse=True)
+
+    for filename in files:
         file_path = os.path.join("uploaded_files", filename)
         file_stats = os.stat(file_path)
         
         st.markdown(f'<div class="file-box">', unsafe_allow_html=True)
-        col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
+        col1, col2, col3, col4, col5 = st.columns([3, 1, 1, 1, 1])
         with col1:
             st.markdown(f"<h3>{filename}</h3>", unsafe_allow_html=True)
             st.text(f"Size: {file_stats.st_size / 1024:.2f} KB")
+            st.text(f"Modified: {datetime.fromtimestamp(file_stats.st_mtime).strftime('%Y-%m-%d %H:%M:%S')}")
         with col2:
             if st.button(f"📥 Download", key=f"download_{filename}"):
                 with open(file_path, "rb") as file:
@@ -2173,8 +2198,10 @@ def folder_menu():
         with col4:
             file_extension = os.path.splitext(filename)[1]
             editor_url = get_online_editor_url(file_extension)
-            shareable_link = generate_shareable_link(file_path)
             st.markdown(f"[🌐 Open Online]({editor_url})")
+        with col5:
+            shareable_link = generate_shareable_link(file_path)
+            st.markdown(f"[🔗 Share]({shareable_link})")
         st.markdown('</div>', unsafe_allow_html=True)
 
     # Process file deletion
@@ -2195,6 +2222,38 @@ def folder_menu():
 
     st.info("Note: The 'Open Online' links will redirect you to the appropriate online editor. You may need to manually open your file once there.")
 
+    # To-Do List / Diary Section
+    st.markdown('<div class="todo-section">', unsafe_allow_html=True)
+    st.subheader("📝 To-Do List / Diary")
+
+    # Load existing to-do items
+    if 'todo_items' not in st.session_state:
+        st.session_state.todo_items = []
+
+    # Add new to-do item
+    new_item = st.text_input("Add a new to-do item or diary entry")
+    if st.button("Add"):
+        if new_item:
+            st.session_state.todo_items.append({"text": new_item, "done": False, "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")})
+            st.success("Item added successfully!")
+
+    # Display and manage to-do items
+    for idx, item in enumerate(st.session_state.todo_items):
+        col1, col2, col3 = st.columns([0.1, 3, 1])
+        with col1:
+            done = st.checkbox("", item["done"], key=f"todo_{idx}")
+            if done != item["done"]:
+                st.session_state.todo_items[idx]["done"] = done
+        with col2:
+            st.markdown(f"<div class='todo-text'>{'<s>' if item['done'] else ''}{item['text']}{'</s>' if item['done'] else ''}</div>", unsafe_allow_html=True)
+        with col3:
+            st.text(item["date"])
+        if st.button("Delete", key=f"delete_todo_{idx}"):
+            st.session_state.todo_items.pop(idx)
+            st.rerun()
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
     # Add a fun fact section
     st.markdown("---")
     st.subheader("📚 Fun File Fact")
@@ -2207,8 +2266,8 @@ def folder_menu():
     ]
     st.markdown(f"*{fun_facts[int(os.urandom(1)[0]) % len(fun_facts)]}*")
 
-
-
+if __name__ == "__main__":
+    folder_menu()
 def load_lottieurl(url: str):
     r = requests.get(url)
     if r.status_code != 200:
