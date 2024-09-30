@@ -2276,9 +2276,6 @@ def folder_menu():
         "The first widely-used image format on the web was GIF, created in 1987."
     ]
     st.markdown(f"*{fun_facts[int(os.urandom(1)[0]) % len(fun_facts)]}*")
-
-if __name__ == "__main__":
-    folder_menu()
 def load_lottieurl(url: str):
     r = requests.get(url)
     if r.status_code != 200:
