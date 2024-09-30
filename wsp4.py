@@ -564,249 +564,171 @@ def load_lottie_url(url: str):
     if r.status_code != 200:
         return None
     return r.json()
-
-import streamlit as st
-from streamlit_lottie import st_lottie
-import requests
-
-
-def load_lottie_url(url: str):
-    r = requests.get(url)
-    if r.status_code != 200:
-        return None
-    return r.json()
-
 def Home():
-    # Advanced CSS Styles
+    # Custom CSS with more modern and professional styling
     st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap');
     
-    :root {
-        --primary-color: #3A86FF;
-        --secondary-color: #FF006E;
-        --background-color: #0A1929;
-        --text-color: #ffffff;
-        --card-background: rgba(255, 255, 255, 0.05);
-    }
-
     body {
-        font-family: 'Poppins', sans-serif;
-        background-color: var(--background-color);
-        color: var(--text-color);
+        font-family: 'Roboto', sans-serif;
+        background-color: #f5f7fa;
+        color: #333;
     }
-
-    .stApp {
-        background: linear-gradient(135deg, #0A1929 0%, #0F2942 100%);
-    }
-
     .title {
         font-size: 3.5rem;
         font-weight: 700;
-        background: linear-gradient(120deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        color: #2c3e50;
         text-align: center;
         padding: 2rem 0;
         margin-bottom: 2rem;
+        background: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
     }
-
     .subtitle {
         font-size: 1.5rem;
         font-weight: 300;
-        color: #b8c1ec;
+        color: #34495e;
         text-align: center;
         margin-bottom: 2rem;
     }
-
-    .glassmorphism {
-        background: var(--card-background);
-        backdrop-filter: blur(10px);
-        border-radius: 10px;
+    .section-box {
+        background-color: #ffffff;
+        border-radius: 8px;
         padding: 2rem;
         margin-bottom: 2rem;
-        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-        border: 1px solid rgba(255, 255, 255, 0.18);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         transition: all 0.3s ease;
     }
-
-    .glassmorphism:hover {
+    .section-box:hover {
         transform: translateY(-5px);
-        box-shadow: 0 12px 48px 0 rgba(59, 59, 152, 0.5);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
     }
-
-    .btn-primary {
-        background-color: var(--primary-color);
-        color: white;
-        padding: 0.7rem 1.5rem;
-        border-radius: 25px;
-        border: none;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        display: inline-block;
-        margin: 0.5rem;
-        text-decoration: none;
-    }
-
-    .btn-secondary {
-        background-color: var(--secondary-color);
-        color: white;
-        padding: 0.7rem 1.5rem;
-        border-radius: 25px;
-        border: none;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        display: inline-block;
-        margin: 0.5rem;
-        text-decoration: none;
-    }
-
-    .btn-primary:hover, .btn-secondary:hover {
-        opacity: 0.8;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-    }
-
-    .feature-card {
-        background: rgba(255, 255, 255, 0.1);
+    .upload-section {
+        background: linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%);
+        padding: 2rem;
         border-radius: 8px;
-        padding: 1.5rem;
-        text-align: center;
-        transition: all 0.3s ease;
-        height: 100%;
+        margin-bottom: 2rem;
     }
-
-    .feature-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 5px 15px rgba(255, 255, 255, 0.1);
+    .btn-primary {
+        background-color: #3498db;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 5px;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
     }
-
-    .feature-icon {
-        font-size: 2.5rem;
-        margin-bottom: 1rem;
-        color: var(--primary-color);
-    }
-
-    .feature-title {
-        font-size: 1.2rem;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-    }
-
-    .feature-description {
-        font-size: 0.9rem;
-        color: #b8c1ec;
+    .btn-primary:hover {
+        background-color: #2980b9;
     }
     </style>
     """, unsafe_allow_html=True)
 
-    # Particles background
-    particles(
-        options={
-            "particles": {
-                "number": {"value": 50, "density": {"enable": True, "value_area": 800}},
-                "color": {"value": "#ffffff"},
-                "shape": {"type": "circle", "stroke": {"width": 0, "color": "#000000"}, "polygon": {"nb_sides": 5}},
-                "opacity": {"value": 0.5, "random": False, "anim": {"enable": False, "speed": 1, "opacity_min": 0.1, "sync": False}},
-                "size": {"value": 3, "random": True, "anim": {"enable": False, "speed": 40, "size_min": 0.1, "sync": False}},
-                "line_linked": {"enable": True, "distance": 150, "color": "#ffffff", "opacity": 0.4, "width": 1},
-                "move": {"enable": True, "speed": 6, "direction": "none", "random": False, "straight": False, "out_mode": "out", "bounce": False, "attract": {"enable": False, "rotateX": 600, "rotateY": 1200}}
-            },
-            "interactivity": {
-                "detect_on": "canvas",
-                "events": {
-                    "onhover": {"enable": True, "mode": "repulse"},
-                    "onclick": {"enable": True, "mode": "push"},
-                    "resize": True
-                },
-                "modes": {
-                    "grab": {"distance": 400, "line_linked": {"opacity": 1}},
-                    "bubble": {"distance": 400, "size": 40, "duration": 2, "opacity": 8, "speed": 3},
-                    "repulse": {"distance": 200, "duration": 0.4},
-                    "push": {"particles_nb": 4},
-                    "remove": {"particles_nb": 2}
-                }
-            },
-            "retina_detect": True
-        }
-    )
-
     # Main title and subtitle
     st.markdown('<h1 class="title">WSP Analysis Dashboard</h1>', unsafe_allow_html=True)
-    st.markdown('<p class="subtitle">Empowering decisions with advanced AI-driven analytics</p>', unsafe_allow_html=True)
+    st.markdown('<p class="subtitle">Unlock insights from your Whole Sale Price data across brands, regions, and districts.</p>', unsafe_allow_html=True)
 
-    # Main content
-    st.markdown('<div class="glassmorphism">', unsafe_allow_html=True)
+    # Load and display Lottie animation
+    lottie_url = "https://assets9.lottiefiles.com/packages/lf20_jcikwtux.json"
+    lottie_json = load_lottie_url(lottie_url)
+
     col1, col2 = st.columns([1, 2])
     with col1:
-        lottie_url = "https://assets3.lottiefiles.com/private_files/lf30_p9tieap9.json"
-        lottie_json = load_lottie_url(lottie_url)
-        st_lottie(lottie_json, height=300, key="dashboard_animation")
+        st_lottie(lottie_json, height=250, key="home_animation")
     with col2:
         st.markdown("""
-        <h3>Transform Your WSP Data into Actionable Insights</h3>
-        <p>Our cutting-edge AI-powered platform offers:</p>
+        <div class="section-box">
+        <h3>Welcome to Your Data Analysis Journey!</h3>
+        <p>Our interactive dashboard empowers you to:</p>
         <ul>
-            <li>Real-time data processing and analysis</li>
-            <li>Advanced pattern recognition across vast datasets</li>
-            <li>Predictive modeling with high accuracy</li>
-            <li>Customizable dashboards for tailored insights</li>
-            <li>Seamless integration with your existing systems</li>
+            <li>Upload and process your WSP data effortlessly</li>
+            <li>Visualize trends across different brands and regions</li>
+            <li>Generate descriptive statistics and predictions</li>
+            <li>Make data-driven decisions with confidence</li>
         </ul>
+        </div>
         """, unsafe_allow_html=True)
+
+    # How to use section
+    st.markdown("""
+    <div class="section-box">
+    <h3>How to Use This Dashboard</h3>
+    <ol>
+        <li><strong>Upload Your Data:</strong> Start by uploading your Excel file containing the WSP data.</li>
+        <li><strong>Enter Week Names:</strong> Provide names for each week column in your dataset.</li>
+        <li><strong>Choose Your Analysis:</strong> Navigate to either the WSP Analysis Dashboard or Descriptive Statistics and Prediction sections.</li>
+        <li><strong>Customize and Explore:</strong> Select your analysis parameters and generate valuable insights!</li>
+    </ol>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # File upload section
+    st.markdown('<div class="upload-section">', unsafe_allow_html=True)
+    st.subheader("Upload Your Data")
+
+    if 'file_processed' not in st.session_state:
+        st.session_state.file_processed = False
+    if 'file_ready' not in st.session_state:
+        st.session_state.file_ready = False
+
+    uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx"],key="wsp_data")
+    if 'edited_df' in st.session_state and 'edited_file_name' in st.session_state and not st.session_state.edited_df.empty:
+        st.success(f"Edited file uploaded: {st.session_state.edited_file_name}")
+        if st.button("Process Edited File", key="process_edited"):
+            process_uploaded_file(st.session_state.edited_df)
+
+    elif uploaded_file:
+        st.success(f"File uploaded: {uploaded_file.name}")
+        if st.button("Process Uploaded File", key="process_uploaded"):
+            process_uploaded_file(uploaded_file)
+
+    if st.session_state.file_ready:
+        st.markdown("### Enter Week Names")
+        num_weeks = st.session_state.num_weeks
+        num_columns = min(4, num_weeks)  # Limit to 4 columns for better layout
+        week_cols = st.columns(num_columns)
+
+        for i in range(num_weeks):
+            with week_cols[i % num_columns]:
+                st.session_state.week_names_input[i] = st.text_input(
+                    f'Week {i+1}', 
+                    value=st.session_state.week_names_input[i],
+                    key=f'week_{i}'
+                )
+        
+        if st.button("Confirm Week Names", key="confirm_weeks"):
+            if all(st.session_state.week_names_input):
+                st.session_state.file_processed = True
+                st.success("File processed successfully! You can now proceed to the analysis sections.")
+            else:
+                st.warning("Please fill in all week names before confirming.")
+
+    if st.session_state.file_processed:
+        st.success("File processed successfully! You can now proceed to the analysis sections.")
+    else:
+        st.info("Please upload a file and fill in all week names to proceed with the analysis.")
+
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Feature highlights
-    st.subheader("Discover Our Powerful Features")
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.markdown("""
-        <div class="feature-card">
-            <div class="feature-icon">📊</div>
-            <div class="feature-title">Advanced Analytics</div>
-            <div class="feature-description">Leverage AI-driven insights to make data-informed decisions.</div>
-        </div>
-        """, unsafe_allow_html=True)
-    with col2:
-        st.markdown("""
-        <div class="feature-card">
-            <div class="feature-icon">🔮</div>
-            <div class="feature-title">Predictive Modeling</div>
-            <div class="feature-description">Forecast trends and anticipate market changes with precision.</div>
-        </div>
-        """, unsafe_allow_html=True)
-    with col3:
-        st.markdown("""
-        <div class="feature-card">
-            <div class="feature-icon">🔄</div>
-            <div class="feature-title">Real-Time Updates</div>
-            <div class="feature-description">Stay ahead with live data processing and instant insights.</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    # Call-to-action
+    # Help section
     st.markdown("""
-    <div style="text-align: center; margin-top: 2rem;">
-        <a href="#" class="btn-primary">Start Your Free Trial</a>
-        <a href="#" class="btn-secondary">Schedule a Demo</a>
+    <div class="section-box">
+    <h3>Need Assistance?</h3>
+    <p>If you have any questions or need help using the dashboard, our support team is here for you. Don't hesitate to reach out!</p>
+    <p>Email: </p>
+    <p>Phone: +91 9219393559</p>
     </div>
     """, unsafe_allow_html=True)
 
-    # Testimonial
+    # Footer
     st.markdown("""
-    <div class="glassmorphism" style="text-align: center;">
-        <h4>What Our Clients Say</h4>
-        <p style="font-style: italic;">"The WSP Analysis Dashboard has revolutionized our pricing strategy. We've seen a 30% increase in profitability since implementation."</p>
-        <p><strong>- John Doe, CEO of XYZ Corp</strong></p>
+    <div style="text-align: center; margin-top: 2rem; padding: 1rem; background-color: #34495e; color: #ecf0f1;">
+    <p>© 2024 WSP Analysis Dashboard. All rights reserved.</p>
     </div>
     """, unsafe_allow_html=True)
 
-# You can keep your existing main() function and other sections as they are
 def process_uploaded_file(uploaded_file):
     if (isinstance(uploaded_file, pd.DataFrame) or uploaded_file) and not st.session_state.file_processed:
         try:
