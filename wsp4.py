@@ -2036,7 +2036,14 @@ def sales_prediction_app():
         
         For any questions or support, please contact our team at support@salespredictionapp.com
         """)
-
+def load_lottie_url(url: str):
+    try:
+        r = requests.get(url)
+        if r.status_code != 200:
+            return None
+        return r.json()
+    except:
+        return None
 def generate_shareable_link(file_path):
     file_name = os.path.basename(file_path)
     encoded_file_name = quote(file_name)
