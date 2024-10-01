@@ -252,12 +252,6 @@ def data_analyzer():
         st.write(f"p-value: {p_value:.4f}")
         st.write("Null hypothesis: Homoscedasticity")
         st.write(f"{'Reject' if p_value < 0.05 else 'Fail to reject'} the null hypothesis at 5% significance level.")
-        
-        st.write("Ljung-Box Test for Autocorrelation")
-        lb_result = acorr_ljungbox(model.resid, lags=[1])
-        st.write(f"p-value: {lb_result['lb_pvalue'][0]:.4f}")
-        st.write("Null hypothesis: No autocorrelation")
-        st.write(f"{'Reject' if lb_result['lb_pvalue'][0] < 0.05 else 'Fail to reject'} the null hypothesis at 5% significance level.")
 
     else:
         st.info("Please upload an Excel file to begin analysis.")
