@@ -120,33 +120,63 @@ def excel_editor():
     st.subheader("Excel Editor")
     
     uploaded_file = st.file_uploader("Choose an Excel file for editing", type="xlsx")
-    
     if uploaded_file is not None:
+        # Read Excel file
         excel_file = openpyxl.load_workbook(uploaded_file)
         sheet = excel_file.active
-        
-        st.write("Original Excel Structure (First 5 Rows)")
+
+        # Display original Excel structure (first 5 rows)
+        st.subheader("Original Excel Structure (First 5 Rows)")
         excel_html = create_excel_structure_html(sheet, max_rows=5)
         st.markdown(excel_html, unsafe_allow_html=True)
-        
+
+        # Get merged column groups
         merged_groups = get_merged_column_groups(sheet)
-        df = create_dataframe_from_excel(uploaded_file, merged_groups)
-        
+
+        # Create a list of column headers, considering merged cells
+        column_headers = []
+        column_indices = OrderedDict()  # To store the column indices for each header
+        for col in range(1, sheet.max_column + 1):
+            cell_value = sheet.cell(1, col).value
+            if cell_value is not None:
+                column_headers.append(cell_value)
+                if cell_value not in column_indices:
+                    column_indices[cell_value] = []
+                column_indices[cell_value].append(col - 1)  # pandas uses 0-based index
+            else:
+                # If the cell is empty, it's part of a merged cell, so use the previous header
+                prev_header = column_headers[-1]
+                column_headers.append(prev_header)
+                column_indices[prev_header].append(col - 1)
+
+        # Read as pandas DataFrame using the correct column headers
+        df = pd.read_excel(uploaded_file, header=None, names=column_headers)
+        df = df.iloc[1:]  # Remove the first row as it's now our header
+
+        # Column selection for deletion
         st.subheader("Select columns to delete")
-        cols_to_delete = st.multiselect("Choose columns to remove", df.columns)
-        if cols_to_delete:
-            df = df.drop(columns=cols_to_delete)
-            st.success(f"Deleted columns: {', '.join(cols_to_delete)}")
+        all_columns = list(column_indices.keys())  # Use OrderedDict keys to maintain order
+        cols_to_delete = st.multiselect("Choose columns to remove", all_columns)
         
+        if cols_to_delete:
+            columns_to_remove = []
+            for col in cols_to_delete:
+                columns_to_remove.extend(column_indices[col])
+            
+            df = df.drop(df.columns[columns_to_remove], axis=1)
+            st.success(f"Deleted columns: {', '.join(cols_to_delete)}")
+
+        # Row deletion
         st.subheader("Delete rows")
         num_rows = st.number_input("Enter the number of rows to delete from the start", min_value=0, max_value=len(df)-1, value=0)
+        
         if num_rows > 0:
             df = df.iloc[num_rows:]
             st.success(f"Deleted first {num_rows} rows")
         
+        # Display editable dataframe
         st.subheader("Edit Data")
-        edited_df = st.data_editor(df)
-        
+        st.write("You can edit individual cell values directly in the table below:")
         st.markdown(get_excel_download_link(edited_df), unsafe_allow_html=True)
         
         if st.button("Upload Edited File to Home"):
@@ -229,57 +259,35 @@ def data_analyzer():
 
     else:
         st.info("Please upload an Excel file to begin analysis.")
+ def create_excel_structure_html(sheet, max_rows=5):
+        html = "<table class='excel-table'>"
+        merged_cells = sheet.merged_cells.ranges
 
-def create_excel_structure_html(sheet, max_rows=5):
-    html = "<table class='excel-table'>"
-    merged_cells = sheet.merged_cells.ranges
-
-    for idx, row in enumerate(sheet.iter_rows(max_row=max_rows)):
-        html += "<tr>"
-        for cell in row:
-            merged = False
-            for merged_range in merged_cells:
-                if cell.coordinate in merged_range:
-                    if cell.coordinate == merged_range.start_cell.coordinate:
-                        rowspan = min(merged_range.max_row - merged_range.min_row + 1, max_rows - idx)
-                        colspan = merged_range.max_col - merged_range.min_col + 1
-                        html += f"<td rowspan='{rowspan}' colspan='{colspan}'>{cell.value}</td>"
-                    merged = True
-                    break
-            if not merged:
-                html += f"<td>{cell.value}</td>"
-        html += "</tr>"
-    html += "</table>"
-    return html
-
+        for idx, row in enumerate(sheet.iter_rows(max_row=max_rows)):
+            html += "<tr>"
+            for cell in row:
+                merged = False
+                for merged_range in merged_cells:
+                    if cell.coordinate in merged_range:
+                        if cell.coordinate == merged_range.start_cell.coordinate:
+                            rowspan = min(merged_range.max_row - merged_range.min_row + 1, max_rows - idx)
+                            colspan = merged_range.max_col - merged_range.min_col + 1
+                            html += f"<td rowspan='{rowspan}' colspan='{colspan}'>{cell.value}</td>"
+                        merged = True
+                        break
+                if not merged:
+                    html += f"<td>{cell.value}</td>"
+            html += "</tr>"
+        html += "</table>"
+        return html
 def get_merged_column_groups(sheet):
-    merged_groups = {}
-    for merged_range in sheet.merged_cells.ranges:
-        if merged_range.min_row == 1:  # Only consider merged cells in the first row (header)
-            main_col = sheet.cell(1, merged_range.min_col).value
-            merged_groups[main_col] = list(range(merged_range.min_col, merged_range.max_col + 1))
-    return merged_groups
+        merged_groups = {}
+        for merged_range in sheet.merged_cells.ranges:
+            if merged_range.min_row == 1:  # Only consider merged cells in the first row (header)
+                main_col = sheet.cell(1, merged_range.min_col).value
+                merged_groups[main_col] = list(range(merged_range.min_col, merged_range.max_col + 1))
+        return merged_groups
 
-def create_dataframe_from_excel(file, merged_groups):
-    df = pd.read_excel(file, header=None)
-    column_headers = []
-    column_indices = OrderedDict()
-    
-    for col in range(df.shape[1]):
-        cell_value = df.iloc[0, col]
-        if pd.notna(cell_value):
-            column_headers.append(cell_value)
-            if cell_value not in column_indices:
-                column_indices[cell_value] = []
-            column_indices[cell_value].append(col)
-        else:
-            prev_header = column_headers[-1]
-            column_headers.append(prev_header)
-            column_indices[prev_header].append(col)
-    
-    df.columns = column_headers
-    df = df.iloc[1:]  # Remove the header row
-    return df
 
 def get_excel_download_link(df):
     output = BytesIO()
