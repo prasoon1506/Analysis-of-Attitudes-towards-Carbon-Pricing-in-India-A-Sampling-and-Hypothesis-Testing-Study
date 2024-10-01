@@ -67,7 +67,7 @@ def apply_custom_css():
 def excel_editor():
     st.subheader("Excel Editor")
     
-    uploaded_file = st.file_uploader("Choose an Excel file for editing", type="xlsx")
+    uploaded_file = st.file_uploader("Choose an Excel file for editing", type="xlsx",key="editor")
     
     if uploaded_file is not None:
         excel_file = openpyxl.load_workbook(uploaded_file)
@@ -108,7 +108,7 @@ def excel_editor():
 def data_analyzer():
     st.subheader("Data Analyzer")
     
-    uploaded_file = st.file_uploader("Choose an Excel file for analysis", type="xlsx")
+    uploaded_file = st.file_uploader("Choose an Excel file for analysis", type="xlsx",key="analyser")
     
     if uploaded_file is not None:
         df = pd.read_excel(uploaded_file)
