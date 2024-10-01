@@ -65,7 +65,7 @@ def apply_custom_css():
     """, unsafe_allow_html=True)
 def excel_editor():
     st.header("Excel Editor")
-def create_excel_structure_html(sheet, max_rows=5):
+    def create_excel_structure_html(sheet, max_rows=5):
         html = "<table class='excel-table'>"
         merged_cells = sheet.merged_cells.ranges
 
