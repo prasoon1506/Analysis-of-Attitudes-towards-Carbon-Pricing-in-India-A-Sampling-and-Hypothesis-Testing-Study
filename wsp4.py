@@ -62,7 +62,7 @@ from io import BytesIO
 import statsmodels.api as sm
 from statsmodels.stats.diagnostic import het_breuschpagan, acorr_ljungbox
 
-def excel_editor_and_analyzer():
+def excel_editor_menu():
     st.header("Excel Editor and Analyzer")
     
     apply_custom_css()
