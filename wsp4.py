@@ -177,6 +177,7 @@ def excel_editor():
         # Display editable dataframe
         st.subheader("Edit Data")
         st.write("You can edit individual cell values directly in the table below:")
+        edited_data = st.data_editor(df_dict)
         st.markdown(get_excel_download_link(edited_df), unsafe_allow_html=True)
         
         if st.button("Upload Edited File to Home"):
