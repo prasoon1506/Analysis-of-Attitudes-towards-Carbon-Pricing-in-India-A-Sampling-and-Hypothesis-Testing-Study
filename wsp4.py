@@ -221,7 +221,7 @@ def excel_editor_menu():
             "Kurtosis": [stats.kurtosis(edited_df[analysis_column].dropna())],
             "Median Absolute Deviation": [stats.median_abs_deviation(edited_df[analysis_column].dropna())],
             "Coefficient of Variation": [stats.variation(edited_df[analysis_column].dropna())]})
-            st.dataframe(advanced_stats)
+             st.dataframe(advanced_stats)
           except Exception as e:
               st.write(f"Unable to compute some advanced statistics: {str(e)}")
         else:
