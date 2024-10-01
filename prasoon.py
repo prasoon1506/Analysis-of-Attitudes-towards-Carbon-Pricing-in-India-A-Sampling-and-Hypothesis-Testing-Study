@@ -677,3 +677,40 @@ def advanced_statistics(df, numeric_columns):
     st.write(f"ADF Statistic: {adf_result[0]:.4f}")
     st.write(f"p-value: {adf_result[1]:.4f}")
     for key, value in adf_result[4].
+    for key, value in adf_result[4].items():
+        st.write(f"Critical Value ({key}): {value:.4f}")
+    st.write(f"{'Reject' if adf_result[1] < 0.05 else 'Fail to reject'} the null hypothesis of a unit root at 5% significance level.")
+    
+    # ACF and PACF plots
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 10))
+    plot_acf(df[column], ax=ax1)
+    plot_pacf(df[column], ax=ax2)
+    ax1.set_title("Autocorrelation Function (ACF)")
+    ax2.set_title("Partial Autocorrelation Function (PACF)")
+    st.pyplot(fig)
+    
+    st.subheader("Distribution Fitting")
+    
+    # Fit normal distribution
+    mu, sigma = stats.norm.fit(df[column])
+    x = np.linspace(df[column].min(), df[column].max(), 100)
+    y = stats.norm.pdf(x, mu, sigma)
+    
+    fig, ax = plt.subplots()
+    ax.hist(df[column], density=True, alpha=0.7, bins='auto')
+    ax.plot(x, y, 'r-', lw=2, label='Normal fit')
+    ax.set_title(f"Distribution Fitting for {column}")
+    ax.legend()
+    st.pyplot(fig)
+    
+    st.write(f"Fitted Normal Distribution: μ = {mu:.4f}, σ = {sigma:.4f}")
+    
+    # Kolmogorov-Smirnov Test
+    ks_statistic, ks_p_value = stats.kstest(df[column], 'norm', args=(mu, sigma))
+    st.write("Kolmogorov-Smirnov Test:")
+    st.write(f"Statistic: {ks_statistic:.4f}")
+    st.write(f"p-value: {ks_p_value:.4f}")
+    st.write(f"{'Reject' if ks_p_value < 0.05 else 'Fail to reject'} the null hypothesis that the data comes from the fitted normal distribution at 5% significance level.")
+
+if __name__ == "__main__":
+    excel_editor_and_analyzer()
