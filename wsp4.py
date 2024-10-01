@@ -195,20 +195,34 @@ def excel_editor_menu():
         edited_df = pd.DataFrame(edited_data)
         st.subheader("Edited Data")
         st.dataframe(edited_df)
-
-        # New section for statistical analysis, charting, and predictions
         st.subheader("Statistical Analysis and Visualization")
 
-        # Select column for analysis
-        analysis_column = st.selectbox("Select a column for analysis", edited_df.columns)
+# Select column for analysis
+analysis_column = st.selectbox("Select a column for analysis", edited_df.columns)
 
-        # Basic statistics
-        st.write("Basic Statistics:")
-        basic_stats = edited_df[analysis_column].describe()
-        st.dataframe(basic_stats)
+# Check if the selected column is numeric
+is_numeric = pd.api.types.is_numeric_dtype(edited_df[analysis_column])
 
-        # Advanced statistics
-        st.write("Advanced Statistics:")
+# Basic statistics
+st.write("Basic Statistics:")
+if is_numeric:
+    basic_stats = edited_df[analysis_column].describe()
+    st.dataframe(basic_stats)
+else:
+    st.write("Basic statistics are not available for non-numeric columns.")
+    # Display some relevant string column statistics
+    string_stats = pd.DataFrame({
+        "Total Count": [edited_df[analysis_column].count()],
+        "Unique Values": [edited_df[analysis_column].nunique()],
+        "Top Value": [edited_df[analysis_column].mode().iloc[0]],
+        "Top Value Count": [edited_df[analysis_column].value_counts().iloc[0]]
+    })
+    st.dataframe(string_stats)
+
+# Advanced statistics
+st.write("Advanced Statistics:")
+if is_numeric:
+    try:
         advanced_stats = pd.DataFrame({
             "Skewness": [stats.skew(edited_df[analysis_column].dropna())],
             "Kurtosis": [stats.kurtosis(edited_df[analysis_column].dropna())],
@@ -216,41 +230,50 @@ def excel_editor_menu():
             "Coefficient of Variation": [stats.variation(edited_df[analysis_column].dropna())]
         })
         st.dataframe(advanced_stats)
+    except Exception as e:
+        st.write(f"Unable to compute some advanced statistics: {str(e)}")
+else:
+    st.write("Advanced statistics are not available for non-numeric columns.")
 
-        # Data visualization
-        st.write("Data Visualization:")
-        chart_type = st.selectbox("Select chart type", ["Line", "Bar", "Scatter", "Histogram", "Box"])
+# Data visualization
+st.write("Data Visualization:")
+if is_numeric:
+    chart_type = st.selectbox("Select chart type", ["Line", "Bar", "Scatter", "Histogram", "Box"])
 
-        if chart_type == "Line":
-            fig = px.line(edited_df, y=analysis_column, title=f"Line Chart of {analysis_column}")
-        elif chart_type == "Bar":
-            fig = px.bar(edited_df, y=analysis_column, title=f"Bar Chart of {analysis_column}")
-        elif chart_type == "Scatter":
-            fig = px.scatter(edited_df, y=analysis_column, title=f"Scatter Plot of {analysis_column}")
-        elif chart_type == "Histogram":
-            fig = px.histogram(edited_df, x=analysis_column, title=f"Histogram of {analysis_column}")
-        else:  # Box plot
-            fig = px.box(edited_df, y=analysis_column, title=f"Box Plot of {analysis_column}")
+    if chart_type == "Line":
+        fig = px.line(edited_df, y=analysis_column, title=f"Line Chart of {analysis_column}")
+    elif chart_type == "Bar":
+        fig = px.bar(edited_df, y=analysis_column, title=f"Bar Chart of {analysis_column}")
+    elif chart_type == "Scatter":
+        fig = px.scatter(edited_df, y=analysis_column, title=f"Scatter Plot of {analysis_column}")
+    elif chart_type == "Histogram":
+        fig = px.histogram(edited_df, x=analysis_column, title=f"Histogram of {analysis_column}")
+    else:  # Box plot
+        fig = px.box(edited_df, y=analysis_column, title=f"Box Plot of {analysis_column}")
 
-        st.plotly_chart(fig)
+    st.plotly_chart(fig)
+else:
+    # For string columns, show a bar chart of value counts
+    value_counts = edited_df[analysis_column].value_counts()
+    fig = px.bar(x=value_counts.index, y=value_counts.values, title=f"Value Counts for {analysis_column}")
+    st.plotly_chart(fig)
 
-        # Predictions (assuming time series data)
-        st.write("Time Series Prediction:")
-        if edited_df[analysis_column].dtype in ['int64', 'float64']:
-            try:
-                model = ARIMA(edited_df[analysis_column], order=(1, 1, 1))
-                results = model.fit()
-                forecast = results.forecast(steps=10)
-                
-                fig = px.line(x=range(len(edited_df)), y=edited_df[analysis_column], title=f"Time Series Forecast for {analysis_column}")
-                fig.add_scatter(x=range(len(edited_df), len(edited_df) + 10), y=forecast, mode='lines', name='Forecast')
-                st.plotly_chart(fig)
-            except:
-                st.write("Unable to perform time series prediction on this column.")
-        else:
-            st.write("Time series prediction is only available for numeric columns.")
+# Predictions (assuming time series data)
+st.write("Time Series Prediction:")
+if is_numeric:
+    try:
+        model = ARIMA(edited_df[analysis_column], order=(1, 1, 1))
+        results = model.fit()
+        forecast = results.forecast(steps=10)
         
-        # Download button
+        fig = px.line(x=range(len(edited_df)), y=edited_df[analysis_column], title=f"Time Series Forecast for {analysis_column}")
+        fig.add_scatter(x=range(len(edited_df), len(edited_df) + 10), y=forecast, mode='lines', name='Forecast')
+        st.plotly_chart(fig)
+    except Exception as e:
+        st.write(f"Unable to perform time series prediction: {str(e)}")
+else:
+    st.write("Time series prediction is only available for numeric columns.")
+
         def get_excel_download_link(df):
             output = BytesIO()
             with pd.ExcelWriter(output, engine='openpyxl') as writer:
