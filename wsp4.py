@@ -714,8 +714,8 @@ def Home():
     <div class="section-box">
     <h3>Need Assistance?</h3>
     <p>If you have any questions or need help using the dashboard, our support team is here for you. Don't hesitate to reach out!</p>
-    <p>Email: </p>
-    <p>Phone: +91 9219393559</p>
+    <p>Email: prasoon.bajpai@lc.jkmail.com</p>
+    <p>Phone: +91-9219393559</p>
     </div>
     """, unsafe_allow_html=True)
 
