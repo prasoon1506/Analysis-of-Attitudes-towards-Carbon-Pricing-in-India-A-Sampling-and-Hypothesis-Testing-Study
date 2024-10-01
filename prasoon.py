@@ -1,14 +1,31 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 import openpyxl
 from collections import OrderedDict
 import plotly.express as px
+import plotly.graph_objects as go
 from statsmodels.tsa.arima.model import ARIMA
 from scipy import stats
 import base64
 from io import BytesIO
 import statsmodels.api as sm
 from statsmodels.stats.diagnostic import het_breuschpagan, acorr_ljungbox
+from statsmodels.stats.stattools import durbin_watson
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+from statsmodels.tsa.stattools import adfuller
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler, PolynomialFeatures
+from sklearn.linear_model import LinearRegression, Ridge, Lasso
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.svm import SVR
+from sklearn.cluster import KMeans
+from sklearn.decomposition import PCA
+from sklearn.metrics import mean_squared_error, r2_score
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 def excel_editor_and_analyzer():
     st.header("Excel Editor and Analyzer")
@@ -188,11 +205,10 @@ def excel_editor():
 
     else:
         st.info("Please upload an Excel file to begin editing.")
-
 def data_analyzer():
     st.subheader("Data Analyzer")
     
-    uploaded_file = st.file_uploader("Choose an Excel file for analysis", type="xlsx",key="analyser")
+    uploaded_file = st.file_uploader("Choose an Excel file for analysis", type="xlsx", key="analyser")
     
     if uploaded_file is not None:
         df = pd.read_excel(uploaded_file)
@@ -202,59 +218,330 @@ def data_analyzer():
         st.write(f"Number of columns: {df.shape[1]}")
         
         numeric_columns = df.select_dtypes(include=['float64', 'int64']).columns
-        x_col = st.selectbox("Select X-axis variable", numeric_columns)
-        y_col = st.selectbox("Select Y-axis variable", numeric_columns)
+        categorical_columns = df.select_dtypes(include=['object']).columns
         
-        st.subheader("Advanced Visualization")
-        chart_type = st.selectbox("Select chart type", ["Scatter", "Line", "Bar", "Box", "Violin", "3D Scatter"])
+        analysis_type = st.selectbox("Select analysis type", ["Univariate Analysis", "Bivariate Analysis", "Regression Analysis", "Machine Learning Models", "Advanced Statistics"])
         
-        if chart_type == "Scatter":
-            fig = px.scatter(df, x=x_col, y=y_col, title=f"{y_col} vs {x_col}")
-        elif chart_type == "Line":
-            fig = px.line(df, x=x_col, y=y_col, title=f"{y_col} vs {x_col}")
-        elif chart_type == "Bar":
-            fig = px.bar(df, x=x_col, y=y_col, title=f"{y_col} vs {x_col}")
-        elif chart_type == "Box":
-            fig = px.box(df, x=x_col, y=y_col, title=f"{y_col} vs {x_col}")
-        elif chart_type == "Violin":
-            fig = px.violin(df, x=x_col, y=y_col, title=f"{y_col} vs {x_col}")
-        elif chart_type == "3D Scatter":
-            z_col = st.selectbox("Select Z-axis variable", numeric_columns)
-            fig = px.scatter_3d(df, x=x_col, y=y_col, z=z_col, title=f"3D Scatter Plot")
+        if analysis_type == "Univariate Analysis":
+            univariate_analysis(df, numeric_columns, categorical_columns)
+        elif analysis_type == "Bivariate Analysis":
+            bivariate_analysis(df, numeric_columns)
+        elif analysis_type == "Regression Analysis":
+            regression_analysis(df, numeric_columns, categorical_columns)
+        elif analysis_type == "Machine Learning Models":
+            machine_learning_models(df, numeric_columns, categorical_columns)
+        elif analysis_type == "Advanced Statistics":
+            advanced_statistics(df, numeric_columns)
+
+def univariate_analysis(df, numeric_columns, categorical_columns):
+    st.subheader("Univariate Analysis")
+    
+    column = st.selectbox("Select a column for analysis", numeric_columns.tolist() + categorical_columns.tolist())
+    
+    if column in numeric_columns:
+        st.write(df[column].describe())
         
+        fig = go.Figure()
+        fig.add_trace(go.Histogram(x=df[column], name="Histogram"))
+        fig.add_trace(go.Box(x=df[column], name="Box Plot"))
+        fig.update_layout(title=f"Histogram and Box Plot for {column}")
         st.plotly_chart(fig)
         
-        st.subheader("Regression Analysis")
-        regression_type = st.selectbox("Select regression type", ["Simple Linear", "Multiple Linear"])
+        fig = go.Figure()
+        fig.add_trace(go.Violin(y=df[column], box_visible=True, line_color='black', meanline_visible=True, fillcolor='lightseagreen', opacity=0.6, x0=column))
+        fig.update_layout(title=f"Violin Plot for {column}")
+        st.plotly_chart(fig)
         
-        if regression_type == "Simple Linear":
-            X = sm.add_constant(df[x_col])
-            y = df[y_col]
-            model = sm.OLS(y, X).fit()
-            st.write(model.summary())
-            
-            fig = px.scatter(df, x=x_col, y=y_col, title=f"Simple Linear Regression: {y_col} vs {x_col}")
-            fig.add_scatter(x=df[x_col], y=model.predict(X), mode='lines', name='Regression Line')
-            st.plotly_chart(fig)
+        fig = px.line(df, y=column, title=f"Line Plot for {column}")
+        st.plotly_chart(fig)
         
-        elif regression_type == "Multiple Linear":
-            independent_vars = st.multiselect("Select independent variables", numeric_columns, default=[x_col])
-            if len(independent_vars) > 0:
-                X = sm.add_constant(df[independent_vars])
-                y = df[y_col]
-                model = sm.OLS(y, X).fit()
-                st.write(model.summary())
-        
-        st.subheader("Statistical Tests")
-        
-        st.write("Breusch-Pagan Test for Heteroscedasticity")
-        _, p_value, _, _ = het_breuschpagan(model.resid, model.model.exog)
-        st.write(f"p-value: {p_value:.4f}")
-        st.write("Null hypothesis: Homoscedasticity")
-        st.write(f"{'Reject' if p_value < 0.05 else 'Fail to reject'} the null hypothesis at 5% significance level.")
-
     else:
-        st.info("Please upload an Excel file to begin analysis.")
+        st.write(df[column].value_counts())
+        fig = px.bar(df[column].value_counts(), title=f"Bar Plot for {column}")
+        st.plotly_chart(fig)
+        
+        fig = px.pie(df, names=column, title=f"Pie Chart for {column}")
+        st.plotly_chart(fig)
+
+def bivariate_analysis(df, numeric_columns):
+    st.subheader("Bivariate Analysis")
+    
+    x_col = st.selectbox("Select X-axis variable", numeric_columns)
+    y_col = st.selectbox("Select Y-axis variable", numeric_columns)
+    
+    chart_type = st.selectbox("Select chart type", ["Scatter", "Line", "Bar", "Box", "Violin", "3D Scatter"])
+    
+    if chart_type == "Scatter":
+        fig = px.scatter(df, x=x_col, y=y_col, title=f"{y_col} vs {x_col}")
+    elif chart_type == "Line":
+        fig = px.line(df, x=x_col, y=y_col, title=f"{y_col} vs {x_col}")
+    elif chart_type == "Bar":
+        fig = px.bar(df, x=x_col, y=y_col, title=f"{y_col} vs {x_col}")
+    elif chart_type == "Box":
+        fig = px.box(df, x=x_col, y=y_col, title=f"{y_col} vs {x_col}")
+    elif chart_type == "Violin":
+        fig = px.violin(df, x=x_col, y=y_col, title=f"{y_col} vs {x_col}")
+    elif chart_type == "3D Scatter":
+        z_col = st.selectbox("Select Z-axis variable", numeric_columns)
+        fig = px.scatter_3d(df, x=x_col, y=y_col, z=z_col, title=f"3D Scatter Plot")
+    
+    st.plotly_chart(fig)
+    
+    correlation = df[[x_col, y_col]].corr().iloc[0, 1]
+    st.write(f"Correlation between {x_col} and {y_col}: {correlation:.4f}")
+
+def regression_analysis(df, numeric_columns, categorical_columns):
+    st.subheader("Regression Analysis")
+    
+    regression_type = st.selectbox("Select regression type", ["Simple Linear", "Multiple Linear", "Polynomial", "Ridge", "Lasso"])
+    
+    y_col = st.selectbox("Select dependent variable", numeric_columns)
+    x_cols = st.multiselect("Select independent variables", numeric_columns.tolist() + categorical_columns.tolist())
+    
+    if len(x_cols) == 0:
+        st.warning("Please select at least one independent variable.")
+        return
+    
+    X = df[x_cols]
+    y = df[y_col]
+    
+    # Handle categorical variables
+    X = pd.get_dummies(X, drop_first=True)
+    
+    if regression_type == "Polynomial":
+        degree = st.slider("Select polynomial degree", 1, 5, 2)
+        poly = PolynomialFeatures(degree=degree)
+        X = poly.fit_transform(X)
+    
+    X = sm.add_constant(X)
+    
+    if regression_type == "Ridge":
+        alpha = st.slider("Select alpha for Ridge regression", 0.0, 10.0, 1.0)
+        model = sm.OLS(y, X).fit_regularized(alpha=alpha, L1_wt=0)
+    elif regression_type == "Lasso":
+        alpha = st.slider("Select alpha for Lasso regression", 0.0, 10.0, 1.0)
+        model = sm.OLS(y, X).fit_regularized(alpha=alpha, L1_wt=1)
+    else:
+        model = sm.OLS(y, X).fit()
+    
+    st.write(model.summary())
+    
+    # Plot actual vs predicted values
+    fig = px.scatter(x=y, y=model.predict(X), labels={'x': 'Actual', 'y': 'Predicted'}, title="Actual vs Predicted Values")
+    fig.add_trace(go.Scatter(x=[y.min(), y.max()], y=[y.min(), y.max()], mode='lines', name='y=x'))
+    st.plotly_chart(fig)
+    
+    # Residual plot
+    residuals = model.resid
+    fig = px.scatter(x=model.predict(X), y=residuals, labels={'x': 'Predicted', 'y': 'Residuals'}, title="Residual Plot")
+    fig.add_hline(y=0, line_dash="dash", line_color="red")
+    st.plotly_chart(fig)
+    
+    # Statistical tests
+    st.subheader("Statistical Tests")
+    
+    # Normality test (Shapiro-Wilk)
+    _, p_value = stats.shapiro(residuals)
+    st.write(f"Shapiro-Wilk Test for Normality: p-value = {p_value:.4f}")
+    st.write(f"{'Reject' if p_value < 0.05 else 'Fail to reject'} the null hypothesis of normality at 5% significance level.")
+    
+    # Heteroscedasticity test (Breusch-Pagan)
+    _, p_value, _, _ = het_breuschpagan(residuals, model.model.exog)
+    st.write(f"Breusch-Pagan Test for Heteroscedasticity: p-value = {p_value:.4f}")
+    st.write(f"{'Reject' if p_value < 0.05 else 'Fail to reject'} the null hypothesis of homoscedasticity at 5% significance level.")
+    
+    # Autocorrelation test (Durbin-Watson)
+    dw_statistic = durbin_watson(residuals)
+    st.write(f"Durbin-Watson Test for Autocorrelation: {dw_statistic:.4f}")
+    st.write("Values close to 2 suggest no autocorrelation, while values toward 0 or 4 suggest positive or negative autocorrelation.")
+    
+    # Multicollinearity (VIF)
+    vif_data = pd.DataFrame()
+    vif_data["Variable"] = X.columns
+    vif_data["VIF"] = [variance_inflation_factor(X.values, i) for i in range(X.shape[1])]
+    st.write("Variance Inflation Factors (VIF) for Multicollinearity:")
+    st.write(vif_data)
+    st.write("VIF > 5 suggests high multicollinearity.")
+
+def machine_learning_models(df, numeric_columns, categorical_columns):
+    st.subheader("Machine Learning Models")
+    
+    model_type = st.selectbox("Select model type", ["Supervised", "Unsupervised"])
+    
+    if model_type == "Supervised":
+        supervised_models(df, numeric_columns, categorical_columns)
+    else:
+        unsupervised_models(df, numeric_columns)
+
+def supervised_models(df, numeric_columns, categorical_columns):
+    y_col = st.selectbox("Select target variable", numeric_columns)
+    x_cols = st.multiselect("Select features", numeric_columns.tolist() + categorical_columns.tolist())
+    
+    if len(x_cols) == 0:
+        st.warning("Please select at least one feature.")
+        return
+    
+    X = df[x_cols]
+    y = df[y_col]
+    
+    # Handle categorical variables
+    X = pd.get_dummies(X, drop_first=True)
+    
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
+    
+    models = {
+        "Linear Regression": LinearRegression(),
+        "Decision Tree": DecisionTreeRegressor(),
+        "Random Forest": RandomForestRegressor(),
+        "SVR": SVR()
+    }
+    
+    selected_model = st.selectbox("Select a model", list(models.keys()))
+    
+    model = models[selected_model]
+    model.fit(X_train_scaled, y_train)
+    
+    y_pred = model.predict(X_test_scaled)
+    
+    mse = mean_squared_error(y_test, y_pred)
+    r2 = r2_score(y_test, y_pred)
+    
+    st.write(f"Mean Squared Error: {mse:.4f}")
+    st.write(f"R-squared Score: {r2:.4f}")
+    
+    fig = px.scatter(x=y_test, y=y_pred, labels={'x': 'Actual', 'y': 'Predicted'}, title="Actual vs Predicted Values")
+    fig.add_trace(go.Scatter(x=[y_test.min(), y_test.max()], y=[y_test.min(), y_test.max()], mode='lines', name='y=x'))
+    st.plotly_chart(fig)
+
+def unsupervised_models(df, numeric_columns):
+    x_cols = st.multiselect("Select features for clustering", numeric_columns)
+    
+    if len(x_cols) == 0:
+        st.warning("Please select at least one feature.")
+        return
+    
+    X = df[x_cols]
+    
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+    
+    n_clusters = st.slider("Select number of clusters", 2, 10, 3)
+    
+    kmeans = KMeans(n_clusters=n_clusters, random_state=42)
+    cluster_labels = kmeans.fit_predict(X_scaled)
+    
+    df_clustered = df.copy()
+    df_clustered['Cluster'] = cluster_labels
+    
+    if len(x_cols) >= 2:
+        fig = px.scatter(df_clustered, x=x_cols[0], y=x_cols[1], color='Cluster', title="K-means Clustering")
+        st.plotly_chart(fig)
+    
+    st.write("Cluster Centers:")
+    cluster_centers = scaler.inverse_transform(kmeans.cluster_centers_)
+    st.write(pd.DataFrame(cluster_centers, columns=x_cols))
+    
+    # PCA
+    st.subheader("Principal Component Analysis (PCA)")
+    n_components = st.slider("Select number of components", 2, min(len(x_cols), 10), 2)
+    pca = PCA(n_components=n_components)
+    pca_result = pca.fit_transform(X_scaled)
+    
+    df_pca = pd.DataFrame(data=pca_result, columns=[f'PC{i+1}' for i in range(n_components)])
+    
+    fig = px.scatter(df_pca, x='PC1', y='PC2', title="PCA Visualization")
+    st.plotly_chart(fig)
+    
+    explained_variance_ratio = pca.explained_variance_ratio_
+    cumulative_variance_ratio = np.cumsum(explained_variance_ratio)
+    
+    fig = go.Figure()
+    fig.add_trace(go.Bar(x=range(1, n_components+1), y=explained_variance_ratio, name='Individual'))
+    fig.add_trace(go.Scatter(x=range(1, n_components+1), y=cumulative_variance_ratio, mode='lines+markers', name='Cumulative'))
+    fig.update_layout(title='Explained Variance Ratio', xaxis_title='Principal Components', yaxis_title='Explained Variance Ratio')
+    st.plotly_chart(fig)
+    
+    st.write("Explained Variance Ratio:")
+    st.write(pd.DataFrame({'PC': range(1, n_components+1), 'Explained Variance Ratio': explained_variance_ratio, 'Cumulative Variance Ratio': cumulative_variance_ratio}))
+
+def advanced_statistics(df, numeric_columns):
+    st.subheader("Advanced Statistics")
+    
+    column = st.selectbox("Select a column for advanced statistics", numeric_columns)
+    
+    st.write("Descriptive Statistics:")
+    st.write(df[column].describe())
+    
+    st.subheader("Normality Tests")
+    
+    # Shapiro-Wilk Test
+    shapiro_stat, shapiro_p = stats.shapiro(df[column])
+    st.write(f"Shapiro-Wilk Test: statistic = {shapiro_stat:.4f}, p-value = {shapiro_p:.4f}")
+    st.write(f"{'Reject' if shapiro_p < 0.05 else 'Fail to reject'} the null hypothesis of normality at 5% significance level.")
+    
+    # Anderson-Darling Test
+    anderson_result = stats.anderson(df[column])
+    st.write("Anderson-Darling Test:")
+    st.write(f"Statistic: {anderson_result.statistic:.4f}")
+    for i in range(len(anderson_result.critical_values)):
+        sl, cv = anderson_result.significance_level[i], anderson_result.critical_values[i]
+        st.write(f"At {sl}% significance level: critical value = {cv:.4f}")
+        if anderson_result.statistic < cv:
+            st.write(f"The null hypothesis of normality is not rejected at {sl}% significance level.")
+        else:
+            st.write(f"The null hypothesis of normality is rejected at {sl}% significance level.")
+    
+    # Q-Q Plot
+    fig, ax = plt.subplots()
+    stats.probplot(df[column], dist="norm", plot=ax)
+    ax.set_title("Q-Q Plot")
+    st.pyplot(fig)
+    
+    st.subheader("Time Series Analysis")
+    
+    # Augmented Dickey-Fuller Test for Stationarity
+    adf_result = adfuller(df[column])
+    st.write("Augmented Dickey-Fuller Test:")
+    st.write(f"ADF Statistic: {adf_result[0]:.4f}")
+    st.write(f"p-value: {adf_result[1]:.4f}")
+    for key, value in adf_result[4].items():
+        st.write(f"Critical Value ({key}): {value:.4f}")
+    st.write(f"{'Reject' if adf_result[1] < 0.05 else 'Fail to reject'} the null hypothesis of a unit root at 5% significance level.")
+    
+    # ACF and PACF plots
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 10))
+    plot_acf(df[column], ax=ax1)
+    plot_pacf(df[column], ax=ax2)
+    ax1.set_title("Autocorrelation Function (ACF)")
+    ax2.set_title("Partial Autocorrelation Function (PACF)")
+    st.pyplot(fig)
+    
+    st.subheader("Distribution Fitting")
+    
+    # Fit normal distribution
+    mu, sigma = stats.norm.fit(df[column])
+    x = np.linspace(df[column].min(), df[column].max(), 100)
+    y = stats.norm.pdf(x, mu, sigma)
+    
+    fig, ax = plt.subplots()
+    ax.hist(df[column], density=True, alpha=0.7, bins='auto')
+    ax.plot(x, y, 'r-', lw=2, label='Normal fit')
+    ax.set_title(f"Distribution Fitting for {column}")
+    ax.legend()
+    st.pyplot(fig)
+    
+    st.write(f"Fitted Normal Distribution: μ = {mu:.4f}, σ = {sigma:.4f}")
+    
+    # Kolmogorov-Smirnov Test
+    ks_statistic, ks_p_value = stats.kstest(df[column], 'norm', args=(mu, sigma))
+    st.write("Kolmogorov-Smirnov Test:")
+    st.write(f"Statistic: {ks_statistic:.4f}")
+    st.write(f"p-value: {ks_p_value:.4f}")
+    st.write(f"{'Reject' if ks_p_value < 0.05 else 'Fail to reject'} the null hypothesis that the data comes from the fitted normal distribution at 5% significance level.")
 
 if __name__ == "__main__":
     excel_editor_and_analyzer()
