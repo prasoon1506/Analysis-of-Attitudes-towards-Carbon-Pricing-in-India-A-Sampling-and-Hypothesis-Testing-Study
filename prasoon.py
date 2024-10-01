@@ -676,7 +676,6 @@ def advanced_statistics(df, numeric_columns):
     st.write("Augmented Dickey-Fuller Test:")
     st.write(f"ADF Statistic: {adf_result[0]:.4f}")
     st.write(f"p-value: {adf_result[1]:.4f}")
-    for key, value in adf_result[4].
     for key, value in adf_result[4].items():
         st.write(f"Critical Value ({key}): {value:.4f}")
     st.write(f"{'Reject' if adf_result[1] < 0.05 else 'Fail to reject'} the null hypothesis of a unit root at 5% significance level.")
