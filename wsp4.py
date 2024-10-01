@@ -39,6 +39,17 @@ def load_lottie_url(url: str):
     if r.status_code != 200:
         return None
     return r.json()
+import streamlit as st
+import pandas as pd
+import openpyxl
+from collections import OrderedDict
+import base64
+from io import BytesIO
+import numpy as np
+import plotly.express as px
+from statsmodels.tsa.arima.model import ARIMA
+from scipy import stats
+
 def excel_editor_menu():
     st.header("Excel Editor")
     st.markdown("""
@@ -184,6 +195,60 @@ def excel_editor_menu():
         edited_df = pd.DataFrame(edited_data)
         st.subheader("Edited Data")
         st.dataframe(edited_df)
+
+        # New section for statistical analysis, charting, and predictions
+        st.subheader("Statistical Analysis and Visualization")
+
+        # Select column for analysis
+        analysis_column = st.selectbox("Select a column for analysis", edited_df.columns)
+
+        # Basic statistics
+        st.write("Basic Statistics:")
+        basic_stats = edited_df[analysis_column].describe()
+        st.dataframe(basic_stats)
+
+        # Advanced statistics
+        st.write("Advanced Statistics:")
+        advanced_stats = pd.DataFrame({
+            "Skewness": [stats.skew(edited_df[analysis_column].dropna())],
+            "Kurtosis": [stats.kurtosis(edited_df[analysis_column].dropna())],
+            "Median Absolute Deviation": [stats.median_abs_deviation(edited_df[analysis_column].dropna())],
+            "Coefficient of Variation": [stats.variation(edited_df[analysis_column].dropna())]
+        })
+        st.dataframe(advanced_stats)
+
+        # Data visualization
+        st.write("Data Visualization:")
+        chart_type = st.selectbox("Select chart type", ["Line", "Bar", "Scatter", "Histogram", "Box"])
+
+        if chart_type == "Line":
+            fig = px.line(edited_df, y=analysis_column, title=f"Line Chart of {analysis_column}")
+        elif chart_type == "Bar":
+            fig = px.bar(edited_df, y=analysis_column, title=f"Bar Chart of {analysis_column}")
+        elif chart_type == "Scatter":
+            fig = px.scatter(edited_df, y=analysis_column, title=f"Scatter Plot of {analysis_column}")
+        elif chart_type == "Histogram":
+            fig = px.histogram(edited_df, x=analysis_column, title=f"Histogram of {analysis_column}")
+        else:  # Box plot
+            fig = px.box(edited_df, y=analysis_column, title=f"Box Plot of {analysis_column}")
+
+        st.plotly_chart(fig)
+
+        # Predictions (assuming time series data)
+        st.write("Time Series Prediction:")
+        if edited_df[analysis_column].dtype in ['int64', 'float64']:
+            try:
+                model = ARIMA(edited_df[analysis_column], order=(1, 1, 1))
+                results = model.fit()
+                forecast = results.forecast(steps=10)
+                
+                fig = px.line(x=range(len(edited_df)), y=edited_df[analysis_column], title=f"Time Series Forecast for {analysis_column}")
+                fig.add_scatter(x=range(len(edited_df), len(edited_df) + 10), y=forecast, mode='lines', name='Forecast')
+                st.plotly_chart(fig)
+            except:
+                st.write("Unable to perform time series prediction on this column.")
+        else:
+            st.write("Time series prediction is only available for numeric columns.")
         
         # Download button
         def get_excel_download_link(df):
@@ -205,6 +270,7 @@ def excel_editor_menu():
 
     else:
         st.info("Please upload an Excel file to begin editing.")
+
 def create_stats_pdf(stats_data, district):
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
