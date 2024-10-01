@@ -81,7 +81,7 @@ from scipy.stats import jarque_bera, kurtosis, skew
 from statsmodels.stats.stattools import omni_normtest
 
 def excel_editor_and_analyzer():
-    st.set_page_config(layout="wide")
+    
     st.title("Advanced Excel Editor and Analyzer")
     
     apply_custom_css()
