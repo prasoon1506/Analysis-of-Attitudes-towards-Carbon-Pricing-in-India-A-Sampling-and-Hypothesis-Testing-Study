@@ -259,7 +259,7 @@ def data_analyzer():
 
     else:
         st.info("Please upload an Excel file to begin analysis.")
- def create_excel_structure_html(sheet, max_rows=5):
+def create_excel_structure_html(sheet, max_rows=5):
         html = "<table class='excel-table'>"
         merged_cells = sheet.merged_cells.ranges
 
