@@ -3475,15 +3475,18 @@ h1, h2, h3 {
             st.image("https://cdn-icons-png.flaticon.com/512/2756/2756778.png", width=200)
         # Create sidebar for user inputs
         st.sidebar.header("Filter Options")
-        region = st.sidebar.selectbox("Select Region", options=df['Region'].unique())
-        brand = st.sidebar.selectbox("Select Brand", options=df['Brand'].unique())
-        product_type = st.sidebar.selectbox("Select Type", options=df['Type'].unique())
-        region_subset = st.sidebar.selectbox("Select Region Subset", options=df['Region subsets'].unique())
-        
+            
+            # Region selection
+        region = st.sidebar.selectbox("Select Region", options=sorted(df['Region'].unique()))
+        region_df = df[df['Region'] == region]
+        brand = st.sidebar.selectbox("Select Brand", options=sorted(region_df['Brand'].unique()))
+        brand_df = region_df[region_df['Brand'] == brand]
+        product_type = st.sidebar.selectbox("Select Type", options=sorted(brand_df['Type'].unique()))
+        type_df = brand_df[brand_df['Type'] == product_type]
+        region_subset = st.sidebar.selectbox("Select Region Subset", options=sorted(type_df['Region subsets'].unique()))
         # Analysis type selection using radio buttons
         st.sidebar.header("Analysis on")
         analysis_options = ["NSR Analysis", "Contribution Analysis", "EBITDA Analysis"]
-        
         # Use session state to store the selected analysis type
         if 'analysis_type' not in st.session_state:
             st.session_state.analysis_type = "EBITDA Analysis"
