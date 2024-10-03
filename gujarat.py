@@ -6,120 +6,137 @@ import io
 import requests
 from streamlit_lottie import st_lottie
 from streamlit_option_menu import option_menu
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
+from io import BytesIO
+import base64
 
-# Set page config
-st.set_page_config(page_title="Advanced Data Analysis", page_icon="📊", layout="wide")
+# New function to create PDF report
+def create_pdf_report(region, df):
+    buffer = BytesIO()
+    c = canvas.Canvas(buffer, pagesize=letter)
+    width, height = letter
 
-# Function to load Lottie animations
-def load_lottieurl(url: str):
-    try:
-        r = requests.get(url)
-        if r.status_code != 200:
-            return None
-        return r.json()
-    except:
-        return None
+    def add_page_number(canvas, doc):
+        canvas.saveState()
+        canvas.setFont('Helvetica', 10)
+        page_number_text = f"Page {doc.page}"
+        canvas.drawString(width - 100, 30, page_number_text)
+        canvas.restoreState()
 
-# Load Lottie animations
-lottie_analysis = load_lottieurl("https://assets4.lottiefiles.com/packages/lf20_qp1q7mct.json")
-lottie_upload = load_lottieurl("https://assets9.lottiefiles.com/packages/lf20_ABViugg1T8.json")
+    def draw_graph(fig, x, y, width, height):
+        img_buffer = BytesIO()
+        fig.write_image(img_buffer, format="png")
+        img_buffer.seek(0)
+        img = ImageReader(img_buffer)
+        c.drawImage(img, x, y, width, height)
 
-# Custom CSS
-st.markdown("""
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400;700&display=swap');
+    # Title
+    c.setFont("Helvetica-Bold", 24)
+    c.drawString(50, height - 50, f"GYR Analysis Report for {region}")
 
-html, body, [class*="css"] {
-    font-family: 'Roboto', sans-serif;
-}
+    brands = df['Brand'].unique()
+    types = df['Type'].unique()
+    region_subsets = df['Region subsets'].unique()
 
-.main {
-    background-color: #f0f2f6;
-}
+    page_count = 1
+    for brand in brands:
+        for product_type in types:
+            for region_subset in region_subsets:
+                filtered_df = df[(df['Region'] == region) & (df['Brand'] == brand) &
+                                 (df['Type'] == product_type) & (df['Region subsets'] == region_subset)].copy()
+                
+                if not filtered_df.empty:
+                    # EBITDA Analysis
+                    cols = ['Green EBITDA', 'Yellow EBITDA', 'Red EBITDA']
+                    overall_col = 'Overall EBITDA'
 
-.stApp {
-    max-width: 1200px;
-    margin: 0 auto;
-}
+                    # Calculate weighted average based on actual quantities
+                    filtered_df[overall_col] = (filtered_df['Green'] * filtered_df[cols[0]] +
+                                                filtered_df['Yellow'] * filtered_df[cols[1]] + 
+                                                filtered_df['Red'] * filtered_df[cols[2]]) / (
+                                                filtered_df['Green'] + filtered_df['Yellow'] + filtered_df['Red'])
 
-.upload-section, .analysis-section, .edit-section {
-    background-color: #ffffff;
-    padding: 30px;
-    border-radius: 15px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    margin-top: 30px;
-    transition: all 0.3s ease;
-}
+                    # Calculate imaginary overall based on adjusted shares
+                    filtered_df['Current Green Share'] = filtered_df['Green'] / (filtered_df['Green'] + filtered_df['Yellow'] + filtered_df['Red'])
+                    filtered_df['Current Yellow Share'] = filtered_df['Yellow'] / (filtered_df['Green'] + filtered_df['Yellow'] + filtered_df['Red'])
+                    filtered_df['Current Red Share'] = filtered_df['Red'] / (filtered_df['Green'] + filtered_df['Yellow'] + filtered_df['Red'])
 
-.upload-section:hover, .analysis-section:hover, .edit-section:hover {
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
-}
+                    filtered_df['Adjusted Green Share'] = filtered_df['Current Green Share'].apply(lambda x: min(x + 0.05, 1) if x > 0 else 0)
+                    filtered_df['Adjusted Yellow Share'] = filtered_df['Current Yellow Share'].apply(lambda x: min(x + 0.025, 1 - filtered_df['Adjusted Green Share']) if x > 0 else 0)
+                    filtered_df['Adjusted Red Share'] = 1 - filtered_df['Adjusted Green Share'] - filtered_df['Adjusted Yellow Share']
 
-.stButton>button {
-    width: 100%;
-    border-radius: 5px;
-    font-weight: 500;
-    transition: all 0.3s ease;
-}
+                    filtered_df['Imaginary EBITDA'] = (
+                        filtered_df['Adjusted Green Share'] * filtered_df['Green EBITDA'] +
+                        filtered_df['Adjusted Yellow Share'] * filtered_df['Yellow EBITDA'] +
+                        filtered_df['Adjusted Red Share'] * filtered_df['Red EBITDA']
+                    )
 
-.stButton>button:hover {
-    background-color: #4CAF50;
-    color: white;
-}
+                    # Create the plot
+                    fig = go.Figure()
 
-h1, h2, h3 {
-    color: #2C3E50;
-}
+                    for col in cols:
+                        fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[col],
+                                                 mode='lines+markers', name=col))
 
-.stPlotlyChart {
-    background-color: white;
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-    margin-top: 20px;
-}
+                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[overall_col],
+                                             mode='lines+markers', name=overall_col, line=dict(dash='dash')))
 
-.stDataFrame {
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
+                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Imaginary EBITDA'],
+                                             mode='lines+markers', name='Imaginary EBITDA',
+                                             line=dict(color='brown', dash='dot')))
 
-</style>
-""", unsafe_allow_html=True)
+                    fig.update_layout(
+                        title=f"EBITDA Analysis: {brand} - {product_type} - {region_subset}",
+                        xaxis_title='Month',
+                        yaxis_title='EBITDA',
+                        legend_title='Metrics'
+                    )
 
+                    # Add new page if needed
+                    if page_count > 1:
+                        c.showPage()
+                    
+                    # Draw the graph
+                    draw_graph(fig, 50, height - 500, 500, 400)
 
+                    # Add descriptive statistics
+                    c.setFont("Helvetica-Bold", 14)
+                    c.drawString(50, height - 520, "Descriptive Statistics")
+                    desc_stats = filtered_df[cols + [overall_col, 'Imaginary EBITDA']].describe().reset_index()
+                    for i, row in desc_stats.iterrows():
+                        c.setFont("Helvetica", 10)
+                        y_position = height - 540 - (i * 15)
+                        c.drawString(50, y_position, f"{row['index']}: {', '.join([f'{col}: {row[col]:.2f}' for col in desc_stats.columns if col != 'index'])}")
 
+                    # Add share of Green, Yellow, and Red Products
+                    c.setFont("Helvetica-Bold", 14)
+                    c.drawString(50, height - 680, "Share of Green, Yellow, and Red Products")
+                    
+                    # Create pie chart
+                    share_fig = px.pie(values=[filtered_df['Current Green Share'].mean(), 
+                                               filtered_df['Current Yellow Share'].mean(), 
+                                               filtered_df['Current Red Share'].mean()], 
+                                       names=['Green', 'Yellow', 'Red'], 
+                                       title='Average Share Distribution')
+                    
+                    draw_graph(share_fig, 50, height - 900, 300, 200)
 
+                    # Add share table
+                    c.setFont("Helvetica", 10)
+                    for i, (_, row) in enumerate(filtered_df[['Month', 'Current Green Share', 'Current Yellow Share', 'Current Red Share']].iterrows()):
+                        y_position = height - 920 - (i * 15)
+                        c.drawString(400, y_position, f"{row['Month']}: G: {row['Current Green Share']:.2%}, Y: {row['Current Yellow Share']:.2%}, R: {row['Current Red Share']:.2%}")
 
-# Sidebar navigation
-with st.sidebar:
-    selected = option_menu(
-        menu_title="Navigation",
-        options=["Home", "Analysis", "About"],
-        icons=["house", "graph-up", "info-circle"],
-        menu_icon="cast",
-        default_index=0,
-    )
+                    add_page_number(c, c._pageNumber)
+                    page_count += 1
 
-if selected == "Home":
-    st.title("📊 Advanced GYR Analysis")
-    st.markdown("Welcome to our advanced data analysis platform. Upload your Excel file to get started with interactive visualizations and insights.")
-    
-    st.markdown("<div class='upload-section'>", unsafe_allow_html=True)
-    col1, col2 = st.columns([2, 1])
-    with col1:
-        uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
-        if uploaded_file is not None:
-            st.session_state.uploaded_file = uploaded_file
-            st.success("File successfully uploaded! Please go to the Analysis page to view results.")
+    c.save()
+    buffer.seek(0)
+    return buffer
 
-    with col2:
-        if lottie_upload:
-            st_lottie(lottie_upload, height=150, key="upload")
-        else:
-            st.image("https://cdn-icons-png.flaticon.com/512/4503/4503700.png", width=150)
-    st.markdown("</div>", unsafe_allow_html=True)
-
+# Modify the Analysis page
 elif selected == "Analysis":
     st.title("📈 Data Analysis Dashboard")
     
@@ -133,8 +150,19 @@ elif selected == "Analysis":
             st_lottie(lottie_analysis, height=200, key="analysis")
         else:
             st.image("https://cdn-icons-png.flaticon.com/512/2756/2756778.png", width=200)
+
         # Create sidebar for user inputs
         st.sidebar.header("Filter Options")
+        region = st.sidebar.selectbox("Select Region", options=df['Region'].unique())
+
+        # Add download button for combined report
+        if st.sidebar.button(f"Download Combined Report for {region}"):
+            pdf_buffer = create_pdf_report(region, df)
+            pdf_bytes = pdf_buffer.getvalue()
+            b64 = base64.b64encode(pdf_bytes).decode()
+            href = f'<a href="data:application/pdf;base64,{b64}" download="GYR_Analysis_Report_{region}.pdf">Download PDF Report</a>'
+            st.sidebar.markdown(href, unsafe_allow_html=True)
+
         region = st.sidebar.selectbox("Select Region", options=df['Region'].unique())
         brand = st.sidebar.selectbox("Select Brand", options=df['Brand'].unique())
         product_type = st.sidebar.selectbox("Select Type", options=df['Type'].unique())
