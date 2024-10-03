@@ -60,16 +60,16 @@ def create_pdf_report(region, df):
     width, height = letter
     styles = getSampleStyleSheet()
 
-    def add_page_number(canvas, doc):
+    def add_page_number(canvas, page_number):
         canvas.saveState()
-        canvas.setFont('Helvetica', 9)
-        page_number_text = f"Page {doc.page} of {doc.page}"
-        canvas.drawRightString(width - 30, 30, page_number_text)
+        canvas.setFont('Helvetica', 10)
+        page_number_text = f"Page {page_number}"
+        canvas.drawString(width - 100, 30, page_number_text)
         canvas.restoreState()
 
     def draw_graph(fig, x, y, width, height):
         img_buffer = BytesIO()
-        fig.write_image(img_buffer, format="png", scale=2)  # Increased scale for better resolution
+        fig.write_image(img_buffer, format="png",scale=2)
         img_buffer.seek(0)
         img = ImageReader(img_buffer)
         c.drawImage(img, x, y, width, height)
@@ -77,24 +77,23 @@ def create_pdf_report(region, df):
     def draw_table(data, x, y, col_widths):
         table = Table(data, colWidths=col_widths)
         table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.lightblue),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.darkblue),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 10),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+            ('FONTSIZE', (0, 0), (-1, 0), 8),  # Reduced font size
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 6),  # Reduced padding
             ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
             ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 1), (-1, -1), 8),
-            ('TOPPADDING', (0, 1), (-1, -1), 4),
-            ('BOTTOMPADDING', (0, 1), (-1, -1), 4),
-            ('GRID', (0, 0), (-1, -1), 1, colors.grey)
+            ('FONTSIZE', (0, 1), (-1, -1), 6),  # Reduced font size
+            ('TOPPADDING', (0, 1), (-1, -1), 3),  # Reduced padding
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 3),  # Reduced padding
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
         ]))
         w, h = table.wrapOn(c, width, height)
         table.drawOn(c, x, y - h)
-
     def add_header(page_number):
         c.setFillColorRGB(0.2, 0.2, 0.7)  # Dark blue color for header
         c.rect(0, height - 50, width, 50, fill=True)
@@ -104,7 +103,6 @@ def create_pdf_report(region, df):
         c.setFont("Helvetica", 12)
         c.drawString(30, height - 50, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         add_page_number(c, page_number)
-
     brands = df['Brand'].unique()
     types = df['Type'].unique()
     region_subsets = df['Region subsets'].unique()
@@ -117,54 +115,131 @@ def create_pdf_report(region, df):
                                  (df['Type'] == product_type) & (df['Region subsets'] == region_subset)].copy()
                 
                 if not filtered_df.empty:
-                    c.showPage()
-                    add_header(page_number)
-                    
                     # EBITDA Analysis
                     cols = ['Green EBITDA', 'Yellow EBITDA', 'Red EBITDA']
                     overall_col = 'Overall EBITDA'
 
-                    # Calculate weighted average and shares (as before)
-                    # ...
+                    # Calculate weighted average based on actual quantities
+                    total_quantity = filtered_df['Green'] + filtered_df['Yellow'] + filtered_df['Red']
+                    filtered_df[overall_col] = (
+                        (filtered_df['Green'] * filtered_df['Green EBITDA'] +
+                         filtered_df['Yellow'] * filtered_df['Yellow EBITDA'] + 
+                         filtered_df['Red'] * filtered_df['Red EBITDA']) / total_quantity
+                    )
+
+                    # Calculate current shares
+                    filtered_df['Average Green Share'] = filtered_df['Green'] / total_quantity
+                    filtered_df['Average Yellow Share'] = filtered_df['Yellow'] / total_quantity
+                    filtered_df['Average Red Share'] = filtered_df['Red'] / total_quantity
+                    
+                    # Calculate Imaginary EBITDA with adjusted shares
+                    def adjust_shares(row):
+                        green = row['Average Green Share']
+                        yellow = row['Average Yellow Share']
+                        red = row['Average Red Share']
+                        
+                        if green == 1 or yellow == 1 or red == 1:
+                            # If any share is 100%, don't change
+                            return green, yellow, red
+                        elif green == 0 and yellow == 0:
+                            # If both green and yellow are absent, don't change
+                            return green, yellow, red
+                        elif green == 0:
+                            # If green is absent, increase yellow by 2.5% and decrease red by 2.5%
+                            yellow = min(yellow + 0.025, 1)
+                            red = max(1 - yellow, 0)
+                        elif yellow == 0:
+                            # If yellow is absent, increase green by 5% and decrease red by 5%
+                            green = min(green + 0.05, 1)
+                            red = max(1 - green, 0)
+                        else:
+                            # Normal case: increase green by 5%, yellow by 2.5%, decrease red by 7.5%
+                            green = min(green + 0.05, 1)
+                            yellow = min(yellow + 0.025, 1 - green)
+                            red = max(1 - green - yellow, 0)
+                        
+                        return green, yellow, red
+                    filtered_df['Adjusted Green Share'], filtered_df['Adjusted Yellow Share'], filtered_df['Adjusted Red Share'] = zip(*filtered_df.apply(adjust_shares, axis=1))
+                    
+                    filtered_df['Imaginary EBITDA'] = (
+                        filtered_df['Adjusted Green Share'] * filtered_df['Green EBITDA'] +
+                        filtered_df['Adjusted Yellow Share'] * filtered_df['Yellow EBITDA'] +
+                        filtered_df['Adjusted Red Share'] * filtered_df['Red EBITDA']
+                    )
+
+                    # Calculate differences
+                    filtered_df['G-R Difference'] = filtered_df['Green EBITDA'] - filtered_df['Red EBITDA']
+                    filtered_df['G-Y Difference'] = filtered_df['Green EBITDA'] - filtered_df['Yellow EBITDA']
+                    filtered_df['Y-R Difference'] = filtered_df['Yellow EBITDA'] - filtered_df['Red EBITDA']
+                    filtered_df['I-O Difference'] = filtered_df['Imaginary EBITDA'] - filtered_df[overall_col]
 
                     # Create the plot
                     fig = go.Figure()
-                    # ... (plot creation code remains the same)
 
+                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Green EBITDA'],
+                                             mode='lines+markers', name='Green EBITDA', line=dict(color='green')))
+                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Yellow EBITDA'],
+                                             mode='lines+markers', name='Yellow EBITDA', line=dict(color='yellow')))
+                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Red EBITDA'],
+                                             mode='lines+markers', name='Red EBITDA', line=dict(color='red')))
+                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[overall_col],
+                                             mode='lines+markers', name=overall_col, line=dict(color='blue', dash='dash')))
+                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Imaginary EBITDA'],
+                                             mode='lines+markers', name='Imaginary EBITDA',
+                                             line=dict(color='purple', dash='dot')))
+
+                    # Customize x-axis labels to include the differences
+                    x_labels = [f"{month}<br>(G-R: {g_r:.0f})<br>(G-Y: {g_y:.0f})<br>(Y-R: {y_r:.0f})<br>(I-O: {i_o:.0f})" 
+                                for month, g_r, g_y, y_r, i_o in 
+                                zip(filtered_df['Month'], 
+                                    filtered_df['G-R Difference'], 
+                                    filtered_df['G-Y Difference'], 
+                                    filtered_df['Y-R Difference'], 
+                                    filtered_df['I-O Difference'])]
+
+                    fig.update_layout(
+                        title=f"EBITDA Analysis: {brand} - {product_type} - {region_subset}",
+                        xaxis_title='Month (G-R: Green - Red, G-Y: Green - Yellow, Y-R: Yellow - Red, I-O: Imaginary - Overall)',
+                        yaxis_title='EBITDA',
+                        legend_title='Metrics',
+                        plot_bgcolor='cornsilk',
+                        paper_bgcolor='lightcyan',
+                        xaxis=dict(tickmode='array', tickvals=list(range(len(x_labels))), ticktext=x_labels)  
+                    )
+                    # Add new page if needed
+                    if page_number > 1:
+                        c.showPage()
+                    
                     # Draw the graph
-                    draw_graph(fig, 30, height - 400, 550, 330)
+                    draw_graph(fig, 50, height - 370, 500, 300)  # Reduced height
 
                     # Add descriptive statistics
-                    c.setFillColorRGB(0.2, 0.2, 0.7)  # Dark blue color for subheaders
-                    c.setFont("Helvetica-Bold", 14)
-                    c.drawString(30, height - 440, "Descriptive Statistics")
+                    c.setFillColorRGB(0.2, 0.2, 0.2)  # Dark grey color for headers
+                    c.setFont("Helvetica-Bold", 10)  # Reduced font size
+                    c.drawString(50, height - 420, "Descriptive Statistics")
                     
                     desc_stats = filtered_df[cols + [overall_col, 'Imaginary EBITDA']].describe().reset_index()
-                    desc_stats = desc_stats[desc_stats['index'] != 'count'].round(2)
+                    desc_stats = desc_stats[desc_stats['index'] != 'count'].round(2)  # Remove 'count' row
                     table_data = [['Metric'] + list(desc_stats.columns[1:])] + desc_stats.values.tolist()
-                    draw_table(table_data, 30, height - 450, [60] + [85] * (len(desc_stats.columns) - 1))
-
-                    # Share Distribution
-                    c.setFont("Helvetica-Bold", 14)
-                    c.drawString(30, height - 620, "Share Distribution")
+                    draw_table(table_data, 50, height - 430, [45] + [80] * (len(desc_stats.columns) - 1))  # Reduced column widths
+                    c.setFont("Helvetica-Bold", 10)  # Reduced font size
+                    c.drawString(50, height - 600, "Average Share Distribution")
                     
-                    # Create pie chart
+                    # Create pie chart with correct colors
                     average_shares = filtered_df[['Average Green Share', 'Average Yellow Share', 'Average Red Share']].mean()
                     share_fig = px.pie(
                        values=average_shares.values,
                        names=average_shares.index,
                        color=average_shares.index,
                        color_discrete_map={'Average Green Share': 'green', 'Average Yellow Share': 'yellow', 'Average Red Share': 'red'},
-                       title="Average Share Distribution",
-                       hole=0.3
-                    )
-                    share_fig.update_layout(width=300, height=300, margin=dict(l=0, r=0, t=30, b=0))
+                       title="",hole=0.3)
+                    share_fig.update_layout(width=475, height=475, margin=dict(l=0, r=0, t=0, b=0))  # Reduced size
                     
-                    draw_graph(share_fig, 30, height - 930, 250, 250)
+                    draw_graph(share_fig, 80, height - 810, 200, 200)  # Adjusted position and size
                     
                     # Add share table
-                    c.setFont("Helvetica-Bold", 12)
-                    c.drawString(300, height - 640, "Monthly Share Distribution")
+                    c.setFont("Helvetica-Bold", 10)  # Reduced font size
+                    c.drawString(330, height - 600, "Monthly Share Distribution")
                     share_data = [['Month', 'Green', 'Yellow', 'Red']]
                     for _, row in filtered_df[['Month', 'Average Green Share', 'Average Yellow Share', 'Average Red Share']].iterrows():
                         share_data.append([
@@ -173,8 +248,9 @@ def create_pdf_report(region, df):
                             f"{row['Average Yellow Share']:.2%}",
                             f"{row['Average Red Share']:.2%}"
                         ])
-                    draw_table(share_data, 300, height - 660, [60, 60, 60, 60])
+                    draw_table(share_data, 330, height - 620, [40, 40, 40, 40])  # Adjusted position and reduced column widths
 
+                    add_page_number(c, page_number)
                     page_number += 1
 
     c.save()
