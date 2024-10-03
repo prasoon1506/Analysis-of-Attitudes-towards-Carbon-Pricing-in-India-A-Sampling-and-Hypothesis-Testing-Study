@@ -115,7 +115,7 @@ def create_pdf_report(region, df):
                                  (df['Type'] == product_type) & (df['Region subsets'] == region_subset)].copy()
                 
                 if not filtered_df.empty:
-                    c.showPage()
+                    
                     add_header(page_number)
                     # EBITDA Analysis
                     cols = ['Green EBITDA', 'Yellow EBITDA', 'Red EBITDA']
