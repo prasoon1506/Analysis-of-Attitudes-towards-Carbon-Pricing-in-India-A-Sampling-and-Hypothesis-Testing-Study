@@ -200,7 +200,7 @@ def create_pdf_report(region, df):
                             f"{row['Current Yellow Share']:.2%}",
                             f"{row['Current Red Share']:.2%}"
                         ])
-                    draw_table(share_data, 300, height - 580, [50, 50, 50, 50])  # Adjusted position and reduced column widths
+                    draw_table(share_data, 300, height - 420, [50, 50, 50, 50])  # Adjusted position and reduced column widths
 
                     add_page_number(c, page_number)
                     page_number += 1
