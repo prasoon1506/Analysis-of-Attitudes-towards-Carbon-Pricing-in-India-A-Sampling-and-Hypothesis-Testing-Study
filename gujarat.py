@@ -11,7 +11,15 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
 from io import BytesIO
 import base64
-
+# Sidebar navigation
+with st.sidebar:
+    selected = option_menu(
+        menu_title="Navigation",
+        options=["Home", "Analysis", "About"],
+        icons=["house", "graph-up", "info-circle"],
+        menu_icon="cast",
+        default_index=0,
+    )
 # New function to create PDF report
 def create_pdf_report(region, df):
     buffer = BytesIO()
