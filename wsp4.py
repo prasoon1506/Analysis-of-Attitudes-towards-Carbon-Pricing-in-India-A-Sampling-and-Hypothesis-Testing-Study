@@ -3557,7 +3557,7 @@ h1, h2, h3 {
             
             fig.update_layout(
                 title=analysis_type,
-                xaxis_title='Month (G-Y: Green - Red,G-R: Green - Red,Y-R: Yellow - Red, I-O: Imaginary - Overall)',
+                xaxis_title='Month (G-Y: Green - Yellow,G-R: Green - Red,Y-R: Yellow - Red, I-O: Imaginary - Overall)',
                 yaxis_title='Value',
                 legend_title='Metrics',
                 hovermode="x unified",
