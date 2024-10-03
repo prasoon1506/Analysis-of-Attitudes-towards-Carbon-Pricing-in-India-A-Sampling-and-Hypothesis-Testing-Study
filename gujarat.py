@@ -205,7 +205,7 @@ def create_pdf_report(region, df):
                             tickmode='array', 
                             tickvals=list(range(len(x_labels))), 
                             ticktext=x_labels,
-                            title_standoff=30  # This moves the x-axis title down
+                            title_standoff=50  # This moves the x-axis title down
                         )
                     )
                     # Add new page if needed
