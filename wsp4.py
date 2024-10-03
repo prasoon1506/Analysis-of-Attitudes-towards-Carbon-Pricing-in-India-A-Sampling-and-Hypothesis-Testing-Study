@@ -94,56 +94,6 @@ def excel_editor_and_analyzer():
     with tab2:
         data_analyzer()
 
-def apply_custom_css():
-    st.markdown("""
-    <style>
-        .stApp {
-            background-color: #f0f2f6;
-        }
-        .excel-table {
-            border-collapse: collapse;
-            width: 100%;
-            font-family: Arial, sans-serif;
-        }
-        .excel-table th, .excel-table td {
-            border: 1px solid #b0b0b0;
-            padding: 8px;
-            text-align: left;
-        }
-        .excel-table tr:nth-child(even) {
-            background-color: #f8f8f8;
-        }
-        .excel-table th {
-            padding-top: 12px;
-            padding-bottom: 12px;
-            background-color: #4CAF50;
-            color: white;
-        }
-        .stButton>button {
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            padding: 10px 24px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 16px;
-            margin: 4px 2px;
-            cursor: pointer;
-            border-radius: 4px;
-        }
-        .stTextInput>div>div>input {
-            color: #4CAF50;
-        }
-        .stSelectbox>div>div>select {
-            color: #4CAF50;
-        }
-        .stMultiSelect>div>div>select {
-            color: #4CAF50;
-        }
-    </style>
-    """, unsafe_allow_html=True)
-
 def excel_editor():
     st.header("Excel Editor")
     def create_excel_structure_html(sheet, max_rows=5):
