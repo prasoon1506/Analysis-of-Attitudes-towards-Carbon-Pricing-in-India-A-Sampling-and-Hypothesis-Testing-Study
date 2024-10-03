@@ -196,12 +196,12 @@ def create_pdf_report(region, df):
                     c.setFont("Helvetica-Bold", 10)  # Reduced font size
                     c.drawString(330, height - 600, "Monthly Share Distribution")
                     share_data = [['Month', 'Green', 'Yellow', 'Red']]
-                    for _, row in filtered_df[['Month', 'Current Green Share', 'Current Yellow Share', 'Current Red Share']].iterrows():
+                    for _, row in filtered_df[['Month', 'Average Green Share', 'Average Yellow Share', 'Average Red Share']].iterrows():
                         share_data.append([
                             row['Month'],
-                            f"{row['Current Green Share']:.2%}",
-                            f"{row['Current Yellow Share']:.2%}",
-                            f"{row['Current Red Share']:.2%}"
+                            f"{row['Average Green Share']:.2%}",
+                            f"{row['Average Yellow Share']:.2%}",
+                            f"{row['Average Red Share']:.2%}"
                         ])
                     draw_table(share_data, 330, height - 620, [40, 40, 40, 40])  # Adjusted position and reduced column widths
 
