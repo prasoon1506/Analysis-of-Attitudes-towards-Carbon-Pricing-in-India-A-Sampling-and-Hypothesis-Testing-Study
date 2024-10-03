@@ -127,12 +127,41 @@ def create_pdf_report(region, df):
                     filtered_df['Average Green Share'] = filtered_df['Green'] / total_quantity
                     filtered_df['Average Yellow Share'] = filtered_df['Yellow'] / total_quantity
                     filtered_df['Average Red Share'] = filtered_df['Red'] / total_quantity
+                    
+                    # Calculate Imaginary EBITDA with adjusted shares
+                    def adjust_shares(row):
+                        green = row['Average Green Share']
+                        yellow = row['Average Yellow Share']
+                        red = row['Average Red Share']
+                        
+                        if green == 1 or yellow == 1 or red == 1:
+                            # If any share is 100%, don't change
+                            return green, yellow, red
+                        elif green == 0 and yellow == 0:
+                            # If both green and yellow are absent, don't change
+                            return green, yellow, red
+                        elif green == 0:
+                            # If green is absent, increase yellow by 2.5% and decrease red by 2.5%
+                            yellow = min(yellow + 0.025, 1)
+                            red = max(1 - yellow, 0)
+                        elif yellow == 0:
+                            # If yellow is absent, increase green by 5% and decrease red by 5%
+                            green = min(green + 0.05, 1)
+                            red = max(1 - green, 0)
+                        else:
+                            # Normal case: increase green by 5%, yellow by 2.5%, decrease red by 7.5%
+                            green = min(green + 0.05, 1)
+                            yellow = min(yellow + 0.025, 1 - green)
+                            red = max(1 - green - yellow, 0)
+                        
+                        return green, yellow, red
 
-                    # Calculate Imaginary EBITDA (using current shares as we don't have adjusted shares)
+                    filtered_df['Adjusted Green Share'], filtered_df['Adjusted Yellow Share'], filtered_df['Adjusted Red Share'] = zip(*filtered_df.apply(adjust_shares, axis=1))
+                    
                     filtered_df['Imaginary EBITDA'] = (
-                        filtered_df['Average Green Share'] * filtered_df['Green EBITDA'] +
-                        filtered_df['Average Yellow Share'] * filtered_df['Yellow EBITDA'] +
-                        filtered_df['Average Red Share'] * filtered_df['Red EBITDA']
+                        filtered_df['Adjusted Green Share'] * filtered_df['Green EBITDA'] +
+                        filtered_df['Adjusted Yellow Share'] * filtered_df['Yellow EBITDA'] +
+                        filtered_df['Adjusted Red Share'] * filtered_df['Red EBITDA']
                     )
 
                     # Create the plot
