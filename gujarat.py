@@ -185,7 +185,7 @@ def create_pdf_report(region, df):
                                              line=dict(color='purple', dash='dot')))
 
                     # Customize x-axis labels to include the differences
-                    x_labels = [f"{month}<br>(G-R: {g_r:.2f})<br>(G-Y: {g_y:.2f})<br>(Y-R: {y_r:.2f})<br>(I-O: {i_o:.2f})" 
+                    x_labels = [f"{month}<br>(G-R: {g_r:.0f})<br>(G-Y: {g_y:.0f})<br>(Y-R: {y_r:.0f})<br>(I-O: {i_o:.0f})" 
                                 for month, g_r, g_y, y_r, i_o in 
                                 zip(filtered_df['Month'], 
                                     filtered_df['G-R Difference'], 
@@ -200,7 +200,12 @@ def create_pdf_report(region, df):
                         legend_title='Metrics',
                         plot_bgcolor='cornsilk',
                         paper_bgcolor='lightcyan',
-                        xaxis=dict(tickmode='array', tickvals=list(range(len(x_labels))), ticktext=x_labels)
+                        xaxis=dict(
+                            tickmode='array', 
+                            tickvals=list(range(len(x_labels))), 
+                            ticktext=x_labels,
+                            title_standoff=25  # This moves the x-axis title down
+                        )
                     )
                     # Add new page if needed
                     if page_number > 1:
@@ -218,22 +223,37 @@ def create_pdf_report(region, df):
                     desc_stats = desc_stats[desc_stats['index'] != 'count'].round(2)  # Remove 'count' row
                     table_data = [['Metric'] + list(desc_stats.columns[1:])] + desc_stats.values.tolist()
                     draw_table(table_data, 50, height - 430, [45] + [80] * (len(desc_stats.columns) - 1))  # Reduced column widths
-
-                    # Add share of Green, Yellow, and Red Products
-                    c.setFont("Helvetica-Bold", 10)  # Reduced font size
+                    c.setFont("Helvetica-Bold", 10)
                     c.drawString(50, height - 600, "Average Share Distribution")
                     
-                    # Create pie chart with correct colors
+                    # Create pie chart with correct colors, excluding 0% shares
                     average_shares = filtered_df[['Average Green Share', 'Average Yellow Share', 'Average Red Share']].mean()
-                    share_fig = px.pie(
-                       values=average_shares.values,
-                       names=average_shares.index,
-                       color=average_shares.index,
-                       color_discrete_map={'Average Green Share': 'green', 'Average Yellow Share': 'yellow', 'Average Red Share': 'red'},
-                       title="",hole=0.3)
-                    share_fig.update_layout(width=475, height=475, margin=dict(l=0, r=0, t=0, b=0))  # Reduced size
+                    colors = ['green', 'yellow', 'red']
+                    labels = []
+                    values = []
+                    chart_colors = []
                     
-                    draw_graph(share_fig, 80, height - 810, 200, 200)  # Adjusted position and size
+                    for share, color in zip(average_shares, colors):
+                        if share > 0:
+                            labels.append(share.index.split()[0])  # 'Green', 'Yellow', or 'Red'
+                            values.append(share)
+                            chart_colors.append(color)
+                    
+                    if len(values) > 0:  # Only create pie chart if there are non-zero values
+                        share_fig = px.pie(
+                            values=values,
+                            names=labels,
+                            color=labels,
+                            color_discrete_map=dict(zip(labels, chart_colors)),
+                            title="",
+                            hole=0.3
+                        )
+                        share_fig.update_layout(width=475, height=475, margin=dict(l=0, r=0, t=0, b=0))
+                        
+                        draw_graph(share_fig, 80, height - 810, 200, 200)
+                    else:
+                        c.setFont("Helvetica", 10)
+                        c.drawString(80, height - 710, "No data available for pie chart")
 
                     # Add share table
                     c.setFont("Helvetica-Bold", 10)  # Reduced font size
