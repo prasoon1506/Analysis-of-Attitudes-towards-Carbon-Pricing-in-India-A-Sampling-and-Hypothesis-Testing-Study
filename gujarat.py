@@ -135,7 +135,7 @@ def create_pdf_report(region, df):
             ("Suggestions for Improvement:", "To increase EBITDA, consider the following strategies:"),
             ("1.", "Increase the share of Green products, which typically have higher EBITDA margins."),
             ("2.", "Implement targeted marketing campaigns to promote Yellow products and\n convert Red product customers."),
-            ("3.", "Analyze the factors contributing to higher EBITDA in Green and Yellow products, and apply these insights to improve Red product performance."),
+            ("3.", "Analyze the factors contributing to higher EBITDA in Green and Yellow products,\n and apply these insights to improve Red product performance."),
             ("4.", "Regularly review and adjust pricing strategies to optimize EBITDA across all product categories."),
             ("5.", "Invest in product innovation to expand the Green and Yellow product offerings.")
         ]
