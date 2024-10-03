@@ -216,7 +216,7 @@ def create_pdf_report(region, df):
                     draw_graph(fig, 50, height - 370, 500, 300)  # Reduced height
 
                     # Add descriptive statistics
-                    c.setFillColorRGB(0.2, 0.2, 0.2)  # Dark grey color for headers
+                    c.setFillColorRGB(0.2, 0.2, 0.7)  # Dark grey color for headers
                     c.setFont("Helvetica-Bold", 10)  # Reduced font size
                     c.drawString(50, height - 420, "Descriptive Statistics")
                     
