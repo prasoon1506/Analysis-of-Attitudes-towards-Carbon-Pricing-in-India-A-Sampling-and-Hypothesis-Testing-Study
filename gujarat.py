@@ -53,6 +53,7 @@ from reportlab.platypus import Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
 import numpy as np
+
 def create_pdf_report(region, df):
     buffer = BytesIO()
     c = canvas.Canvas(buffer, pagesize=letter)
