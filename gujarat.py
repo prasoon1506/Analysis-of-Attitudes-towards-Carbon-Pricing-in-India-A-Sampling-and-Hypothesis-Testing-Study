@@ -128,19 +128,11 @@ def create_pdf_report(region, df):
                     filtered_df['Current Yellow Share'] = filtered_df['Yellow'] / total_quantity
                     filtered_df['Current Red Share'] = filtered_df['Red'] / total_quantity
 
-                    # Calculate adjusted shares
-                    filtered_df['Adjusted Green Share'] = np.where(filtered_df['Current Green Share'] > 0, 
-                                                                   np.minimum(filtered_df['Current Green Share'] + 0.05, 1), 0)
-                    filtered_df['Adjusted Yellow Share'] = np.where(filtered_df['Current Yellow Share'] > 0,
-                                                                    np.minimum(filtered_df['Current Yellow Share'] + 0.025, 
-                                                                               1 - filtered_df['Adjusted Green Share']), 0)
-                    filtered_df['Adjusted Red Share'] = 1 - filtered_df['Adjusted Green Share'] - filtered_df['Adjusted Yellow Share']
-
-                    # Calculate Imaginary EBITDA
+                    # Calculate Imaginary EBITDA (using current shares as we don't have adjusted shares)
                     filtered_df['Imaginary EBITDA'] = (
-                        filtered_df['Adjusted Green Share'] * filtered_df['Green EBITDA'] +
-                        filtered_df['Adjusted Yellow Share'] * filtered_df['Yellow EBITDA'] +
-                        filtered_df['Adjusted Red Share'] * filtered_df['Red EBITDA']
+                        filtered_df['Current Green Share'] * filtered_df['Green EBITDA'] +
+                        filtered_df['Current Yellow Share'] * filtered_df['Yellow EBITDA'] +
+                        filtered_df['Current Red Share'] * filtered_df['Red EBITDA']
                     )
 
                     # Create the plot
@@ -152,10 +144,8 @@ def create_pdf_report(region, df):
                                              mode='lines+markers', name='Yellow EBITDA', line=dict(color='yellow')))
                     fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Red EBITDA'],
                                              mode='lines+markers', name='Red EBITDA', line=dict(color='red')))
-
                     fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[overall_col],
                                              mode='lines+markers', name=overall_col, line=dict(color='blue', dash='dash')))
-
                     fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Imaginary EBITDA'],
                                              mode='lines+markers', name='Imaginary EBITDA',
                                              line=dict(color='purple', dash='dot')))
@@ -179,30 +169,30 @@ def create_pdf_report(region, df):
                     # Add descriptive statistics
                     c.setFillColorRGB(0.2, 0.2, 0.2)  # Dark grey color for headers
                     c.setFont("Helvetica-Bold", 14)
-                    c.drawString(50, height - 520, "Descriptive Statistics")
+                    c.drawString(300, height - 520, "Descriptive Statistics")
                     
                     desc_stats = filtered_df[cols + [overall_col, 'Imaginary EBITDA']].describe().reset_index()
-                    desc_stats = desc_stats.round(2)
+                    desc_stats = desc_stats[desc_stats['index'] != 'count'].round(2)  # Remove 'count' row
                     table_data = [['Metric'] + list(desc_stats.columns[1:])] + desc_stats.values.tolist()
-                    draw_table(table_data, 50, height - 530, [80] + [70] * (len(desc_stats.columns) - 1))
+                    draw_table(table_data, 300, height - 530, [60] + [55] * (len(desc_stats.columns) - 1))
 
                     # Add share of Green, Yellow, and Red Products
                     c.setFont("Helvetica-Bold", 14)
-                    c.drawString(50, height - 730, "Share of Green, Yellow, and Red Products")
+                    c.drawString(50, height - 520, "Average Share Distribution")
                     
                     # Create pie chart
                     average_shares = filtered_df[['Current Green Share', 'Current Yellow Share', 'Current Red Share']].mean()
                     share_fig = px.pie(values=average_shares, 
                                        names=['Green', 'Yellow', 'Red'], 
-                                       title='Average Share Distribution',
+                                       title='',
                                        color_discrete_map={'Green': 'green', 'Yellow': 'yellow', 'Red': 'red'})
-                    share_fig.update_layout(width=400, height=300)
+                    share_fig.update_layout(width=250, height=250, margin=dict(l=20, r=20, t=20, b=20))
                     
-                    draw_graph(share_fig, 50, height - 1050, 400, 300)
+                    draw_graph(share_fig, 25, height - 800, 250, 250)
 
                     # Add share table
                     c.setFont("Helvetica-Bold", 12)
-                    c.drawString(50, height - 1070, "Monthly Share Distribution")
+                    c.drawString(50, height - 820, "Monthly Share Distribution")
                     share_data = [['Month', 'Green', 'Yellow', 'Red']]
                     for _, row in filtered_df[['Month', 'Current Green Share', 'Current Yellow Share', 'Current Red Share']].iterrows():
                         share_data.append([
@@ -211,7 +201,7 @@ def create_pdf_report(region, df):
                             f"{row['Current Yellow Share']:.2%}",
                             f"{row['Current Red Share']:.2%}"
                         ])
-                    draw_table(share_data, 50, height - 1080, [100, 80, 80, 80])
+                    draw_table(share_data, 50, height - 830, [60, 60, 60, 60])
 
                     add_page_number(c, page_number)
                     page_number += 1
