@@ -201,7 +201,7 @@ def create_pdf_report(region, df):
 
                     fig.update_layout(
                         title=f"EBITDA Analysis: {brand} - {product_type} - {region_subset}",
-                        xaxis_title='Month (G-R: Green - Red, G-Y: Green - Yellow, Y-R: Yellow - Red, I-O: Imaginary - Overall)',
+                        xaxis_title='',
                         yaxis_title='EBITDA',
                         legend_title='Metrics',
                         plot_bgcolor='cornsilk',
