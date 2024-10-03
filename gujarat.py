@@ -187,10 +187,10 @@ def create_pdf_report(region, df):
                        names=average_shares.index,
                        color=average_shares.index,
                        color_discrete_map={'Current Green Share': 'green', 'Current Yellow Share': 'yellow', 'Current Red Share': 'red'},
-                       title="Average Share Distribution")
+                       title="")
                     share_fig.update_layout(width=200, height=200, margin=dict(l=20, r=20, t=20, b=20))  # Reduced size
                     
-                    draw_graph(share_fig, 50, height - 600, 100, 100)  # Adjusted position and size
+                    draw_graph(share_fig, 50, height - 600, 300, 300)  # Adjusted position and size
 
                     # Add share table
                     c.setFont("Helvetica-Bold", 10)  # Reduced font size
