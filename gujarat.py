@@ -186,7 +186,7 @@ def create_pdf_report(region, df):
                        values=average_shares.values,
                        names=average_shares.index,
                        color=average_shares.index,
-                       color_discrete_map={'Current Green Share': 'green', 'Current Yellow Share': 'yellow', 'Current Red Share': 'red'},
+                       color_discrete_map={'Average Green Share': 'green', 'Average Yellow Share': 'yellow', 'Average Red Share': 'red'},
                        title="",hole=0.3)
                     share_fig.update_layout(width=475, height=475, margin=dict(l=0, r=0, t=0, b=0))  # Reduced size
                     
