@@ -98,7 +98,7 @@ def create_pdf_report(region, df):
     # Title
     c.setFillColorRGB(0.2, 0.2, 0.2)  # Dark grey color for title
     c.setFont("Helvetica-Bold", 24)
-    c.drawString(50, height - 50, f"GYR Analysis Report for {region}")
+    c.drawString(70, height - 50, f"GYR Analysis Report for {region}")
 
     brands = df['Brand'].unique()
     types = df['Type'].unique()
