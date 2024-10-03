@@ -258,8 +258,8 @@ def create_pdf_report(region, df):
                         xaxis=dict(tickmode='array', tickvals=list(range(len(x_labels))), ticktext=x_labels)  
                     )
                     # Add new page if needed
-                    if page_number > 1:
-                        c.showPage()
+                    #if page_number > 1:
+                        #c.showPage()
                     
                     # Draw the graph
                     draw_graph(fig, 50, height - 370, 500, 300)  # Reduced height
