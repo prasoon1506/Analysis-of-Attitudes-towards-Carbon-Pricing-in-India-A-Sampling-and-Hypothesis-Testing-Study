@@ -83,9 +83,6 @@ from statsmodels.stats.stattools import omni_normtest
 def excel_editor_and_analyzer():
     
     st.title("Advanced Excel Editor and Analyzer")
-    
-    apply_custom_css()
-    
     tab1, tab2 = st.tabs(["Excel Editor", "Data Analyzer"])
     
     with tab1:
