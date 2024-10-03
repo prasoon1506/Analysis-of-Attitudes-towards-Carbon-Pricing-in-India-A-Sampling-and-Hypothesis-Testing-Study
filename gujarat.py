@@ -41,15 +41,16 @@ def load_lottieurl(url: str):
 lottie_analysis = load_lottieurl("https://assets4.lottiefiles.com/packages/lf20_qp1q7mct.json")
 lottie_upload = load_lottieurl("https://assets9.lottiefiles.com/packages/lf20_ABViugg1T8.json")
 import numpy as np
+
 def create_pdf_report(region, df):
     buffer = BytesIO()
     c = canvas.Canvas(buffer, pagesize=letter)
     width, height = letter
 
-    def add_page_number(canvas, doc):
+    def add_page_number(canvas, page_number):
         canvas.saveState()
         canvas.setFont('Helvetica', 10)
-        page_number_text = f"Page {doc.page}"
+        page_number_text = f"Page {page_number}"
         canvas.drawString(width - 100, 30, page_number_text)
         canvas.restoreState()
 
@@ -68,7 +69,7 @@ def create_pdf_report(region, df):
     types = df['Type'].unique()
     region_subsets = df['Region subsets'].unique()
 
-    page_count = 1
+    page_number = 1
     for brand in brands:
         for product_type in types:
             for region_subset in region_subsets:
@@ -130,7 +131,7 @@ def create_pdf_report(region, df):
                     )
 
                     # Add new page if needed
-                    if page_count > 1:
+                    if page_number > 1:
                         c.showPage()
                     
                     # Draw the graph
@@ -163,8 +164,8 @@ def create_pdf_report(region, df):
                         y_position = height - 920 - (i * 15)
                         c.drawString(400, y_position, f"{row['Month']}: G: {row['Current Green Share']:.2%}, Y: {row['Current Yellow Share']:.2%}, R: {row['Current Red Share']:.2%}")
 
-                    add_page_number(c, c._pageNumber)
-                    page_count += 1
+                    add_page_number(c, page_number)
+                    page_number += 1
 
     c.save()
     buffer.seek(0)
