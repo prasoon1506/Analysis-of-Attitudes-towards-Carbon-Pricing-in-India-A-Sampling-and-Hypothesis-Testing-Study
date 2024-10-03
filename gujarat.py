@@ -164,9 +164,9 @@ def create_pdf_report(region, df):
                                  (df['Type'] == product_type) & (df['Region subsets'] == region_subset)].copy()
                 
                 if not filtered_df.empty:
-                    
-                    add_header(page_number)
-                    # EBITDA Analysis
+                    add_header(c, c)
+                    add_page_number(c, c)
+
                     cols = ['Green EBITDA', 'Yellow EBITDA', 'Red EBITDA']
                     overall_col = 'Overall EBITDA'
 
@@ -258,7 +258,7 @@ def create_pdf_report(region, df):
                         xaxis=dict(tickmode='array', tickvals=list(range(len(x_labels))), ticktext=x_labels)  
                     )
                     # Add new page if needed
-                    if page_number >= 1:
+                    if page_number > 1:
                         c.showPage()
                     
                     # Draw the graph
