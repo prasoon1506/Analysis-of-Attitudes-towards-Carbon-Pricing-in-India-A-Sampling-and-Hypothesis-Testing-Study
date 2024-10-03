@@ -124,15 +124,15 @@ def create_pdf_report(region, df):
                     )
 
                     # Calculate current shares
-                    filtered_df['Current Green Share'] = filtered_df['Green'] / total_quantity
-                    filtered_df['Current Yellow Share'] = filtered_df['Yellow'] / total_quantity
-                    filtered_df['Current Red Share'] = filtered_df['Red'] / total_quantity
+                    filtered_df['Average Green Share'] = filtered_df['Green'] / total_quantity
+                    filtered_df['Average Yellow Share'] = filtered_df['Yellow'] / total_quantity
+                    filtered_df['Average Red Share'] = filtered_df['Red'] / total_quantity
 
                     # Calculate Imaginary EBITDA (using current shares as we don't have adjusted shares)
                     filtered_df['Imaginary EBITDA'] = (
-                        filtered_df['Current Green Share'] * filtered_df['Green EBITDA'] +
-                        filtered_df['Current Yellow Share'] * filtered_df['Yellow EBITDA'] +
-                        filtered_df['Current Red Share'] * filtered_df['Red EBITDA']
+                        filtered_df['Average Green Share'] * filtered_df['Green EBITDA'] +
+                        filtered_df['Average Yellow Share'] * filtered_df['Yellow EBITDA'] +
+                        filtered_df['Average Red Share'] * filtered_df['Red EBITDA']
                     )
 
                     # Create the plot
@@ -181,13 +181,13 @@ def create_pdf_report(region, df):
                     c.drawString(50, height - 600, "Average Share Distribution")
                     
                     # Create pie chart with correct colors
-                    average_shares = filtered_df[['Current Green Share', 'Current Yellow Share', 'Current Red Share']].mean()
+                    average_shares = filtered_df[['Average Green Share', 'Average Yellow Share', 'Average Red Share']].mean()
                     share_fig = px.pie(
                        values=average_shares.values,
                        names=average_shares.index,
                        color=average_shares.index,
                        color_discrete_map={'Current Green Share': 'green', 'Current Yellow Share': 'yellow', 'Current Red Share': 'red'},
-                       title="")
+                       title="",hole=0.3)
                     share_fig.update_layout(width=475, height=475, margin=dict(l=0, r=0, t=0, b=0))  # Reduced size
                     
                     draw_graph(share_fig, 80, height - 810, 200, 200)  # Adjusted position and size
