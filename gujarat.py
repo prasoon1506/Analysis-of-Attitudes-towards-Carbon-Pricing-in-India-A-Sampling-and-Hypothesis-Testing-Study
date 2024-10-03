@@ -11,6 +11,14 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
 from io import BytesIO
 import base64
+import streamlit as st
+import pandas as pd
+import plotly.graph_objects as go
+import plotly.express as px
+import io
+import requests
+from streamlit_lottie import st_lottie
+from streamlit_option_menu import option_menu
 # Sidebar navigation
 with st.sidebar:
     selected = option_menu(
