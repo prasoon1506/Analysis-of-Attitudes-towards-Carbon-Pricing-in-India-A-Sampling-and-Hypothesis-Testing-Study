@@ -173,7 +173,7 @@ def create_pdf_report(region, df):
                     desc_stats = filtered_df[cols + [overall_col, 'Imaginary EBITDA']].describe().reset_index()
                     desc_stats = desc_stats[desc_stats['index'] != 'count'].round(2)  # Remove 'count' row
                     table_data = [['Metric'] + list(desc_stats.columns[1:])] + desc_stats.values.tolist()
-                    draw_table(table_data, 60, height - 430, [50] + [45] * (len(desc_stats.columns) - 1))  # Reduced column widths
+                    draw_table(table_data, 80, height - 430, [50] + [45] * (len(desc_stats.columns) - 1))  # Reduced column widths
 
                     # Add share of Green, Yellow, and Red Products
                     c.setFont("Helvetica-Bold", 10)  # Reduced font size
@@ -191,7 +191,7 @@ def create_pdf_report(region, df):
 
                     # Add share table
                     c.setFont("Helvetica-Bold", 10)  # Reduced font size
-                    c.drawString(330, height - 420, "Monthly Share Distribution")
+                    c.drawString(360, height - 420, "Monthly Share Distribution")
                     share_data = [['Month', 'Green', 'Yellow', 'Red']]
                     for _, row in filtered_df[['Month', 'Current Green Share', 'Current Yellow Share', 'Current Red Share']].iterrows():
                         share_data.append([
@@ -200,7 +200,7 @@ def create_pdf_report(region, df):
                             f"{row['Current Yellow Share']:.2%}",
                             f"{row['Current Red Share']:.2%}"
                         ])
-                    draw_table(share_data, 330, height - 430, [50, 50, 50, 50])  # Adjusted position and reduced column widths
+                    draw_table(share_data, 360, height - 430, [40, 40, 40, 40])  # Adjusted position and reduced column widths
 
                     add_page_number(c, page_number)
                     page_number += 1
