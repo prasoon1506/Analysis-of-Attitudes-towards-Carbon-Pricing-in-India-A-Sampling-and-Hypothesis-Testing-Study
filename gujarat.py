@@ -52,7 +52,6 @@ from reportlab.platypus import Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
 import numpy as np
-
 def create_pdf_report(region, df):
     buffer = BytesIO()
     c = canvas.Canvas(buffer, pagesize=letter)
@@ -80,15 +79,15 @@ def create_pdf_report(region, df):
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 10),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('FONTSIZE', (0, 0), (-1, 0), 8),  # Reduced font size
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 6),  # Reduced padding
             ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
             ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 1), (-1, -1), 8),
-            ('TOPPADDING', (0, 1), (-1, -1), 6),
-            ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+            ('FONTSIZE', (0, 1), (-1, -1), 6),  # Reduced font size
+            ('TOPPADDING', (0, 1), (-1, -1), 3),  # Reduced padding
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 3),  # Reduced padding
             ('GRID', (0, 0), (-1, -1), 1, colors.black)
         ]))
         w, h = table.wrapOn(c, width, height)
@@ -164,35 +163,35 @@ def create_pdf_report(region, df):
                         c.showPage()
                     
                     # Draw the graph
-                    draw_graph(fig, 50, height - 500, 500, 400)
+                    draw_graph(fig, 50, height - 400, 500, 300)  # Reduced height
 
                     # Add descriptive statistics
                     c.setFillColorRGB(0.2, 0.2, 0.2)  # Dark grey color for headers
-                    c.setFont("Helvetica-Bold", 14)
-                    c.drawString(300, height - 520, "Descriptive Statistics")
+                    c.setFont("Helvetica-Bold", 12)  # Reduced font size
+                    c.drawString(50, height - 420, "Descriptive Statistics")
                     
                     desc_stats = filtered_df[cols + [overall_col, 'Imaginary EBITDA']].describe().reset_index()
                     desc_stats = desc_stats[desc_stats['index'] != 'count'].round(2)  # Remove 'count' row
                     table_data = [['Metric'] + list(desc_stats.columns[1:])] + desc_stats.values.tolist()
-                    draw_table(table_data, 300, height - 530, [60] + [55] * (len(desc_stats.columns) - 1))
+                    draw_table(table_data, 50, height - 430, [50] + [45] * (len(desc_stats.columns) - 1))  # Reduced column widths
 
                     # Add share of Green, Yellow, and Red Products
-                    c.setFont("Helvetica-Bold", 14)
-                    c.drawString(50, height - 520, "Average Share Distribution")
+                    c.setFont("Helvetica-Bold", 12)  # Reduced font size
+                    c.drawString(50, height - 550, "Average Share Distribution")
                     
-                    # Create pie chart
+                    # Create pie chart with correct colors
                     average_shares = filtered_df[['Current Green Share', 'Current Yellow Share', 'Current Red Share']].mean()
                     share_fig = px.pie(values=average_shares, 
                                        names=['Green', 'Yellow', 'Red'], 
                                        title='',
                                        color_discrete_map={'Green': 'green', 'Yellow': 'yellow', 'Red': 'red'})
-                    share_fig.update_layout(width=250, height=250, margin=dict(l=20, r=20, t=20, b=20))
+                    share_fig.update_layout(width=200, height=200, margin=dict(l=20, r=20, t=20, b=20))  # Reduced size
                     
-                    draw_graph(share_fig, 25, height - 800, 250, 250)
+                    draw_graph(share_fig, 50, height - 750, 200, 200)  # Adjusted position and size
 
                     # Add share table
-                    c.setFont("Helvetica-Bold", 12)
-                    c.drawString(50, height - 820, "Monthly Share Distribution")
+                    c.setFont("Helvetica-Bold", 10)  # Reduced font size
+                    c.drawString(300, height - 570, "Monthly Share Distribution")
                     share_data = [['Month', 'Green', 'Yellow', 'Red']]
                     for _, row in filtered_df[['Month', 'Current Green Share', 'Current Yellow Share', 'Current Red Share']].iterrows():
                         share_data.append([
@@ -201,7 +200,7 @@ def create_pdf_report(region, df):
                             f"{row['Current Yellow Share']:.2%}",
                             f"{row['Current Red Share']:.2%}"
                         ])
-                    draw_table(share_data, 50, height - 830, [60, 60, 60, 60])
+                    draw_table(share_data, 300, height - 580, [50, 50, 50, 50])  # Adjusted position and reduced column widths
 
                     add_page_number(c, page_number)
                     page_number += 1
