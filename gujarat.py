@@ -178,7 +178,7 @@ def create_pdf_report(region, df):
 
                     # Add share of Green, Yellow, and Red Products
                     c.setFont("Helvetica-Bold", 10)  # Reduced font size
-                    c.drawString(50, height - 550, "Average Share Distribution")
+                    c.drawString(50, height - 600, "Average Share Distribution")
                     
                     # Create pie chart with correct colors
                     average_shares = filtered_df[['Current Green Share', 'Current Yellow Share', 'Current Red Share']].mean()
