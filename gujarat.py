@@ -155,7 +155,6 @@ def create_pdf_report(region, df):
                             red = max(1 - green - yellow, 0)
                         
                         return green, yellow, red
-
                     filtered_df['Adjusted Green Share'], filtered_df['Adjusted Yellow Share'], filtered_df['Adjusted Red Share'] = zip(*filtered_df.apply(adjust_shares, axis=1))
                     
                     filtered_df['Imaginary EBITDA'] = (
@@ -163,6 +162,12 @@ def create_pdf_report(region, df):
                         filtered_df['Adjusted Yellow Share'] * filtered_df['Yellow EBITDA'] +
                         filtered_df['Adjusted Red Share'] * filtered_df['Red EBITDA']
                     )
+
+                    # Calculate differences
+                    filtered_df['G-R Difference'] = filtered_df['Green EBITDA'] - filtered_df['Red EBITDA']
+                    filtered_df['G-Y Difference'] = filtered_df['Green EBITDA'] - filtered_df['Yellow EBITDA']
+                    filtered_df['Y-R Difference'] = filtered_df['Yellow EBITDA'] - filtered_df['Red EBITDA']
+                    filtered_df['I-O Difference'] = filtered_df['Imaginary EBITDA'] - filtered_df[overall_col]
 
                     # Create the plot
                     fig = go.Figure()
@@ -179,15 +184,24 @@ def create_pdf_report(region, df):
                                              mode='lines+markers', name='Imaginary EBITDA',
                                              line=dict(color='purple', dash='dot')))
 
+                    # Customize x-axis labels to include the differences
+                    x_labels = [f"{month}<br>(G-R: {g_r:.2f})<br>(G-Y: {g_y:.2f})<br>(Y-R: {y_r:.2f})<br>(I-O: {i_o:.2f})" 
+                                for month, g_r, g_y, y_r, i_o in 
+                                zip(filtered_df['Month'], 
+                                    filtered_df['G-R Difference'], 
+                                    filtered_df['G-Y Difference'], 
+                                    filtered_df['Y-R Difference'], 
+                                    filtered_df['I-O Difference'])]
+
                     fig.update_layout(
                         title=f"EBITDA Analysis: {brand} - {product_type} - {region_subset}",
-                        xaxis_title='Month',
+                        xaxis_title='Month (G-R: Green - Red, G-Y: Green - Yellow, Y-R: Yellow - Red, I-O: Imaginary - Overall)',
                         yaxis_title='EBITDA',
                         legend_title='Metrics',
                         plot_bgcolor='cornsilk',
-                        paper_bgcolor='lightcyan'
+                        paper_bgcolor='lightcyan',
+                        xaxis=dict(tickmode='array', tickvals=list(range(len(x_labels))), ticktext=x_labels)
                     )
-
                     # Add new page if needed
                     if page_number > 1:
                         c.showPage()
