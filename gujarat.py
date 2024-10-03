@@ -40,7 +40,7 @@ def load_lottieurl(url: str):
 # Load Lottie animations
 lottie_analysis = load_lottieurl("https://assets4.lottiefiles.com/packages/lf20_qp1q7mct.json")
 lottie_upload = load_lottieurl("https://assets9.lottiefiles.com/packages/lf20_ABViugg1T8.json")
-# New function to create PDF report
+import numpy as np
 def create_pdf_report(region, df):
     buffer = BytesIO()
     c = canvas.Canvas(buffer, pagesize=letter)
@@ -81,20 +81,27 @@ def create_pdf_report(region, df):
                     overall_col = 'Overall EBITDA'
 
                     # Calculate weighted average based on actual quantities
-                    filtered_df[overall_col] = (filtered_df['Green'] * filtered_df[cols[0]] +
-                                                filtered_df['Yellow'] * filtered_df[cols[1]] + 
-                                                filtered_df['Red'] * filtered_df[cols[2]]) / (
-                                                filtered_df['Green'] + filtered_df['Yellow'] + filtered_df['Red'])
+                    total_quantity = filtered_df['Green'] + filtered_df['Yellow'] + filtered_df['Red']
+                    filtered_df[overall_col] = (
+                        (filtered_df['Green'] * filtered_df['Green EBITDA'] +
+                         filtered_df['Yellow'] * filtered_df['Yellow EBITDA'] + 
+                         filtered_df['Red'] * filtered_df['Red EBITDA']) / total_quantity
+                    )
 
-                    # Calculate imaginary overall based on adjusted shares
-                    filtered_df['Current Green Share'] = filtered_df['Green'] / (filtered_df['Green'] + filtered_df['Yellow'] + filtered_df['Red'])
-                    filtered_df['Current Yellow Share'] = filtered_df['Yellow'] / (filtered_df['Green'] + filtered_df['Yellow'] + filtered_df['Red'])
-                    filtered_df['Current Red Share'] = filtered_df['Red'] / (filtered_df['Green'] + filtered_df['Yellow'] + filtered_df['Red'])
+                    # Calculate current shares
+                    filtered_df['Current Green Share'] = filtered_df['Green'] / total_quantity
+                    filtered_df['Current Yellow Share'] = filtered_df['Yellow'] / total_quantity
+                    filtered_df['Current Red Share'] = filtered_df['Red'] / total_quantity
 
-                    filtered_df['Adjusted Green Share'] = filtered_df['Current Green Share'].apply(lambda x: min(x + 0.05, 1) if x > 0 else 0)
-                    filtered_df['Adjusted Yellow Share'] = filtered_df['Current Yellow Share'].apply(lambda x: min(x + 0.025, 1 - filtered_df['Adjusted Green Share']) if x > 0 else 0)
+                    # Calculate adjusted shares
+                    filtered_df['Adjusted Green Share'] = np.where(filtered_df['Current Green Share'] > 0, 
+                                                                   np.minimum(filtered_df['Current Green Share'] + 0.05, 1), 0)
+                    filtered_df['Adjusted Yellow Share'] = np.where(filtered_df['Current Yellow Share'] > 0,
+                                                                    np.minimum(filtered_df['Current Yellow Share'] + 0.025, 
+                                                                               1 - filtered_df['Adjusted Green Share']), 0)
                     filtered_df['Adjusted Red Share'] = 1 - filtered_df['Adjusted Green Share'] - filtered_df['Adjusted Yellow Share']
 
+                    # Calculate Imaginary EBITDA
                     filtered_df['Imaginary EBITDA'] = (
                         filtered_df['Adjusted Green Share'] * filtered_df['Green EBITDA'] +
                         filtered_df['Adjusted Yellow Share'] * filtered_df['Yellow EBITDA'] +
@@ -143,9 +150,8 @@ def create_pdf_report(region, df):
                     c.drawString(50, height - 680, "Share of Green, Yellow, and Red Products")
                     
                     # Create pie chart
-                    share_fig = px.pie(values=[filtered_df['Current Green Share'].mean(), 
-                                               filtered_df['Current Yellow Share'].mean(), 
-                                               filtered_df['Current Red Share'].mean()], 
+                    average_shares = filtered_df[['Current Green Share', 'Current Yellow Share', 'Current Red Share']].mean()
+                    share_fig = px.pie(values=average_shares, 
                                        names=['Green', 'Yellow', 'Red'], 
                                        title='Average Share Distribution')
                     
