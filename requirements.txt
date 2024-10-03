@@ -19,4 +19,4 @@ streamlit_option_menu
 lightgbm
 catboost
 twilio
-
+kaleido
