@@ -190,7 +190,7 @@ def create_pdf_report(region, df):
                        title="")
                     share_fig.update_layout(width=450, height=450, margin=dict(l=0, r=0, t=0, b=0))  # Reduced size
                     
-                    draw_graph(share_fig, 50, height - 800, 200, 200)  # Adjusted position and size
+                    draw_graph(share_fig, 70, height - 810, 200, 200)  # Adjusted position and size
 
                     # Add share table
                     c.setFont("Helvetica-Bold", 10)  # Reduced font size
