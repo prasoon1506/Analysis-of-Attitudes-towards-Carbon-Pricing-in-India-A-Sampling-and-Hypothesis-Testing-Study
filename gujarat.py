@@ -147,8 +147,8 @@ def create_pdf_report(region, df):
                             # If both green and yellow are absent, don't change
                             return green, yellow, red
                         elif green == 0:
-                            # If green is absent, increase yellow by 2.5% and decrease red by 2.5%
-                            yellow = min(yellow + 0.025, 1)
+                            # If green is absent, increase yellow by 5% and decrease red by 5%
+                            yellow = min(yellow + 0.05, 1)
                             red = max(1 - yellow, 0)
                         elif yellow == 0:
                             # If yellow is absent, increase green by 5% and decrease red by 5%
