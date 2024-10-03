@@ -155,8 +155,8 @@ def create_pdf_report(region, df):
                         xaxis_title='Month',
                         yaxis_title='EBITDA',
                         legend_title='Metrics',
-                        plot_bgcolor='white',
-                        paper_bgcolor='lightpink'
+                        plot_bgcolor='cornsilk',
+                        paper_bgcolor='lightcyan'
                     )
 
                     # Add new page if needed
