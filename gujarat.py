@@ -165,8 +165,6 @@ def create_pdf_report(region, df):
                 
                 if not filtered_df.empty:
                     add_header(c)
-                    add_page_number(c, c)
-
                     cols = ['Green EBITDA', 'Yellow EBITDA', 'Red EBITDA']
                     overall_col = 'Overall EBITDA'
 
@@ -258,8 +256,8 @@ def create_pdf_report(region, df):
                         xaxis=dict(tickmode='array', tickvals=list(range(len(x_labels))), ticktext=x_labels)  
                     )
                     # Add new page if needed
-                    if page_number > 1:
-                        c.showPage()
+                    #if page_number > 1:
+                        #c.showPage()
                     
                     # Draw the graph
                     draw_graph(fig, 50, height - 370, 500, 300)  # Reduced height
@@ -287,22 +285,20 @@ def create_pdf_report(region, df):
                     share_fig.update_layout(width=475, height=475, margin=dict(l=0, r=0, t=0, b=0))  # Reduced size
                     
                     draw_graph(share_fig, 80, height - 810, 200, 200)  # Adjusted position and size
-                    
-                    # Add share table
-                    c.setFont("Helvetica-Bold", 10)  # Reduced font size
+                    c.setFont("Helvetica-Bold", 10)
                     c.drawString(330, height - 600, "Monthly Share Distribution")
                     share_data = [['Month', 'Green', 'Yellow', 'Red']]
-                    for _, row in filtered_df[['Month', 'Average Green Share', 'Average Yellow Share', 'Average Red Share']].iterrows():
+                    for _, row in filtered_df[['Month', 'Green', 'Yellow', 'Red', 'Average Green Share', 'Average Yellow Share', 'Average Red Share']].iterrows():
                         share_data.append([
                             row['Month'],
-                            f"{row['Average Green Share']:.2%}",
-                            f"{row['Average Yellow Share']:.2%}",
-                            f"{row['Average Red Share']:.2%}"
+                            f"{row['Green']:.0f} ({row['Average Green Share']:.2%})",
+                            f"{row['Yellow']:.0f} ({row['Average Yellow Share']:.2%})",
+                            f"{row['Red']:.0f} ({row['Average Red Share']:.2%})"
                         ])
-                    draw_table(share_data, 330, height - 620, [40, 40, 40, 40])  # Adjusted position and reduced column widths
-
-                    add_page_number(c, page_number)
-                    page_number += 1
+                    draw_table(share_data, 330, height - 620, [40, 60, 60, 60])
+                    
+                    c.showPage()
+                    
     add_appendix()
     c.save()
     buffer.seek(0)
