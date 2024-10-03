@@ -28,6 +28,18 @@ with st.sidebar:
         menu_icon="cast",
         default_index=0,
     )
+def load_lottieurl(url: str):
+    try:
+        r = requests.get(url)
+        if r.status_code != 200:
+            return None
+        return r.json()
+    except:
+        return None
+
+# Load Lottie animations
+lottie_analysis = load_lottieurl("https://assets4.lottiefiles.com/packages/lf20_qp1q7mct.json")
+lottie_upload = load_lottieurl("https://assets9.lottiefiles.com/packages/lf20_ABViugg1T8.json")
 # New function to create PDF report
 def create_pdf_report(region, df):
     buffer = BytesIO()
