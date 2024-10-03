@@ -223,7 +223,7 @@ def create_pdf_report(region, df):
                     desc_stats = filtered_df[['Green','Yellow','Red']+cols + [overall_col, 'Imaginary EBITDA']].describe().reset_index()
                     desc_stats = desc_stats[desc_stats['index'] != 'count'].round(2)  # Remove 'count' row
                     table_data = [['Metric'] + list(desc_stats.columns[1:])] + desc_stats.values.tolist()
-                    draw_table(table_data, 50, height - 430, [45,45,45,45] + [80] * (len(desc_stats.columns) - 4))  # Reduced column widths
+                    draw_table(table_data, 50, height - 430, [45,45,45,45] + [75] * (len(desc_stats.columns) - 4))  # Reduced column widths
                     c.setFont("Helvetica-Bold", 10)  # Reduced font size
                     c.drawString(50, height - 600, "Average Share Distribution")
                     
