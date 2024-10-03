@@ -110,7 +110,6 @@ def create_pdf_report(region, df):
         c.setFillColorRGB(1, 1, 1)  # White color for text
         c.setFont("Helvetica-Bold", 24)
         c.drawString(30, height - 35, f"GYR Analysis Report: {region}")
-        add_page_number(c, page_number)
     def add_front_page():
         c.setFillColorRGB(0.4,0.5,0.3)
         c.rect(0, 0, width, height, fill=True)
