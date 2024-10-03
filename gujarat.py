@@ -113,7 +113,7 @@ def create_pdf_report(region, df):
         
         add_page_number(c, page_number)
     def add_front_page():
-        c.setFillColor(firebrick)
+        c.setFillColorRGB(0.2,0.2,0.2)
         c.rect(0, 0, width, height, fill=True)
         c.setFillColorRGB(1, 1, 1)
         c.setFont("Helvetica-Bold", 36)
