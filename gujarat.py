@@ -245,7 +245,7 @@ def create_pdf_report(region, df):
                                     filtered_df['I-O Difference'])]
 
                     fig.update_layout(
-                        title=f"EBITDA Analysis for {brand} - (Type:-{product_type}) in {region}({region_subset})",
+                        title=f"EBITDA Analysis for {brand}(Type:-{product_type}) in {region}({region_subset})",
                         xaxis_title='',
                         yaxis_title='EBITDA',
                         legend_title='Metrics',
