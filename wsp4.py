@@ -1077,7 +1077,7 @@ def Home():
     .title {
         font-size: 3.5rem;
         font-weight: 700;
-        color: #2c3e50;
+        color: white;
         text-align: center;
         padding: 2rem 0;
         margin-bottom: 2rem;
