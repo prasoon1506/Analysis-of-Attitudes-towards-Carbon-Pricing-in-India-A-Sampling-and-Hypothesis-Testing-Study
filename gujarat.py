@@ -156,7 +156,7 @@ def create_pdf_report(region, df):
                         yaxis_title='EBITDA',
                         legend_title='Metrics',
                         plot_bgcolor='white',
-                        paper_bgcolor='white'
+                        paper_bgcolor='lightpink'
                     )
 
                     # Add new page if needed
@@ -164,7 +164,7 @@ def create_pdf_report(region, df):
                         c.showPage()
                     
                     # Draw the graph
-                    draw_graph(fig, 50, height - 400, 500, 300)  # Reduced height
+                    draw_graph(fig, 50, height - 200, 500, 300)  # Reduced height
 
                     # Add descriptive statistics
                     c.setFillColorRGB(0.2, 0.2, 0.2)  # Dark grey color for headers
