@@ -184,7 +184,6 @@ def create_pdf_report(region, df):
                     average_shares = filtered_df[['Current Green Share', 'Current Yellow Share', 'Current Red Share']].mean()
                     share_fig = plt.pie(average_shares, 
                                        labels=['Green', 'Yellow', 'Red'], 
-                                       title='',
                                        colors=['green','yellow','red'])
                     share_fig.update_layout(width=200, height=200, margin=dict(l=20, r=20, t=20, b=20))  # Reduced size
                     
