@@ -129,7 +129,7 @@ def create_pdf_report(region, df):
         c.drawString(50, height - 100, "Appendix")
         
         appendix_text = [
-            ("Graph Interpretation:", "Each line in the graph represents a different metric (Green, Yellow, Red, Overall, and Imaginary EBITDA) over time. The differences between these metrics are shown below each month."),
+            ("Graph Interpretation:", "Each line in the graph represents a different metric (Green, Yellow, Red, Overall, and Imaginary EBITDA) over time.\n The differences between these metrics are shown below each month."),
             ("Tables:", "The descriptive statistics table provides a summary of the data, including mean, standard deviation, and quartiles. The monthly share distribution table shows the proportion of Green, Yellow, and Red products for each month."),
             ("Importance:", "These visualizations and tables help identify trends, compare performance across different product categories, and understand the potential impact of changing product distributions."),
             ("Suggestions for Improvement:", "To increase EBITDA, consider the following strategies:"),
