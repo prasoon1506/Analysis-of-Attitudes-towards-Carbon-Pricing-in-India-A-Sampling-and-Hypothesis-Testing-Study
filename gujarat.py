@@ -41,11 +41,23 @@ def load_lottieurl(url: str):
 lottie_analysis = load_lottieurl("https://assets4.lottiefiles.com/packages/lf20_qp1q7mct.json")
 lottie_upload = load_lottieurl("https://assets9.lottiefiles.com/packages/lf20_ABViugg1T8.json")
 import numpy as np
+import pandas as pd
+import plotly.graph_objects as go
+import plotly.express as px
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
+from reportlab.lib import colors
+from reportlab.platypus import Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet
+from io import BytesIO
+import numpy as np
 
 def create_pdf_report(region, df):
     buffer = BytesIO()
     c = canvas.Canvas(buffer, pagesize=letter)
     width, height = letter
+    styles = getSampleStyleSheet()
 
     def add_page_number(canvas, page_number):
         canvas.saveState()
@@ -61,7 +73,29 @@ def create_pdf_report(region, df):
         img = ImageReader(img_buffer)
         c.drawImage(img, x, y, width, height)
 
+    def draw_table(data, x, y, col_widths):
+        table = Table(data, colWidths=col_widths)
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 1), (-1, -1), 8),
+            ('TOPPADDING', (0, 1), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        w, h = table.wrapOn(c, width, height)
+        table.drawOn(c, x, y - h)
+
     # Title
+    c.setFillColorRGB(0.2, 0.2, 0.2)  # Dark grey color for title
     c.setFont("Helvetica-Bold", 24)
     c.drawString(50, height - 50, f"GYR Analysis Report for {region}")
 
@@ -112,22 +146,27 @@ def create_pdf_report(region, df):
                     # Create the plot
                     fig = go.Figure()
 
-                    for col in cols:
-                        fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[col],
-                                                 mode='lines+markers', name=col))
+                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Green EBITDA'],
+                                             mode='lines+markers', name='Green EBITDA', line=dict(color='green')))
+                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Yellow EBITDA'],
+                                             mode='lines+markers', name='Yellow EBITDA', line=dict(color='yellow')))
+                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Red EBITDA'],
+                                             mode='lines+markers', name='Red EBITDA', line=dict(color='red')))
 
                     fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[overall_col],
-                                             mode='lines+markers', name=overall_col, line=dict(dash='dash')))
+                                             mode='lines+markers', name=overall_col, line=dict(color='blue', dash='dash')))
 
                     fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Imaginary EBITDA'],
                                              mode='lines+markers', name='Imaginary EBITDA',
-                                             line=dict(color='brown', dash='dot')))
+                                             line=dict(color='purple', dash='dot')))
 
                     fig.update_layout(
                         title=f"EBITDA Analysis: {brand} - {product_type} - {region_subset}",
                         xaxis_title='Month',
                         yaxis_title='EBITDA',
-                        legend_title='Metrics'
+                        legend_title='Metrics',
+                        plot_bgcolor='white',
+                        paper_bgcolor='white'
                     )
 
                     # Add new page if needed
@@ -138,31 +177,41 @@ def create_pdf_report(region, df):
                     draw_graph(fig, 50, height - 500, 500, 400)
 
                     # Add descriptive statistics
+                    c.setFillColorRGB(0.2, 0.2, 0.2)  # Dark grey color for headers
                     c.setFont("Helvetica-Bold", 14)
                     c.drawString(50, height - 520, "Descriptive Statistics")
+                    
                     desc_stats = filtered_df[cols + [overall_col, 'Imaginary EBITDA']].describe().reset_index()
-                    for i, row in desc_stats.iterrows():
-                        c.setFont("Helvetica", 10)
-                        y_position = height - 540 - (i * 15)
-                        c.drawString(50, y_position, f"{row['index']}: {', '.join([f'{col}: {row[col]:.2f}' for col in desc_stats.columns if col != 'index'])}")
+                    desc_stats = desc_stats.round(2)
+                    table_data = [['Metric'] + list(desc_stats.columns[1:])] + desc_stats.values.tolist()
+                    draw_table(table_data, 50, height - 530, [80] + [70] * (len(desc_stats.columns) - 1))
 
                     # Add share of Green, Yellow, and Red Products
                     c.setFont("Helvetica-Bold", 14)
-                    c.drawString(50, height - 680, "Share of Green, Yellow, and Red Products")
+                    c.drawString(50, height - 730, "Share of Green, Yellow, and Red Products")
                     
                     # Create pie chart
                     average_shares = filtered_df[['Current Green Share', 'Current Yellow Share', 'Current Red Share']].mean()
                     share_fig = px.pie(values=average_shares, 
                                        names=['Green', 'Yellow', 'Red'], 
-                                       title='Average Share Distribution')
+                                       title='Average Share Distribution',
+                                       color_discrete_map={'Green': 'green', 'Yellow': 'yellow', 'Red': 'red'})
+                    share_fig.update_layout(width=400, height=300)
                     
-                    draw_graph(share_fig, 50, height - 900, 300, 200)
+                    draw_graph(share_fig, 50, height - 1050, 400, 300)
 
                     # Add share table
-                    c.setFont("Helvetica", 10)
-                    for i, (_, row) in enumerate(filtered_df[['Month', 'Current Green Share', 'Current Yellow Share', 'Current Red Share']].iterrows()):
-                        y_position = height - 920 - (i * 15)
-                        c.drawString(400, y_position, f"{row['Month']}: G: {row['Current Green Share']:.2%}, Y: {row['Current Yellow Share']:.2%}, R: {row['Current Red Share']:.2%}")
+                    c.setFont("Helvetica-Bold", 12)
+                    c.drawString(50, height - 1070, "Monthly Share Distribution")
+                    share_data = [['Month', 'Green', 'Yellow', 'Red']]
+                    for _, row in filtered_df[['Month', 'Current Green Share', 'Current Yellow Share', 'Current Red Share']].iterrows():
+                        share_data.append([
+                            row['Month'],
+                            f"{row['Current Green Share']:.2%}",
+                            f"{row['Current Yellow Share']:.2%}",
+                            f"{row['Current Red Share']:.2%}"
+                        ])
+                    draw_table(share_data, 50, height - 1080, [100, 80, 80, 80])
 
                     add_page_number(c, page_number)
                     page_number += 1
