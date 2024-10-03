@@ -182,16 +182,19 @@ def create_pdf_report(region, df):
                     
                     # Create pie chart with correct colors
                     average_shares = filtered_df[['Current Green Share', 'Current Yellow Share', 'Current Red Share']].mean()
-                    share_fig = plt.pie(average_shares, 
-                                       labels=['Green', 'Yellow', 'Red'], 
-                                       colors=['green','yellow','red'])
+                    share_fig = px.pie(
+                       values=average_shares.values,
+                       names=average_shares.index,
+                       color=average_shares.index,
+                       color_discrete_map={'Current Green Share': 'green', 'Current Yellow Share': 'yellow', 'Current Red Share': 'red'},
+                       title="Average Share Distribution")
                     share_fig.update_layout(width=200, height=200, margin=dict(l=20, r=20, t=20, b=20))  # Reduced size
                     
-                    draw_graph(share_fig, 50, height - 750, 200, 200)  # Adjusted position and size
+                    draw_graph(share_fig, 50, height - 650, 200, 200)  # Adjusted position and size
 
                     # Add share table
                     c.setFont("Helvetica-Bold", 10)  # Reduced font size
-                    c.drawString(360, height - 420, "Monthly Share Distribution")
+                    c.drawString(360, height - 550, "Monthly Share Distribution")
                     share_data = [['Month', 'Green', 'Yellow', 'Red']]
                     for _, row in filtered_df[['Month', 'Current Green Share', 'Current Yellow Share', 'Current Red Share']].iterrows():
                         share_data.append([
@@ -200,7 +203,7 @@ def create_pdf_report(region, df):
                             f"{row['Current Yellow Share']:.2%}",
                             f"{row['Current Red Share']:.2%}"
                         ])
-                    draw_table(share_data, 360, height - 430, [40, 40, 40, 40])  # Adjusted position and reduced column widths
+                    draw_table(share_data, 360, height - 650, [40, 40, 40, 40])  # Adjusted position and reduced column widths
 
                     add_page_number(c, page_number)
                     page_number += 1
