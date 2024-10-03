@@ -173,10 +173,10 @@ def create_pdf_report(region, df):
                     desc_stats = filtered_df[cols + [overall_col, 'Imaginary EBITDA']].describe().reset_index()
                     desc_stats = desc_stats[desc_stats['index'] != 'count'].round(2)  # Remove 'count' row
                     table_data = [['Metric'] + list(desc_stats.columns[1:])] + desc_stats.values.tolist()
-                    draw_table(table_data, 50, height - 430, [50] + [45] * (len(desc_stats.columns) - 1))  # Reduced column widths
+                    draw_table(table_data, 60, height - 430, [50] + [45] * (len(desc_stats.columns) - 1))  # Reduced column widths
 
                     # Add share of Green, Yellow, and Red Products
-                    c.setFont("Helvetica-Bold", 8)  # Reduced font size
+                    c.setFont("Helvetica-Bold", 10)  # Reduced font size
                     c.drawString(50, height - 550, "Average Share Distribution")
                     
                     # Create pie chart with correct colors
