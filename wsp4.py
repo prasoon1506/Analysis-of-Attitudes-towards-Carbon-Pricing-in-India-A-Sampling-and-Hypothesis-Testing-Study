@@ -1081,7 +1081,7 @@ def Home():
         text-align: center;
         padding: 2rem 0;
         margin-bottom: 2rem;
-        background: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%);
+        background: linear-gradient(to right, #f0f8ff, #e6f3ff);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
     }
