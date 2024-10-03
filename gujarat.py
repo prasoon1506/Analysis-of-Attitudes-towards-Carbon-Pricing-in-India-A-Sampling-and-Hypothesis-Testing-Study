@@ -164,7 +164,7 @@ def create_pdf_report(region, df):
                         c.showPage()
                     
                     # Draw the graph
-                    draw_graph(fig, 50, height - 350, 500, 300)  # Reduced height
+                    draw_graph(fig, 50, height - 370, 500, 300)  # Reduced height
 
                     # Add descriptive statistics
                     c.setFillColorRGB(0.2, 0.2, 0.2)  # Dark grey color for headers
