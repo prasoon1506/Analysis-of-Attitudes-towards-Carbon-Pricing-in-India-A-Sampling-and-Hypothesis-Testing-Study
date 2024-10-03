@@ -181,10 +181,10 @@ def create_pdf_report(region, df):
                     
                     # Create pie chart with correct colors
                     average_shares = filtered_df[['Current Green Share', 'Current Yellow Share', 'Current Red Share']].mean()
-                    share_fig = px.pie(values=average_shares, 
-                                       names=['Green', 'Yellow', 'Red'], 
+                    share_fig = plt.pie(average_shares, 
+                                       labels=['Green', 'Yellow', 'Red'], 
                                        title='',
-                                       color_discrete_map={'Green': 'green', 'Yellow': 'yellow', 'Red': 'red'})
+                                       colors=['green','yellow','red'])
                     share_fig.update_layout(width=200, height=200, margin=dict(l=20, r=20, t=20, b=20))  # Reduced size
                     
                     draw_graph(share_fig, 50, height - 750, 200, 200)  # Adjusted position and size
