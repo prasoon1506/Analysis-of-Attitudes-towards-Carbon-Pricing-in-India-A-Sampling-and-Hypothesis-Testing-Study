@@ -135,8 +135,25 @@ def create_pdf_report(region, df):
     c.save()
     buffer.seek(0)
     return buffer
+if selected == "Home":
+    st.title("📊 Advanced GYR Analysis")
+    st.markdown("Welcome to our advanced data analysis platform. Upload your Excel file to get started with interactive visualizations and insights.")
+    
+    st.markdown("<div class='upload-section'>", unsafe_allow_html=True)
+    col1, col2 = st.columns([2, 1])
+    with col1:
+        uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
+        if uploaded_file is not None:
+            st.session_state.uploaded_file = uploaded_file
+            st.success("File successfully uploaded! Please go to the Analysis page to view results.")
 
-# Modify the Analysis page
+    with col2:
+        if lottie_upload:
+            st_lottie(lottie_upload, height=150, key="upload")
+        else:
+            st.image("https://cdn-icons-png.flaticon.com/512/4503/4503700.png", width=150)
+    st.markdown("</div>", unsafe_allow_html=True)
+
 elif selected == "Analysis":
     st.title("📈 Data Analysis Dashboard")
     
