@@ -201,12 +201,7 @@ def create_pdf_report(region, df):
                         legend_title='Metrics',
                         plot_bgcolor='cornsilk',
                         paper_bgcolor='lightcyan',
-                        xaxis=dict(
-                            tickmode='array', 
-                            tickvals=list(range(len(x_labels))), 
-                            ticktext=x_labels,
-                            title_standoff=50  # This moves the x-axis title down
-                        )
+                        xaxis=dict(tickmode='array', tickvals=list(range(len(x_labels))), ticktext=x_labels)  
                     )
                     # Add new page if needed
                     if page_number > 1:
