@@ -181,7 +181,6 @@ if selected == "Home":
         else:
             st.image("https://cdn-icons-png.flaticon.com/512/4503/4503700.png", width=150)
     st.markdown("</div>", unsafe_allow_html=True)
-
 elif selected == "Analysis":
     st.title("📈 Data Analysis Dashboard")
     
@@ -198,7 +197,7 @@ elif selected == "Analysis":
 
         # Create sidebar for user inputs
         st.sidebar.header("Filter Options")
-        region = st.sidebar.selectbox("Select Region", options=df['Region'].unique())
+        region = st.sidebar.selectbox("Select Region", options=df['Region'].unique(), key="region_select")
 
         # Add download button for combined report
         if st.sidebar.button(f"Download Combined Report for {region}"):
@@ -208,10 +207,10 @@ elif selected == "Analysis":
             href = f'<a href="data:application/pdf;base64,{b64}" download="GYR_Analysis_Report_{region}.pdf">Download PDF Report</a>'
             st.sidebar.markdown(href, unsafe_allow_html=True)
 
-        region = st.sidebar.selectbox("Select Region", options=df['Region'].unique())
-        brand = st.sidebar.selectbox("Select Brand", options=df['Brand'].unique())
-        product_type = st.sidebar.selectbox("Select Type", options=df['Type'].unique())
-        region_subset = st.sidebar.selectbox("Select Region Subset", options=df['Region subsets'].unique())
+        # Add unique keys to each selectbox
+        brand = st.sidebar.selectbox("Select Brand", options=df['Brand'].unique(), key="brand_select")
+        product_type = st.sidebar.selectbox("Select Type", options=df['Type'].unique(), key="type_select")
+        region_subset = st.sidebar.selectbox("Select Region Subset", options=df['Region subsets'].unique(), key="region_subset_select")
         
         # Analysis type selection using radio buttons
         st.sidebar.header("Analysis on")
@@ -221,13 +220,13 @@ elif selected == "Analysis":
         if 'analysis_type' not in st.session_state:
             st.session_state.analysis_type = "EBITDA Analysis"
         
-        analysis_type = st.sidebar.radio("Select Analysis Type", analysis_options, index=analysis_options.index(st.session_state.analysis_type))
+        analysis_type = st.sidebar.radio("Select Analysis Type", analysis_options, index=analysis_options.index(st.session_state.analysis_type), key="analysis_type_radio")
         
         # Update session state
         st.session_state.analysis_type = analysis_type
 
-        green_share = st.sidebar.slider("Adjust Green Share (%)", 0, 99, 50)
-        yellow_share = st.sidebar.slider("Adjust Yellow Share (%)", 0, 100-green_share,0)
+        green_share = st.sidebar.slider("Adjust Green Share (%)", 0, 99, 50, key="green_share_slider")
+        yellow_share = st.sidebar.slider("Adjust Yellow Share (%)", 0, 100-green_share, 0, key="yellow_share_slider")
         red_share = 100 - green_share - yellow_share
         st.sidebar.text(f"Red Share: {red_share}%")
         # Filter the dataframe
