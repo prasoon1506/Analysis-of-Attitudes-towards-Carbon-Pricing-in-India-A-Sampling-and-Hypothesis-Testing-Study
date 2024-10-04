@@ -857,7 +857,7 @@ st.markdown("""
     }
     .dataframe thead tr th {
         background-color: #3498db;
-        color: white;
+        color: brown;
     }
     .dataframe tbody tr:nth-child(even) {
         background-color: #f2f2f2;
