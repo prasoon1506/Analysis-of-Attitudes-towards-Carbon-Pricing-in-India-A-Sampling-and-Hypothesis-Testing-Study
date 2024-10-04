@@ -312,14 +312,14 @@ def create_pdf_report(region, df, region_subset=None):
                     # Calculate Imaginary EBITDA with adjusted shares
                     def adjust_shares(row):
                         trade = row['Average Trade Share']
-                        non-trade = row['Average Non-Trade Share']
+                        nontrade = row['Average Non-Trade Share']
                         
-                        if trade == 1 or non-trade == 1 :
+                        if trade == 1 or nontrade == 1 :
                             # If any share is 100%, don't change
-                            return trade,non-trade
+                            return trade,nontrade
                         else:
                             trade = min(trade + 0.05, 1)
-                            non-trade = min(non-trade - 0.05, 1 - trade)
+                            nontrade = min(nontrade - 0.05, 1 - trade)
                         
                         return trade,non-trade
                     filtered_df['Adjusted Trade Share'], filtered_df['Adjusted Non-Trade Share'] = zip(*filtered_df.apply(adjust_shares, axis=1))
