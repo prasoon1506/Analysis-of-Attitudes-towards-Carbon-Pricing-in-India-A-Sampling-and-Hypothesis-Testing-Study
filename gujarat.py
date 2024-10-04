@@ -126,31 +126,32 @@ def create_pdf_report(region, df):
         c.setFont("Helvetica", 18)
         c.drawCentredString(width / 2, height - 300, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         c.showPage()
-
     def add_appendix():
-        c.setFont("Helvetica-Bold", 24)
-        c.drawString(50, height - 100, "Appendix")
-        
-        appendix_text = [
-            ("Graph Interpretation:", "Each line in the graph represents a different metric (Green, Yellow, Red, Overall, and Imaginary EBITDA) over time.\n The differences between these metrics are shown below each month."),
-            ("Tables:", "The descriptive statistics table provides a summary of the data, including mean, standard deviation, and quartiles.\n The monthly share distribution table shows the proportion of Green, Yellow, and Red products for each month."),
-            ("Importance:", "These visualizations and tables help identify trends, compare performance across different product categories,\n and understand the potential impact of changing product distributions."),
-            ("Suggestions for Improvement:", "To increase EBITDA, consider the following strategies:"),
-            ("1. Increase the share of Green Region, which typically have higher EBITDA margins."),
-            ("2. Implement targeted marketing campaigns to promote Yellow Regions and\n convert Red Region customers."),
-            ("3. Analyze the factors contributing to higher EBIDTA in Green and Yellow region,\n and apply these insights to improve Red Region performance."),
-            ("4. Regularly review and adjust pricing strategies to optimize EBITDA across all product categories."),
-            ("5. Invest in product innovation to expand the Green and Yellow region offerings."),
-            ("Limitations:"),
-            ("1. This analysis is based on historical data and may not predict future market changes."),
-            ("2. External factors such as economic conditions are not accounted for in this report."),
-            ("3. This report analyzes the EBIDTA for GYR keeping everything else constant."),
-            (" We are currently working on including all the other factors which impact the EBIDTA across\n GYR regions which will make this analysis more robust and helpful. Also we will\n also include NSR and Contribution in our next report."),
-            ("Thank You.")
-        ]
+    c.setFont("Helvetica-Bold", 24)
+    c.drawString(50, height - 100, "Appendix")
+    
+    appendix_text = [
+        ("Graph Interpretation:", "Each line in the graph represents a different metric (Green, Yellow, Red, Overall, and Imaginary EBITDA) over time. The differences between these metrics are shown below each month."),
+        ("Tables:", "The descriptive statistics table provides a summary of the data, including mean, standard deviation, and quartiles. The monthly share distribution table shows the proportion of Green, Yellow, and Red products for each month."),
+        ("Importance:", "These visualizations and tables help identify trends, compare performance across different product categories, and understand the potential impact of changing product distributions."),
+        "Suggestions for Improvement:",
+        "1. Increase the share of Green Region, which typically have higher EBITDA margins.",
+        "2. Implement targeted marketing campaigns to promote Yellow Regions and convert Red Region customers.",
+        "3. Analyze the factors contributing to higher EBIDTA in Green and Yellow region, and apply these insights to improve Red Region performance.",
+        "4. Regularly review and adjust pricing strategies to optimize EBITDA across all product categories.",
+        "5. Invest in product innovation to expand the Green and Yellow region offerings.",
+        "Limitations:",
+        "1. This analysis is based on historical data and may not predict future market changes.",
+        "2. External factors such as economic conditions are not accounted for in this report.",
+        "3. This report analyzes the EBIDTA for GYR keeping everything else constant.",
+        "We are currently working on including all the other factors which impact the EBIDTA across GYR regions which will make this analysis more robust and helpful. Also we will also include NSR and Contribution in our next report.",
+        "Thank You."
+    ]
 
-        y_position = height - 150
-        for title, content in appendix_text:
+    y_position = height - 150
+    for item in appendix_text:
+        if isinstance(item, tuple):
+            title, content = item
             c.setFont("Helvetica-Bold", 12)
             c.drawString(50, y_position, title)
             y_position -= 20
@@ -159,6 +160,13 @@ def create_pdf_report(region, df):
             text.textLines(content)
             c.drawText(text)
             y_position -= 30
+        else:
+            c.setFont("Helvetica", 10)
+            text = c.beginText(70, y_position)
+            text.textLines(item)
+            c.drawText(text)
+            y_position -= 20
+        
 
     add_front_page()
     brands = df['Brand'].unique()
