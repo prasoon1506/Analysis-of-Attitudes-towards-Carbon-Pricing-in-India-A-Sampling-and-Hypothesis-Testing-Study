@@ -260,8 +260,8 @@ def create_pdf_report(region, df):
         c.drawText(text_object)
 
         c.setFont("Helvetica", 12)
-        c.drawString(inch, 2*inch, "We are currently working on including all other factors which impact the EBIDTA across GYR regions,")
-        c.drawString(inch, 1.8*inch, "which will make this analysis more robust and helpful. We will also include NSR and") 
+        c.drawString(inch, 2*inch, "We are currently working on including all other factors which impact the EBIDTA across GYR,")
+        c.drawString(inch, 1.8*inch, "regions which will make this analysis more robust and helpful. We will also include NSR and") 
         c.drawString(inch,1.6*inch,"Contribution in our next report.")
 
         c.setFont("Helvetica-Bold", 14)
