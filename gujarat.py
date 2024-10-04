@@ -268,7 +268,7 @@ def create_pdf_report(region, df):
                         legend_title='Metrics',
                         plot_bgcolor='cornsilk',
                         paper_bgcolor='lightcyan',
-                        height=700,  # Increased height to accommodate the new subplot
+                        height=600,  # Increased height to accommodate the new subplot
                     )
                     fig.update_xaxes(tickmode='array', tickvals=list(range(len(x_labels))), ticktext=x_labels, row=1, col=1)
                     fig.update_xaxes(title_text='Month', row=2, col=1)
@@ -278,7 +278,7 @@ def create_pdf_report(region, df):
                     #if page_number > 1:
                         #c.showPage()
                     # Draw the graph
-                    draw_graph(fig, 50, height - 520, 500, 450)
+                    draw_graph(fig, 50, height - 420, 500, 350)
 
                     # Add descriptive statistics
                     c.setFillColorRGB(0.2, 0.2, 0.7)  # Dark grey color for headers
