@@ -119,7 +119,7 @@ def create_pdf_report(region, df, region_subset=None):
         c.drawCentredString(width / 2, height - 250, report_title)
         c.setFont("Helvetica", 18)
         c.drawCentredString(width / 2, height - 300, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        add_page_number(c, c._pageNumber)
+        add_page_number(c)
         c.showPage()
     def draw_graph(fig, x, y, width, height):
         img_buffer = BytesIO()
