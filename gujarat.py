@@ -226,17 +226,16 @@ def create_pdf_report(region, df):
 
         # Suggestions for Improvement
         c.setFont("Helvetica-Bold", 14)
-        c.drawString(inch, height - 4.2*inch, "Suggestions for Improvement:")
+        c.drawString(inch, height - 4*inch, "Suggestions for Improvement:")
 
         suggestions = [
             "Increase the share of Green Region products, which typically have higher EBIDTA margins.",
-            "Implement targeted marketing campaigns to promote Yellow Regions and convert Red Region customers.",
-            "Analyze factors contributing to higher EBITDA in Green and Yellow regions, and apply insights to improve Red Region performance.",
+            "Analyze factors contributing to higher EBIDTA in Green zone,and apply insights to Red zone.",
             "Regularly review and adjust pricing strategies to optimize EBITDA across all product categories.",
             "Invest in product innovation to expand Green and Yellow region offerings.",
         ]
 
-        text_object = c.beginText(inch, height - 4.5*inch)
+        text_object = c.beginText(inch, height - 4.3*inch)
         text_object.setFont("Helvetica", 12)
         for suggestion in suggestions:
             text_object.textLine(f"• {suggestion}")
@@ -245,7 +244,7 @@ def create_pdf_report(region, df):
 
         # Limitations
         c.setFont("Helvetica-Bold", 14)
-        c.drawString(inch, height - 6*inch, "Limitations:")
+        c.drawString(inch, height - 5.5*inch, "Limitations:")
 
         limitations = [
             "This analysis is based on historical data and may not predict future market changes.",
@@ -253,7 +252,7 @@ def create_pdf_report(region, df):
             "This report analyzes the EBIDTA for GYR keeping everything else constant.",
         ]
 
-        text_object = c.beginText(inch, height - 6.3*inch)
+        text_object = c.beginText(inch, height - 5.8*inch)
         text_object.setFont("Helvetica", 12)
         for limitation in limitations:
             text_object.textLine(f"• {limitation}")
