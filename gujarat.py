@@ -204,7 +204,7 @@ def create_pdf_report(region, df):
             if not title:
                 text_object.textLine("")
             else:
-                text_object.setFont("Helvetica-Bold", 12)
+                text_object.setFont("Helvetica", 12)
 
         c.drawText(text_object)
 
