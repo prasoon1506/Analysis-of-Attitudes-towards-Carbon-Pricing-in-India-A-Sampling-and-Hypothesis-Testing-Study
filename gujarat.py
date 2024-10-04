@@ -268,7 +268,7 @@ def create_pdf_report(region, df):
                         legend_title='Metrics',
                         plot_bgcolor='cornsilk',
                         paper_bgcolor='lightcyan',
-                        height=650,  # Increased height to accommodate the new subplot
+                        height=700,  # Increased height to accommodate the new subplot
                     )
                     fig.update_xaxes(tickmode='array', tickvals=list(range(len(x_labels))), ticktext=x_labels, row=1, col=1)
                     fig.update_xaxes(title_text='Month', row=2, col=1)
