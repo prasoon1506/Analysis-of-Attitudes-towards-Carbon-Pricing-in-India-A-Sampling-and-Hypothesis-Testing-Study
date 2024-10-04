@@ -208,7 +208,7 @@ def create_pdf_report(region, df, region_subset=None):
         for title, description in concepts:
             if title:
                 text_object.textLine(title)
-                text_object.setFont("Helvetica", 12)
+                text_object.setFont("Helvetica-Bold", 12)
             text_object.textLine(description)
             if not title:
                 text_object.textLine("")
@@ -509,7 +509,9 @@ elif selected == "Analysis":
             region_subsets = df[df['Region'] == region]['Region subsets'].unique()
             selected_subset = st.sidebar.selectbox("Select Region Subset", options=region_subsets)
             if st.sidebar.button(f"Download Report for {region} - {selected_subset}"):
-                pdf_buffer = create_pdf_report(region, df, selected_subset)
+                # Filter the dataframe for the selected region and subset
+                subset_df = df[(df['Region'] == region) & (df['Region subsets'] == selected_subset)]
+                pdf_buffer = create_pdf_report(region, subset_df, selected_subset)
                 pdf_bytes = pdf_buffer.getvalue()
                 b64 = base64.b64encode(pdf_bytes).decode()
                 href = f'<a href="data:application/pdf;base64,{b64}" download="GYR_Analysis_Report_{region}_{selected_subset}.pdf">Download Region Subset PDF Report</a>'
@@ -519,6 +521,7 @@ elif selected == "Analysis":
         brand = st.sidebar.selectbox("Select Brand", options=df['Brand'].unique(), key="brand_select")
         product_type = st.sidebar.selectbox("Select Type", options=df['Type'].unique(), key="type_select")
         region_subset = st.sidebar.selectbox("Select Region Subset", options=df['Region subsets'].unique(), key="region_subset_select")
+
         
         # Analysis type selection using radio buttons
         st.sidebar.header("Analysis on")
