@@ -3856,9 +3856,9 @@ def green():
                 st.sidebar.markdown(href, unsafe_allow_html=True)
 
         # Add unique keys to each selectbox
-        brand = st.sidebar.selectbox("Select Brand", options=df['Brand'].unique(), key="brand_select")
-        product_type = st.sidebar.selectbox("Select Type", options=df['Type'].unique(), key="type_select")
-        region_subset = st.sidebar.selectbox("Select Region Subset", options=df['Region subsets'].unique(), key="region_subset_select")
+        brand = st.sidebar.selectbox("Select Brand", options=df[df['Region']==region]['Brand'].unique(), key="brand_select")
+        product_type = st.sidebar.selectbox("Select Type", options=df[df['Region']==region]['Type'].unique(), key="type_select")
+        region_subset = st.sidebar.selectbox("Select Region Subset", options=df[df['Region']==region]['Region subsets'].unique(), key="region_subset_select")
 
         
         # Analysis type selection using radio buttons
