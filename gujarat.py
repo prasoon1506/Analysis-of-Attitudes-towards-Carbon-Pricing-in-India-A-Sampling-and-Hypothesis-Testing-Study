@@ -126,6 +126,62 @@ def create_pdf_report(region, df):
         c.setFont("Helvetica", 18)
         c.drawCentredString(width / 2, height - 300, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         c.showPage()
+    def add_tutorial_page():
+        story.append(Paragraph("Understanding the GYR Analysis", styles['Heading1']))
+        story.append(Spacer(1, 0.25*inch))
+
+        # Example chart
+        drawing = Drawing(400, 200)
+        lc = HorizontalLineChart()
+        lc.x = 50
+        lc.y = 50
+        lc.height = 125
+        lc.width = 300
+        lc.data = [
+            [random.randint(2000, 3000) for _ in range(12)],  # Green
+            [random.randint(1500, 2500) for _ in range(12)],  # Yellow
+            [random.randint(1000, 2000) for _ in range(12)],  # Red
+            [random.randint(1800, 2800) for _ in range(12)],  # Overall
+            [random.randint(2200, 3200) for _ in range(12)],  # Imaginary
+        ]
+        lc.lines[0].strokeColor = colors.green
+        lc.lines[1].strokeColor = colors.yellow
+        lc.lines[2].strokeColor = colors.red
+        lc.lines[3].strokeColor = colors.blue
+        lc.lines[4].strokeColor = colors.purple
+
+        # Add a legend
+        legend = Legend()
+        legend.alignment = 'right'
+        legend.x = 380
+        legend.y = 150
+        legend.colorNamePairs = [
+            (colors.green, 'Green EBITDA'),
+            (colors.yellow, 'Yellow EBITDA'),
+            (colors.red, 'Red EBITDA'),
+            (colors.blue, 'Overall EBITDA'),
+            (colors.purple, 'Imaginary EBITDA'),
+        ]
+        drawing.add(lc)
+        drawing.add(legend)
+
+        story.append(drawing)
+        story.append(Spacer(1, 0.25*inch))
+
+        story.append(Paragraph("Key Concepts:", styles['Heading2']))
+        story.append(Spacer(1, 0.1*inch))
+
+        concepts = [
+            ("Overall EBITDA", "Weighted average of Green, Yellow, and Red EBITDA based on their actual quantities."),
+            ("Imaginary EBITDA", "Calculated by adjusting shares: Green +5%, Yellow +2.5%, Red -7.5% (if all present)."),
+            ("Adjusted Shares", "If any category is absent, adjustments are made to the remaining categories."),
+        ]
+
+        for title, description in concepts:
+            story.append(Paragraph(f"<b>{title}:</b> {description}", body_style))
+            story.append(Spacer(1, 0.1*inch))
+
+        story.append(PageBreak())
     def add_appendix():
        c.setFont("Helvetica-Bold", 24)
        c.drawString(50, height - 100, "Appendix")
@@ -167,6 +223,8 @@ def create_pdf_report(region, df):
             c.drawText(text)
             y_position -= 20
     add_front_page()
+    add_tutorial_page()
+    
     brands = df['Brand'].unique()
     types = df['Type'].unique()
     region_subsets = df['Region subsets'].unique()
