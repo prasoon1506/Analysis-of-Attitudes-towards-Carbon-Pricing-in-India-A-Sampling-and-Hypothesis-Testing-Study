@@ -142,10 +142,10 @@ def create_pdf_report(region, df):
             ("4. Regularly review and adjust pricing strategies to optimize EBITDA across all product categories."),
             ("5. Invest in product innovation to expand the Green and Yellow region offerings."),
             ("Limitations:"),
-            ("1.This analysis is based on historical data and may not predict future market changes")
-            ("2.External factors such as economic conditions are not accounted for in this report")
-            ("3.This report analyzes the EBIDTA for GYR keeping everything else constant.")
-            (" We are currently working on including all the other factors which impact the EBIDTA across\n GYR regions which will make this analysis more robust and helpful. Also we will\n also include NSR and Contribution in our next report.")
+            ("1. This analysis is based on historical data and may not predict future market changes."),
+            ("2. External factors such as economic conditions are not accounted for in this report."),
+            ("3. This report analyzes the EBIDTA for GYR keeping everything else constant."),
+            (" We are currently working on including all the other factors which impact the EBIDTA across\n GYR regions which will make this analysis more robust and helpful. Also we will\n also include NSR and Contribution in our next report."),
             ("Thank You.")
         ]
 
