@@ -245,11 +245,11 @@ def create_pdf_report(region, df):
                     fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['I-O Difference'],
                                              mode='lines+markers+text', name='I-O Difference',
                                              text=filtered_df['I-O Difference'].round(2),
-                                             textposition='top center',
+                                             textposition='top center',textfont=dict(size=8),
                                              line=dict(color='fuchsia')), row=2, col=1)
 
                     # Add mean line to the second subplot
-                    mean_diff = int(filtered_df['I-O Difference'].mean())
+                    mean_diff = round(filtered_df['I-O Difference'].mean())
                     fig.add_trace(go.Scatter(x=filtered_df['Month'], y=[mean_diff] * len(filtered_df),
                                              mode='lines', name='Mean I-O Difference',
                                              line=dict(color='black', dash='dash')), row=2, col=1)
@@ -271,7 +271,7 @@ def create_pdf_report(region, df):
                         height=600,  # Increased height to accommodate the new subplot
                     )
                     fig.update_xaxes(tickmode='array', tickvals=list(range(len(x_labels))), ticktext=x_labels, row=1, col=1)
-                    fig.update_xaxes(title_text='Month', row=2, col=1,tickfont=dict(size=4))
+                    fig.update_xaxes(title_text='Month', row=2, col=1)
                     fig.update_yaxes(title_text='EBITDA', row=1, col=1)
                     fig.update_yaxes(title_text='I-O Difference', row=2, col=1)
                     # Add new page if needed
