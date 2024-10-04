@@ -10,6 +10,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 import io
 import requests
+from reportlab.lib.units import inch
 from datetime import datetime
 from streamlit_lottie import st_lottie
 from streamlit_option_menu import option_menu
