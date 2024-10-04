@@ -1063,6 +1063,8 @@ def load_lottie_url(url: str):
     if r.status_code != 200:
         return None
     return r.json()
+    #-webkit-background-clip: text;
+        #-webkit-text-fill-color: transparent;
 def Home():
     # Custom CSS with more modern and professional styling
     st.markdown("""
@@ -1082,8 +1084,7 @@ def Home():
         padding: 2rem 0;
         margin-bottom: 2rem;
         background: linear-gradient(to right, #f0f8ff, #e6f3ff);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        
     }
     .subtitle {
         font-size: 1.5rem;
