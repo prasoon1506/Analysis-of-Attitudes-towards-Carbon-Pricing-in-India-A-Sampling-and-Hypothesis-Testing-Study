@@ -3571,7 +3571,7 @@ def trade():
     st.markdown("<div class='upload-section'>", unsafe_allow_html=True)
     col1, col2 = st.columns([2, 1])
     with col1:
-        uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
+        uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx",key='TradevsNontradeuploader')
         if uploaded_file is not None:
             st.session_state.uploaded_file = uploaded_file
             st.success("File successfully uploaded! Please go to the Analysis page to view results.")
@@ -4185,7 +4185,7 @@ def green():
     st.markdown("<div class='upload-section'>", unsafe_allow_html=True)
     col1, col2 = st.columns([2, 1])
     with col1:
-        uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
+        uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx",key="gyruploader")
         if uploaded_file is not None:
             st.session_state.uploaded_file = uploaded_file
             st.success("File successfully uploaded! Please go to the Analysis page to view results.")
