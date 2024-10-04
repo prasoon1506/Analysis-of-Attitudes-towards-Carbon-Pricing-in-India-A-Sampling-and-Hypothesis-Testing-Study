@@ -210,7 +210,7 @@ def create_pdf_report(region, df):
         sections = [
             ("Graph Interpretation:", "Each line represents a different metric over time. The differences between metrics are shown below\n each month."),
             ("Tables:", "The descriptive statistics table provides a summary of the data. The monthly share distribution table\n shows the proportion of Green, Yellow, and Red products for each month."),
-            ("Importance:", "These visualizations help identify trends, compare performance across product categories, and understand\n the potential impact of changing product distributions."),
+            ("Importance:", "These visualizations help identify trends, compare performance across product categories, and\n understand the potential impact of changing product distributions."),
         ]
 
         text_object = c.beginText(inch, height - 1.5*inch)
@@ -226,17 +226,17 @@ def create_pdf_report(region, df):
 
         # Suggestions for Improvement
         c.setFont("Helvetica-Bold", 14)
-        c.drawString(inch, height - 4.5*inch, "Suggestions for Improvement:")
+        c.drawString(inch, height - 4.2*inch, "Suggestions for Improvement:")
 
         suggestions = [
             "Increase the share of Green Region products, which typically have higher EBITDA margins.",
-            "Implement targeted marketing campaigns to promote Yellow Regions and convert Red Region customers.",
-            "Analyze factors contributing to higher EBITDA in Green and Yellow regions, and apply insights to improve Red Region performance.",
+            "Implement targeted marketing campaigns to promote Yellow Regions and convert Red\n Region customers.",
+            "Analyze factors contributing to higher EBITDA in Green and Yellow regions, and apply\n insights to improve Red Region performance.",
             "Regularly review and adjust pricing strategies to optimize EBITDA across all product categories.",
             "Invest in product innovation to expand Green and Yellow region offerings.",
         ]
 
-        text_object = c.beginText(inch, height - 5*inch)
+        text_object = c.beginText(inch, height - 4.5*inch)
         text_object.setFont("Helvetica", 12)
         for suggestion in suggestions:
             text_object.textLine(f"• {suggestion}")
@@ -245,7 +245,7 @@ def create_pdf_report(region, df):
 
         # Limitations
         c.setFont("Helvetica-Bold", 14)
-        c.drawString(inch, height - 8*inch, "Limitations:")
+        c.drawString(inch, height - 6*inch, "Limitations:")
 
         limitations = [
             "This analysis is based on historical data and may not predict future market changes.",
@@ -261,8 +261,8 @@ def create_pdf_report(region, df):
         c.drawText(text_object)
 
         c.setFont("Helvetica", 12)
-        c.drawString(inch, 2*inch, "We are currently working on including all other factors which impact the EBITDA across GYR regions,")
-        c.drawString(inch, 1.8*inch, "which will make this analysis more robust and helpful. We will also include NSR and Contribution in our next report.")
+        c.drawString(inch, 2*inch, "We are currently working on including all other factors which impact the EBIDTA across GYR regions,")
+        c.drawString(inch, 1.8*inch, "which will make this analysis more robust and helpful. We will also include NSR and Contribution\n in our next report.")
 
         c.setFont("Helvetica-Bold", 14)
         c.drawString(inch, inch, "Thank You.")
