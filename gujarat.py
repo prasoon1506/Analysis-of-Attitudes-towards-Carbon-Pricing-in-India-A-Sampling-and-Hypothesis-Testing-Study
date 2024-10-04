@@ -447,7 +447,7 @@ def create_pdf_report(region, df, region_subset=None):
                             f"{row['Red']:.0f} ({row['Average Red Share']:.2%})"
                         ])
                     draw_table(share_data, 330, height - 620, [40, 60, 60, 60])
-                    
+                    add_page_number(c)
                     c.showPage()
     for i in range(c.getPageNumber()):
         c.setPageSize((width, height))
