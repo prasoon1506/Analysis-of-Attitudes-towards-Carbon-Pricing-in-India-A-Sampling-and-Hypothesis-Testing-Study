@@ -150,13 +150,13 @@ def create_pdf_report(region, df):
         lc.x = 50
         lc.y = 50
         lc.height = 125
-        lc.width = 250
+        lc.width = 300
         lc.data = [
-            [random.randint(2000, 3000) for _ in range(12)],  # Green
-            [random.randint(1500, 2500) for _ in range(12)],  # Yellow
+            [random.randint(2000, 2500) for _ in range(12)],  # Green
+            [random.randint(1500, 1700) for _ in range(12)],  # Yellow
             [random.randint(1000, 2000) for _ in range(12)],  # Red
-            [random.randint(1800, 2800) for _ in range(12)],  # Overall
-            [random.randint(2200, 3200) for _ in range(12)],  # Imaginary
+            [random.randint(1500, 1800) for _ in range(12)],  # Overall
+            [random.randint(1500, 2000) for _ in range(12)],  # Imaginary
         ]
         lc.lines[0].strokeColor = colors.green
         lc.lines[1].strokeColor = colors.yellow
@@ -167,7 +167,7 @@ def create_pdf_report(region, df):
         # Add a legend
         legend = Legend()
         legend.alignment = 'right'
-        legend.x = 380
+        legend.x = 340
         legend.y = 150
         legend.colorNamePairs = [
             (colors.green, 'Green EBITDA'),
