@@ -3205,6 +3205,8 @@ def load_lottieurl(url: str):
     except:
         return None
 def trade():
+ lottie_analysis = load_lottieurl("https://assets4.lottiefiles.com/packages/lf20_qp1q7mct.json")
+ lottie_upload = load_lottieurl("https://assets9.lottiefiles.com/packages/lf20_ABViugg1T8.json")
  with st.sidebar:
     selected = option_menu(
         menu_title="Navigation",
