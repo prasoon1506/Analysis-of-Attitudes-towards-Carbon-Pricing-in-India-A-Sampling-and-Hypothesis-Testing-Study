@@ -158,7 +158,7 @@ def create_pdf_report(region, df):
         This report provides a comprehensive analysis of the GYR (Green, Yellow, Red) metrics for the {region} region. 
         Key findings include:
         
-        1. Overall Performance: The region shows a {get_trend(filtered_df['Overall EBITDA'])} trend in overall EBITDA.
+        1. Overall Performance: The region shows a  trend in overall EBITDA.
         2. Green Products: {get_product_summary(df, 'Green')}
         3. Yellow Products: {get_product_summary(df, 'Yellow')}
         4. Red Products: {get_product_summary(df, 'Red')}
