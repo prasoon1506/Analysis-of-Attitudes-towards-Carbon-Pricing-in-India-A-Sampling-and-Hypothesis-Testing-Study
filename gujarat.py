@@ -208,12 +208,12 @@ def create_pdf_report(region, df, region_subset=None):
         for title, description in concepts:
             if title:
                 text_object.textLine(title)
-                text_object.setFont("Helvetica-Bold", 12)
+                text_object.setFont("Helvetica", 12)
             text_object.textLine(description)
             if not title:
                 text_object.textLine("")
             else:
-                text_object.setFont("Helvetica", 12)
+                text_object.setFont("Helvetica-Bold", 12)
 
         c.drawText(text_object)
         add_page_number(c)
