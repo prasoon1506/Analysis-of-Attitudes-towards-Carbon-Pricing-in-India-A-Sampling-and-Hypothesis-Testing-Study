@@ -244,7 +244,7 @@ def create_pdf_report(region, df):
 
         # Limitations
         c.setFont("Helvetica-Bold", 14)
-        c.drawString(inch, height - 5*inch, "Limitations:")
+        c.drawString(inch, height - 5.2*inch, "Limitations:")
 
         limitations = [
             "This analysis is based on historical data and may not predict future market changes.",
@@ -252,7 +252,7 @@ def create_pdf_report(region, df):
             "This report analyzes the EBIDTA for GYR keeping everything else constant.",
         ]
 
-        text_object = c.beginText(inch, height - 5.3*inch)
+        text_object = c.beginText(inch, height - 5.5*inch)
         text_object.setFont("Helvetica", 12)
         for limitation in limitations:
             text_object.textLine(f"• {limitation}")
