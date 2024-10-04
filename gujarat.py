@@ -318,7 +318,6 @@ def create_pdf_report(region, df, region_subset=None):
                             # If any share is 100%, don't change
                             return trade,non-trade
                         else:
-                            
                             trade = min(trade + 0.05, 1)
                             non-trade = min(non-trade - 0.05, 1 - trade)
                         
