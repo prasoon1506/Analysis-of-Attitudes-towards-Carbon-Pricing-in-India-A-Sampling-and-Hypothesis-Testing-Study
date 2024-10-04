@@ -202,18 +202,18 @@ def create_pdf_report(region, df, region_subset=None):
             ("", "• If only one is present: No change"),
             ("Adjusted Shares:", "These adjustments aim to model potential improvements in product mix."),
         ]
-
         text_object = c.beginText(inch, height - 380)
-        text_object.setFont("Helvetica-Bold", 12)
         for title, description in concepts:
             if title:
+                text_object.setFont("Helvetica-Bold", 12)
+                text_object.setFillColorRGB(0.7, 0.3, 0.1)  # Reddish-brown color for concept titles
                 text_object.textLine(title)
                 text_object.setFont("Helvetica", 12)
+                text_object.setFillColorRGB(0, 0, 0)  # Black color for descriptions
             text_object.textLine(description)
             if not title:
                 text_object.textLine("")
-            else:
-                text_object.setFont("Helvetica-Bold", 12)
+            
 
         c.drawText(text_object)
         add_page_number(c)
