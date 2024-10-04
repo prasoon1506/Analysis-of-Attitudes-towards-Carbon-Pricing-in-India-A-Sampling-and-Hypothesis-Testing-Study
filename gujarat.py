@@ -237,7 +237,7 @@ def create_pdf_report(region, df):
                                              mode='lines+markers', name='Red EBIDTA', line=dict(color='red')), row=1, col=1)
                     fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[overall_col],
                                              mode='lines+markers', name=overall_col, line=dict(color='blue', dash='dash')), row=1, col=1)
-                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Imaginary EBIDTA'],
+                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Imaginary EBITDA'],
                                              mode='lines+markers', name='Imaginary EBIDTA',
                                              line=dict(color='purple', dash='dot')), row=1, col=1)
 
