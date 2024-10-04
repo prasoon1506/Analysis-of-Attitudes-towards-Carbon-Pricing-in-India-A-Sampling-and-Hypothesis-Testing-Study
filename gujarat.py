@@ -182,7 +182,7 @@ def create_pdf_report(region, df):
         renderPDF.draw(drawing, c, inch, height - 300)
 
         # Key Concepts
-        c.setFont("Helvetica-Bold", 18)
+        c.setFont("Helvetica-Bold", 10)
         c.drawString(inch, height - 350, "Key Concepts:")
 
         concepts = [
@@ -204,45 +204,71 @@ def create_pdf_report(region, df):
 
         c.showPage()
     def add_appendix():
-       c.setFont("Helvetica-Bold", 24)
-       c.drawString(50, height - 100, "Appendix")
-    
-       appendix_text = [
-        ("Graph Interpretation:", "Each line in the graph represents a different metric (Green, Yellow, Red, Overall, and Imaginary EBITDA) over time. The differences between these metrics are shown below each month."),
-        ("Tables:", "The descriptive statistics table provides a summary of the data, including mean, standard deviation, and quartiles. The monthly share distribution table shows the proportion of Green, Yellow, and Red products for each month."),
-        ("Importance:", "These visualizations and tables help identify trends, compare performance across different product categories, and understand the potential impact of changing product distributions."),
-        "Suggestions for Improvement:",
-        "1. Increase the share of Green Region, which typically have higher EBITDA margins.",
-        "2. Implement targeted marketing campaigns to promote Yellow Regions and convert Red Region customers.",
-        "3. Analyze the factors contributing to higher EBIDTA in Green and Yellow region, and apply these insights to improve Red Region performance.",
-        "4. Regularly review and adjust pricing strategies to optimize EBITDA across all product categories.",
-        "5. Invest in product innovation to expand the Green and Yellow region offerings.",
-        "Limitations:",
-        "1. This analysis is based on historical data and may not predict future market changes.",
-        "2. External factors such as economic conditions are not accounted for in this report.",
-        "3. This report analyzes the EBIDTA for GYR keeping everything else constant.",
-        "We are currently working on including all the other factors which impact the EBIDTA across GYR regions which\n will make this analysis more robust and helpful. Also we will also include NSR and Contribution in our next report.",
-        "\nThank You."
-    ]
+        c.setFont("Helvetica-Bold", 24)
+        c.drawString(inch, height - inch, "Appendix")
 
-       y_position = height - 150
-       for item in appendix_text:
-        if isinstance(item, tuple):
-            title, content = item
-            c.setFont("Helvetica-Bold", 12)
-            c.drawString(50, y_position, title)
-            y_position -= 20
-            c.setFont("Helvetica", 10)
-            text = c.beginText(70, y_position)
-            text.textLines(content)
-            c.drawText(text)
-            y_position -= 30
-        else:
-            c.setFont("Helvetica", 10)
-            text = c.beginText(70, y_position)
-            text.textLines(item)
-            c.drawText(text)
-            y_position -= 20
+        sections = [
+            ("Graph Interpretation:", "Each line represents a different metric over time. The differences between metrics are shown below each month."),
+            ("Tables:", "The descriptive statistics table provides a summary of the data. The monthly share distribution table shows the proportion of Green, Yellow, and Red products for each month."),
+            ("Importance:", "These visualizations help identify trends, compare performance across product categories, and understand the potential impact of changing product distributions."),
+        ]
+
+        text_object = c.beginText(inch, height - 1.5*inch)
+        text_object.setFont("Helvetica-Bold", 14)
+        for title, content in sections:
+            text_object.textLine(title)
+            text_object.setFont("Helvetica", 12)
+            text_object.textLines(content)
+            text_object.textLine("")
+            text_object.setFont("Helvetica-Bold", 14)
+
+        c.drawText(text_object)
+
+        # Suggestions for Improvement
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(inch, height - 5*inch, "Suggestions for Improvement:")
+
+        suggestions = [
+            "Increase the share of Green Region products, which typically have higher EBITDA margins.",
+            "Implement targeted marketing campaigns to promote Yellow Regions and convert Red Region customers.",
+            "Analyze factors contributing to higher EBITDA in Green and Yellow regions, and apply insights to improve Red Region performance.",
+            "Regularly review and adjust pricing strategies to optimize EBITDA across all product categories.",
+            "Invest in product innovation to expand Green and Yellow region offerings.",
+        ]
+
+        text_object = c.beginText(inch, height - 5.5*inch)
+        text_object.setFont("Helvetica", 12)
+        for suggestion in suggestions:
+            text_object.textLine(f"• {suggestion}")
+
+        c.drawText(text_object)
+
+        # Limitations
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(inch, height - 8*inch, "Limitations:")
+
+        limitations = [
+            "This analysis is based on historical data and may not predict future market changes.",
+            "External factors such as economic conditions are not accounted for in this report.",
+            "This report analyzes the EBITDA for GYR keeping everything else constant.",
+        ]
+
+        text_object = c.beginText(inch, height - 8.5*inch)
+        text_object.setFont("Helvetica", 12)
+        for limitation in limitations:
+            text_object.textLine(f"• {limitation}")
+
+        c.drawText(text_object)
+
+        c.setFont("Helvetica", 12)
+        c.drawString(inch, 2*inch, "We are currently working on including all other factors which impact the EBITDA across GYR regions,")
+        c.drawString(inch, 1.8*inch, "which will make this analysis more robust and helpful. We will also include NSR and Contribution in our next report.")
+
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(inch, inch, "Thank You.")
+
+        c.showPage()
+    
     add_front_page()
     add_tutorial_page()
     brands = df['Brand'].unique()
