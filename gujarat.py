@@ -227,7 +227,7 @@ def create_pdf_report(region, df):
                     
                     # Create the plot
                     fig = go.Figure()
-                    fig = make_subplots(rows=2, cols=1, row_heights=[0.65, 0.35], vertical_spacing=0.2)
+                    fig = make_subplots(rows=2, cols=1, row_heights=[0.60, 0.40], vertical_spacing=0.2)
 
                     fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Green EBITDA'],
                                              mode='lines+markers', name='Green EBITDA', line=dict(color='green')), row=1, col=1)
