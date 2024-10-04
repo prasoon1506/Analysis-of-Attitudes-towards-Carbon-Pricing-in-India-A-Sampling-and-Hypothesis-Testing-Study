@@ -134,17 +134,17 @@ def create_pdf_report(region, df):
         ("Graph Interpretation:", "Each line in the graph represents a different metric (Green, Yellow, Red, Overall, and Imaginary EBITDA) over time. The differences between these metrics are shown below each month."),
         ("Tables:", "The descriptive statistics table provides a summary of the data, including mean, standard deviation, and quartiles. The monthly share distribution table shows the proportion of Green, Yellow, and Red products for each month."),
         ("Importance:", "These visualizations and tables help identify trends, compare performance across different product categories, and understand the potential impact of changing product distributions."),
-        ("Suggestions for Improvement:",
+        "Suggestions for Improvement:",
         "1. Increase the share of Green Region, which typically have higher EBITDA margins.",
         "2. Implement targeted marketing campaigns to promote Yellow Regions and convert Red Region customers.",
         "3. Analyze the factors contributing to higher EBIDTA in Green and Yellow region, and apply these insights to improve Red Region performance.",
         "4. Regularly review and adjust pricing strategies to optimize EBITDA across all product categories.",
-        "5. Invest in product innovation to expand the Green and Yellow region offerings."),
-        ("Limitations:",
+        "5. Invest in product innovation to expand the Green and Yellow region offerings.",
+        "Limitations:",
         "1. This analysis is based on historical data and may not predict future market changes.",
         "2. External factors such as economic conditions are not accounted for in this report.",
         "3. This report analyzes the EBIDTA for GYR keeping everything else constant.",
-        "We are currently working on including all the other factors which impact the EBIDTA across GYR regions which\n will make this analysis more robust and helpful. Also we will also include NSR and Contribution in our next report."),
+        "We are currently working on including all the other factors which impact the EBIDTA across GYR regions which\n will make this analysis more robust and helpful. Also we will also include NSR and Contribution in our next report.",
         "\nThank You."
     ]
 
