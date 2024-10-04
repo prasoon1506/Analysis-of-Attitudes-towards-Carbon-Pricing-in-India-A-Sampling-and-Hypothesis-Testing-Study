@@ -245,7 +245,7 @@ def create_pdf_report(region, df):
                     fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['I-O Difference'],
                                              mode='lines+markers+text', name='I-O Difference',
                                              text=filtered_df['I-O Difference'].round(2),
-                                             textposition='top center',textfont=dict(size=8,family="bold"),
+                                             textposition='top center',textfont=dict(size=8),
                                              line=dict(color='fuchsia')), row=2, col=1)
 
                     # Add mean line to the second subplot
@@ -268,7 +268,7 @@ def create_pdf_report(region, df):
                         legend_title='Metrics',
                         plot_bgcolor='cornsilk',
                         paper_bgcolor='lightcyan',
-                        height=700,  # Increased height to accommodate the new subplot
+                        height=710,  # Increased height to accommodate the new subplot
                     )
                     fig.update_xaxes(tickmode='array', tickvals=list(range(len(x_labels))), ticktext=x_labels, row=1, col=1)
                     fig.update_xaxes(title_text='Month', row=2, col=1)
