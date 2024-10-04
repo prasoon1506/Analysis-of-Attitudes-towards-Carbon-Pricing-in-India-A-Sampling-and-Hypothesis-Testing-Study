@@ -89,11 +89,11 @@ def create_pdf_report(region, df, region_subset=None):
     width, height = letter
 
     def add_page_number(canvas):
-    canvas.saveState()
-    canvas.setFont('Helvetica', 10)
-    page_number_text = f"Page {canvas.getPageNumber()}"
-    canvas.drawString(width - 100, 30, page_number_text)
-    canvas.restoreState()
+      canvas.saveState()
+      canvas.setFont('Helvetica', 10)
+      page_number_text = f"Page {canvas.getPageNumber()}"
+      canvas.drawString(width - 100, 30, page_number_text)
+      canvas.restoreState()
 
     # Modify the header to include region subset if provided
     def add_header(page_number):
