@@ -179,7 +179,7 @@ def create_pdf_report(region, df, region_subset=None):
         legend.colorNamePairs = [
             (colors.green, 'Trade EBITDA'),
             (colors.blue, 'Non-Trade EBITDA'),
-            (colors.pink, 'Overall EBITDA'),
+            (colors.crimson, 'Overall EBITDA'),
             (colors.brown, 'Imaginary EBITDA'),
         ]
         drawing.add(lc)
@@ -338,11 +338,11 @@ def create_pdf_report(region, df, region_subset=None):
                     fig = make_subplots(rows=2, cols=1, row_heights=[0.58, 0.42], vertical_spacing=0.18)
 
                     fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Trade EBITDA'],
-                                             mode='lines+markers', name='Green EBIDTA', line=dict(color='green')), row=1, col=1)
+                                             mode='lines+markers', name='Trade EBIDTA', line=dict(color='green')), row=1, col=1)
                     fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Non-Trade EBITDA'],
-                                             mode='lines+markers', name='Yellow EBIDTA', line=dict(color='blue')), row=1, col=1)
+                                             mode='lines+markers', name='Non-Trade EBIDTA', line=dict(color='blue')), row=1, col=1)
                     fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[overall_col],
-                                             mode='lines+markers', name=overall_col, line=dict(color='pink', dash='dash')), row=1, col=1)
+                                             mode='lines+markers', name=overall_col, line=dict(color='crimson', dash='dash')), row=1, col=1)
                     fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Imaginary EBITDA'],
                                              mode='lines+markers', name='Imaginary EBIDTA',
                                              line=dict(color='brown', dash='dot')), row=1, col=1)
@@ -394,7 +394,7 @@ def create_pdf_report(region, df, region_subset=None):
                     desc_stats = filtered_df[['Trade','Non-Trade']+cols + [overall_col, 'Imaginary EBITDA']].describe().reset_index()
                     desc_stats = desc_stats[desc_stats['index'] != 'count'].round(2)  # Remove 'count' row
                     table_data = [['Metric'] + list(desc_stats.columns[1:])] + desc_stats.values.tolist()
-                    draw_table(table_data, 50, height - 435, [40,40,40] + [75] * (len(desc_stats.columns) - 4))  # Reduced column widths
+                    draw_table(table_data, 50, height - 435, [45,45,45] + [75] * (len(desc_stats.columns) - 4))  # Reduced column widths
                     c.setFont("Helvetica-Bold", 10)  # Reduced font size
                     c.drawString(50, height - 600, "Average Share Distribution")
                     
@@ -483,7 +483,7 @@ elif selected == "Analysis":
             selected_subset = st.sidebar.selectbox("Select Region Subset", options=region_subsets)
             if st.sidebar.button(f"Download Report for {region} - {selected_subset}"):
                 # Filter the dataframe for the selected region and subset
-                subset_df = df[(df['Region'] == region) & (df['Region subsets'] == selected_subset)]
+                subset_df = df[(df['Region'] == region) & (df['Region subsets'] == selected_subset) & ([df['Type'] != 'Premium')]
                 pdf_buffer = create_pdf_report(region, subset_df, selected_subset)
                 pdf_bytes = pdf_buffer.getvalue()
                 b64 = base64.b64encode(pdf_bytes).decode()
