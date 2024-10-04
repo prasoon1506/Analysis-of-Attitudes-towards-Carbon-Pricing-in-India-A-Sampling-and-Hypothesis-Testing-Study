@@ -321,7 +321,7 @@ def create_pdf_report(region, df, region_subset=None):
                             trade = min(trade + 0.05, 1)
                             nontrade = min(nontrade - 0.05, 1 - trade)
                         
-                        return trade,non-trade
+                        return trade,nontrade
                     filtered_df['Adjusted Trade Share'], filtered_df['Adjusted Non-Trade Share'] = zip(*filtered_df.apply(adjust_shares, axis=1))
                     
                     filtered_df['Imaginary EBITDA'] = (
