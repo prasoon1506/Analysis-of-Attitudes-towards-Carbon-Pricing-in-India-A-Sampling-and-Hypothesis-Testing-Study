@@ -473,6 +473,7 @@ elif selected == "Analysis":
         
         if download_choice == 'Full Region':
             if st.sidebar.button(f"Download Full Report for {region}"):
+                subset_df = df[df['Region'] == region) & (df['Type'] != "PPC Premium")]
                 pdf_buffer = create_pdf_report(region, df)
                 pdf_bytes = pdf_buffer.getvalue()
                 b64 = base64.b64encode(pdf_bytes).decode()
@@ -483,7 +484,7 @@ elif selected == "Analysis":
             selected_subset = st.sidebar.selectbox("Select Region Subset", options=region_subsets)
             if st.sidebar.button(f"Download Report for {region} - {selected_subset}"):
                 # Filter the dataframe for the selected region and subset
-                subset_df = df[(df['Region'] == region) & (df['Region subsets'] == selected_subset) & (df['Type'] != 'Premium')]
+                subset_df = df[(df['Region'] == region) & (df['Region subsets'] == selected_subset) & (df['Type'] != 'PPC Premium')]
                 pdf_buffer = create_pdf_report(region, subset_df, selected_subset)
                 pdf_bytes = pdf_buffer.getvalue()
                 b64 = base64.b64encode(pdf_bytes).decode()
