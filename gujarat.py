@@ -140,7 +140,7 @@ def create_pdf_report(region, df):
             ("2. Implement targeted marketing campaigns to promote Yellow Regions and\n convert Red Region customers."),
             ("3. Analyze the factors contributing to higher EBIDTA in Green and Yellow region,\n and apply these insights to improve Red Region performance."),
             ("4. Regularly review and adjust pricing strategies to optimize EBITDA across all product categories."),
-            ("5. Invest in product innovation to expand the Green and Yellow region offerings.")
+            ("5. Invest in product innovation to expand the Green and Yellow region offerings."),
             ("Limitations:"),
             ("1.This analysis is based on historical data and may not predict future market changes")
             ("2.External factors such as economic conditions are not accounted for in this report")
@@ -255,7 +255,9 @@ def create_pdf_report(region, df):
                                              line=dict(color='fuchsia')), row=2, col=1)
 
                     # Add mean line to the second subplot
-                    mean_diff = round(filtered_df['I-O Difference'].mean())
+                    mean_diff = filtered_df['I-O Difference'].mean()
+                    if mean_diff != NaN:
+                        mean_diff=round(mean_diff)
                     fig.add_trace(go.Scatter(x=filtered_df['Month'], y=[mean_diff] * len(filtered_df),
                                              mode='lines', name=f'Mean I-O Difference[{mean_diff}]',
                                              line=dict(color='black', dash='dash')), row=2, col=1)
