@@ -227,7 +227,7 @@ def create_pdf_report(region, df):
                     
                     # Create the plot
                     fig = go.Figure()
-                    fig = make_subplots(rows=2, cols=1, row_heights=[0.65, 0.35], vertical_spacing=0.18)
+                    fig = make_subplots(rows=2, cols=1, row_heights=[0.60, 0.40], vertical_spacing=0.18)
 
                     fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Green EBITDA'],
                                              mode='lines+markers', name='Green EBITDA', line=dict(color='green')), row=1, col=1)
@@ -278,7 +278,7 @@ def create_pdf_report(region, df):
                     #if page_number > 1:
                         #c.showPage()
                     # Draw the graph
-                    draw_graph(fig, 50, height - 400, 500, 350)
+                    draw_graph(fig, 50, height - 410, 500, 350)
 
                     # Add descriptive statistics
                     c.setFillColorRGB(0.2, 0.2, 0.7)  # Dark grey color for headers
