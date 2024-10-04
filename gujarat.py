@@ -147,16 +147,16 @@ def create_pdf_report(region, df):
         # Create example chart
         drawing = Drawing(400, 200)
         lc = HorizontalLineChart()
-        lc.x = 40
+        lc.x = 50
         lc.y = 50
         lc.height = 125
         lc.width = 300
         lc.data = [
-            [random.randint(2000, 2500) for _ in range(12)],  # Green
-            [random.randint(1500, 1700) for _ in range(12)],  # Yellow
+            [random.randint(2000, 3000) for _ in range(12)],  # Green
+            [random.randint(1500, 2500) for _ in range(12)],  # Yellow
             [random.randint(1000, 2000) for _ in range(12)],  # Red
-            [random.randint(1500, 1800) for _ in range(12)],  # Overall
-            [random.randint(1500, 2000) for _ in range(12)],  # Imaginary
+            [random.randint(1800, 2800) for _ in range(12)],  # Overall
+            [random.randint(2200, 3200) for _ in range(12)],  # Imaginary
         ]
         lc.lines[0].strokeColor = colors.green
         lc.lines[1].strokeColor = colors.yellow
@@ -167,14 +167,14 @@ def create_pdf_report(region, df):
         # Add a legend
         legend = Legend()
         legend.alignment = 'right'
-        legend.x = 330
+        legend.x = 380
         legend.y = 150
         legend.colorNamePairs = [
-            (colors.green, 'Green EBIDTA'),
-            (colors.yellow, 'Yellow EBIDTA'),
-            (colors.red, 'Red EBIDTA'),
-            (colors.blue, 'Overall EBIDTA'),
-            (colors.purple, 'Imaginary EBIDTA'),
+            (colors.green, 'Green EBITDA'),
+            (colors.yellow, 'Yellow EBITDA'),
+            (colors.red, 'Red EBITDA'),
+            (colors.blue, 'Overall EBITDA'),
+            (colors.purple, 'Imaginary EBITDA'),
         ]
         drawing.add(lc)
         drawing.add(legend)
@@ -187,19 +187,24 @@ def create_pdf_report(region, df):
 
         concepts = [
             ("Overall EBITDA:", "Weighted average of Green, Yellow, and Red EBITDA based on their actual quantities."),
-            ("Imaginary EBITDA:", "Calculated by adjusting shares: Green +5%, Yellow +2.5%, Red -7.5% (if all present)"),
-            ("If only two of them are present then increasing the share of superior one(Green if GR or GY are presentand Yellow if YR is present) by 5% and decreasing other by -5%. If only one of them is present then no change."),
-            ("Adjusted Shares:", "If any category is absent, adjustments are made to the remaining categories."),
+            ("Imaginary EBITDA:", "Calculated by adjusting shares based on the following rules:"),
+            ("", "• If all three (Green, Yellow, Red) are present: Green +5%, Yellow +2.5%, Red -7.5%"),
+            ("", "• If only two are present: Superior one (Green in GR or GY, Yellow in YR) +5%, other -5%"),
+            ("", "• If only one is present: No change"),
+            ("Adjusted Shares:", "These adjustments aim to model potential improvements in product mix."),
         ]
 
         text_object = c.beginText(inch, height - 380)
         text_object.setFont("Helvetica-Bold", 12)
         for title, description in concepts:
-            text_object.textLine(title)
-            text_object.setFont("Helvetica", 12)
+            if title:
+                text_object.textLine(title)
+                text_object.setFont("Helvetica", 12)
             text_object.textLine(description)
-            text_object.textLine("")
-            text_object.setFont("Helvetica-Bold", 12)
+            if not title:
+                text_object.textLine("")
+            else:
+                text_object.setFont("Helvetica-Bold", 12)
 
         c.drawText(text_object)
 
