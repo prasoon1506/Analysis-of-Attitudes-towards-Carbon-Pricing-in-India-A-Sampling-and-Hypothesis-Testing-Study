@@ -10,6 +10,18 @@ import plotly.graph_objects as go
 import plotly.express as px
 import io
 import requests
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.lib.units import inch
+from reportlab.graphics.shapes import Drawing, Rect
+from reportlab.graphics.charts.linecharts import HorizontalLineChart
+from reportlab.graphics.charts.legends import Legend
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import Paragraph
+from reportlab.lib.enums import TA_CENTER
+from io import BytesIO
+from datetime import datetime
+import random
 from reportlab.lib.units import inch
 from datetime import datetime
 from streamlit_lottie import st_lottie
