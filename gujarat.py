@@ -473,7 +473,7 @@ elif selected == "Analysis":
         
         if download_choice == 'Full Region':
             if st.sidebar.button(f"Download Full Report for {region}"):
-                subset_df = df[(df['Region'] == region) & (df['Type'] != "PPC Premium")]
+                subset_df = df[(df['Region'] == region) & (df['Type'] != 'PPC Premium')]
                 pdf_buffer = create_pdf_report(region, df)
                 pdf_bytes = pdf_buffer.getvalue()
                 b64 = base64.b64encode(pdf_bytes).decode()
