@@ -474,7 +474,7 @@ elif selected == "Analysis":
         if download_choice == 'Full Region':
             if st.sidebar.button(f"Download Full Report for {region}"):
                 subset_df = df[(df['Region'] == region) & (df['Type'] != 'PPC Premium')]
-                pdf_buffer = create_pdf_report(region, df)
+                pdf_buffer = create_pdf_report(region, subset_df)
                 pdf_bytes = pdf_buffer.getvalue()
                 b64 = base64.b64encode(pdf_bytes).decode()
                 href = f'<a href="data:application/pdf;base64,{b64}" download="GYR_Analysis_Report_{region}.pdf">Download Full Region PDF Report</a>'
