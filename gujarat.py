@@ -88,12 +88,12 @@ def create_pdf_report(region, df, region_subset=None):
     c = canvas.Canvas(buffer, pagesize=letter)
     width, height = letter
 
-    def add_page_number(canvas, doc):
-        canvas.saveState()
-        canvas.setFont('Helvetica', 10)
-        page_number_text = f"Page {doc.page}"
-        canvas.drawString(width - 100, 30, page_number_text)
-        canvas.restoreState()
+    def add_page_number(canvas):
+    canvas.saveState()
+    canvas.setFont('Helvetica', 10)
+    page_number_text = f"Page {canvas.getPageNumber()}"
+    canvas.drawString(width - 100, 30, page_number_text)
+    canvas.restoreState()
 
     # Modify the header to include region subset if provided
     def add_header(page_number):
@@ -449,9 +449,10 @@ def create_pdf_report(region, df, region_subset=None):
                     draw_table(share_data, 330, height - 620, [40, 60, 60, 60])
                     
                     c.showPage()
-    for page in range(1, c.getPageNumber() + 1):
-        c.getPage(page)
-        add_page_number(c, c._pageNumber)            
+    for i in range(c.getPageNumber()):
+        c.setPageSize((width, height))
+        c.showPage()
+        add_page_number(c)         
     add_appendix()
     c.save()
     buffer.seek(0)
