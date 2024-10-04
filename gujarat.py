@@ -150,7 +150,7 @@ def create_pdf_report(region, df):
         lc.x = 50
         lc.y = 50
         lc.height = 125
-        lc.width = 300
+        lc.width = 250
         lc.data = [
             [random.randint(2000, 3000) for _ in range(12)],  # Green
             [random.randint(1500, 2500) for _ in range(12)],  # Yellow
@@ -182,7 +182,7 @@ def create_pdf_report(region, df):
         renderPDF.draw(drawing, c, inch, height - 300)
 
         # Key Concepts
-        c.setFont("Helvetica-Bold", 10)
+        c.setFont("Helvetica-Bold", 18)
         c.drawString(inch, height - 350, "Key Concepts:")
 
         concepts = [
@@ -208,9 +208,9 @@ def create_pdf_report(region, df):
         c.drawString(inch, height - inch, "Appendix")
 
         sections = [
-            ("Graph Interpretation:", "Each line represents a different metric over time. The differences between metrics are shown below each month."),
-            ("Tables:", "The descriptive statistics table provides a summary of the data. The monthly share distribution table shows the proportion of Green, Yellow, and Red products for each month."),
-            ("Importance:", "These visualizations help identify trends, compare performance across product categories, and understand the potential impact of changing product distributions."),
+            ("Graph Interpretation:", "Each line represents a different metric over time. The differences between metrics are shown below\n each month."),
+            ("Tables:", "The descriptive statistics table provides a summary of the data. The monthly share distribution table\n shows the proportion of Green, Yellow, and Red products for each month."),
+            ("Importance:", "These visualizations help identify trends, compare performance across product categories, and understand\n the potential impact of changing product distributions."),
         ]
 
         text_object = c.beginText(inch, height - 1.5*inch)
@@ -226,7 +226,7 @@ def create_pdf_report(region, df):
 
         # Suggestions for Improvement
         c.setFont("Helvetica-Bold", 14)
-        c.drawString(inch, height - 5*inch, "Suggestions for Improvement:")
+        c.drawString(inch, height - 3*inch, "Suggestions for Improvement:")
 
         suggestions = [
             "Increase the share of Green Region products, which typically have higher EBITDA margins.",
@@ -236,7 +236,7 @@ def create_pdf_report(region, df):
             "Invest in product innovation to expand Green and Yellow region offerings.",
         ]
 
-        text_object = c.beginText(inch, height - 5.5*inch)
+        text_object = c.beginText(inch, height - 3.5*inch)
         text_object.setFont("Helvetica", 12)
         for suggestion in suggestions:
             text_object.textLine(f"• {suggestion}")
