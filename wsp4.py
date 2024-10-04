@@ -1112,7 +1112,7 @@ def Home():
     }
     .btn-primary {
         background-color: #3498db;
-        color: white;
+        color: brown;
         padding: 0.5rem 1rem;
         border-radius: 5px;
         border: none;
