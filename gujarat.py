@@ -262,7 +262,7 @@ def create_pdf_report(region, df):
 
                     # Add mean line to the second subplot
                     mean_diff = filtered_df['I-O Difference'].mean()
-                    if mean_diff != "NaN":
+                    if not np.isnan(mean_diff):
                         mean_diff=round(mean_diff)
                     fig.add_trace(go.Scatter(x=filtered_df['Month'], y=[mean_diff] * len(filtered_df),
                                              mode='lines', name=f'Mean I-O Difference[{mean_diff}]',
