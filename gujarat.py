@@ -251,7 +251,7 @@ def create_pdf_report(region, df):
                     # Add mean line to the second subplot
                     mean_diff = round(filtered_df['I-O Difference'].mean())
                     fig.add_trace(go.Scatter(x=filtered_df['Month'], y=[mean_diff] * len(filtered_df),
-                                             mode='lines', name='Mean I-O Difference',
+                                             mode='lines', name=f'Mean I-O Difference{mean_diff}',
                                              line=dict(color='black', dash='dash')), row=2, col=1)
 
                     # Customize x-axis labels for the main plot
