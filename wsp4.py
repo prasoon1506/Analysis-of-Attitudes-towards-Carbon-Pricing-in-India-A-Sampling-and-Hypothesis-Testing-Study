@@ -1281,7 +1281,7 @@ def wsp_analysis_dashboard():
     .title {
         font-size: 50px;
         font-weight: bold;
-        color: #3366cc;
+        color: brown;
         text-align: center;
         padding: 20px;
         border-radius: 10px;
