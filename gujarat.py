@@ -227,7 +227,7 @@ def create_pdf_report(region, df):
                     
                     # Create the plot
                     fig = go.Figure()
-                    fig = make_subplots(rows=2, cols=1, row_heights=[0.7, 0.3], vertical_spacing=0.1)
+                    fig = make_subplots(rows=2, cols=1, row_heights=[0.7, 0.3], vertical_spacing=0.2)
 
                     fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Green EBITDA'],
                                              mode='lines+markers', name='Green EBITDA', line=dict(color='green')), row=1, col=1)
@@ -255,7 +255,7 @@ def create_pdf_report(region, df):
                                              line=dict(color='black', dash='dash')), row=2, col=1)
 
                     # Customize x-axis labels for the main plot
-                    x_labels = [f"{month}<br>(G-R: {g_r:.0f})<br>(G-Y: {g_y:.0f})<br>(Y-R: {y_r:.0f})<br>(I-O: {i_o:.0f})" 
+                    x_labels = [f"{month}<br>(G-R: {g_r:.0f})<br>(G-Y: {g_y:.0f})<br>(Y-R: {y_r:.0f})" 
                                 for month, g_r, g_y, y_r, i_o in 
                                 zip(filtered_df['Month'], 
                                     filtered_df['G-R Difference'], 
