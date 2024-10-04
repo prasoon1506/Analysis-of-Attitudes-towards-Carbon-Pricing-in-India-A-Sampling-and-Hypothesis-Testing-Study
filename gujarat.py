@@ -147,7 +147,7 @@ def create_pdf_report(region, df):
         # Create example chart
         drawing = Drawing(400, 200)
         lc = HorizontalLineChart()
-        lc.x = 50
+        lc.x = 40
         lc.y = 50
         lc.height = 125
         lc.width = 300
@@ -167,7 +167,7 @@ def create_pdf_report(region, df):
         # Add a legend
         legend = Legend()
         legend.alignment = 'right'
-        legend.x = 340
+        legend.x = 330
         legend.y = 150
         legend.colorNamePairs = [
             (colors.green, 'Green EBITDA'),
@@ -226,7 +226,7 @@ def create_pdf_report(region, df):
 
         # Suggestions for Improvement
         c.setFont("Helvetica-Bold", 14)
-        c.drawString(inch, height - 3*inch, "Suggestions for Improvement:")
+        c.drawString(inch, height - 4.5*inch, "Suggestions for Improvement:")
 
         suggestions = [
             "Increase the share of Green Region products, which typically have higher EBITDA margins.",
@@ -236,7 +236,7 @@ def create_pdf_report(region, df):
             "Invest in product innovation to expand Green and Yellow region offerings.",
         ]
 
-        text_object = c.beginText(inch, height - 3.5*inch)
+        text_object = c.beginText(inch, height - 5*inch)
         text_object.setFont("Helvetica", 12)
         for suggestion in suggestions:
             text_object.textLine(f"• {suggestion}")
