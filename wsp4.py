@@ -3734,7 +3734,7 @@ def green():
                                     filtered_df['I-O Difference'])]
 
                     fig.update_layout(
-                        title=f"EBITDA Analysis for {brand}(Type:-{product_type}) in {region}({region_subset})",
+                        title=f"EBITDA Analysis for {brand}({product_type}) in {region}({region_subset})",
                         legend_title='Metrics',
                         plot_bgcolor='cornsilk',
                         paper_bgcolor='lightcyan',
