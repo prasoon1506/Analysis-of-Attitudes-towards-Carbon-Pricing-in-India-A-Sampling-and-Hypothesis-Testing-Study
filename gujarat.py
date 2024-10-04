@@ -253,7 +253,7 @@ def create_pdf_report(region, df):
             "This report analyzes the EBITDA for GYR keeping everything else constant.",
         ]
 
-        text_object = c.beginText(inch, height - 8.5*inch)
+        text_object = c.beginText(inch, height - 6.3*inch)
         text_object.setFont("Helvetica", 12)
         for limitation in limitations:
             text_object.textLine(f"• {limitation}")
