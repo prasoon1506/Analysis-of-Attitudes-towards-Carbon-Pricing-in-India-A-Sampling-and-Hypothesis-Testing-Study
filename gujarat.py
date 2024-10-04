@@ -216,7 +216,7 @@ def create_pdf_report(region, df, region_subset=None):
                 text_object.setFont("Helvetica", 12)
 
         c.drawText(text_object)
-
+        add_page_number(c)
         c.showPage()
     def add_appendix():
         c.setFont("Helvetica-Bold", 24)
@@ -281,7 +281,6 @@ def create_pdf_report(region, df, region_subset=None):
 
         c.setFont("Helvetica-Bold", 14)
         c.drawString(inch, inch, "Thank You.")
-
         c.showPage()
     
     add_front_page()
