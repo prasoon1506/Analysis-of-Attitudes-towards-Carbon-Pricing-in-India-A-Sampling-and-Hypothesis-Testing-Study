@@ -4045,6 +4045,9 @@ def green():
                         if green == 1 or yellow == 1 or red == 1:
                             # If any share is 100%, don't change
                             return green, yellow, red
+                        elif red == 0:
+                            green = min(green +0.05, 1)
+                            yellow = max(1-green, 0)
                         elif green == 0 and yellow == 0:
                             # If both green and yellow are absent, don't change
                             return green, yellow, red
