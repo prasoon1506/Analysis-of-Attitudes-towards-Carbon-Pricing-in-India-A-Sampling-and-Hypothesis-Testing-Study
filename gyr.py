@@ -145,7 +145,7 @@ def create_pdf_report(region, df):
         c.drawCentredString(width / 2, height - 300, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         
         # Add a professional logo or image
-        logo_path = "C:/Users/Prasoon.bajpai/OneDrive - JKLC/Pictures/Screenshots/Screenshot 2024-07-03 171330.png"  # Replace with your logo path
+        logo_path = ""  # Replace with your logo path
         c.drawImage(logo_path, width/2 - 50, height - 150, width=100, height=100)
         
         c.showPage()
