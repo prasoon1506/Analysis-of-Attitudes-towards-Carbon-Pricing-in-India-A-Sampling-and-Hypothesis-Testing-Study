@@ -219,23 +219,37 @@ def create_pdf_report(region, df):
                     filtered_df['G-Y Difference'] = filtered_df['Green EBITDA'] - filtered_df['Yellow EBITDA']
                     filtered_df['Y-R Difference'] = filtered_df['Yellow EBITDA'] - filtered_df['Red EBITDA']
                     filtered_df['I-O Difference'] = filtered_df['Imaginary EBITDA'] - filtered_df[overall_col]
-
+                    
                     # Create the plot
                     fig = go.Figure()
+                    fig = make_subplots(rows=2, cols=1, row_heights=[0.7, 0.3], vertical_spacing=0.1)
 
                     fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Green EBITDA'],
-                                             mode='lines+markers', name='Green EBITDA', line=dict(color='green')))
+                                             mode='lines+markers', name='Green EBITDA', line=dict(color='green')), row=1, col=1)
                     fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Yellow EBITDA'],
-                                             mode='lines+markers', name='Yellow EBITDA', line=dict(color='yellow')))
+                                             mode='lines+markers', name='Yellow EBITDA', line=dict(color='yellow')), row=1, col=1)
                     fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Red EBITDA'],
-                                             mode='lines+markers', name='Red EBITDA', line=dict(color='red')))
+                                             mode='lines+markers', name='Red EBITDA', line=dict(color='red')), row=1, col=1)
                     fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[overall_col],
-                                             mode='lines+markers', name=overall_col, line=dict(color='blue', dash='dash')))
+                                             mode='lines+markers', name=overall_col, line=dict(color='blue', dash='dash')), row=1, col=1)
                     fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Imaginary EBITDA'],
                                              mode='lines+markers', name='Imaginary EBITDA',
-                                             line=dict(color='purple', dash='dot')))
+                                             line=dict(color='purple', dash='dot')), row=1, col=1)
 
-                    # Customize x-axis labels to include the differences
+                    # Add I-O difference trace to the second subplot
+                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['I-O Difference'],
+                                             mode='lines+markers+text', name='I-O Difference',
+                                             text=filtered_df['I-O Difference'].round(2),
+                                             textposition='top center',
+                                             line=dict(color='darkgreen')), row=2, col=1)
+
+                    # Add mean line to the second subplot
+                    mean_diff = filtered_df['I-O Difference'].mean()
+                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=[mean_diff] * len(filtered_df),
+                                             mode='lines', name='Mean I-O Difference',
+                                             line=dict(color='black', dash='dash')), row=2, col=1)
+
+                    # Customize x-axis labels for the main plot
                     x_labels = [f"{month}<br>(G-R: {g_r:.0f})<br>(G-Y: {g_y:.0f})<br>(Y-R: {y_r:.0f})<br>(I-O: {i_o:.0f})" 
                                 for month, g_r, g_y, y_r, i_o in 
                                 zip(filtered_df['Month'], 
@@ -246,19 +260,20 @@ def create_pdf_report(region, df):
 
                     fig.update_layout(
                         title=f"EBITDA Analysis for {brand}(Type:-{product_type}) in {region}({region_subset})",
-                        xaxis_title='',
-                        yaxis_title='EBITDA',
                         legend_title='Metrics',
                         plot_bgcolor='cornsilk',
                         paper_bgcolor='lightcyan',
-                        xaxis=dict(tickmode='array', tickvals=list(range(len(x_labels))), ticktext=x_labels)  
+                        height=600,  # Increased height to accommodate the new subplot
                     )
+                    fig.update_xaxes(tickmode='array', tickvals=list(range(len(x_labels))), ticktext=x_labels, row=1, col=1)
+                    fig.update_xaxes(title_text='Month', row=2, col=1)
+                    fig.update_yaxes(title_text='EBITDA', row=1, col=1)
+                    fig.update_yaxes(title_text='I-O Difference', row=2, col=1)
                     # Add new page if needed
                     #if page_number > 1:
                         #c.showPage()
-                    
                     # Draw the graph
-                    draw_graph(fig, 50, height - 370, 500, 300)  # Reduced height
+                    draw_graph(fig, 50, height - 420, 500, 350)
 
                     # Add descriptive statistics
                     c.setFillColorRGB(0.2, 0.2, 0.7)  # Dark grey color for headers
