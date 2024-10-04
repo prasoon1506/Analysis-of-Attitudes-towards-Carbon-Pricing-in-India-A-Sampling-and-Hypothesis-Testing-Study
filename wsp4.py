@@ -3814,7 +3814,7 @@ def green():
             st.image("https://cdn-icons-png.flaticon.com/512/4503/4503700.png", width=150)
     st.markdown("</div>", unsafe_allow_html=True)
  elif selected == "Analysis":
-    st.title("📈 Data Analysis Dashboard")
+    st.title("📈 GYR Dashboard")
     
     if 'uploaded_file' not in st.session_state or st.session_state.uploaded_file is None:
         st.warning("Please upload an Excel file on the Home page to begin the analysis.")
