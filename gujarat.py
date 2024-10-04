@@ -240,10 +240,10 @@ def create_pdf_report(region, df, region_subset=None):
         c.drawString(inch, height - 4*inch, "Suggestions for Improvement:")
 
         suggestions = [
-            "Increase the share of Trade Channel for PPC, which typically have higher EBIDTA margins.",
-            "Analyze factors contributing to higher EBIDTA in Green zone,and apply insights to Red zone.",
-            "Regularly review and adjust pricing strategies to optimize EBITDA across all product categories.",
-            "Invest in product innovation to expand Green and Yellow region offerings.",
+            "Increase the share of Trade Channel specifically for PPC, which typically have higher EBIDTA.",
+            "Analyze factors contributing to higher EBIDTA in Trade Channel,and apply insights to Non-Trade.",
+            "Regularly review and adjust pricing strategies to optimize EBITDA across all channels.",
+            "Invest in product innovation to expand Trade Channel offerings.",
         ]
 
         text_object = c.beginText(inch, height - 4.3*inch)
@@ -260,7 +260,7 @@ def create_pdf_report(region, df, region_subset=None):
         limitations = [
             "This analysis is based on historical data and may not predict future market changes.",
             "External factors such as economic conditions are not accounted for in this report.",
-            "This report analyzes the EBIDTA for GYR keeping everything else constant.",
+            "This report analyzes the EBIDTA for Trade and Non-Trade channel ceteris paribus.",
         ]
 
         text_object = c.beginText(inch, height - 5.5*inch)
