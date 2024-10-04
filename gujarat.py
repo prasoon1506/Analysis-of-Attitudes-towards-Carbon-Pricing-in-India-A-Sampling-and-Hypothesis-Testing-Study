@@ -268,7 +268,7 @@ def create_pdf_report(region, df):
                         legend_title='Metrics',
                         plot_bgcolor='cornsilk',
                         paper_bgcolor='lightcyan',
-                        height=600,  # Increased height to accommodate the new subplot
+                        height=700,  # Increased height to accommodate the new subplot
                     )
                     fig.update_xaxes(tickmode='array', tickvals=list(range(len(x_labels))), ticktext=x_labels, row=1, col=1)
                     fig.update_xaxes(title_text='Month', row=2, col=1)
@@ -283,7 +283,7 @@ def create_pdf_report(region, df):
                     # Add descriptive statistics
                     c.setFillColorRGB(0.2, 0.2, 0.7)  # Dark grey color for headers
                     c.setFont("Helvetica-Bold", 10)  # Reduced font size
-                    c.drawString(50, height - 425, "Descriptive Statistics")
+                    c.drawString(50, height - 450, "Descriptive Statistics")
                     
                     desc_stats = filtered_df[['Green','Yellow','Red']+cols + [overall_col, 'Imaginary EBITDA']].describe().reset_index()
                     desc_stats = desc_stats[desc_stats['index'] != 'count'].round(2)  # Remove 'count' row
