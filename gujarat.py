@@ -187,7 +187,8 @@ def create_pdf_report(region, df):
 
         concepts = [
             ("Overall EBITDA:", "Weighted average of Green, Yellow, and Red EBITDA based on their actual quantities."),
-            ("Imaginary EBITDA:", "Calculated by adjusting shares: Green +5%, Yellow +2.5%, Red -7.5% (if all present).\n If only two of them are present then increasing the share of superior one(Green if GR or GY are presentand Yellow if YR is present) by 5% and decreasing other by -5%.\n If only one of them is present then no change."),
+            ("Imaginary EBITDA:", "Calculated by adjusting shares: Green +5%, Yellow +2.5%, Red -7.5% (if all present)"),
+            ("If only two of them are present then increasing the share of superior one(Green if GR or GY are presentand Yellow if YR is present) by 5% and decreasing other by -5%. If only one of them is present then no change."),
             ("Adjusted Shares:", "If any category is absent, adjustments are made to the remaining categories."),
         ]
 
