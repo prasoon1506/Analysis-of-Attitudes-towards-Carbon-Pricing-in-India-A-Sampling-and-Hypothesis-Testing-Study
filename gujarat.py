@@ -415,8 +415,8 @@ def create_pdf_report(region, df, region_subset=None):
                     for _, row in filtered_df[['Month', 'Trade', 'Non-Trade','Average Trade Share', 'Average Non-Trade Share']].iterrows():
                         share_data.append([
                             row['Month'],
-                            f"{row['Green']:.0f} ({row['Average Trade Share']:.2%})",
-                            f"{row['Yellow']:.0f} ({row['Average Non-Trade Share']:.2%})"
+                            f"{row['Trade']:.0f} ({row['Average Trade Share']:.2%})",
+                            f"{row['Non-Trade']:.0f} ({row['Average Non-Trade Share']:.2%})"
                         ])
                     draw_table(share_data, 330, height - 620, [40, 60, 60, 60])
                     add_page_number(c)
