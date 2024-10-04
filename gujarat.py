@@ -21,6 +21,7 @@ from reportlab.platypus import Paragraph
 from reportlab.lib.enums import TA_CENTER
 from io import BytesIO
 from datetime import datetime
+from reportlab.graphics import renderPDF
 import random
 from reportlab.lib.units import inch
 from datetime import datetime
