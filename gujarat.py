@@ -451,7 +451,6 @@ def create_pdf_report(region, df, region_subset=None):
                     c.showPage()
     for i in range(c.getPageNumber()):
         c.setPageSize((width, height))
-        c.showPage()
         add_page_number(c)         
     add_appendix()
     c.save()
