@@ -127,10 +127,10 @@ def create_pdf_report(region, df):
         c.drawCentredString(width / 2, height - 300, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         c.showPage()
     def add_tutorial_page():
-        story.append(Paragraph("Understanding the GYR Analysis", styles['Heading1']))
-        story.append(Spacer(1, 0.25*inch))
+        c.setFont("Helvetica-Bold", 24)
+        c.drawString(inch, height - inch, "Understanding the GYR Analysis")
 
-        # Example chart
+        # Create example chart
         drawing = Drawing(400, 200)
         lc = HorizontalLineChart()
         lc.x = 50
@@ -165,23 +165,30 @@ def create_pdf_report(region, df):
         drawing.add(lc)
         drawing.add(legend)
 
-        story.append(drawing)
-        story.append(Spacer(1, 0.25*inch))
+        renderPDF.draw(drawing, c, inch, height - 300)
 
-        story.append(Paragraph("Key Concepts:", styles['Heading2']))
-        story.append(Spacer(1, 0.1*inch))
+        # Key Concepts
+        c.setFont("Helvetica-Bold", 18)
+        c.drawString(inch, height - 350, "Key Concepts:")
 
         concepts = [
-            ("Overall EBITDA", "Weighted average of Green, Yellow, and Red EBITDA based on their actual quantities."),
-            ("Imaginary EBITDA", "Calculated by adjusting shares: Green +5%, Yellow +2.5%, Red -7.5% (if all present)."),
-            ("Adjusted Shares", "If any category is absent, adjustments are made to the remaining categories."),
+            ("Overall EBITDA:", "Weighted average of Green, Yellow, and Red EBITDA based on their actual quantities."),
+            ("Imaginary EBITDA:", "Calculated by adjusting shares: Green +5%, Yellow +2.5%, Red -7.5% (if all present)."),
+            ("Adjusted Shares:", "If any category is absent, adjustments are made to the remaining categories."),
         ]
 
+        text_object = c.beginText(inch, height - 380)
+        text_object.setFont("Helvetica-Bold", 12)
         for title, description in concepts:
-            story.append(Paragraph(f"<b>{title}:</b> {description}", body_style))
-            story.append(Spacer(1, 0.1*inch))
+            text_object.textLine(title)
+            text_object.setFont("Helvetica", 12)
+            text_object.textLine(description)
+            text_object.textLine("")
+            text_object.setFont("Helvetica-Bold", 12)
 
-        story.append(PageBreak())
+        c.drawText(text_object)
+
+        c.showPage()
     def add_appendix():
        c.setFont("Helvetica-Bold", 24)
        c.drawString(50, height - 100, "Appendix")
@@ -224,7 +231,6 @@ def create_pdf_report(region, df):
             y_position -= 20
     add_front_page()
     add_tutorial_page()
-    
     brands = df['Brand'].unique()
     types = df['Type'].unique()
     region_subsets = df['Region subsets'].unique()
