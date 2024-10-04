@@ -144,7 +144,7 @@ def create_pdf_report(region, df):
         "1. This analysis is based on historical data and may not predict future market changes.",
         "2. External factors such as economic conditions are not accounted for in this report.",
         "3. This report analyzes the EBIDTA for GYR keeping everything else constant.",
-        "We are currently working on including all the other factors which impact the EBIDTA across GYR regions which will make this analysis more robust and helpful. Also we will also include NSR and Contribution in our next report.",
+        "We are currently working on including all the other factors which impact the EBIDTA across GYR regions which\n will make this analysis more robust and helpful. Also we will also\n include NSR and Contribution in our next report.",
         "Thank You."
     ]
 
