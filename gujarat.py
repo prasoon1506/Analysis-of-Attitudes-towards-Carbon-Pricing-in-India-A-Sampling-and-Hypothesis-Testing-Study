@@ -245,7 +245,7 @@ def create_pdf_report(region, df):
                     fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['I-O Difference'],
                                              mode='lines+markers+text', name='I-O Difference',
                                              text=filtered_df['I-O Difference'].round(2),
-                                             textposition='top center',textfont=dict(size=8),
+                                             textposition='top center',textfont=dict(size=8,family="bold"),
                                              line=dict(color='fuchsia')), row=2, col=1)
 
                     # Add mean line to the second subplot
