@@ -271,9 +271,9 @@ def create_pdf_report(region, df):
                         height=710,  # Increased height to accommodate the new subplot
                     )
                     fig.update_xaxes(tickmode='array', tickvals=list(range(len(x_labels))), ticktext=x_labels, row=1, col=1)
-                    fig.update_xaxes(title_text='Month', row=2, col=1)
-                    fig.update_yaxes(title_text='EBITDA', row=1, col=1)
-                    fig.update_yaxes(title_text='I-O Difference', row=2, col=1)
+                    fig.update_xaxes(title_text='MonthS', row=2, col=1)
+                    fig.update_yaxes(title_text='EBITDA(Rs./MT)', row=1, col=1)
+                    fig.update_yaxes(title_text='I-O Difference(Rs./MT)', row=2, col=1)
                     # Add new page if needed
                     #if page_number > 1:
                         #c.showPage()
