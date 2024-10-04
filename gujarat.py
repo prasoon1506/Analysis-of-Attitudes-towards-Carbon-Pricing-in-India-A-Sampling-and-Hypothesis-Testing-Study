@@ -83,19 +83,44 @@ from reportlab.platypus import Paragraph
 from io import BytesIO
 import numpy as np
 from datetime import datetime
-def create_pdf_report(region, df):
+def create_pdf_report(region, df, region_subset=None):
     buffer = BytesIO()
     c = canvas.Canvas(buffer, pagesize=letter)
     width, height = letter
-    styles = getSampleStyleSheet()
 
-    def add_page_number(canvas, page_number):
+    def add_page_number(canvas, doc):
         canvas.saveState()
         canvas.setFont('Helvetica', 10)
-        page_number_text = f"Page {page_number}"
+        page_number_text = f"Page {doc.page}"
         canvas.drawString(width - 100, 30, page_number_text)
         canvas.restoreState()
 
+    # Modify the header to include region subset if provided
+    def add_header(page_number):
+        c.setFillColorRGB(0.2, 0.2, 0.7)  # Dark blue color for header
+        c.rect(0, height - 50, width, 50, fill=True)
+        c.setFillColorRGB(1, 1, 1)  # White color for text
+        c.setFont("Helvetica-Bold", 24)
+        header_text = f"GYR Analysis Report: {region}"
+        if region_subset:
+            header_text += f" ({region_subset})"
+        c.drawString(30, height - 35, header_text)
+
+    def add_front_page():
+        c.setFillColorRGB(0.1,0.1,0.5)
+        c.rect(0, 0, width, height, fill=True)
+        c.setFillColorRGB(1, 1, 1)
+        c.setFont("Helvetica-Bold", 36)
+        c.drawCentredString(width / 2, height - 200, "GYR Analysis Report")
+        c.setFont("Helvetica", 24)
+        report_title = f"Region: {region}"
+        if region_subset:
+            report_title += f" ({region_subset})"
+        c.drawCentredString(width / 2, height - 250, report_title)
+        c.setFont("Helvetica", 18)
+        c.drawCentredString(width / 2, height - 300, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        add_page_number(c, c._pageNumber)
+        c.showPage()
     def draw_graph(fig, x, y, width, height):
         img_buffer = BytesIO()
         fig.write_image(img_buffer, format="png",scale=2)
@@ -123,23 +148,7 @@ def create_pdf_report(region, df):
         ]))
         w, h = table.wrapOn(c, width, height)
         table.drawOn(c, x, y - h)
-    def add_header(page_number):
-        c.setFillColorRGB(0.2, 0.2, 0.7)  # Dark blue color for header
-        c.rect(0, height - 50, width, 50, fill=True)
-        c.setFillColorRGB(1, 1, 1)  # White color for text
-        c.setFont("Helvetica-Bold", 24)
-        c.drawString(30, height - 35, f"GYR Analysis Report: {region}")
-    def add_front_page():
-        c.setFillColorRGB(0.1,0.1,0.5)
-        c.rect(0, 0, width, height, fill=True)
-        c.setFillColorRGB(1, 1, 1)
-        c.setFont("Helvetica-Bold", 36)
-        c.drawCentredString(width / 2, height - 200, "GYR Analysis Report")
-        c.setFont("Helvetica", 24)
-        c.drawCentredString(width / 2, height - 250, f"Region: {region}")
-        c.setFont("Helvetica", 18)
-        c.drawCentredString(width / 2, height - 300, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        c.showPage()
+   
     def add_tutorial_page():
         c.setFont("Helvetica-Bold", 24)
         c.drawString(inch, height - inch, "Understanding the GYR Analysis")
@@ -440,7 +449,9 @@ def create_pdf_report(region, df):
                     draw_table(share_data, 330, height - 620, [40, 60, 60, 60])
                     
                     c.showPage()
-                    
+    for page in range(1, c.getPageNumber() + 1):
+        c.getPage(page)
+        add_page_number(c, c._pageNumber)            
     add_appendix()
     c.save()
     buffer.seek(0)
@@ -478,18 +489,31 @@ elif selected == "Analysis":
             st_lottie(lottie_analysis, height=200, key="analysis")
         else:
             st.image("https://cdn-icons-png.flaticon.com/512/2756/2756778.png", width=200)
-
-        # Create sidebar for user inputs
         st.sidebar.header("Filter Options")
         region = st.sidebar.selectbox("Select Region", options=df['Region'].unique(), key="region_select")
 
-        # Add download button for combined report
-        if st.sidebar.button(f"Download Combined Report for {region}"):
-            pdf_buffer = create_pdf_report(region, df)
-            pdf_bytes = pdf_buffer.getvalue()
-            b64 = base64.b64encode(pdf_bytes).decode()
-            href = f'<a href="data:application/pdf;base64,{b64}" download="GYR_Analysis_Report_{region}.pdf">Download PDF Report</a>'
-            st.sidebar.markdown(href, unsafe_allow_html=True)
+        # Add download button for report
+        if st.sidebar.button(f"Download Report for {region}"):
+            download_choice = st.sidebar.radio(
+                f"Do you want to download the report for the whole {region} region?",
+                ('Yes', 'No')
+            )
+            
+            if download_choice == 'Yes':
+                pdf_buffer = create_pdf_report(region, df)
+                pdf_bytes = pdf_buffer.getvalue()
+                b64 = base64.b64encode(pdf_bytes).decode()
+                href = f'<a href="data:application/pdf;base64,{b64}" download="GYR_Analysis_Report_{region}.pdf">Download Full Region PDF Report</a>'
+                st.sidebar.markdown(href, unsafe_allow_html=True)
+            else:
+                region_subsets = df[df['Region'] == region]['Region subsets'].unique()
+                selected_subset = st.sidebar.selectbox("Select Region Subset", options=region_subsets)
+                if st.sidebar.button(f"Download Report for {region} - {selected_subset}"):
+                    pdf_buffer = create_pdf_report(region, df, selected_subset)
+                    pdf_bytes = pdf_buffer.getvalue()
+                    b64 = base64.b64encode(pdf_bytes).decode()
+                    href = f'<a href="data:application/pdf;base64,{b64}" download="GYR_Analysis_Report_{region}_{selected_subset}.pdf">Download Region Subset PDF Report</a>'
+                    st.sidebar.markdown(href, unsafe_allow_html=True)
 
         # Add unique keys to each selectbox
         brand = st.sidebar.selectbox("Select Brand", options=df['Brand'].unique(), key="brand_select")
