@@ -1126,8 +1126,8 @@ def Home():
     """, unsafe_allow_html=True)
 
     # Main title and subtitle
-    st.markdown('<h1 class="title">WSP Analysis Dashboard</h1>', unsafe_allow_html=True)
-    st.markdown('<p class="subtitle">Unlock insights from your Whole Sale Price data across brands, regions, and districts.</p>', unsafe_allow_html=True)
+    st.markdown('<h1 class="title">Insightium</h1>', unsafe_allow_html=True)
+    st.markdown('<p class="subtitle">Unlock insights, drive decisions.</p>', unsafe_allow_html=True)
 
     # Load and display Lottie animation
     lottie_url = "https://assets9.lottiefiles.com/packages/lf20_jcikwtux.json"
