@@ -147,7 +147,7 @@ def create_pdf_report(region, df):
         # Create example chart
         drawing = Drawing(400, 200)
         lc = HorizontalLineChart()
-        lc.x = 50
+        lc.x = 40
         lc.y = 50
         lc.height = 125
         lc.width = 300
@@ -167,7 +167,7 @@ def create_pdf_report(region, df):
         # Add a legend
         legend = Legend()
         legend.alignment = 'right'
-        legend.x = 380
+        legend.x = 330
         legend.y = 150
         legend.colorNamePairs = [
             (colors.green, 'Green EBITDA'),
