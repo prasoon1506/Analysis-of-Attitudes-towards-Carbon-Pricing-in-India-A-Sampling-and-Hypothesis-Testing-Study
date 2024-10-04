@@ -107,7 +107,7 @@ def create_pdf_report(region, df, region_subset=None):
         c.drawString(30, height - 35, header_text)
 
     def add_front_page():
-        c.setFillColorRGB(0.1,0.1,0.5)
+        c.setFillColorRGB(0.4,0.5,0.3)
         c.rect(0, 0, width, height, fill=True)
         c.setFillColorRGB(1, 1, 1)
         c.setFont("Helvetica-Bold", 36)
@@ -446,7 +446,7 @@ def create_pdf_report(region, df, region_subset=None):
                             f"{row['Red']:.0f} ({row['Average Red Share']:.2%})"
                         ])
                     draw_table(share_data, 330, height - 620, [40, 60, 60, 60])
-                  
+                    add_page_number(c)
                     c.showPage()
     for i in range(c.getPageNumber()):
         c.setPageSize((width, height))
@@ -491,28 +491,29 @@ elif selected == "Analysis":
         st.sidebar.header("Filter Options")
         region = st.sidebar.selectbox("Select Region", options=df['Region'].unique(), key="region_select")
 
-        # Add download button for report
-        if st.sidebar.button(f"Download Report for {region}"):
-            download_choice = st.sidebar.radio(
-                f"Do you want to download the report for the whole {region} region?",
-                ('Yes', 'No')
-            )
-            
-            if download_choice == 'Yes':
+        # Add download options for report
+        st.sidebar.subheader(f"Download Report for {region}")
+        download_choice = st.sidebar.radio(
+            "Choose report type:",
+            ('Full Region', 'Region Subset')
+        )
+        
+        if download_choice == 'Full Region':
+            if st.sidebar.button(f"Download Full Report for {region}"):
                 pdf_buffer = create_pdf_report(region, df)
                 pdf_bytes = pdf_buffer.getvalue()
                 b64 = base64.b64encode(pdf_bytes).decode()
                 href = f'<a href="data:application/pdf;base64,{b64}" download="GYR_Analysis_Report_{region}.pdf">Download Full Region PDF Report</a>'
                 st.sidebar.markdown(href, unsafe_allow_html=True)
-            else:
-                region_subsets = df[df['Region'] == region]['Region subsets'].unique()
-                selected_subset = st.sidebar.selectbox("Select Region Subset", options=region_subsets)
-                if st.sidebar.button(f"Download Report for {region} - {selected_subset}"):
-                    pdf_buffer = create_pdf_report(region, df, selected_subset)
-                    pdf_bytes = pdf_buffer.getvalue()
-                    b64 = base64.b64encode(pdf_bytes).decode()
-                    href = f'<a href="data:application/pdf;base64,{b64}" download="GYR_Analysis_Report_{region}_{selected_subset}.pdf">Download Region Subset PDF Report</a>'
-                    st.sidebar.markdown(href, unsafe_allow_html=True)
+        else:
+            region_subsets = df[df['Region'] == region]['Region subsets'].unique()
+            selected_subset = st.sidebar.selectbox("Select Region Subset", options=region_subsets)
+            if st.sidebar.button(f"Download Report for {region} - {selected_subset}"):
+                pdf_buffer = create_pdf_report(region, df, selected_subset)
+                pdf_bytes = pdf_buffer.getvalue()
+                b64 = base64.b64encode(pdf_bytes).decode()
+                href = f'<a href="data:application/pdf;base64,{b64}" download="GYR_Analysis_Report_{region}_{selected_subset}.pdf">Download Region Subset PDF Report</a>'
+                st.sidebar.markdown(href, unsafe_allow_html=True)
 
         # Add unique keys to each selectbox
         brand = st.sidebar.selectbox("Select Brand", options=df['Brand'].unique(), key="brand_select")
