@@ -3380,8 +3380,8 @@ def normal():
                     for _, row in filtered_df[['Month', 'Normal', 'Premium','Average Normal Share', 'Average Premium Share']].iterrows():
                         share_data.append([
                             row['Month'],
-                            f"{row['Trade']:.0f} ({row['Average Normal Share']:.2%})",
-                            f"{row['Non-Trade']:.0f} ({row['Average Premium Share']:.2%})"
+                            f"{row['Normal']:.0f} ({row['Average Normal Share']:.2%})",
+                            f"{row['Premium']:.0f} ({row['Average Premium Share']:.2%})"
                         ])
                     draw_table(share_data, 330, height - 620, [40, 60, 60, 60])
                     add_page_number(c)
