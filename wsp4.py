@@ -3455,11 +3455,9 @@ def normal():
                 b64 = base64.b64encode(pdf_bytes).decode()
                 href = f'<a href="data:application/pdf;base64,{b64}" download="Product_Mix_Analysis_Report_{region}_{selected_subset}.pdf">Download Region Subset PDF Report</a>'
                 st.sidebar.markdown(href, unsafe_allow_html=True)
-
-        # Add unique keys to each selectbox
-        brand = st.sidebar.selectbox("Select Brand", options=df['Brand'].unique(), key="brand_select")
-        product_type = st.sidebar.selectbox("Select Type", options=df['Type'].unique(), key="type_select")
-        region_subset = st.sidebar.selectbox("Select Region Subset", options=df['Region subsets'].unique(), key="region_subset_select")
+        brand = st.sidebar.selectbox("Select Brand", options=df[df['Region']==region]['Brand'].unique(), key="brand_select")
+        product_type = st.sidebar.selectbox("Select Type", options=df[df['Region']==region]['Type'].unique(), key="type_select")
+        region_subset = st.sidebar.selectbox("Select Region Subset", options=df[df['Region']==region]['Region subsets'].unique(), key="region_subset_select")
 
         
         # Analysis type selection using radio buttons
@@ -3616,7 +3614,7 @@ def trade():
         c.rect(0, height - 50, width, 50, fill=True)
         c.setFillColorRGB(1, 1, 1)  # White color for text
         c.setFont("Helvetica-Bold", 24)
-        header_text = f"GYR Analysis Report: {region}"
+        header_text = f"Segment Mix Analysis Report: {region}"
         if region_subset:
             header_text += f" ({region_subset})"
         c.drawString(30, height - 35, header_text)
@@ -3992,7 +3990,7 @@ def trade():
                 pdf_buffer = create_pdf_report(region, subset_df)
                 pdf_bytes = pdf_buffer.getvalue()
                 b64 = base64.b64encode(pdf_bytes).decode()
-                href = f'<a href="data:application/pdf;base64,{b64}" download="GYR_Analysis_Report_{region}.pdf">Download Full Region PDF Report</a>'
+                href = f'<a href="data:application/pdf;base64,{b64}" download="Segment_Mix_Analysis_Report_{region}.pdf">Download Full Region PDF Report</a>'
                 st.sidebar.markdown(href, unsafe_allow_html=True)
         else:
             region_subsets = df[df['Region'] == region]['Region subsets'].unique()
@@ -4005,11 +4003,9 @@ def trade():
                 b64 = base64.b64encode(pdf_bytes).decode()
                 href = f'<a href="data:application/pdf;base64,{b64}" download="GYR_Analysis_Report_{region}_{selected_subset}.pdf">Download Region Subset PDF Report</a>'
                 st.sidebar.markdown(href, unsafe_allow_html=True)
-
-        # Add unique keys to each selectbox
-        brand = st.sidebar.selectbox("Select Brand", options=df['Brand'].unique(), key="brand_select")
-        product_type = st.sidebar.selectbox("Select Type", options=df['Type'].unique(), key="type_select")
-        region_subset = st.sidebar.selectbox("Select Region Subset", options=df['Region subsets'].unique(), key="region_subset_select")
+        brand = st.sidebar.selectbox("Select Brand", options=df[df['Region']==region]['Brand'].unique(), key="brand_select")
+        product_type = st.sidebar.selectbox("Select Type", options=df[df['Region']==region]['Type'].unique(), key="type_select")
+        region_subset = st.sidebar.selectbox("Select Region Subset", options=df[df['Region']==region]['Region subsets'].unique(), key="region_subset_select")
 
         
         # Analysis type selection using radio buttons
