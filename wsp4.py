@@ -3498,8 +3498,8 @@ def normal():
             
             # Calculate imaginary overall based on slider
             imaginary_col = f'Imaginary {overall_col}'
-            filtered_df[imaginary_col] = ((1 - premium_share/100) * filtered_df[cols[1]] +
-                                          (premium_share/100) * filtered_df[cols[0]])
+            filtered_df[imaginary_col] = ((1 - premium_share/100) * filtered_df[cols[0]] +
+                                          (premium_share/100) * filtered_df[cols[1]])
             
             # Calculate difference between Premium and Normal
             filtered_df['Difference'] = filtered_df[cols[0]] - filtered_df[cols[1]]
