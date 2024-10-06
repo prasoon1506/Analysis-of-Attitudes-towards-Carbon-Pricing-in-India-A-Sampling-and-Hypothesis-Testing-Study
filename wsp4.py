@@ -3396,7 +3396,7 @@ def normal():
 
 
  if selected == "Home":
-    st.title("📊 Advanced Segment Mix Analysis")
+    st.title("📊 Advanced Product Mix Analysis")
     st.markdown("Welcome to our advanced data analysis platform. Upload your Excel file to get started with interactive visualizations and insights.")
     
     st.markdown("<div class='upload-section'>", unsafe_allow_html=True)
@@ -3414,7 +3414,7 @@ def normal():
             st.image("https://cdn-icons-png.flaticon.com/512/4503/4503700.png", width=150)
     st.markdown("</div>", unsafe_allow_html=True)
  elif selected == "Analysis":
-    st.title("📈 Segment Mix Dashboard")
+    st.title("📈 Product Mix Dashboard")
     
     if 'uploaded_file' not in st.session_state or st.session_state.uploaded_file is None:
         st.warning("Please upload an Excel file on the Home page to begin the analysis.")
