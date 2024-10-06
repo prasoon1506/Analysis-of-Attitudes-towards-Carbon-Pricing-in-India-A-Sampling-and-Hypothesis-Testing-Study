@@ -3553,7 +3553,7 @@ def normal():
                 'Normal Share (%)': normal_share
             })
                   
-            fig_pie = px.pie(share_df, values=[trade_share.mean(), nontrade_share.mean()], 
+            fig_pie = px.pie(share_df, values=[normal_share.mean(), premium_share.mean()], 
                                      names=['Normal', 'Premium'], title='Average Share Distribution',color=["N","P"],color_discrete_map={"N":"green","P":"blue"},hole=0.5)
             st.plotly_chart(fig_pie, use_container_width=True)
                     
