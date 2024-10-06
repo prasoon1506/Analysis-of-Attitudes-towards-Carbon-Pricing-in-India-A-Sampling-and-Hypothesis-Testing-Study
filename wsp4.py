@@ -3065,7 +3065,7 @@ def normal():
         c.setFillColorRGB(0.2, 0.2, 0.7)  # Dark blue color for header
         c.rect(0, height - 50, width, 50, fill=True)
         c.setFillColorRGB(1, 1, 1)  # White color for text
-        c.setFont("Helvetica-Bold", 24)
+        c.setFont("Helvetica-Bold", 18)
         header_text = f"Product Mix Analysis Report: {region}"
         if region_subset:
             header_text += f" ({region_subset})"
@@ -3613,7 +3613,7 @@ def trade():
         c.setFillColorRGB(0.2, 0.2, 0.7)  # Dark blue color for header
         c.rect(0, height - 50, width, 50, fill=True)
         c.setFillColorRGB(1, 1, 1)  # White color for text
-        c.setFont("Helvetica-Bold", 24)
+        c.setFont("Helvetica-Bold", 18)
         header_text = f"Segment Mix Analysis Report: {region}"
         if region_subset:
             header_text += f" ({region_subset})"
@@ -4198,7 +4198,7 @@ def green():
         c.setFillColorRGB(0.2, 0.2, 0.7)  # Dark blue color for header
         c.rect(0, height - 50, width, 50, fill=True)
         c.setFillColorRGB(1, 1, 1)  # White color for text
-        c.setFont("Helvetica-Bold", 24)
+        c.setFont("Helvetica-Bold", 18)
         header_text = f"GYR Analysis Report: {region}"
         if region_subset:
             header_text += f" ({region_subset})"
