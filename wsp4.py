@@ -3482,13 +3482,13 @@ def normal():
         
         if not filtered_df.empty:
             if analysis_type == 'NSR Analysis':
-                cols = ['Trade NSR', 'Non-Trade NSR']
+                cols = ['Normal NSR', 'Premium NSR']
                 overall_col = 'Overall NSR'
             elif analysis_type == 'Contribution Analysis':
-                cols = ['Trade Contribution', 'Non-Trade Contribution']
+                cols = ['Normal Contribution', 'Premium Contribution']
                 overall_col = 'Overall Contribution'
             elif analysis_type == 'EBITDA Analysis':
-                cols = ['Trade EBITDA', 'Non-Trade EBITDA']
+                cols = ['Normal EBITDA', 'Premium EBITDA']
                 overall_col = 'Overall EBITDA'
             
             # Calculate weighted average based on actual quantities
