@@ -2061,8 +2061,8 @@ def create_visualization(region_data, region, brand, months, oct_target, oct_ach
         ax1.text(i, (max(target, achievement)+min(target,achievement))/2, f'{percentage:.1f}%', 
                  ha='center', va='bottom', fontsize=10, color=color, fontweight='bold')
     
-    ax1.errorbar(x[-1] + width/2, sept_achievement, 
-                 yerr=[[sept_achievement - lower_achievement], [upper_achievement - sept_achievement]],
+    ax1.errorbar(x[-1] + width/2, oct_achievement, 
+                 yerr=[[oct_achievement - lower_achievement], [upper_achievement - oct_achievement]],
                  fmt='o', color='darkred', capsize=5, capthick=2, elinewidth=2)
     
     # Percentage achievement line chart (same as before)
