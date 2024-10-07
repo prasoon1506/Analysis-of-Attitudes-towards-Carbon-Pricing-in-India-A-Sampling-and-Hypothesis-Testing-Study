@@ -4750,24 +4750,20 @@ def green():
     - Descriptive statistics and share analysis
     - Customizable Green and Yellow share adjustments
     """)
-
 def load_visit_data():
     try:
         with open('visit_data.json', 'r') as f:
             return json.load(f)
     except FileNotFoundError:
         return {'total_visits': 0, 'daily_visits': {}}
-
 def save_visit_data(data):
     with open('visit_data.json', 'w') as f:
         json.dump(data, f)
 def update_visit_count():
     visit_data = load_visit_data()
     today = datetime.now().strftime('%Y-%m-%d')
-    
     visit_data['total_visits'] += 1
     visit_data['daily_visits'][today] = visit_data['daily_visits'].get(today, 0) + 1
-    
     save_visit_data(visit_data)
     return visit_data['total_visits'], visit_data['daily_visits'][today]
 def load_visit_data():
@@ -4776,25 +4772,17 @@ def load_visit_data():
             return json.load(f)
     except FileNotFoundError:
         return {'total_visits': 0, 'daily_visits': {}}
-
 def save_visit_data(data):
     with open('visit_data.json', 'w') as f:
         json.dump(data, f)
-
 def update_visit_count():
     visit_data = load_visit_data()
     today = datetime.now().strftime('%Y-%m-%d')
-    
     visit_data['total_visits'] += 1
     visit_data['daily_visits'][today] = visit_data['daily_visits'].get(today, 0) + 1
-    
     save_visit_data(visit_data)
     return visit_data['total_visits'], visit_data['daily_visits'][today]
-
 def main():
-    # Set background image (uncomment and replace 'background.png' with your image file)
-    # set_png_as_page_bg('background.png')
-
     # Custom CSS for the sidebar and main content
     st.markdown("""
     <style>
@@ -4859,15 +4847,9 @@ def main():
     }
     </style>
     """, unsafe_allow_html=True)
-
     st.sidebar.title("Analytics Dashboard")
-    
-    # User info with avatar
     if 'username' not in st.session_state:
         st.session_state.username = "Guest"
-    
-
-    
     st.sidebar.markdown(f"""
     <div class="user-info">
         <i class="fas fa-user"></i> Logged in as: {st.session_state.username}
@@ -4901,7 +4883,6 @@ def main():
                 "nav-link-selected": {"background-color": "rgba(255, 255, 255, 0.2)"},
             }
         )
-
     # Submenu based on main selection
     if selected == "Home":
         Home()
@@ -4947,40 +4928,28 @@ def main():
     elif selected == "Settings":
         st.title("Settings")
         st.markdown('<div class="settings-container">', unsafe_allow_html=True)
-        
-        # User Settings
         st.subheader("User Settings")
         username = st.text_input("Username", value=st.session_state.username)
         email = st.text_input("Email", value="johndoe@example.com")
         if st.button("Update Profile"):
             st.session_state.username = username
             st.success("Profile updated successfully!")
-        
-        # Appearance Settings
         st.subheader("Appearance")
         theme = st.selectbox("Theme", ["Light", "Dark", "System Default"])
         chart_color = st.color_picker("Default Chart Color", "#2e7bcf")
-        
-        # Notification Settings
         st.subheader("Notifications")
         email_notifications = st.checkbox("Receive Email Notifications", value=True)
         notification_frequency = st.select_slider("Notification Frequency", options=["Daily", "Weekly", "Monthly"])
-        
         # Save Settings Button
         if st.button("Save Settings"):
             st.success("Settings saved successfully!")
-        
         st.markdown('</div>', unsafe_allow_html=True)
-
-    # Enhanced feedback section
     st.sidebar.markdown("---")
     st.sidebar.subheader("📢 Feedback")
     feedback = st.sidebar.text_area("Share your thoughts:")
     if st.sidebar.button("Submit Feedback", key="submit_feedback"):
         # Here you would typically send this feedback to a database or email
         st.sidebar.success("Thank you for your valuable feedback!")
-    
-
     # Display visit counter with animations
     total_visits, daily_visits = update_visit_count()
     st.sidebar.markdown(f"""
