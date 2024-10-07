@@ -2475,7 +2475,7 @@ def sales_prediction_app():
             
             if st.button("Run Prediction"):
                 with st.spinner("Running prediction..."):
-                    fig, sept_achievement, lower_achievement, upper_achievement, rmse = predict_and_visualize(df, region, brand)
+                    fig, oct_achievement, lower_achievement, upper_achievement, rmse = predict_and_visualize(df, region, brand)
                 if fig:
                     st.pyplot(fig)
                     
