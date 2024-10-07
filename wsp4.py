@@ -1895,7 +1895,6 @@ def xgboost_explanation():
     # Create and train the model
     model = xgb.XGBRegressor(n_estimators=100, learning_rate=0.1)
     model.fit(X_train, y_train)
-
     # Make predictions
     predictions = model.predict(X_test)
 
