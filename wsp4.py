@@ -4785,7 +4785,7 @@ def green():
     st.dataframe(share_df.set_index('Month').style.format("{:.2f}").background_gradient(cmap='RdYlGn'), use_container_width=True)
         
         
-else:
+ else:
             st.warning("No data available for the selected combination.")
         
         st.markdown("</div>", unsafe_allow_html=True)
