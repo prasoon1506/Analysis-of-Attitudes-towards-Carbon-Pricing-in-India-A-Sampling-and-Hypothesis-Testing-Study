@@ -2301,7 +2301,7 @@ def create_advanced_visualization(region_data, region, brand, months, oct_target
     st.header("Additional Insights")
     total_sep_current = region_data['Monthly Achievement(Sep)'].mean()  # or use .sum() as needed
     total_sep_last = region_data['Total Sep 2023'].mean()  # or use .sum() as needed
-    yoy_growth = ((total_sep_current - total_sep_last) / total_aug_last) * 100
+    yoy_growth = ((total_sep_current - total_sep_last) / total_sep_last) * 100
 
     # Now this should work without raising an error
     st.metric("Year-over-Year Growth", f"{yoy_growth:.1f}%", delta=f"{yoy_growth:.1f}%")
