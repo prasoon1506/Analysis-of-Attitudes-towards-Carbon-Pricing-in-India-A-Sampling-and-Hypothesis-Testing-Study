@@ -4557,7 +4557,7 @@ def green():
     buffer.seek(0)
     return buffer
 
-if selected == "Home":
+ if selected == "Home":
     st.title("📊 Advanced GYR Analysis")
     st.markdown("Welcome to our advanced data analysis platform. Upload your Excel file to get started with interactive visualizations and insights.")
     
@@ -4575,7 +4575,7 @@ if selected == "Home":
         else:
             st.image("https://cdn-icons-png.flaticon.com/512/4503/4503700.png", width=150)
     st.markdown("</div>", unsafe_allow_html=True)
-elif selected == "Analysis":
+ elif selected == "Analysis":
     st.title("📈 GYR Dashboard")
     
     if 'uploaded_file' not in st.session_state or st.session_state.uploaded_file is None:
@@ -4738,7 +4738,7 @@ elif selected == "Analysis":
         
         st.markdown("</div>", unsafe_allow_html=True)
  
-elif selected == "About":
+ elif selected == "About":
     st.title("About the GYR Analysis App")
     st.markdown("""
     This advanced data analysis application is designed to provide insightful visualizations and statistics for your GYR (Green, Yellow, Red) data. 
