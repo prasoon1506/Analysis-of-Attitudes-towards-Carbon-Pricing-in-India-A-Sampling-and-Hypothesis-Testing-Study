@@ -4786,9 +4786,9 @@ def green():
         
         
  else:
-            st.warning("No data available for the selected combination.")
+    st.warning("No data available for the selected combination.")
         
-        st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
  elif selected == "About":
     st.title("About the GYR Analysis App")
