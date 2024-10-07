@@ -2209,7 +2209,7 @@ def create_advanced_visualization(region_data, region, brand, months, oct_target
     fig1 = go.Figure()
     fig1.add_trace(go.Bar(x=all_months, y=all_targets, name='Target', marker_color='rgba(255, 192, 203, 0.8)'))
     fig1.add_trace(go.Bar(x=all_months, y=all_achievements, name='Achievement', marker_color='rgba(255, 255, 0, 0.8)'))
-    fig1.add_trace(go.Scatter(x=['Sep'], y=[sept_achievement], mode='markers', name='October Prediction',
+    fig1.add_trace(go.Scatter(x=['Sep'], y=[oct_achievement], mode='markers', name='October Prediction',
                              marker=dict(color='red', size=10), error_y=dict(
                                  type='data',
                                  symmetric=False,
