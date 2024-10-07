@@ -4790,7 +4790,7 @@ def green():
         
     st.markdown("</div>", unsafe_allow_html=True)
 
- elif selected == "About":
+elif selected == "About":
     st.title("About the GYR Analysis App")
     st.markdown("""
     This advanced data analysis application is designed to provide insightful visualizations and statistics for your GYR (Green, Yellow, Red) data. 
