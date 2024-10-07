@@ -1918,7 +1918,7 @@ def predict_and_visualize(df, region, brand):
         region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)].copy()
         
         if len(region_data) > 0:
-            months = ['Apr', 'May', 'June', 'July', 'Aug']
+            months = ['Apr', 'May', 'June', 'July', 'Aug','Sep']
             for month in months:
                 region_data[f'Achievement({month})'] = region_data[f'Monthly Achievement({month})'] / region_data[f'Month Tgt ({month})']
             
@@ -1935,8 +1935,8 @@ def predict_and_visualize(df, region, brand):
             val_predictions = model.predict(X_val)
             rmse = math.sqrt(mean_squared_error(y_val, val_predictions))
             
-            sept_target = region_data['Month Tgt (Sep)'].iloc[-1]
-            sept_prediction = model.predict([[sept_target]])[0]
+            oct_target = region_data['Month Tgt (Oct)'].iloc[-1]
+            oct_prediction = model.predict([[oct_target]])[0]
             
             n = len(X_train)
             degrees_of_freedom = n - 2
@@ -1947,8 +1947,8 @@ def predict_and_visualize(df, region, brand):
             
             margin_of_error = t_value * std_error * np.sqrt(1 + 1/n + (sept_target - np.mean(X_train))**2 / np.sum((X_train - np.mean(X_train))**2))
             
-            lower_bound = max(0, sept_prediction - margin_of_error)
-            upper_bound = sept_prediction + margin_of_error
+            lower_bound = max(0, oct_prediction - margin_of_error)
+            upper_bound = oct_prediction + margin_of_error
             
             sept_achievement = sept_prediction * sept_target
             lower_achievement = lower_bound * sept_target
@@ -2337,7 +2337,7 @@ def create_advanced_visualization(region_data, region, brand, months, sept_targe
     return None  # No need to return a figure, as we're using Streamlit components directly
 
 def generate_combined_report(df, regions, brands):
-    main_table_data = [['Region', 'Brand', 'Month Target\n(Sep)', 'Monthly Achievement\n(Aug)', 'Predicted\nAchievement(Sept)', 'CI', 'RMSE']]
+    main_table_data = [['Region', 'Brand', 'Month Target\n(Oct)', 'Monthly Achievement\n(Sep)', 'Predicted\nAchievement(Oct)', 'CI', 'RMSE']]
     additional_table_data = [['Region', 'Brand', 'Till Yesterday\nTotal Sales', 'Commitment\nfor Today', 'Asking\nfor Today', 'Yesterday\nSales', 'Yesterday\nCommitment']]
     
     with ThreadPoolExecutor() as executor:
@@ -2353,8 +2353,8 @@ def generate_combined_report(df, regions, brands):
                 if sept_achievement is not None:
                     region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)]
                     if not region_data.empty:
-                        sept_target = region_data['Month Tgt (Sep)'].iloc[-1]
-                        aug_achievement = region_data['Monthly Achievement(Aug)'].iloc[-1]
+                        sept_target = region_data['Month Tgt (Oct)'].iloc[-1]
+                        aug_achievement = region_data['Monthly Achievement(Sep)'].iloc[-1]
                         
                         main_table_data.append([
                             region, brand, f"{sept_target:.0f}", f"{aug_achievement:.0f}",
