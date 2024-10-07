@@ -1794,7 +1794,7 @@ def load_data(uploaded_file):
     regions = df['Zone'].unique().tolist()
     brands = df['Brand'].unique().tolist()
     return df, regions, brands
-
+# Cache the model training
 @st.cache_resource
 def train_model(X_train, y_train):
     model = xgb.XGBRegressor(n_estimators=100, learning_rate=0.1, random_state=42)
@@ -1806,27 +1806,21 @@ def load_lottie_url(url: str):
     if r.status_code != 200:
         return None
     return r.json()
+
 def predict_and_visualize(df, region, brand):
     try:
         region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)].copy()
         
         if len(region_data) > 0:
-            months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep']
+            months = ['Apr', 'May', 'June', 'July', 'Aug','Sep']
             for month in months:
                 region_data[f'Achievement({month})'] = region_data[f'Monthly Achievement({month})'] / region_data[f'Month Tgt ({month})']
             
-            # Prepare features and target
-            X = region_data[[f'Month Tgt ({month})' for month in months] + ['Total Oct 2023']]
-            y = region_data[[f'Achievement({month})' for month in months]].values.ravel()
+            X = region_data[[f'Month Tgt ({month})' for month in months]]
+            y = region_data[[f'Achievement({month})' for month in months]]
             
-            # Reshape X to have the same number of samples as y
-            X_reshaped = X.values.reshape(-1, X.shape[1])
-            y_reshaped = y.reshape(-1)
-            
-            # Ensure X_reshaped and y_reshaped have the same number of samples
-            min_samples = min(X_reshaped.shape[0], y_reshaped.shape[0])
-            X_reshaped = X_reshaped[:min_samples]
-            y_reshaped = y_reshaped[:min_samples]
+            X_reshaped = X.values.reshape(-1, 1)
+            y_reshaped = y.values.ravel()
             
             X_train, X_val, y_train, y_val = train_test_split(X_reshaped, y_reshaped, test_size=0.2, random_state=42)
             
@@ -1836,26 +1830,16 @@ def predict_and_visualize(df, region, brand):
             rmse = math.sqrt(mean_squared_error(y_val, val_predictions))
             
             oct_target = region_data['Month Tgt (Oct)'].iloc[-1]
-            oct_2023 = region_data['Total Oct 2023'].iloc[-1]
-            
-            # Prepare input for October prediction
-            oct_input = np.array([[oct_target] + [region_data[f'Month Tgt ({month})'].iloc[-1] for month in months] + [oct_2023]])
-            
-            oct_prediction = model.predict(oct_input)[0]
+            oct_prediction = model.predict([[oct_target]])[0]
             
             n = len(X_train)
-            degrees_of_freedom = n - X.shape[1] - 1
+            degrees_of_freedom = n - 2
             t_value = stats.t.ppf(0.975, degrees_of_freedom)
             
             residuals = y_train - model.predict(X_train)
             std_error = np.sqrt(np.sum(residuals**2) / degrees_of_freedom)
             
-            X_mean = np.mean(X_train, axis=0)
-            X_centered = X_train - X_mean
-            cov_matrix = np.linalg.inv(X_centered.T @ X_centered)
-            leverage = oct_input @ cov_matrix @ oct_input.T
-            
-            margin_of_error = t_value * std_error * np.sqrt(1 + 1/n + leverage[0][0])
+            margin_of_error = t_value * std_error * np.sqrt(1 + 1/n + (oct_target - np.mean(X_train))**2 / np.sum((X_train - np.mean(X_train))**2))
             
             lower_bound = max(0, oct_prediction - margin_of_error)
             upper_bound = oct_prediction + margin_of_error
@@ -1873,11 +1857,8 @@ def predict_and_visualize(df, region, brand):
     except Exception as e:
         st.error(f"Error in predict_and_visualize: {str(e)}")
         raise
-import streamlit as st
 import plotly.graph_objects as go
 import plotly.subplots as sp
-import pandas as pd
-import numpy as np
 from scipy import stats
 def create_visualization(region_data, region, brand, months, oct_target, oct_achievement, lower_achievement, upper_achievement, rmse):
     fig = plt.figure(figsize=(20, 28))  # Increased height to accommodate new table
