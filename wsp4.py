@@ -4755,37 +4755,37 @@ def green():
     return fig
 
 # Display interactive dataframe
-          st.markdown("Click on a row to see detailed distribution")
-          selected_indices = st.data_editor(
-          share_df.set_index('Month')[['Green Share (%)', 'Yellow Share (%)', 'Red Share (%)']],
-          hide_index=False,
-          use_container_width=True,
-          key="interactive_share_df",
-          disabled=True)
+    st.markdown("Click on a row to see detailed distribution")
+    selected_indices = st.data_editor(
+    share_df.set_index('Month')[['Green Share (%)', 'Yellow Share (%)', 'Red Share (%)']],
+    hide_index=False,
+    use_container_width=True,
+    key="interactive_share_df",
+    disabled=True)
 
 # Display pie chart for selected row
-          if selected_indices:
+    if selected_indices:
               selected_month = list(selected_indices.keys())[0]
               selected_row = share_df[share_df['Month'] == selected_month].iloc[0]
               st.plotly_chart(create_pie_chart(selected_row), use_container_width=True)
 
 # Display average distribution pie chart
-          fig_avg_pie = px.pie(
+    fig_avg_pie = px.pie(
                      values=[green_share.mean(), yellow_share.mean(), red_share.mean()],
                      names=['Green', 'Yellow', 'Red'],
                      title='Average Share Distribution',
                      color=['Green', 'Yellow', 'Red'],
                      color_discrete_map={"Green": "green", "Yellow": "yellow", "Red": "red"},
                      hole=0.3)
-          st.plotly_chart(fig_avg_pie, use_container_width=True)   
-          fig_pie = px.pie(share_df, values=[green_share.mean(), yellow_share.mean(), red_share.mean()], 
+    st.plotly_chart(fig_avg_pie, use_container_width=True)   
+    fig_pie = px.pie(share_df, values=[green_share.mean(), yellow_share.mean(), red_share.mean()], 
                                      names=['Green', 'Yellow', 'Red'], title='Average Share Distribution',color=["G","Y","R"],color_discrete_map={"G":"green","Y":"yellow","R":"red"},hole=0.5)
-          st.plotly_chart(fig_pie, use_container_width=True)
+    st.plotly_chart(fig_pie, use_container_width=True)
                     
-          st.dataframe(share_df.set_index('Month').style.format("{:.2f}").background_gradient(cmap='RdYlGn'), use_container_width=True)
+    st.dataframe(share_df.set_index('Month').style.format("{:.2f}").background_gradient(cmap='RdYlGn'), use_container_width=True)
         
         
-        else:
+else:
             st.warning("No data available for the selected combination.")
         
         st.markdown("</div>", unsafe_allow_html=True)
