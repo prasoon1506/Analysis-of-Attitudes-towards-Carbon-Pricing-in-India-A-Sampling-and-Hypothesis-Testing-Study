@@ -1970,7 +1970,7 @@ import plotly.subplots as sp
 import pandas as pd
 import numpy as np
 from scipy import stats
-def create_visualization(region_data, region, brand, months, sept_target, sept_achievement, lower_achievement, upper_achievement, rmse):
+def create_visualization(region_data, region, brand, months, oct_target, oct_achievement, lower_achievement, upper_achievement, rmse):
     fig = plt.figure(figsize=(20, 28))  # Increased height to accommodate new table
     gs = fig.add_gridspec(7, 2, height_ratios=[0.5, 0.5, 0.5, 3, 1, 2, 1])
     ax_region = fig.add_subplot(gs[0, :])
@@ -2003,9 +2003,9 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
     ax_table = fig.add_subplot(gs[2, :])
     ax_table.axis('off')
     table_data = [
-                ['Month Target\n(Sep)', 'Monthly Achievement\n(Aug)', 'Predicted Achievement\n(Sept)(using XGBoost Algorithm)', 'CI', 'RMSE'],
-                [f"{sept_target:.2f}", f"{region_data['Monthly Achievement(Aug)'].iloc[-1]:.2f}", 
-                 f"{sept_achievement:.2f}", f"({lower_achievement:.2f}, {upper_achievement:.2f})", f"{rmse:.4f}"]
+                ['Month Target\n(Oct)', 'Monthly Achievement\n(Sep)', 'Predicted Achievement\n(Oct)(using XGBoost Algorithm)', 'CI', 'RMSE'],
+                [f"{oct_target:.2f}", f"{region_data['Monthly Achievement(Sep)'].iloc[-1]:.2f}", 
+                 f"{oct_achievement:.2f}", f"({lower_achievement:.2f}, {upper_achievement:.2f})", f"{rmse:.4f}"]
             ]
     table = ax_table.table(cellText=table_data[1:], colLabels=table_data[0], cellLoc='center', loc='center')
     table.auto_set_font_size(False)
@@ -2025,9 +2025,9 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
     
     actual_achievements = [region_data[f'Monthly Achievement({month})'].iloc[-1] for month in months]
     actual_targets = [region_data[f'Month Tgt ({month})'].iloc[-1] for month in months]
-    all_months = months + ['Sep']
-    all_achievements = actual_achievements + [sept_achievement]
-    all_targets = actual_targets + [sept_target]
+    all_months = months + ['Oct']
+    all_achievements = actual_achievements + [oct_achievement]
+    all_targets = actual_targets + [oct_target]
     
     x = np.arange(len(all_months))
     width = 0.35
@@ -2085,13 +2085,13 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
     last_year = 2023
 
     channel_data = [
-        ('Trade', region_data['Trade Aug'].iloc[-1], region_data['Trade Aug 2023'].iloc[-1]),
-        ('Premium', region_data['Premium Aug'].iloc[-1], region_data['Premium Aug 2023'].iloc[-1]),
-        ('Blended', region_data['Blended Aug'].iloc[-1], region_data['Blended Aug 2023'].iloc[-1])
+        ('Trade', region_data['Trade Sep'].iloc[-1], region_data['Trade Sep 2023'].iloc[-1]),
+        ('Premium', region_data['Premium Sep'].iloc[-1], region_data['Premium Sep 2023'].iloc[-1]),
+        ('Blended', region_data['Blended Sep'].iloc[-1], region_data['Blended Sep 2023'].iloc[-1])
     ]
-    monthly_achievement_aug = region_data['Monthly Achievement(Aug)'].iloc[-1]
-    total_aug_current = region_data['Monthly Achievement(Aug)'].iloc[-1]
-    total_aug_last = region_data['Total Aug 2023'].iloc[-1]
+    monthly_achievement_aug = region_data['Monthly Achievement(Sep)'].iloc[-1]
+    total_sep_current = region_data['Monthly Achievement(Sep)'].iloc[-1]
+    total_sep_last = region_data['Total Sep 2023'].iloc[-1]
     
     ax3.text(0.2, 1, f'\nAugust {current_year} Sales Breakdown:-', fontsize=16, fontweight='bold', ha='center', va='center')
     
@@ -2104,11 +2104,11 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
         return 'green' if value > 0 else 'red' if value < 0 else 'black'
 
     # Display total sales
-    total_change = ((total_aug_current - total_aug_last) / total_aug_last) * 100
+    total_change = ((total_sep_current - total_sep_last) / total_aug_last) * 100
     arrow = get_arrow(total_change)
     color = get_color(total_change)
-    ax3.text(0.21, 0.9, f"August 2024: {total_aug_current:.0f}", fontsize=14, fontweight='bold', ha='center')
-    ax3.text(0.22, 0.85, f"vs August 2023: {total_aug_last:.0f} ({total_change:.1f}% {arrow})", fontsize=12, color=color, ha='center')
+    ax3.text(0.21, 0.9, f"August 2024: {total_sep_current:.0f}", fontsize=14, fontweight='bold', ha='center')
+    ax3.text(0.22, 0.85, f"vs August 2023: {total_sep_last:.0f} ({total_change:.1f}% {arrow})", fontsize=12, color=color, ha='center')
     for i, (channel, value_current, value_last) in enumerate(channel_data):
         percentage = (value_current / monthly_achievement_aug) * 100
         change = ((value_current - value_last) / value_last) * 100
@@ -2127,10 +2127,10 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
     # Updated: August Region Type Breakdown with values
     ax4 = fig.add_subplot(gs[5, 1])
     region_type_data = [
-        region_data['Green Aug'].iloc[-1],
-        region_data['Yellow Aug'].iloc[-1],
-        region_data['Red Aug'].iloc[-1],
-        region_data['Unidentified Aug'].iloc[-1]
+        region_data['Green Sep'].iloc[-1],
+        region_data['Yellow Sep'].iloc[-1],
+        region_data['Red Sep'].iloc[-1],
+        region_data['Unidentified Sep'].iloc[-1]
     ]
     region_type_labels = ['Green', 'Yellow', 'Red', 'Unidentified']
     colors = ['green', 'yellow', 'red', 'gray']
@@ -2150,8 +2150,8 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
     
     q3_table_data = [
         ['Overall Requirement', 'Requirement in\nTrade Channel', 'Requirement in\nBlednded Product Category', 'Requirement for\nPremium Product'],
-        [f"{region_data['Q3 2023'].iloc[-1]:.0f}", f"{region_data['Q3 2023 Trade'].iloc[-1]:.0f}", 
-         f"{region_data['Q3 2023 Blended'].iloc[-1]:.0f}", f"{region_data['Q3 2023 Premium'].iloc[-1]:.0f}"]
+        [f"{region_data['Q4 2023'].iloc[-1]:.0f}", f"{region_data['Q4 2023 Trade'].iloc[-1]:.0f}", 
+         f"{region_data['Q4 2023 Blended'].iloc[-1]:.0f}", f"{region_data['Q4 2023 Premium'].iloc[-1]:.0f}"]
     ]
     
     q3_table = ax5.table(cellText=q3_table_data[1:], colLabels=q3_table_data[0], cellLoc='center', loc='center')
@@ -2164,11 +2164,11 @@ def create_visualization(region_data, region, brand, months, sept_target, sept_a
             cell.set_facecolor('goldenrod')
         cell.set_edgecolor('brown')
     
-    ax5.set_title('Quarterly Requirements for September 2024', fontsize=16, fontweight='bold')
+    ax5.set_title('Quarterly Requirements for October 2024', fontsize=16, fontweight='bold')
     plt.tight_layout()
     return fig
 
-def create_advanced_visualization(region_data, region, brand, months, sept_target, sept_achievement, lower_achievement, upper_achievement, rmse):
+def create_advanced_visualization(region_data, region, brand, months, oct_target, oct_achievement, lower_achievement, upper_achievement, rmse):
     st.title(f"{region} ({brand}) Performance")
 
     # Current Month Sales Data
@@ -2186,11 +2186,11 @@ def create_advanced_visualization(region_data, region, brand, months, sept_targe
     # Monthly Performance Table
     st.header("Monthly Performance Summary")
     performance_df = pd.DataFrame({
-        "Metric": ["Month Target (Sep)", "Monthly Achievement (Aug)", "Predicted Achievement (Sep)", "Confidence Interval", "RMSE"],
+        "Metric": ["Month Target (Oct)", "Monthly Achievement (Sep)", "Predicted Achievement (Oct)", "Confidence Interval", "RMSE"],
         "Value": [
-            f"{sept_target:,.2f}",
-            f"{region_data['Monthly Achievement(Aug)'].iloc[-1]:,.2f}",
-            f"{sept_achievement:,.2f}",
+            f"{oct_target:,.2f}",
+            f"{region_data['Monthly Achievement(Sep)'].iloc[-1]:,.2f}",
+            f"{oct_achievement:,.2f}",
             f"({lower_achievement:,.2f}, {upper_achievement:,.2f})",
             f"{rmse:.4f}"
         ]
@@ -2200,21 +2200,21 @@ def create_advanced_visualization(region_data, region, brand, months, sept_targe
     # Main Chart: Monthly Targets and Achievements
     st.header("Monthly Targets and Achievements for FY 2025")
     
-    all_months = months + ['Sep']
+    all_months = months + ['Oct']
     actual_achievements = [region_data[f'Monthly Achievement({month})'].iloc[-1] for month in months]
     actual_targets = [region_data[f'Month Tgt ({month})'].iloc[-1] for month in months]
-    all_achievements = actual_achievements + [sept_achievement]
-    all_targets = actual_targets + [sept_target]
+    all_achievements = actual_achievements + [oct_achievement]
+    all_targets = actual_targets + [oct_target]
 
     fig1 = go.Figure()
     fig1.add_trace(go.Bar(x=all_months, y=all_targets, name='Target', marker_color='rgba(255, 192, 203, 0.8)'))
     fig1.add_trace(go.Bar(x=all_months, y=all_achievements, name='Achievement', marker_color='rgba(255, 255, 0, 0.8)'))
-    fig1.add_trace(go.Scatter(x=['Sep'], y=[sept_achievement], mode='markers', name='September Prediction',
+    fig1.add_trace(go.Scatter(x=['Sep'], y=[sept_achievement], mode='markers', name='October Prediction',
                              marker=dict(color='red', size=10), error_y=dict(
                                  type='data',
                                  symmetric=False,
-                                 array=[upper_achievement - sept_achievement],
-                                 arrayminus=[sept_achievement - lower_achievement],
+                                 array=[upper_achievement - oct_achievement],
+                                 arrayminus=[oct_achievement - lower_achievement],
                                  visible=True
                              )))
 
@@ -2245,15 +2245,15 @@ def create_advanced_visualization(region_data, region, brand, months, sept_targe
     st.plotly_chart(fig_percent, use_container_width=True)
 
     # August Sales Breakdown
-    st.header("August 2024 Sales Breakdown")
+    st.header("September 2024 Sales Breakdown")
     col_breakdown1, col_breakdown2 = st.columns(2)
 
     with col_breakdown1:
         st.subheader("Channel Performance")
         channel_data = [
-            ('Trade', region_data['Trade Aug'].iloc[-1], region_data['Trade Aug 2023'].iloc[-1]),
-            ('Premium', region_data['Premium Aug'].iloc[-1], region_data['Premium Aug 2023'].iloc[-1]),
-            ('Blended', region_data['Blended Aug'].iloc[-1], region_data['Blended Aug 2023'].iloc[-1])
+            ('Trade', region_data['Trade Sep'].iloc[-1], region_data['Trade Sep 2023'].iloc[-1]),
+            ('Premium', region_data['Premium Sep'].iloc[-1], region_data['Premium Sep 2023'].iloc[-1]),
+            ('Blended', region_data['Blended Sep'].iloc[-1], region_data['Blended Sep 2023'].iloc[-1])
         ]
         
         for channel, value_current, value_last in channel_data:
@@ -2267,10 +2267,10 @@ def create_advanced_visualization(region_data, region, brand, months, sept_targe
     with col_breakdown2:
         st.subheader("Region Type Breakdown")
         region_type_data = [
-            region_data['Green Aug'].iloc[-1],
-            region_data['Yellow Aug'].iloc[-1],
-            region_data['Red Aug'].iloc[-1],
-            region_data['Unidentified Aug'].iloc[-1]
+            region_data['Green Sep'].iloc[-1],
+            region_data['Yellow Sep'].iloc[-1],
+            region_data['Red Sep'].iloc[-1],
+            region_data['Unidentified Sep'].iloc[-1]
         ]
         region_type_labels = ['Green', 'Yellow', 'Red', 'Unidentified']
         colors = ['green', 'yellow', 'red', 'gray']
@@ -2281,27 +2281,27 @@ def create_advanced_visualization(region_data, region, brand, months, sept_targe
         st.plotly_chart(fig_pie, use_container_width=True)
 
     # Quarterly Requirements
-    st.header("Quarterly Requirements for September 2024")
+    st.header("Quarterly Requirements for October 2024")
     q3_data = {
         'Category': ['Overall', 'Trade Channel', 'Blended Product', 'Premium Product'],
         'Requirement': [
-            region_data['Q3 2023'].iloc[-1],
-            region_data['Q3 2023 Trade'].iloc[-1],
-            region_data['Q3 2023 Blended'].iloc[-1],
-            region_data['Q3 2023 Premium'].iloc[-1]
+            region_data['Q4 2023'].iloc[-1],
+            region_data['Q4 2023 Trade'].iloc[-1],
+            region_data['Q4 2023 Blended'].iloc[-1],
+            region_data['Q4 2023 Premium'].iloc[-1]
         ]
     }
     q3_df = pd.DataFrame(q3_data)
     
     fig_q3 = go.Figure([go.Bar(x=q3_df['Category'], y=q3_df['Requirement'])])
-    fig_q3.update_layout(title='Q3 Requirements by Category', xaxis_title='Category', yaxis_title='Requirement')
+    fig_q3.update_layout(title='Q4 Requirements by Category', xaxis_title='Category', yaxis_title='Requirement')
     st.plotly_chart(fig_q3, use_container_width=True)
 
     # Additional Insights
     st.header("Additional Insights")
-    total_aug_current = region_data['Monthly Achievement(Aug)'].mean()  # or use .sum() as needed
-    total_aug_last = region_data['Total Aug 2023'].mean()  # or use .sum() as needed
-    yoy_growth = ((total_aug_current - total_aug_last) / total_aug_last) * 100
+    total_sep_current = region_data['Monthly Achievement(Sep)'].mean()  # or use .sum() as needed
+    total_sep_last = region_data['Total Sep 2023'].mean()  # or use .sum() as needed
+    yoy_growth = ((total_sep_current - total_sep_last) / total_aug_last) * 100
 
     # Now this should work without raising an error
     st.metric("Year-over-Year Growth", f"{yoy_growth:.1f}%", delta=f"{yoy_growth:.1f}%")
