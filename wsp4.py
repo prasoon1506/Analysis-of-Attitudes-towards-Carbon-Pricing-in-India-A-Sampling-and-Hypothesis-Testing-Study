@@ -4762,10 +4762,11 @@ def green():
             disabled=True)
 
 # Display pie chart for selected row
-            if selected_indices:
-              selected_month = list(selected_indices.keys())[0]
-              selected_row = share_df[share_df['Month'] == selected_month].iloc[0]
-              st.plotly_chart(create_pie_chart(selected_row), use_container_width=True)
+            if selected_indices and not selected_indices.empty:
+               selected_month = selected_indices.index[0]
+               selected_row = share_df[share_df['Month'] == selected_month].iloc[0]
+               st.plotly_chart(create_pie_chart(selected_row), use_container_width=True)
+
 
 # Display average distribution pie chart
             fig_avg_pie = px.pie(
