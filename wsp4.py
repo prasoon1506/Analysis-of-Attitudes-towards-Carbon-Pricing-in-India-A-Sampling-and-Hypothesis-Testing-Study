@@ -1950,9 +1950,9 @@ def predict_and_visualize(df, region, brand):
             lower_bound = max(0, oct_prediction - margin_of_error)
             upper_bound = oct_prediction + margin_of_error
             
-            oct_achievement = oct_prediction * sept_target
-            lower_achievement = lower_bound * sept_target
-            upper_achievement = upper_bound * sept_target
+            oct_achievement = oct_prediction * oct_target
+            lower_achievement = lower_bound * oct_target
+            upper_achievement = upper_bound * oct_target
             
             fig = create_visualization(region_data, region, brand, months, oct_target, oct_achievement, lower_achievement, upper_achievement, rmse)
             fig2 = create_advanced_visualization(region_data, region, brand, months, oct_target, oct_achievement, lower_achievement, upper_achievement, rmse)
