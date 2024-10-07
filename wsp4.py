@@ -2104,7 +2104,7 @@ def create_visualization(region_data, region, brand, months, oct_target, oct_ach
         return 'green' if value > 0 else 'red' if value < 0 else 'black'
 
     # Display total sales
-    total_change = ((total_sep_current - total_sep_last) / total_aug_last) * 100
+    total_change = ((total_sep_current - total_sep_last) / total_sep_last) * 100
     arrow = get_arrow(total_change)
     color = get_color(total_change)
     ax3.text(0.21, 0.9, f"August 2024: {total_sep_current:.0f}", fontsize=14, fontweight='bold', ha='center')
