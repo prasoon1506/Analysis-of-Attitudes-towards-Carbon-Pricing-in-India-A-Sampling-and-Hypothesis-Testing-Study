@@ -2035,7 +2035,7 @@ def create_visualization(region_data, region, brand, months, oct_target, oct_ach
     rects1 = ax1.bar(x - width/2, all_targets, width, label='Target', color='pink', alpha=0.8)
     rects2 = ax1.bar(x + width/2, all_achievements, width, label='Achievement', color='yellow', alpha=0.8)
     
-    ax1.bar(x[-1] + width/2, sept_achievement, width, color='red', alpha=0.8)
+    ax1.bar(x[-1] + width/2, oct_achievement, width, color='red', alpha=0.8)
     
     ax1.set_ylabel('Target and Achievement', fontsize=12, fontweight='bold')
     ax1.set_title(f"Monthly Targets and Achievements for FY 2025", fontsize=18, fontweight='bold')
