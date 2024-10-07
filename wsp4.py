@@ -2349,16 +2349,16 @@ def generate_combined_report(df, regions, brands):
         valid_data = False
         for future, (region, brand) in zip(futures, [(r, b) for r in regions for b in brands]):
             try:
-                _, sept_achievement, lower_achievement, upper_achievement, rmse = future.result()
-                if sept_achievement is not None:
+                _, oct_achievement, lower_achievement, upper_achievement, rmse = future.result()
+                if oct_achievement is not None:
                     region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)]
                     if not region_data.empty:
-                        sept_target = region_data['Month Tgt (Oct)'].iloc[-1]
-                        aug_achievement = region_data['Monthly Achievement(Sep)'].iloc[-1]
+                        oct_target = region_data['Month Tgt (Oct)'].iloc[-1]
+                        sept_achievement = region_data['Monthly Achievement(Sep)'].iloc[-1]
                         
                         main_table_data.append([
-                            region, brand, f"{sept_target:.0f}", f"{aug_achievement:.0f}",
-                            f"{sept_achievement:.0f}", f"({lower_achievement:.2f},\n{upper_achievement:.2f})", f"{rmse:.4f}"
+                            region, brand, f"{oct_target:.0f}", f"{sept_achievement:.0f}",
+                            f"{oct_achievement:.0f}", f"({lower_achievement:.2f},\n{upper_achievement:.2f})", f"{rmse:.4f}"
                         ])
                         
                         additional_table_data.append([
