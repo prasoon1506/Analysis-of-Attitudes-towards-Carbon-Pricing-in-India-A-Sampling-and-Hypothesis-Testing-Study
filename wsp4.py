@@ -4750,7 +4750,7 @@ def green():
                x=0.5, y=-0.15,
                showarrow=False)
     
-            return fig
+               return fig
 
 # Display interactive dataframe
             st.markdown("Click on a row to see detailed distribution")
