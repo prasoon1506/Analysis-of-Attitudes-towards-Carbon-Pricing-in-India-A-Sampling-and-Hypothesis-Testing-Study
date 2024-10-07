@@ -4744,11 +4744,11 @@ def green():
                  color_discrete_map=dict(zip(labels, colors)),
                  hole=0.3)
     
-              total_quantity = sum(values)
-              fig.add_annotation(
-              text=f'Total Quantity: {total_quantity}',
-              x=0.5, y=-0.15,
-              showarrow=False)
+               total_quantity = sum(values)
+               fig.add_annotation(
+               text=f'Total Quantity: {total_quantity}',
+               x=0.5, y=-0.15,
+               showarrow=False)
     
             return fig
 
