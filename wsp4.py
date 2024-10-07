@@ -1945,19 +1945,19 @@ def predict_and_visualize(df, region, brand):
             residuals = y_train - model.predict(X_train)
             std_error = np.sqrt(np.sum(residuals**2) / degrees_of_freedom)
             
-            margin_of_error = t_value * std_error * np.sqrt(1 + 1/n + (sept_target - np.mean(X_train))**2 / np.sum((X_train - np.mean(X_train))**2))
+            margin_of_error = t_value * std_error * np.sqrt(1 + 1/n + (oct_target - np.mean(X_train))**2 / np.sum((X_train - np.mean(X_train))**2))
             
             lower_bound = max(0, oct_prediction - margin_of_error)
             upper_bound = oct_prediction + margin_of_error
             
-            sept_achievement = sept_prediction * sept_target
+            oct_achievement = oct_prediction * sept_target
             lower_achievement = lower_bound * sept_target
             upper_achievement = upper_bound * sept_target
             
-            fig = create_visualization(region_data, region, brand, months, sept_target, sept_achievement, lower_achievement, upper_achievement, rmse)
-            fig2 = create_advanced_visualization(region_data, region, brand, months, sept_target, sept_achievement, lower_achievement, upper_achievement, rmse)
+            fig = create_visualization(region_data, region, brand, months, oct_target, oct_achievement, lower_achievement, upper_achievement, rmse)
+            fig2 = create_advanced_visualization(region_data, region, brand, months, oct_target, oct_achievement, lower_achievement, upper_achievement, rmse)
             
-            return fig, sept_achievement, lower_achievement, upper_achievement, rmse
+            return fig, oct_achievement, lower_achievement, upper_achievement, rmse
         else:
             return None, None, None, None, None
     except Exception as e:
