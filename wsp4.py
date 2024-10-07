@@ -4557,8 +4557,7 @@ def green():
     buffer.seek(0)
     return buffer
 
-
- if selected == "Home":
+if selected == "Home":
     st.title("📊 Advanced GYR Analysis")
     st.markdown("Welcome to our advanced data analysis platform. Upload your Excel file to get started with interactive visualizations and insights.")
     
@@ -4719,64 +4718,14 @@ def green():
             green_share = (filtered_df['Green'] / total_quantity * 100).round(2)
             yellow_share = (filtered_df['Yellow'] / total_quantity * 100).round(2)
             red_share = (filtered_df['Red'] / total_quantity * 100).round(2)
-            
-            
+                    
             share_df = pd.DataFrame({
-                    'Month': filtered_df['Month'],
-                    'Green Share (%)': green_share,
-                    'Yellow Share (%)': yellow_share,
-                    'Red Share (%)': red_share,
-                    'Green Quantity': filtered_df['Green'],
-                    'Yellow Quantity': filtered_df['Yellow'],
-                    'Red Quantity': filtered_df['Red']})
-
-# Function to create pie chart
-            def create_pie_chart(row):
-               values = [row['Green Quantity'], row['Yellow Quantity'], row['Red Quantity']]
-               labels = ['Green', 'Yellow', 'Red']
-               colors = ['green', 'yellow', 'red']
-    
-               fig = px.pie(
-                 values=values,
-                 names=labels,
-                 title=f"Product Distribution for {row['Month']}",
-                 color=labels,
-                 color_discrete_map=dict(zip(labels, colors)),
-                 hole=0.3)
-    
-               total_quantity = sum(values)
-               fig.add_annotation(
-               text=f'Total Quantity: {total_quantity}',
-               x=0.5, y=-0.15,
-               showarrow=False)
-    
-               return fig
-
-# Display interactive dataframe
-            st.markdown("Click on a row to see detailed distribution")
-            selected_indices = st.data_editor(
-            share_df.set_index('Month')[['Green Share (%)', 'Yellow Share (%)', 'Red Share (%)']],
-            hide_index=False,
-            use_container_width=True,
-            key="interactive_share_df",
-            disabled=True)
-
-# Display pie chart for selected row
-            if selected_indices and not selected_indices.empty:
-               selected_month = selected_indices.index[0]
-               selected_row = share_df[share_df['Month'] == selected_month].iloc[0]
-               st.plotly_chart(create_pie_chart(selected_row), use_container_width=True)
-
-
-# Display average distribution pie chart
-            fig_avg_pie = px.pie(
-                     values=[green_share.mean(), yellow_share.mean(), red_share.mean()],
-                     names=['Green', 'Yellow', 'Red'],
-                     title='Average Share Distribution',
-                     color=['Green', 'Yellow', 'Red'],
-                     color_discrete_map={"Green": "green", "Yellow": "yellow", "Red": "red"},
-                     hole=0.3)
-            st.plotly_chart(fig_avg_pie, use_container_width=True)   
+                        'Month': filtered_df['Month'],
+                        'Green Share (%)': green_share,
+                        'Yellow Share (%)': yellow_share,
+                        'Red Share (%)': red_share
+                    })
+                    
             fig_pie = px.pie(share_df, values=[green_share.mean(), yellow_share.mean(), red_share.mean()], 
                                      names=['Green', 'Yellow', 'Red'], title='Average Share Distribution',color=["G","Y","R"],color_discrete_map={"G":"green","Y":"yellow","R":"red"},hole=0.5)
             st.plotly_chart(fig_pie, use_container_width=True)
@@ -4787,7 +4736,8 @@ def green():
         else:
             st.warning("No data available for the selected combination.")
         
-    st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+ 
  elif selected == "About":
     st.title("About the GYR Analysis App")
     st.markdown("""
