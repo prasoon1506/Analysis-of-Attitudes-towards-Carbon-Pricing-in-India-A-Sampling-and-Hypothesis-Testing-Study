@@ -2324,7 +2324,7 @@ def create_advanced_visualization(region_data, region, brand, months, oct_target
 
     # Recommendations
     st.subheader("Recommendations")
-    if sept_achievement < sept_target:
+    if oct_achievement < oct_target:
         st.write("- Focus on increasing sales in underperforming channels")
         st.write("- Implement targeted marketing strategies for regions with lower performance")
     else:
