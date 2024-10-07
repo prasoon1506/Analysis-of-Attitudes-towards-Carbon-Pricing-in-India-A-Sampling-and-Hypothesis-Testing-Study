@@ -469,7 +469,6 @@ def main():
             st.session_state['regions'] = regions
             st.session_state['brands'] = brands
             st.success("File uploaded and processed successfully!")
-    
     elif page == "Predictions":
         st.title("🔮 Sales Predictions")
         if 'df' not in st.session_state:
@@ -517,23 +516,6 @@ def main():
                           )
                      else:
                         st.error("Unable to generate combined report. Please check the warnings above for more details.")
-
-    elif page == "XGBoost Explained":
-        xgboost_explanation()
-    
-    elif page == "About":
-        st.title("ℹ️ About the Sales Prediction App")
-        st.write("""
-        This app is designed to help sales teams predict and visualize their performance across different regions and brands.
-        
-        Key features:
-        - Data upload and processing
-        - Individual predictions for each region and brand
-        - Combined report generation
-        - Interactive visualizations
-        
-        For any questions or support, please contact our team at support@salespredictionapp.com
-        """)
 
 if __name__ == "__main__":
     main()
