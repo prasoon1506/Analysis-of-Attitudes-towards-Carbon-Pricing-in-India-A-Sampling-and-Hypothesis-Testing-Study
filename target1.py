@@ -67,13 +67,27 @@ def create_pipeline(numeric_features, categorical_features):
     ])
 
     return xgb_pipeline, gb_pipeline, rf_pipeline
-
 def hyperparameter_tuning(pipeline, X, y):
-    param_grid = {
-        'regressor__n_estimators': [100, 200, 300],
-        'regressor__max_depth': [3, 5, 7],
-        'regressor__learning_rate': [0.01, 0.1, 0.3]
-    }
+    if isinstance(pipeline.named_steps['regressor'], xgb.XGBRegressor):
+        param_grid = {
+            'regressor__n_estimators': [100, 200, 300],
+            'regressor__max_depth': [3, 5, 7],
+            'regressor__learning_rate': [0.01, 0.1, 0.3]
+        }
+    elif isinstance(pipeline.named_steps['regressor'], GradientBoostingRegressor):
+        param_grid = {
+            'regressor__n_estimators': [100, 200, 300],
+            'regressor__max_depth': [3, 5, 7],
+            'regressor__learning_rate': [0.01, 0.1, 0.3]
+        }
+    elif isinstance(pipeline.named_steps['regressor'], RandomForestRegressor):
+        param_grid = {
+            'regressor__n_estimators': [100, 200, 300],
+            'regressor__max_depth': [3, 5, 7],
+            'regressor__min_samples_split': [2, 5, 10]
+        }
+    else:
+        raise ValueError("Unknown regressor type")
     
     grid_search = GridSearchCV(pipeline, param_grid, cv=5, n_jobs=-1, scoring='neg_mean_squared_error')
     grid_search.fit(X, y)
@@ -99,7 +113,6 @@ def train_model(X, y, xgb_pipeline, gb_pipeline, rf_pipeline):
         st.write(f"{name} Cross-validation RMSE: {rmse_scores.mean():.4f} (+/- {rmse_scores.std() * 2:.4f})")
 
     return xgb_pipeline, gb_pipeline, rf_pipeline
-
 def predict_sales(df, region, brand, xgb_pipeline, gb_pipeline, rf_pipeline, feature_columns):
     region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)].copy()
 
