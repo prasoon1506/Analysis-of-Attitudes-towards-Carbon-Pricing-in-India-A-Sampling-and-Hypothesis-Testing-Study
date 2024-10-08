@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -44,34 +45,34 @@ def create_pipeline(numeric_features, categorical_features):
             ('cat', categorical_transformer, categorical_features)
         ])
 
-    xgb_model = Pipeline([
+    xgb_pipeline = Pipeline([
         ('preprocessor', preprocessor),
         ('regressor', xgb.XGBRegressor(n_estimators=100, learning_rate=0.1, random_state=42))
     ])
 
-    rf_model = Pipeline([
+    rf_pipeline = Pipeline([
         ('preprocessor', preprocessor),
         ('regressor', RandomForestRegressor(n_estimators=100, random_state=42))
     ])
 
-    return xgb_model, rf_model
+    return xgb_pipeline, rf_pipeline
 
-def train_model(X, y):
+def train_model(X, y, xgb_pipeline, rf_pipeline):
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-    xgb_model.fit(X_train, y_train)
-    rf_model.fit(X_train, y_train)
+    xgb_pipeline.fit(X_train, y_train)
+    rf_pipeline.fit(X_train, y_train)
 
-    return xgb_model, rf_model
+    return xgb_pipeline, rf_pipeline
 
-def predict_sales(df, region, brand, xgb_model, rf_model, feature_columns):
+def predict_sales(df, region, brand, xgb_pipeline, rf_pipeline, feature_columns):
     region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)].copy()
 
     if len(region_data) > 0:
         X_pred = region_data[feature_columns].iloc[-1:] 
 
-        xgb_pred = xgb_model.predict(X_pred)[0]
-        rf_pred = rf_model.predict(X_pred)[0]
+        xgb_pred = xgb_pipeline.predict(X_pred)[0]
+        rf_pred = rf_pipeline.predict(X_pred)[0]
         ensemble_pred = (xgb_pred + rf_pred) / 2
 
         confidence_interval = 1.96 * np.std([xgb_pred, rf_pred])
@@ -81,14 +82,14 @@ def predict_sales(df, region, brand, xgb_model, rf_model, feature_columns):
         return None, None, None
 
 # Function to generate combined report
-def generate_combined_report(df, regions, brands, xgb_model, rf_model, scaler, feature_columns):
+def generate_combined_report(df, regions, brands, xgb_pipeline, rf_pipeline, feature_columns):
     main_table_data = [['Region', 'Brand', 'Month Target\n(Oct)', 'Monthly Achievement\n(Sep)', 'Predicted\nAchievement(Oct)', 'CI', 'RMSE']]
     
     with ThreadPoolExecutor() as executor:
         futures = []
         for region in regions:
             for brand in brands:
-                futures.append(executor.submit(predict_sales, df, region, brand, xgb_model, rf_model, scaler, feature_columns))
+                futures.append(executor.submit(predict_sales, df, region, brand, xgb_pipeline, rf_pipeline, feature_columns))
         
         valid_data = False
         for future, (region, brand) in zip(futures, [(r, b) for r in regions for b in brands]):
@@ -141,6 +142,7 @@ def generate_combined_report(df, regions, brands, xgb_model, rf_model, scaler, f
     else:
         st.warning("No valid data available for any region and brand combination.")
         return None
+
 # Streamlit app
 def combined_report_app():
     st.title("📊 Combined Sales Prediction Report Generator")
@@ -157,14 +159,14 @@ def combined_report_app():
             X = df[feature_columns]
             y = df[target_column]
             
-            xgb_model, rf_model = create_pipeline(numeric_features, categorical_features)
-            xgb_model, rf_model = train_model(X, y)
+            xgb_pipeline, rf_pipeline = create_pipeline(numeric_features, categorical_features)
+            xgb_pipeline, rf_pipeline = train_model(X, y, xgb_pipeline, rf_pipeline)
         
         st.success("Data processed and model trained successfully!")
         
         if st.button("Generate Combined Report"):
             with st.spinner("Generating combined report..."):
-                combined_report_data = generate_combined_report(df, regions, brands, xgb_model, rf_model, feature_columns)
+                combined_report_data = generate_combined_report(df, regions, brands, xgb_pipeline, rf_pipeline, feature_columns)
             
             if combined_report_data:
                 st.success("Combined report generated successfully!")
