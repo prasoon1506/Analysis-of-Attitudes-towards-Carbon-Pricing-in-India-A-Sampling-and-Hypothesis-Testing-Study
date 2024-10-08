@@ -191,41 +191,50 @@ def generate_combined_report(df, regions, brands, xgb_pipeline, gb_pipeline, rf_
     else:
         st.warning("No valid data available for any region and brand combination.")
         return None
-
 def combined_report_app():
     st.title("📊 Improved Sales Prediction Report Generator")
     
     uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
     
     if uploaded_file is not None:
-        with st.spinner("Loading and processing data..."):
-            df = pd.read_excel(uploaded_file)
-            regions = df['Zone'].unique().tolist()
-            brands = df['Brand'].unique().tolist()
+        try:
+            with st.spinner("Loading and processing data..."):
+                df = pd.read_excel(uploaded_file)
+                regions = df['Zone'].unique().tolist()
+                brands = df['Brand'].unique().tolist()
+                
+                df, feature_columns, target_column, numeric_features, categorical_features = preprocess_data(df)
+                X = df[feature_columns]
+                y = df[target_column]
+                
+                xgb_pipeline, gb_pipeline, rf_pipeline = create_pipeline(numeric_features, categorical_features)
+                
+                # Limit the data size for faster processing
+                sample_size = min(1000, len(X))
+                X_sample = X.sample(n=sample_size, random_state=42)
+                y_sample = y.loc[X_sample.index]
+                
+                xgb_pipeline, gb_pipeline, rf_pipeline = train_model(X_sample, y_sample, xgb_pipeline, gb_pipeline, rf_pipeline)
             
-            df, feature_columns, target_column, numeric_features, categorical_features = preprocess_data(df)
-            X = df[feature_columns]
-            y = df[target_column]
+            st.success("Data processed and models trained successfully!")
             
-            xgb_pipeline, gb_pipeline, rf_pipeline = create_pipeline(numeric_features, categorical_features)
-            xgb_pipeline, gb_pipeline, rf_pipeline = train_model(X, y, xgb_pipeline, gb_pipeline, rf_pipeline)
-        
-        st.success("Data processed and models trained successfully!")
-        
-        if st.button("Generate Combined Report"):
-            with st.spinner("Generating combined report..."):
-                combined_report_data = generate_combined_report(df, regions, brands, xgb_pipeline, gb_pipeline, rf_pipeline, feature_columns)
-            
-            if combined_report_data:
-                st.success("Combined report generated successfully!")
-                st.download_button(
-                    label="Download Combined PDF Report",
-                    data=base64.b64decode(combined_report_data),
-                    file_name="combined_prediction_report.pdf",
-                    mime="application/pdf"
-                )
-            else:
-                st.error("Unable to generate combined report. Please check the warnings above for more details.")
+            if st.button("Generate Combined Report"):
+                with st.spinner("Generating combined report..."):
+                    combined_report_data = generate_combined_report(df, regions, brands, xgb_pipeline, gb_pipeline, rf_pipeline, feature_columns)
+                
+                if combined_report_data:
+                    st.success("Combined report generated successfully!")
+                    st.download_button(
+                        label="Download Combined PDF Report",
+                        data=base64.b64decode(combined_report_data),
+                        file_name="combined_prediction_report.pdf",
+                        mime="application/pdf"
+                    )
+                else:
+                    st.error("Unable to generate combined report. Please check the warnings above for more details.")
+        except Exception as e:
+            st.error(f"An error occurred: {str(e)}")
+            st.exception(e)
 
 if __name__ == "__main__":
     combined_report_app()
