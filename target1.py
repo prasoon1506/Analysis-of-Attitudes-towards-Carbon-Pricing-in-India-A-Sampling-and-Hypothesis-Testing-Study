@@ -1,9 +1,12 @@
+
 import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error, r2_score
 import xgboost as xgb
@@ -11,7 +14,6 @@ from io import BytesIO
 import base64
 from concurrent.futures import ThreadPoolExecutor
 
-# Improved model functions
 def preprocess_data(df):
     months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep']
     for month in months:
@@ -23,36 +25,54 @@ def preprocess_data(df):
     df['YoYGrowthSep'] = (df['Monthly Achievement(Sep)'] - df['PrevYearSep']) / df['PrevYearSep']
     df['ZoneBrand'] = df['Zone'] + '_' + df['Brand']
 
-    feature_columns = [f'Achievement({month})' for month in months] + \
-                      [f'Target({month})' for month in months] + \
-                      ['PrevYearSep', 'PrevYearOct', 'YoYGrowthSep', 'ZoneBrand']
+    numeric_features = [f'Achievement({month})' for month in months] + \
+                       [f'Target({month})' for month in months] + \
+                       ['PrevYearSep', 'PrevYearOct', 'YoYGrowthSep']
+    categorical_features = ['ZoneBrand']
+    
+    feature_columns = numeric_features + categorical_features
     target_column = 'Month Tgt (Oct)'
 
-    return df, feature_columns, target_column
+    return df, feature_columns, target_column, numeric_features, categorical_features
+
+def create_pipeline(numeric_features, categorical_features):
+    numeric_transformer = StandardScaler()
+    categorical_transformer = OneHotEncoder(handle_unknown='ignore')
+
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ('num', numeric_transformer, numeric_features),
+            ('cat', categorical_transformer, categorical_features)
+        ])
+
+    xgb_model = Pipeline([
+        ('preprocessor', preprocessor),
+        ('regressor', xgb.XGBRegressor(n_estimators=100, learning_rate=0.1, random_state=42))
+    ])
+
+    rf_model = Pipeline([
+        ('preprocessor', preprocessor),
+        ('regressor', RandomForestRegressor(n_estimators=100, random_state=42))
+    ])
+
+    return xgb_model, rf_model
 
 def train_model(X, y):
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    scaler = StandardScaler()
-    X_train_scaled = scaler.fit_transform(X_train)
-    X_test_scaled = scaler.transform(X_test)
 
-    xgb_model = xgb.XGBRegressor(n_estimators=100, learning_rate=0.1, random_state=42)
-    xgb_model.fit(X_train_scaled, y_train)
+    xgb_model.fit(X_train, y_train)
+    rf_model.fit(X_train, y_train)
 
-    rf_model = RandomForestRegressor(n_estimators=100, random_state=42)
-    rf_model.fit(X_train_scaled, y_train)
+    return xgb_model, rf_model
 
-    return xgb_model, rf_model, scaler
-
-def predict_sales(df, region, brand, xgb_model, rf_model, scaler, feature_columns):
+def predict_sales(df, region, brand, xgb_model, rf_model, feature_columns):
     region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)].copy()
 
     if len(region_data) > 0:
         X_pred = region_data[feature_columns].iloc[-1:] 
-        X_pred_scaled = scaler.transform(X_pred)
 
-        xgb_pred = xgb_model.predict(X_pred_scaled)[0]
-        rf_pred = rf_model.predict(X_pred_scaled)[0]
+        xgb_pred = xgb_model.predict(X_pred)[0]
+        rf_pred = rf_model.predict(X_pred)[0]
         ensemble_pred = (xgb_pred + rf_pred) / 2
 
         confidence_interval = 1.96 * np.std([xgb_pred, rf_pred])
@@ -122,7 +142,6 @@ def generate_combined_report(df, regions, brands, xgb_model, rf_model, scaler, f
     else:
         st.warning("No valid data available for any region and brand combination.")
         return None
-
 # Streamlit app
 def combined_report_app():
     st.title("📊 Combined Sales Prediction Report Generator")
@@ -135,17 +154,18 @@ def combined_report_app():
             regions = df['Zone'].unique().tolist()
             brands = df['Brand'].unique().tolist()
             
-            df, feature_columns, target_column = preprocess_data(df)
+            df, feature_columns, target_column, numeric_features, categorical_features = preprocess_data(df)
             X = df[feature_columns]
             y = df[target_column]
             
-            xgb_model, rf_model, scaler = train_model(X, y)
+            xgb_model, rf_model = create_pipeline(numeric_features, categorical_features)
+            xgb_model, rf_model = train_model(X, y)
         
         st.success("Data processed and model trained successfully!")
         
         if st.button("Generate Combined Report"):
             with st.spinner("Generating combined report..."):
-                combined_report_data = generate_combined_report(df, regions, brands, xgb_model, rf_model, scaler, feature_columns)
+                combined_report_data = generate_combined_report(df, regions, brands, xgb_model, rf_model, feature_columns)
             
             if combined_report_data:
                 st.success("Combined report generated successfully!")
