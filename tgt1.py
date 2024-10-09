@@ -61,12 +61,12 @@ st.markdown("""
         background-color: #0c2461;
     }
     .metric-value {
-        color: #ffd700 !important;
+        color: darksalmon !important;
         font-size: 24px !important;
         font-weight: bold !important;
     }
     .metric-label {
-        color: lawngreen !important;
+        color: darksalmon !important;
     }
     h3 {
         color: #ff9f43 !important;
