@@ -112,7 +112,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 def custom_file_uploader(label, type):
-    st.markdown(f'<p class="file-upload-text">{label}</p>', unsafe_allow_html=True)
+    st.markdown(f'<p class="">{label}</p>', unsafe_allow_html=True)
     uploaded_file = st.file_uploader("", type=type, key="file_uploader")
     return uploaded_file
 
