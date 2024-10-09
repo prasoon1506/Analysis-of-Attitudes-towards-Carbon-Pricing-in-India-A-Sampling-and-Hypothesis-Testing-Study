@@ -199,7 +199,7 @@ def create_monthly_performance_graph(data):
         font_color='#ffffff',
         title_font_color='#ffffff',
         legend_font_color='#ffffff',
-        height=100,
+        height=600,
         width=300
     )
     fig.update_xaxes(tickfont_color='#ffffff')
@@ -426,7 +426,7 @@ def main():
             st.plotly_chart(fig_target_vs_projected, use_container_width=True)
         st.markdown("<h3>Monthly Performance by Zone</h3>", unsafe_allow_html=True)
         fig_monthly_performance = create_monthly_performance_graph(filtered_data)
-        st.plotly_chart(fig_monthly_performance, use_container_width=True)
+        st.plotly_chart(fig_monthly_performance, use_container_width=False)
         st.markdown("<h3>Detailed Sales Forecast</h3>", unsafe_allow_html=True)
         st.dataframe(filtered_data[['Zone', 'Brand', 'Month Tgt (Oct)', 'Predicted Oct 2024', 'Total Oct 2023', 'YoY Growth']])
 
