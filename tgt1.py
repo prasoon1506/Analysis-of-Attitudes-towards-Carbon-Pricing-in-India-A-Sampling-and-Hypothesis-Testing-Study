@@ -16,8 +16,6 @@ import plotly.graph_objects as go
 
 # Set page config
 st.set_page_config(page_title="Sales Prediction Simulator", layout="wide", initial_sidebar_state="collapsed")
-
-# Custom CSS to give a gaming app vibe
 st.markdown("""
 <style>
     body {
@@ -61,6 +59,14 @@ st.markdown("""
     }
     .stDataFrame {
         background-color: #0c2461;
+    }
+    .metric-value {
+        color: #ffd700 !important;
+        font-size: 24px !important;
+        font-weight: bold !important;
+    }
+    .metric-label {
+        color: #ffffff !important;
     }
 </style>
 """, unsafe_allow_html=True)
