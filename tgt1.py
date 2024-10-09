@@ -91,7 +91,7 @@ st.markdown("""
     /* Style for uploaded file name */
     .uploaded-filename {
         background-color: rgba(255, 255, 255, 0.2);
-        color: #ffffff;
+        color: aqua;
         padding: 10px;
         border-radius: 5px;
         margin-top: 10px;
