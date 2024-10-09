@@ -308,49 +308,32 @@ def create_pdf(data):
     buffer.seek(0)
     return buffer
 from reportlab.lib import colors
-
 def style_dataframe(df):
+    # Create a Styler object
     styler = df.style
-    
-    def color_gradient(s, low_color, high_color):
-        if s.dtype in ['float64', 'int64']:
-            min_val, max_val = s.min(), s.max()
-            range_val = max_val - min_val
-            
-            def get_color(val):
-                if pd.isna(val):
-                    return ''
-                ratio = (val - min_val) / range_val if range_val != 0 else 0.5
-                r = low_color.red + (high_color.red - low_color.red) * ratio
-                g = low_color.green + (high_color.green - low_color.green) * ratio
-                b = low_color.blue + (high_color.blue - low_color.blue) * ratio
-                return f'background-color: rgb({int(r)},{int(g)},{int(b)})'
-            
-            return [get_color(v) for v in s]
-        else:
-            return [''] * len(s)  # Return empty styles for non-numeric columns
 
+    # Apply background gradient to all columns
     for col in df.columns:
         if df[col].dtype in ['float64', 'int64']:
-            styler.apply(color_gradient, low_color=colors.red, high_color=colors.green, subset=[col])
+            styler.background_gradient(cmap='RdYlGn', subset=[col])
         else:
-            styler.apply(lambda x: ['background-color: #f0f0f0'] * len(x), subset=[col])
+            # For non-numeric columns, we'll use a categorical colormap
+            styler.background_gradient(cmap='Pastel1', subset=[col])
 
+    # Format numeric columns
     numeric_format = {
         'October 2024 Target': '{:.2f}',
         'October Projection': '{:.2f}',
         'October 2023 Sales': '{:.2f}',
         'YoY Growth(Projected)': '{:.2f}%'
     }
-    
-    # Apply numeric formatting only to columns that exist and are numeric
-    for col, fmt in numeric_format.items():
-        if col in df.columns and df[col].dtype in ['float64', 'int64']:
-            styler.format({col: fmt})
+    styler.format(numeric_format)
 
-    styler.hide(axis=0)
+    # Hide the index
+    styler.hide(axis='index')
 
     return styler
+
 def main():
     st.markdown('<p class="big-font">Sales Prediction Simulator</p>', unsafe_allow_html=True)
     st.markdown('<p class="subheader">Upload your data and unlock the future of sales!</p>', unsafe_allow_html=True)
