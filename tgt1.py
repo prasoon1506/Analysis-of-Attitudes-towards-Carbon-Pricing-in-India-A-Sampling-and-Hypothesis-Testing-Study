@@ -168,6 +168,8 @@ def create_monthly_performance_graph(data):
         paper_bgcolor='rgba(0,0,0,0)',
         font_color='burlywood',
         title_font_color='burlywood',
+        xaxis_title_font_color='burlywood',
+        yaxis_title_font_color='burlywood',
         legend_font_color='burlywood',
         height=500,
         width=800,
@@ -190,6 +192,8 @@ def create_target_vs_projected_graph(data):
         paper_bgcolor='rgba(0,0,0,0)',
         font_color='burlywood',
         title_font_color='burlywood',
+        xaxis_title_font_color='burlywood',
+        yaxis_title_font_color='burlywood',
         legend_font_color='burlywood',
         height=500
     )
@@ -404,6 +408,8 @@ def main():
                 plot_bgcolor='rgba(255,255,255,0.1)', 
                 paper_bgcolor='rgba(0,0,0,0)', 
                 font_color='burlywood',
+                xaxis_title_font_color='burlywood',
+                yaxis_title_font_color='burlywood',
                 title_font_color='burlywood',
                 legend_font_color='burlywood'
             )
