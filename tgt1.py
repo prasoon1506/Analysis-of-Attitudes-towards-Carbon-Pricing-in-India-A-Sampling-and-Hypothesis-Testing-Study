@@ -375,11 +375,11 @@ def main():
             fig_importance.update_layout(
                 plot_bgcolor='rgba(255,255,255,0.1)', 
                 paper_bgcolor='rgba(0,0,0,0)', 
-                font_color='mocassin',
-                title_font_color='mocassin',
-                xaxis_title_font_color='mocassin',
-                yaxis_title_font_color='mocassin',
-                legend_font_color='mocassin'
+                font_color='moccasin',
+                title_font_color='moccasin',
+                xaxis_title_font_color='moccasin',
+                yaxis_title_font_color='moccasin',
+                legend_font_color='moccasin'
             )
             fig_importance.update_xaxes(tickfont_color='#ffffff')
             fig_importance.update_yaxes(tickfont_color='#ffffff')
