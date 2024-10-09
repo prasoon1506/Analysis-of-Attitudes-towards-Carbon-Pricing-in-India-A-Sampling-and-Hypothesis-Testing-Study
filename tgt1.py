@@ -127,7 +127,89 @@ def train_model(X, y):
     model = RandomForestRegressor(n_estimators=100, random_state=42)
     model.fit(X_train, y_train)
     return model, X_test, y_test
+def create_target_vs_projected_graph(data):
+    fig = go.Figure()
+    fig.add_trace(go.Bar(x=data['Zone'], y=data['Month Tgt (Oct)'], name='Month Target (Oct)', marker_color='#4a69bd'))
+    fig.add_trace(go.Bar(x=data['Zone'], y=data['Predicted Oct 2024'], name='Projected Sales (Oct)', marker_color='#82ccdd'))
+    
+    fig.update_layout(
+        title='October 2024: Target vs Projected Sales',
+        barmode='group',
+        plot_bgcolor='rgba(255,255,255,0.1)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font_color='#ffffff',
+        title_font_color='#ffffff',
+        legend_font_color='#ffffff',
+        height=500
+    )
+    fig.update_xaxes(title_text='Zone', tickfont_color='#ffffff')
+    fig.update_yaxes(title_text='Sales', tickfont_color='#ffffff')
+    
+    return fig
 
+def create_monthly_performance_graph(data):
+    zones = data['Zone'].unique()
+    
+    fig = go.Figure()
+    
+    months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']
+    colors = px.colors.qualitative.Pastel
+
+    for i, month in enumerate(months):
+        if month != 'Oct':
+            fig.add_trace(go.Bar(
+                x=[f"{month} Tgt", f"{month} Ach"],
+                y=[data[f'Monthly Target({month})'].iloc[0], data[f'Monthly Achievement({month})'].iloc[0]],
+                name=month,
+                marker_color=colors[i],
+                visible=False
+            ))
+        else:
+            fig.add_trace(go.Bar(
+                x=[f"{month} Tgt", f"{month} Proj"],
+                y=[data['Month Tgt (Oct)'].iloc[0], data['Predicted Oct 2024'].iloc[0]],
+                name=month,
+                marker_color=colors[i],
+                visible=False
+            ))
+
+    # Create and add buttons
+    buttons = []
+    for zone in zones:
+        button = dict(
+            method='update',
+            label=zone,
+            args=[{'visible': [True if data['Zone'].iloc[i] == zone else False for i in range(len(data))] * 7},
+                  {'title': f'Monthly Performance for {zone}'}]
+        )
+        buttons.append(button)
+
+    fig.update_layout(
+        updatemenus=[dict(
+            type="buttons",
+            direction="right",
+            x=0.1,
+            y=1.15,
+            showactive=True,
+            buttons=buttons
+        )],
+        title='Select a Zone to View Monthly Performance',
+        plot_bgcolor='rgba(255,255,255,0.1)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font_color='#ffffff',
+        title_font_color='#ffffff',
+        legend_font_color='#ffffff',
+        height=600,
+        width=1000
+    )
+    fig.update_xaxes(tickfont_color='#ffffff')
+    fig.update_yaxes(title_text='Sales', tickfont_color='#ffffff')
+    
+    # Set the first zone as initially visible
+    fig.data[0].visible = True
+    fig.data[1].visible = True
+
+    return fig
 def prepare_data_for_pdf(data):
     # Filter out specified zones
     excluded_zones = ['Bihar', 'J&K', 'North-I', 'Punjab,HP and J&K', 'U.P.+U.K.', 'Odisha+Jharkhand+Bihar']
@@ -340,8 +422,11 @@ def main():
             fig_predictions.update_xaxes(tickfont_color='#ffffff')
             fig_predictions.update_yaxes(tickfont_color='#ffffff')
             st.plotly_chart(fig_predictions, use_container_width=True)
-
-        
+            fig_target_vs_projected = create_target_vs_projected_graph(filtered_data)
+            st.plotly_chart(fig_target_vs_projected, use_container_width=True)
+        st.markdown("<h3>Monthly Performance by Zone</h3>", unsafe_allow_html=True)
+        fig_monthly_performance = create_monthly_performance_graph(filtered_data)
+        st.plotly_chart(fig_monthly_performance, use_container_width=True)
         st.markdown("<h3>Detailed Sales Forecast</h3>", unsafe_allow_html=True)
         st.dataframe(filtered_data[['Zone', 'Brand', 'Month Tgt (Oct)', 'Predicted Oct 2024', 'Total Oct 2023', 'YoY Growth']])
 
