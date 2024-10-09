@@ -463,9 +463,9 @@ def main():
                styler = df.style
                for col in df.columns:
                 if df[col].dtype in ['float64', 'int64']:
-                  styler.apply(color_gradient, cmap='RdYlGn', subset=[col])
+                  styler.apply(cmap='twilight', subset=[col])
                 else:
-                  styler.apply(color_gradient, cmap='Pastel1', subset=[col])
+                  styler.apply(cmap='Pastel1', subset=[col])
                numeric_format = {'October 2024 Target': '{:.2f}','October Projection': '{:.2f}','October 2023 Sales': '{:.2f}','YoY Growth(Projected)': '{:.2f}%'}
                styler.format(numeric_format)
                styler.hide(axis='index')
