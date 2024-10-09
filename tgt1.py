@@ -332,7 +332,7 @@ def style_dataframe(df):
 
     for col in df.columns:
         if df[col].dtype in ['float64', 'int64']:
-            styler.apply(color_gradient, low_color=colors.red, high_color=colors.green, subset=[col])
+            styler.apply(lambda x: ['background-color: #f0f0f0'] * len(x), subset=[col])
         else:
             styler.apply(lambda x: ['background-color: #f0f0f0'] * len(x), subset=[col])
 
