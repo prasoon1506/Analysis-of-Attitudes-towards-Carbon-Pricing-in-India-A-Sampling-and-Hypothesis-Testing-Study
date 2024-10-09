@@ -461,11 +461,19 @@ def main():
 
         def style_dataframe(df):
                styler = df.style
+               def color_gradient(s, cmap='RdYlGn', low=0, high=0):
+                      rng = s.max() - s.min()
+                      norm = colors.Normalize(vmin=s.min() - (rng * low), 
+                                vmax=s.max() + (rng * high))
+                      normed = norm(s.values)
+                      c = [colors.rgb2hex(x) for x in plt.cm.get_cmap(cmap)(normed)]
+                      return ['background-color: %s' % color for color in c]
+
                for col in df.columns:
                 if df[col].dtype in ['float64', 'int64']:
-                  styler.apply(cmap='twilight', subset=[col])
+                  styler.apply(color_gradient,cmap='twilight', subset=[col])
                 else:
-                  styler.apply(cmap='Pastel1', subset=[col])
+                  styler.apply(color_gradient,cmap='Pastel1', subset=[col])
                numeric_format = {'October 2024 Target': '{:.2f}','October Projection': '{:.2f}','October 2023 Sales': '{:.2f}','YoY Growth(Projected)': '{:.2f}%'}
                styler.format(numeric_format)
                styler.hide(axis='index')
