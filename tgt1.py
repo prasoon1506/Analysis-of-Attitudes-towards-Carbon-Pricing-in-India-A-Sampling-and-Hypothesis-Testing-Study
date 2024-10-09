@@ -15,8 +15,8 @@ from reportlab.lib.units import inch
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
-# Set page config
-st.set_page_config(page_title="Sales Prediction Simulator", layout="wide", initial_sidebar_state="collapsed")
+
+st.set_page_config(page_title="Advanced Sales Prediction Simulator", layout="wide", initial_sidebar_state="expanded")
 st.markdown("""
 <style>
     body {
