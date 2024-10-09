@@ -310,28 +310,10 @@ from reportlab.lib import colors
 
 def style_dataframe(df):
     styler = df.style
-    
-    def color_gradient(s, low_color, high_color):
-        if s.dtype in ['float64', 'int64']:
-            min_val, max_val = s.min(), s.max()
-            range_val = max_val - min_val
-            
-            def get_color(val):
-                if pd.isna(val):
-                    return ''
-                ratio = (val - min_val) / range_val if range_val != 0 else 0.5
-                r = low_color.red + (high_color.red - low_color.red) * ratio
-                g = low_color.green + (high_color.green - low_color.green) * ratio
-                b = low_color.blue + (high_color.blue - low_color.blue) * ratio
-                return f'background-color: rgb({int(r)},{int(g)},{int(b)})'
-            
-            return [get_color(v) for v in s]
-        else:
-            return [''] * len(s)  # Return empty styles for non-numeric columns
 
     for col in df.columns:
         if df[col].dtype in ['float64', 'int64']:
-            styler.apply(lambda x: ['background-color: #f0f0f0'] * len(x), subset=[col])
+            styler.apply(lambda x: ['background-color: #ffffff'] * len(x), subset=[col])
         else:
             styler.apply(lambda x: ['background-color: #f0f0f0'] * len(x), subset=[col])
 
