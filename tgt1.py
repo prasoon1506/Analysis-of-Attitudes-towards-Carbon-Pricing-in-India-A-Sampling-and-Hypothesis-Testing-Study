@@ -187,7 +187,7 @@ def create_monthly_performance_graph(data):
     fig.update_layout(
         updatemenus=[dict(
             type="buttons",
-            direction="right",
+            direction="left",
             x=0.1,
             y=1.15,
             showactive=True,
