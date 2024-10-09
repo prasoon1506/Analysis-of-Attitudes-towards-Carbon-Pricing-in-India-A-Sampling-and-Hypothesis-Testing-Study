@@ -61,7 +61,7 @@ st.markdown("""
         background-color: #0c2461;
     }
     .metric-value {
-        color: darksalmon !important;
+        color: gold !important;
         font-size: 24px !important;
         font-weight: bold !important;
     }
