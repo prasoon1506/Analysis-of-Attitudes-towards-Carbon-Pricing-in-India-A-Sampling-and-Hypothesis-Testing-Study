@@ -394,8 +394,8 @@ def main():
                 title_font_color='#ffffff',
                 legend_font_color='#ffffff'
             )
-            fig.update_xaxes(title_text='Zone', tickfont_color='#ffffff')
-            fig.update_yaxes(title_text='Sales', tickfont_color='#ffffff')
+            fig_predictions.update_xaxes(title_text='Zone', tickfont_color='#ffffff')
+            fig_predictions.update_yaxes(title_text='Sales', tickfont_color='#ffffff')
             st.plotly_chart(fig_predictions, use_container_width=True)
             fig_target_vs_projected = create_target_vs_projected_graph(filtered_data)
             st.plotly_chart(fig_target_vs_projected, use_container_width=True)
@@ -419,7 +419,7 @@ def main():
             for i, month in enumerate(months):
                 if month != 'Oct':
                     fig_monthly_performance.data[i].y = [
-                        selected_data[f'Monthly Target({month})'].iloc[0],
+                        selected_data[f'Month Tgt ({month})'].iloc[0],
                         selected_data[f'Monthly Achievement({month})'].iloc[0]
                     ]
                 else:
