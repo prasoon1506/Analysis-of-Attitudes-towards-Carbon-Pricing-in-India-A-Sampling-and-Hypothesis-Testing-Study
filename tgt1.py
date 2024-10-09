@@ -406,7 +406,7 @@ def main():
             fig_importance.update_xaxes(tickfont_color='peru')
             fig_importance.update_yaxes(tickfont_color='peru')
             fig_predictions1 = go.Figure()
-            fig_predictions1.add_trace(go.Bar(x=filtered_data['Zone'], y=filtered_data['FY2025 Till Sep'], name='Oct 2023 Sales', marker_color='darkseagreen'))
+            fig_predictions1.add_trace(go.Bar(x=filtered_data['Zone'], y=data['FY2025 Till Sep'], name='Oct 2023 Sales', marker_color='darkseagreen'))
             fig_predictions1.update_layout(
                 title='FY2025 Till September', 
                 plot_bgcolor='rgba(255,255,255,0.1)', 
