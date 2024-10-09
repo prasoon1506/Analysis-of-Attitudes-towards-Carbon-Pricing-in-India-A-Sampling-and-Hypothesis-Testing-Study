@@ -1,8 +1,6 @@
 import streamlit as st
 import io
-import matplotlib.colors
 import matplotlib.pyplot as plt
-from matplotlib.colors import Normalize
 import base64
 import pandas as pd
 import numpy as np
@@ -309,7 +307,50 @@ def create_pdf(data):
     doc.build(elements)
     buffer.seek(0)
     return buffer
+from reportlab.lib import colors
 
+def style_dataframe(df):
+    styler = df.style
+    
+    def color_gradient(s, low_color, high_color):
+        if s.dtype in ['float64', 'int64']:
+            min_val, max_val = s.min(), s.max()
+            range_val = max_val - min_val
+            
+            def get_color(val):
+                if pd.isna(val):
+                    return ''
+                ratio = (val - min_val) / range_val if range_val != 0 else 0.5
+                r = low_color.red + (high_color.red - low_color.red) * ratio
+                g = low_color.green + (high_color.green - low_color.green) * ratio
+                b = low_color.blue + (high_color.blue - low_color.blue) * ratio
+                return f'background-color: rgb({int(r)},{int(g)},{int(b)})'
+            
+            return [get_color(v) for v in s]
+        else:
+            return [''] * len(s)  # Return empty styles for non-numeric columns
+
+    for col in df.columns:
+        if df[col].dtype in ['float64', 'int64']:
+            styler.apply(color_gradient, low_color=colors.red, high_color=colors.green, subset=[col])
+        else:
+            styler.apply(lambda x: ['background-color: #f0f0f0'] * len(x), subset=[col])
+
+    numeric_format = {
+        'October 2024 Target': '{:.2f}',
+        'October Projection': '{:.2f}',
+        'October 2023 Sales': '{:.2f}',
+        'YoY Growth(Projected)': '{:.2f}%'
+    }
+    
+    # Apply numeric formatting only to columns that exist and are numeric
+    for col, fmt in numeric_format.items():
+        if col in df.columns and df[col].dtype in ['float64', 'int64']:
+            styler.format({col: fmt})
+
+    styler.hide(axis='index')
+
+    return styler
 def main():
     st.markdown('<p class="big-font">Sales Prediction Simulator</p>', unsafe_allow_html=True)
     st.markdown('<p class="subheader">Upload your data and unlock the future of sales!</p>', unsafe_allow_html=True)
@@ -453,6 +494,7 @@ def main():
         else:
             st.warning("No data available for the selected Zone and Brand combination.")
         st.markdown("<h3>Detailed Sales Forecast</h3>", unsafe_allow_html=True)
+        
         share_df = pd.DataFrame({
            'Zone': filtered_data['Zone'],
             'Brand': filtered_data['Brand'],
@@ -461,30 +503,6 @@ def main():
            'October 2023 Sales': filtered_data['Total Oct 2023'],
           'YoY Growth(Projected)': filtered_data['YoY Growth']
              })
-
-        def style_dataframe(df):
-               styler = df.style
-               def color_gradient(s, cmap='RdYlGn', low=0, high=0):
-                 if s.dtype in ['float64', 'int64']:
-                   rng = s.max() - s.min()
-                   norm = colors.Normalize(vmin=s.min() - (rng * low), 
-                                    vmax=s.max() + (rng * high))
-                   normed = norm(s.values)
-                   c = [colors.rgb2hex(x) for x in plt.cm.get_cmap(cmap)(normed)]
-                   return ['background-color: %s' % color for color in c]
-                 else:
-                   return [''] * len(s)
-
-               for col in df.columns:
-                if df[col].dtype in ['float64', 'int64']:
-                  styler.apply(color_gradient,cmap='RdYlGn', subset=[col])
-                else:
-                  styler.apply(color_gradient,cmap='Pastel1', subset=[col])
-               numeric_format = {'October 2024 Target': '{:.2f}','October Projection': '{:.2f}','October 2023 Sales': '{:.2f}','YoY Growth(Projected)': '{:.2f}%'}
-               styler.format(numeric_format)
-               styler.hide(axis='index')
-
-               return styler
         styled_df = style_dataframe(share_df)
         st.dataframe(styled_df, use_container_width=True)
 
