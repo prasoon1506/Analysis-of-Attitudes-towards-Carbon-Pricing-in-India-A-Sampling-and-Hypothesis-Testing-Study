@@ -459,9 +459,7 @@ def main():
                         'October 2023 Sales' : filtered_data['Total Oct 2023'],
                         'YoY Growth(Projected)' : filtered_data['YoY Growth']
                     })
-        def color_scale(s, cmap='twilight'):
-               return ['background-color: #{:02x}{:02x}{:02x}'.format(*tuple(int(x*255) for x in plt.cm.get_cmap(cmap)(norm(v)))) for v in s]
-        styled_df = share_df.style.format({
+        styled_df = share_df.style.format({'Zone','Brand',
             'October 2024 Target': '{:.0f}',
               'October Projection': '{:.0f}',
                 'October 2023 Sales': '{:.0f}',
