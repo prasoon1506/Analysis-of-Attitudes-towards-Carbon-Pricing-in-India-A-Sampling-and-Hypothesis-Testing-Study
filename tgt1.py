@@ -159,7 +159,7 @@ def create_monthly_performance_graph(data):
         if month != 'Oct':
             fig.add_trace(go.Bar(
                 x=[f"{month} Tgt", f"{month} Ach"],
-                y=[data[f'Monthly Target({month})'].iloc[0], data[f'Monthly Achievement({month})'].iloc[0]],
+                y=[data[f'Month Tgt ({month})'].iloc[0], data[f'Monthly Achievement({month})'].iloc[0]],
                 name=month,
                 marker_color=colors[i],
                 visible=False
