@@ -66,7 +66,7 @@ st.markdown("""
         font-weight: bold !important;
     }
     .metric-label {
-        color: darksalmon !important;
+        color: white !important;
     }
     h3 {
         color: #ff9f43 !important;
