@@ -238,7 +238,6 @@ def main():
                                  data['Zone'].isin(st.session_state.selected_zones)]
         else:
             filtered_data = data
-
         col1, col2 = st.columns(2)
 
         with col1:
@@ -247,8 +246,8 @@ def main():
             mse = mean_squared_error(y_test, y_pred)
             r2 = r2_score(y_test, y_pred)
 
-            st.metric("Accuracy Score", f"{r2:.2f}")
-            st.metric("Error Margin", f"{np.sqrt(mse):.2f}")
+            st.markdown(f'<div class="metric-label">Accuracy Score</div><div class="metric-value">{r2:.2f}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="metric-label">Error Margin</div><div class="metric-value">{np.sqrt(mse):.2f}</div>', unsafe_allow_html=True)
 
             feature_importance = pd.DataFrame({
                 'feature': features,
@@ -257,7 +256,17 @@ def main():
 
             fig_importance = px.bar(feature_importance, x='importance', y='feature', orientation='h',
                                     title='Feature Impact Analysis', labels={'importance': 'Impact', 'feature': 'Feature'})
-            fig_importance.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font_color='#ffffff')
+            fig_importance.update_layout(
+                plot_bgcolor='rgba(255,255,255,0.1)', 
+                paper_bgcolor='rgba(0,0,0,0)', 
+                font_color='#ffffff',
+                title_font_color='#ffffff',
+                xaxis_title_font_color='#ffffff',
+                yaxis_title_font_color='#ffffff',
+                legend_font_color='#ffffff'
+            )
+            fig_importance.update_xaxes(tickfont_color='#ffffff')
+            fig_importance.update_yaxes(tickfont_color='#ffffff')
             st.plotly_chart(fig_importance, use_container_width=True)
 
         with col2:
@@ -271,7 +280,17 @@ def main():
             fig_predictions = go.Figure()
             fig_predictions.add_trace(go.Bar(x=filtered_data['Zone'], y=filtered_data['Total Oct 2023'], name='Oct 2023 Sales', marker_color='#4a69bd'))
             fig_predictions.add_trace(go.Bar(x=filtered_data['Zone'], y=filtered_data['Predicted Oct 2024'], name='Predicted Oct 2024 Sales', marker_color='#82ccdd'))
-            fig_predictions.update_layout(title='Sales Projection: 2023 vs 2024', barmode='group', plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font_color='#ffffff')
+            fig_predictions.update_layout(
+                title='Sales Projection: 2023 vs 2024', 
+                barmode='group', 
+                plot_bgcolor='rgba(255,255,255,0.1)', 
+                paper_bgcolor='rgba(0,0,0,0)', 
+                font_color='#ffffff',
+                title_font_color='#ffffff',
+                legend_font_color='#ffffff'
+            )
+            fig_predictions.update_xaxes(tickfont_color='#ffffff')
+            fig_predictions.update_yaxes(tickfont_color='#ffffff')
             st.plotly_chart(fig_predictions, use_container_width=True)
 
         st.subheader("Detailed Sales Forecast")
