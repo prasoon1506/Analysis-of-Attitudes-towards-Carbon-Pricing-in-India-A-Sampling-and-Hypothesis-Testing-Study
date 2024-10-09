@@ -450,7 +450,7 @@ def main():
         else:
             st.warning("No data available for the selected Zone and Brand combination.")
         st.markdown("<h3>Detailed Sales Forecast</h3>", unsafe_allow_html=True)
-        share_df = pd.filtered_data({
+        share_df = pd.DataFrame({
                         'Zone': filtered_data['Zone'],
                         'Brand': filtered_data['Brand'],
                         'October 2024 Target': filtered_data['Month Tgt (Oct)'],
