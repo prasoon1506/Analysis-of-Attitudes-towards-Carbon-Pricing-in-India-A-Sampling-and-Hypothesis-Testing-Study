@@ -68,6 +68,12 @@ st.markdown("""
     .metric-label {
         color: #ffffff !important;
     }
+    h3 {
+        color: #ff9f43 !important;
+        font-size: 28px !important;
+        font-weight: bold !important;
+        text-shadow: 1px 1px 2px #000000;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -241,7 +247,8 @@ def main():
         col1, col2 = st.columns(2)
 
         with col1:
-            st.subheader("Model Performance Metrics")
+            
+            st.markdown("<h3>Model Performance Metrics</h3>", unsafe_allow_html=True)
             y_pred = model.predict(X_test)
             mse = mean_squared_error(y_test, y_pred)
             r2 = r2_score(y_test, y_pred)
@@ -270,7 +277,9 @@ def main():
             st.plotly_chart(fig_importance, use_container_width=True)
 
         with col2:
-            st.subheader("Sales Forecast Visualization")
+            
+            st.markdown("<h3>Sales Forecast Visualization</h3>", unsafe_allow_html=True)
+
             X_2024 = filtered_data[features].copy()
             X_2024['Total Oct 2023'] = filtered_data['Total Oct 2023']
             predictions_2024 = model.predict(X_2024)
@@ -293,7 +302,8 @@ def main():
             fig_predictions.update_yaxes(tickfont_color='#ffffff')
             st.plotly_chart(fig_predictions, use_container_width=True)
 
-        st.subheader("Detailed Sales Forecast")
+        
+        st.markdown("<h3>Detailed Sales Forecast</h3>", unsafe_allow_html=True)
         st.dataframe(filtered_data[['Zone', 'Brand', 'Month Tgt (Oct)', 'Predicted Oct 2024', 'Total Oct 2023', 'YoY Growth']])
 
         pdf_buffer = create_pdf(filtered_data)
