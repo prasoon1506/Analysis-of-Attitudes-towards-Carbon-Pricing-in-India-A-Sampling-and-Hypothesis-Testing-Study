@@ -44,6 +44,45 @@ def train_model(X, y):
     model = RandomForestRegressor(n_estimators=100, random_state=42)
     model.fit(X_train, y_train)
     return model, X_test, y_test
+def prepare_data_for_pdf(data):
+    # Filter out specified zones
+    excluded_zones = ['Bihar', 'J&K', 'North-I', 'Punjab,HP and J&K', 'U.P.+U.K.', 'Odisha+Jharkhand+Bihar']
+    filtered_data = data[~data['Zone'].isin(excluded_zones)]
+
+    # Further filter to include only LC and PHD brands
+    filtered_data = filtered_data[filtered_data['Brand'].isin(['LC', 'PHD'])]
+
+    # Calculate totals for LC, PHD, and LC+PHD
+    lc_data = filtered_data[filtered_data['Brand'] == 'LC']
+    phd_data = filtered_data[filtered_data['Brand'] == 'PHD']
+    lc_phd_data = filtered_data
+
+    totals = []
+    for brand_data, brand_name in [(lc_data, 'LC'), (phd_data, 'PHD'), (lc_phd_data, 'LC+PHD')]:
+        total_month_tgt_oct = brand_data['Month Tgt (Oct)'].sum()
+        total_predicted_oct_2024 = brand_data['Predicted Oct 2024'].sum()
+        total_oct_2023 = brand_data['Total Oct 2023'].sum()
+        total_yoy_growth = (total_predicted_oct_2024 - total_oct_2023) / total_oct_2023 * 100
+
+        totals.append({
+            'Zone': 'All India Total',
+            'Brand': brand_name,
+            'Month Tgt (Oct)': total_month_tgt_oct,
+            'Predicted Oct 2024': total_predicted_oct_2024,
+            'Total Oct 2023': total_oct_2023,
+            'YoY Growth': total_yoy_growth
+        })
+
+    # Concatenate filtered data with totals
+    final_data = pd.concat([filtered_data, pd.DataFrame(totals)], ignore_index=True)
+
+    # Round the values
+    final_data['Month Tgt (Oct)'] = final_data['Month Tgt (Oct)'].round().astype(int)
+    final_data['Predicted Oct 2024'] = final_data['Predicted Oct 2024'].round().astype(int)
+    final_data['Total Oct 2023'] = final_data['Total Oct 2023'].round().astype(int)
+    final_data['YoY Growth'] = final_data['YoY Growth'].round(2)
+
+    return final_data
 
 def create_pdf(data):
     buffer = io.BytesIO()
@@ -60,19 +99,22 @@ def create_pdf(data):
     elements.append(Spacer(1, 0.15*inch))
     elements.append(Paragraph("<br/><br/>", styles['Normal']))
 
+    # Prepare data for PDF
+    pdf_data = prepare_data_for_pdf(data)
+
     table_data = [['Zone', 'Brand', 'Month Tgt (Oct)', 'Predicted Oct 2024', 'Total Oct 2023', 'YoY Growth']]
-    for _, row in data.iterrows():
+    for _, row in pdf_data.iterrows():
         table_data.append([
             row['Zone'],
             row['Brand'],
-            row['Month Tgt (Oct)'],
-            row['Predicted Oct 2024'],
-            row['Total Oct 2023'],
-            row['YoY Growth']
+            f"{row['Month Tgt (Oct)']:,}",
+            f"{row['Predicted Oct 2024']:,}",
+            f"{row['Total Oct 2023']:,}",
+            f"{row['YoY Growth']:.2f}%"
         ])
     table_data[0][-1] = table_data[0][-1] + "*"  
 
-    table = Table(table_data, colWidths=[1.25*inch, 1*inch, 1.5*inch, 1.75*inch, 1.25*inch, 1.25*inch], 
+    table = Table(table_data, colWidths=[1.25*inch, 1*inch, 1.5*inch, 1.75*inch, 1.5*inch, 1*inch], 
                   rowHeights=[0.60*inch] + [0.38*inch] * (len(table_data) - 1))
     style = TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4A708B')),
@@ -96,7 +138,7 @@ def create_pdf(data):
     footnote_style.fontSize = 8
     footnote_style.leading = 10 
     footnote_style.alignment = 0
-    footnote = Paragraph("*This predicted YoY growth is calculated using October 2023 sales and predicted October 2024 sales.", footnote_style)
+    footnote = Paragraph("*YoY Growth is calculated using October 2023 sales and predicted October 2024 sales.", footnote_style)
     indented_footnote = Indenter(left=-0.75*inch)
     elements.append(Spacer(1, 0.15*inch))
     elements.append(indented_footnote)
