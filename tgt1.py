@@ -46,7 +46,66 @@ def train_model(X, y):
     return model, X_test, y_test
 
 def create_pdf(data):
-    # ... [The create_pdf function remains unchanged] ...
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter,
+                            rightMargin=inch, leftMargin=inch,
+                            topMargin=0.2*inch, bottomMargin=0.5*inch)
+    elements = []
+
+    styles = getSampleStyleSheet()
+    title_style = styles['Heading1']
+    title_style.alignment = 1
+    title = Paragraph("Sales Predictions for October 2024", title_style)
+    elements.append(title)
+    elements.append(Spacer(1, 0.15*inch))
+    elements.append(Paragraph("<br/><br/>", styles['Normal']))
+
+    table_data = [['Zone', 'Brand', 'Month Tgt (Oct)', 'Predicted Oct 2024', 'Total Oct 2023', 'YoY Growth']]
+    for _, row in data.iterrows():
+        table_data.append([
+            row['Zone'],
+            row['Brand'],
+            row['Month Tgt (Oct)'],
+            row['Predicted Oct 2024'],
+            row['Total Oct 2023'],
+            row['YoY Growth']
+        ])
+    table_data[0][-1] = table_data[0][-1] + "*"  
+
+    table = Table(table_data, colWidths=[1.25*inch, 1*inch, 1.5*inch, 1.75*inch, 1.25*inch, 1.25*inch], 
+                  rowHeights=[0.60*inch] + [0.38*inch] * (len(table_data) - 1))
+    style = TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4A708B')),
+        ('BACKGROUND', (0, len(table_data) - 3), (-1, len(table_data) - 1), colors.orange),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+        ('BACKGROUND', (0, 1), (-1, -4), colors.white),
+        ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -1), 10),
+        ('GRID', (0, 0), (-1, -1), 1, colors.lightgrey)
+    ])
+    table.setStyle(style)
+    elements.append(table)
+
+    footnote_style = getSampleStyleSheet()['Normal']
+    footnote_style.fontSize = 8
+    footnote_style.leading = 10 
+    footnote_style.alignment = 0
+    footnote = Paragraph("*This predicted YoY growth is calculated using October 2023 sales and predicted October 2024 sales.", footnote_style)
+    indented_footnote = Indenter(left=-0.75*inch)
+    elements.append(Spacer(1, 0.15*inch))
+    elements.append(indented_footnote)
+    elements.append(footnote)
+    elements.append(Indenter(left=0.5*inch))
+
+    doc.build(elements)
+    buffer.seek(0)
+    return buffer
 
 def main():
     st.markdown('<p class="big-font">Sales Prediction Dashboard</p>', unsafe_allow_html=True)
