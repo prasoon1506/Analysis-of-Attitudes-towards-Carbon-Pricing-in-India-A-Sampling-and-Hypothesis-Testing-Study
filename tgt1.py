@@ -459,14 +459,14 @@ def main():
                         'October 2023 Sales' : filtered_data['Total Oct 2023'],
                         'YoY Growth(Projected)' : filtered_data['YoY Growth']
                     })
-        styled_df = share_df.style.format({'Zone','Brand',
+        styled_df = share_df.style.format({
             'October 2024 Target': '{:.0f}',
               'October Projection': '{:.0f}',
                 'October 2023 Sales': '{:.0f}',
                   'YoY Growth(Projected)': '{:.2f}%'})
-        numeric_columns = ['Zone','Brand','October 2024 Target', 'October Projection', 'October 2023 Sales', 'YoY Growth(Projected)']
+        numeric_columns = ['October 2024 Target', 'October Projection', 'October 2023 Sales', 'YoY Growth(Projected)']
         for col in numeric_columns:
-              styled_df = styled_df.background_gradient(cmap='twilight', subset=[col])
+              styled_df = styled_df.background_gradient(cmap='twilight')
         st.dataframe(styled_df, use_container_width=True)
 
         pdf_buffer = create_pdf(filtered_data)
