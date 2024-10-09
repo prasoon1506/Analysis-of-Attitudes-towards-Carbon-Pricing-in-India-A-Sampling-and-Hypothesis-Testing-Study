@@ -458,9 +458,20 @@ def main():
                         'October 2023 Sales' : filtered_data['Total Oct 2023'],
                         'YoY Growth(Projected)' : filtered_data['YoY Growth']
                     })
+        # Reset the index to ensure we have a unique index
+        share_df = share_df.reset_index(drop=True)
+        def color_scale(s, cmap='RdYlGn'):
+               return ['background-color: #{:02x}{:02x}{:02x}'.format(*tuple(int(x*255) for x in plt.cm.get_cmap(cmap)(norm(v)))) for v in s]
+        styled_df = share_df.style.format({
+            'October 2024 Target': '{:.0f}',
+              'October Projection': '{:.0f}',
+                'October 2023 Sales': '{:.0f}',
+                  'YoY Growth(Projected)': '{:.2f}%'})
+        numeric_columns = ['October 2024 Target', 'October Projection', 'October 2023 Sales', 'YoY Growth(Projected)']
+        for col in numeric_columns:
+              styled_df = styled_df.background_gradient(cmap='RdYlGn', subset=[col])
+        st.dataframe(styled_df, use_container_width=True)
 
-                    
-        st.dataframe(share_df.set_index('Zone').style.format("{:.2f}").background_gradient(cmap='RdYlGn'), use_container_width=True)
         pdf_buffer = create_pdf(filtered_data)
         st.download_button(
             label="Download Forecast Report",
