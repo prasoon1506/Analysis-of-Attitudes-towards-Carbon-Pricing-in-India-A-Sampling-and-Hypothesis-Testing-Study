@@ -450,26 +450,28 @@ def main():
         else:
             st.warning("No data available for the selected Zone and Brand combination.")
         st.markdown("<h3>Detailed Sales Forecast</h3>", unsafe_allow_html=True)
-        
         share_df = pd.DataFrame({
-                        'Zone': filtered_data['Zone'],
-                        'Brand': filtered_data['Brand'],
-                        'October 2024 Target': filtered_data['Month Tgt (Oct)'],
-                        'October Projection': filtered_data['Predicted Oct 2024'],
-                        'October 2023 Sales' : filtered_data['Total Oct 2023'],
-                        'YoY Growth(Projected)' : filtered_data['YoY Growth']
-                    })
-        styled_df = share_df.style.format({
-            'October 2024 Target': '{:.0f}',
-              'October Projection': '{:.0f}',
-                'October 2023 Sales': '{:.0f}',
-                  'YoY Growth(Projected)': '{:.2f}%'})
-        numeric_columns = ['October 2024 Target', 'October Projection', 'October 2023 Sales', 'YoY Growth(Projected)']
-        for col in numeric_columns:
-              styled_df = styled_df.background_gradient(cmap='twilight')
-        text_columns = ['Zone','Brand']
-        for col in text_columns:
-            styled_df = share_df.background_gradient(cmap='twilight')
+           'Zone': filtered_data['Zone'],
+            'Brand': filtered_data['Brand'],
+             'October 2024 Target': filtered_data['Month Tgt (Oct)'],
+           'October Projection': filtered_data['Predicted Oct 2024'],
+           'October 2023 Sales': filtered_data['Total Oct 2023'],
+          'YoY Growth(Projected)': filtered_data['YoY Growth']
+             })
+
+        def style_dataframe(df):
+               styler = df.style
+               for col in df.columns:
+               if df[col].dtype in ['float64', 'int64']:
+                  styler.apply(color_gradient, cmap='RdYlGn', subset=[col])
+               else:
+                  styler.apply(color_gradient, cmap='Pastel1', subset=[col])
+               numeric_format = {'October 2024 Target': '{:.2f}','October Projection': '{:.2f}','October 2023 Sales': '{:.2f}','YoY Growth(Projected)': '{:.2f}%'}
+               styler.format(numeric_format)
+               styler.hide(axis='index')
+
+               return styler
+        styled_df = style_dataframe(share_df)
         st.dataframe(styled_df, use_container_width=True)
 
         pdf_buffer = create_pdf(filtered_data)
