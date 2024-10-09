@@ -462,12 +462,15 @@ def main():
         def style_dataframe(df):
                styler = df.style
                def color_gradient(s, cmap='RdYlGn', low=0, high=0):
-                      rng = s.max() - s.min()
-                      norm = colors.Normalize(vmin=s.min() - (rng * low), 
-                                vmax=s.max() + (rng * high))
-                      normed = norm(s.values)
-                      c = [colors.rgb2hex(x) for x in plt.cm.get_cmap(cmap)(normed)]
-                      return ['background-color: %s' % color for color in c]
+                 if s.dtype in ['float64', 'int64']:
+                   rng = s.max() - s.min()
+                   norm = colors.Normalize(vmin=s.min() - (rng * low), 
+                                    vmax=s.max() + (rng * high))
+                   normed = norm(s.values)
+                   c = [colors.rgb2hex(x) for x in plt.cm.get_cmap(cmap)(normed)]
+                   return ['background-color: %s' % color for color in c]
+                 else:
+                   return [''] * len(s)
 
                for col in df.columns:
                 if df[col].dtype in ['float64', 'int64']:
