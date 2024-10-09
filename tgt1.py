@@ -499,9 +499,9 @@ def main():
            'October Projection': filtered_data['Predicted Oct 2024'],
            'October 2023 Sales': filtered_data['Total Oct 2023'],
           'YoY Growth(Projected)': filtered_data['YoY Growth']
-             }).reset_index(drop=True)
+             })
         styled_df = style_dataframe(share_df)
-        st.dataframe(styled_df, use_container_width=True)
+        st.dataframe(styled_df, use_container_width=True,hide_index=True)
 
         pdf_buffer = create_pdf(filtered_data)
         st.download_button(
