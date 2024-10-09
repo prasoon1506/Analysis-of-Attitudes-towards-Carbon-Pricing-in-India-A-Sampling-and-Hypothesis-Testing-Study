@@ -340,7 +340,7 @@ def style_dataframe(df):
         'October 2024 Target': '{:.2f}',
         'October Projection': '{:.0f}',
         'October 2023 Sales': '{:.2f}',
-        'YoY Growth(Projected)': '{:.2f}%'
+        'YoY Growth(Projected)': '{:.0f}%'
     }
     
     # Apply numeric formatting only to columns that exist and are numeric
