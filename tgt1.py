@@ -458,8 +458,6 @@ def main():
                         'October 2023 Sales' : filtered_data['Total Oct 2023'],
                         'YoY Growth(Projected)' : filtered_data['YoY Growth']
                     })
-        # Reset the index to ensure we have a unique index
-        share_df = share_df.reset_index(drop=True)
         def color_scale(s, cmap='twilight'):
                return ['background-color: #{:02x}{:02x}{:02x}'.format(*tuple(int(x*255) for x in plt.cm.get_cmap(cmap)(norm(v)))) for v in s]
         styled_df = share_df.style.format({
