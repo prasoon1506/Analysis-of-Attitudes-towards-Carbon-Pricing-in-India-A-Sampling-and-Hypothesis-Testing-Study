@@ -450,8 +450,8 @@ def main():
         else:
             st.warning("No data available for the selected Zone and Brand combination.")
         st.markdown("<h3>Detailed Sales Forecast</h3>", unsafe_allow_html=True)
-        st.dataframe(filtered_data[['Zone', 'Brand', 'Month Tgt (Oct)', 'Predicted Oct 2024', 'Total Oct 2023', 'YoY Growth']])
-
+        st.dataframe(filtered_data[['Zone', 'Brand', 'Month Tgt (Oct)', 'Predicted Oct 2024', 'Total Oct 2023', 'YoY Growth']].set_index('Zone').style.format("{.2f}").background_gradient(cmap='RdYlGn'), use_container_Width=True)
+        
         pdf_buffer = create_pdf(filtered_data)
         st.download_button(
             label="Download Forecast Report",
