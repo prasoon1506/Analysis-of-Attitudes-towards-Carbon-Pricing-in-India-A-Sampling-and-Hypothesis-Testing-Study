@@ -166,15 +166,15 @@ def create_monthly_performance_graph(data):
         title='Monthly Performance',
         plot_bgcolor='rgba(255,255,255,0.1)',
         paper_bgcolor='rgba(0,0,0,0)',
-        font_color='#ffffff',
-        title_font_color='#ffffff',
-        legend_font_color='#ffffff',
+        font_color='burlywood',
+        title_font_color='burlywood',
+        legend_font_color='burlywood',
         height=500,
         width=800,
         barmode='group'
     )
-    fig.update_xaxes(tickfont_color='#ffffff')
-    fig.update_yaxes(title_text='Sales', tickfont_color='#ffffff')
+    fig.update_xaxes(tickfont_color='peru')
+    fig.update_yaxes(title_text='Sales', tickfont_color='peru')
     fig.update_traces(textfont_color='black')
     
     return fig
@@ -188,13 +188,13 @@ def create_target_vs_projected_graph(data):
         barmode='group',
         plot_bgcolor='rgba(255,255,255,0.1)',
         paper_bgcolor='rgba(0,0,0,0)',
-        font_color='#ffffff',
-        title_font_color='#ffffff',
-        legend_font_color='#ffffff',
+        font_color='burlywood',
+        title_font_color='burlywood',
+        legend_font_color='burlywood',
         height=500
     )
-    fig.update_xaxes(title_text='Zone', tickfont_color='#ffffff')
-    fig.update_yaxes(title_text='Sales', tickfont_color='#ffffff')
+    fig.update_xaxes(title_text='Zone', tickfont_color='peru')
+    fig.update_yaxes(title_text='Sales', tickfont_color='peru')
     
     return fig
 
@@ -377,8 +377,8 @@ def main():
                 paper_bgcolor='rgba(0,0,0,0)', 
                 font_color='burlywood',
                 title_font_color='burlywood',
-                xaxis_title_font_color='peru',
-                yaxis_title_font_color='peru',
+                xaxis_title_font_color='burlywood',
+                yaxis_title_font_color='burlywood',
                 legend_font_color='burlywood'
             )
             fig_importance.update_xaxes(tickfont_color='peru')
