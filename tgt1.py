@@ -158,7 +158,7 @@ def create_monthly_performance_graph(data):
                 y=[target, projection],
                 name=month,
                 marker_color=[colors[i], 'red'],
-                text=[f"{target:,.0f}", f"{projection:,.0f}<br><span style='color:red'>{percentage:.1f}%</span>"],
+                text=[f"{target:,.0f}", f"{projection:,.0f}<br><span style='color:black'>{percentage:.1f}%</span>"],
                 textposition='auto'
             ))
 
