@@ -74,24 +74,36 @@ st.markdown("""
         font-weight: bold !important;
         text-shadow: 1px 1px 2px #000000;
     }
-    /* New styles for file uploader */
+    /* Updated styles for file uploader */
     .stFileUploader {
         background-color: rgba(255, 255, 255, 0.1);
         border-radius: 10px;
         padding: 20px;
         margin-bottom: 20px;
     }
-    .stFileUploader > div > label {
-        color: #ffffff !important;
-        font-weight: bold;
+    .custom-file-upload {
+        display: inline-block;
+        padding: 10px 20px;
+        cursor: pointer;
+        background-color: #4a69bd;
+        color: #ffffff;
+        border-radius: 5px;
+        transition: all 0.3s;
     }
-    .stFileUploader > div > small {
-        color: #82ccdd !important;
+    .custom-file-upload:hover {
+        background-color: #82ccdd;
+        color: #0c2461;
+    }
+    .file-upload-text {
+        font-size: 18px;
+        color: #ffd700;
+        font-weight: bold;
+        margin-bottom: 10px;
     }
     /* Style for uploaded file name */
     .uploaded-filename {
         background-color: rgba(255, 255, 255, 0.2);
-        color: aqua;
+        color: #ffffff;
         padding: 10px;
         border-radius: 5px;
         margin-top: 10px;
@@ -99,6 +111,10 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
+def custom_file_uploader(label, type):
+    st.markdown(f'<p class="file-upload-text">{label}</p>', unsafe_allow_html=True)
+    uploaded_file = st.file_uploader("Choose file", type=type, key="file_uploader")
+    return uploaded_file
 
 @st.cache_data
 def load_data(file):
@@ -220,8 +236,7 @@ def create_pdf(data):
 def main():
     st.markdown('<p class="big-font">Sales Prediction Simulator</p>', unsafe_allow_html=True)
     st.markdown('<p class="subheader">Upload your data and unlock the future of sales!</p>', unsafe_allow_html=True)
-
-    uploaded_file = st.file_uploader("Choose your sales data file (Excel format)", type="xlsx")
+    uploaded_file = custom_file_uploader("Choose your sales data file (Excel format)", ["xlsx"])
 
     if uploaded_file is not None:
         st.markdown(f'<div class="uploaded-filename">Uploaded file: {uploaded_file.name}</div>', unsafe_allow_html=True)
