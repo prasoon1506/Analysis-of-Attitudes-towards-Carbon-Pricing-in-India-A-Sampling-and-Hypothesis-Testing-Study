@@ -327,7 +327,9 @@ def style_dataframe(df):
         'October 2023 Sales': '{:.2f}',
         'YoY Growth(Projected)': '{:.2f}%'
     }
-    styler.format(numeric_format)
+    for col, fmt in numeric_format.items():
+        if col in df.columns and df[col].dtype in ['float64', 'int64']:
+            styler.format({col: fmt})
 
     # Hide the index
     styler.hide(axis='index')
