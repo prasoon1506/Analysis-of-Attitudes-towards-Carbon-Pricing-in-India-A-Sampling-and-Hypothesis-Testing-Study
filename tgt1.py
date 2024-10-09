@@ -1,5 +1,6 @@
 import streamlit as st
 import io
+import matplotlib.colors
 import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
 import base64
