@@ -377,8 +377,8 @@ def main():
                 paper_bgcolor='rgba(0,0,0,0)', 
                 font_color='burlywood',
                 title_font_color='burlywood',
-                xaxis_title_font_color='burlywood',
-                yaxis_title_font_color='burlywood',
+                xaxis_title_font_color='peru',
+                yaxis_title_font_color='peru',
                 legend_font_color='burlywood'
             )
             fig_importance.update_xaxes(tickfont_color='peru')
@@ -403,12 +403,12 @@ def main():
                 barmode='group', 
                 plot_bgcolor='rgba(255,255,255,0.1)', 
                 paper_bgcolor='rgba(0,0,0,0)', 
-                font_color='#ffffff',
-                title_font_color='#ffffff',
-                legend_font_color='#ffffff'
+                font_color='burlywood',
+                title_font_color='burlywood',
+                legend_font_color='burlywood'
             )
-            fig_predictions.update_xaxes(title_text='Zone', tickfont_color='#ffffff')
-            fig_predictions.update_yaxes(title_text='Sales', tickfont_color='#ffffff')
+            fig_predictions.update_xaxes(title_text='Zone', tickfont_color='peru')
+            fig_predictions.update_yaxes(title_text='Sales', tickfont_color='peru')
             st.plotly_chart(fig_predictions, use_container_width=True)
             fig_target_vs_projected = create_target_vs_projected_graph(filtered_data)
             st.plotly_chart(fig_target_vs_projected, use_container_width=True)
