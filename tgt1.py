@@ -381,8 +381,8 @@ def main():
                 yaxis_title_font_color='burlywood',
                 legend_font_color='burlywood'
             )
-            fig_importance.update_xaxes(tickfont_color='#ffffff')
-            fig_importance.update_yaxes(tickfont_color='#ffffff')
+            fig_importance.update_xaxes(tickfont_color='peru')
+            fig_importance.update_yaxes(tickfont_color='peru')
             st.plotly_chart(fig_importance, use_container_width=True)
 
         with col2:
