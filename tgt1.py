@@ -450,6 +450,7 @@ def main():
         else:
             st.warning("No data available for the selected Zone and Brand combination.")
         st.markdown("<h3>Detailed Sales Forecast</h3>", unsafe_allow_html=True)
+        
         share_df = pd.DataFrame({
                         'Zone': filtered_data['Zone'],
                         'Brand': filtered_data['Brand'],
@@ -468,8 +469,7 @@ def main():
         numeric_columns = ['October 2024 Target', 'October Projection', 'October 2023 Sales', 'YoY Growth(Projected)']
         for col in numeric_columns:
               styled_df = styled_df.background_gradient(cmap='twilight', subset=[col])
-        styled_df = styled_df.hide(axis='index')
-        st.dataframe(styled_df, use_container_width=True)
+        st.dataframe(styled_df.set_index('Zone'), use_container_width=True)
 
         pdf_buffer = create_pdf(filtered_data)
         st.download_button(
