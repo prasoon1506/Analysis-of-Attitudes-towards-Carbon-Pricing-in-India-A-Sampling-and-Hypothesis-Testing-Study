@@ -467,6 +467,9 @@ def main():
         numeric_columns = ['October 2024 Target', 'October Projection', 'October 2023 Sales', 'YoY Growth(Projected)']
         for col in numeric_columns:
               styled_df = styled_df.background_gradient(cmap='twilight')
+        text_columns = ['Zone','Brand']
+        for col in text_columns:
+            styled_df = share_df.background_gradient(cmap='twilight')
         st.dataframe(styled_df, use_container_width=True)
 
         pdf_buffer = create_pdf(filtered_data)
