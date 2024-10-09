@@ -14,7 +14,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch
 import plotly.express as px
 import plotly.graph_objects as go
-
+from datetime import datetime
 # Set page config
 st.set_page_config(page_title="Sales Prediction Simulator", layout="wide", initial_sidebar_state="collapsed")
 st.markdown("""
@@ -112,6 +112,32 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
+# Dark/Light mode toggle
+if 'light_mode' not in st.session_state:
+    st.session_state.light_mode = False
+
+def toggle_mode():
+    st.session_state.light_mode = not st.session_state.light_mode
+
+# Add the toggle to the sidebar
+st.sidebar.markdown("<div class='toggle-container'>🌙 <label class='toggle-switch'><input type='checkbox' onclick='toggleMode()'><span class='toggle-slider'></span></label> ☀️</div>", unsafe_allow_html=True)
+
+# JavaScript for toggling dark/light mode
+st.markdown("""
+<script>
+function toggleMode() {
+    const body = document.body;
+    body.classList.toggle('light-mode');
+}
+</script>
+""", unsafe_allow_html=True)
+
+# Dynamic header with real-time updates
+def get_dynamic_header():
+    now = datetime.now()
+    return f"<p class='big-font'>Advanced Sales Prediction Simulator</p><p class='subheader'>Last updated: {now.strftime('%Y-%m-%d %H:%M:%S')}</p>"
+
+st.markdown(get_dynamic_header(), unsafe_allow_html=True)
 def custom_file_uploader(label, type):
     st.markdown(f'<p class="file-upload-text">{label}</p>', unsafe_allow_html=True)
     uploaded_file = st.file_uploader("Choose file", type=type, key="file_uploader", label_visibility="collapsed")
