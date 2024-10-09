@@ -114,9 +114,8 @@ st.markdown("""
 """, unsafe_allow_html=True)
 def custom_file_uploader(label, type):
     st.markdown(f'<p class="file-upload-text">{label}</p>', unsafe_allow_html=True)
-    uploaded_file = st.file_uploader("", type=type, key="file_uploader")
+    uploaded_file = st.file_uploader("Choose file", type=type, key="file_uploader", label_visibility="collapsed")
     return uploaded_file
-
 @st.cache_data
 def load_data(file):
     data = pd.read_excel(file)
