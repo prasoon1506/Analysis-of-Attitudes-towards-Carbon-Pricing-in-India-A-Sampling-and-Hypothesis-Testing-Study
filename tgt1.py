@@ -114,7 +114,7 @@ def create_pdf(data):
         ])
     table_data[0][-1] = table_data[0][-1] + "*"  
 
-    table = Table(table_data, colWidths=[1.25*inch, 1*inch, 1.5*inch, 1.75*inch, 1.5*inch, 1*inch], 
+    table = Table(table_data, colWidths=[1.25*inch, 0.80*inch, 1.5*inch, 1.75*inch, 1.5*inch, 1.20*inch], 
                   rowHeights=[0.60*inch] + [0.38*inch] * (len(table_data) - 1))
     style = TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4A708B')),
