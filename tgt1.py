@@ -348,8 +348,6 @@ def style_dataframe(df):
         if col in df.columns and df[col].dtype in ['float64', 'int64']:
             styler.format({col: fmt})
 
-    styler.hide(axis='index')
-
     return styler
 def main():
     st.markdown('<p class="big-font">Sales Prediction Simulator</p>', unsafe_allow_html=True)
@@ -502,7 +500,7 @@ def main():
            'October Projection': filtered_data['Predicted Oct 2024'],
            'October 2023 Sales': filtered_data['Total Oct 2023'],
           'YoY Growth(Projected)': filtered_data['YoY Growth']
-             })
+             }).reset_index(drop=True)
         styled_df = style_dataframe(share_df)
         st.dataframe(styled_df, use_container_width=True)
 
