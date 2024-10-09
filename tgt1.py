@@ -459,6 +459,7 @@ def main():
                         'October 2023 Sales' : filtered_data['Total Oct 2023'],
                         'YoY Growth(Projected)' : filtered_data['YoY Growth']
                     })
+        share_df=share_df.set_index('Zone')
         def color_scale(s, cmap='twilight'):
                return ['background-color: #{:02x}{:02x}{:02x}'.format(*tuple(int(x*255) for x in plt.cm.get_cmap(cmap)(norm(v)))) for v in s]
         styled_df = share_df.style.format({
@@ -469,7 +470,7 @@ def main():
         numeric_columns = ['October 2024 Target', 'October Projection', 'October 2023 Sales', 'YoY Growth(Projected)']
         for col in numeric_columns:
               styled_df = styled_df.background_gradient(cmap='twilight', subset=[col])
-        st.dataframe(styled_df.set_index('Zone'), use_container_width=True)
+        st.dataframe(styled_df, use_container_width=True)
 
         pdf_buffer = create_pdf(filtered_data)
         st.download_button(
