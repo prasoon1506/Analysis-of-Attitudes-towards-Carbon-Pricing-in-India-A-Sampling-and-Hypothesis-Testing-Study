@@ -34,7 +34,7 @@ st.markdown("""
     }
     .subheader {
         font-size: 24px;
-        color: #82ccdd;
+        color: cornsilk;
         text-align: center;
     }
     .stButton>button {
