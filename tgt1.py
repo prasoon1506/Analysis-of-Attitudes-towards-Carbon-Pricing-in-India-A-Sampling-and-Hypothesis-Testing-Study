@@ -96,14 +96,14 @@ st.markdown("""
     }
     .file-upload-text {
         font-size: 18px;
-        color: #ffd700;
+        color: fuchsia;
         font-weight: bold;
         margin-bottom: 10px;
     }
     /* Style for uploaded file name */
     .uploaded-filename {
         background-color: rgba(255, 255, 255, 0.2);
-        color: #ffffff;
+        color: cyan;
         padding: 10px;
         border-radius: 5px;
         margin-top: 10px;
