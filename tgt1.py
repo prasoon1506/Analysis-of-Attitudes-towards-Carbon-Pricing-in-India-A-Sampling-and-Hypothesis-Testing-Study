@@ -323,7 +323,7 @@ def style_dataframe(df):
         'October 2023 Sales': '{:.2f}',
         'YoY Growth(Projected)': '{:.2f}%'
     }
-
+    styler.format(numeric_format)
     return styler
 def main():
     st.markdown('<p class="big-font">Sales Prediction Simulator</p>', unsafe_allow_html=True)
