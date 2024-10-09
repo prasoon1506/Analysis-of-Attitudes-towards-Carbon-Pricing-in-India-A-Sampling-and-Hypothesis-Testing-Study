@@ -74,6 +74,29 @@ st.markdown("""
         font-weight: bold !important;
         text-shadow: 1px 1px 2px #000000;
     }
+    /* New styles for file uploader */
+    .stFileUploader {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .stFileUploader > div > label {
+        color: #ffffff !important;
+        font-weight: bold;
+    }
+    .stFileUploader > div > small {
+        color: #82ccdd !important;
+    }
+    /* Style for uploaded file name */
+    .uploaded-filename {
+        background-color: rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+        padding: 10px;
+        border-radius: 5px;
+        margin-top: 10px;
+        font-weight: bold;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -201,6 +224,7 @@ def main():
     uploaded_file = st.file_uploader("Choose your sales data file (Excel format)", type="xlsx")
 
     if uploaded_file is not None:
+        st.markdown(f'<div class="uploaded-filename">Uploaded file: {uploaded_file.name}</div>', unsafe_allow_html=True)
         data = load_data(uploaded_file)
 
         features = ['Month Tgt (Oct)', 'Monthly Achievement(Sep)', 'Total Sep 2023', 'Total Oct 2023',
