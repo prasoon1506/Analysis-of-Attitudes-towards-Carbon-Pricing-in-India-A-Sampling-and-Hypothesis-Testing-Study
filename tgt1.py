@@ -419,11 +419,10 @@ def main():
         with col_zone:
             selected_zone = st.selectbox("Select Zone", options=filtered_data['Zone'].unique())
         with col_brand:
-            selected_brand = st.selectbox("Select Brand", options=filtered_data['Brand'].unique())
+            selected_brand = st.selectbox("Select Brand", options=filtered_data[filtered_data['Zone']==selected_zone]['Brand'].unique())
         
         # Filter data based on selection
-        selected_data = filtered_data[(filtered_data['Zone'] == selected_zone) & (filtered_data[filtered_data['Zone']==selected_zone]['Brand'].unique() == selected_brand)]
-        
+        selected_data = filtered_data[(filtered_data['Zone'] == selected_zone) & (filtered_data[filtered_data['Brand']==selected_brand)]
         if not selected_data.empty:
             fig_monthly_performance = create_monthly_performance_graph(selected_data)
             
