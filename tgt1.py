@@ -420,6 +420,7 @@ def main():
             fig_predictions1.update_xaxes(title_text='Zone', tickfont_color='peru')
             fig_predictions1.update_yaxes(title_text='Sales', tickfont_color='peru')
             st.plotly_chart(fig_importance, use_container_width=True)
+            st.plotly_chart(fig_predictions1, use_container_width=True)
 
         with col2:
             
