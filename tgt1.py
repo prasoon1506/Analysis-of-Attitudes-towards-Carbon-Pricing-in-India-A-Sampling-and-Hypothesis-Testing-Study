@@ -313,7 +313,7 @@ def style_dataframe(df):
 
     for col in df.columns:
         if df[col].dtype in ['float64', 'int64']:
-            styler.apply(lambda x: ['background-color: #ffffff'] * len(x), subset=[col])
+            styler.apply(lambda x: ['background-color: #f0f0f0'] * len(x), subset=[col])
         else:
             styler.apply(lambda x: ['background-color: #f0f0f0'] * len(x), subset=[col])
 
@@ -326,7 +326,7 @@ def style_dataframe(df):
     
     # Apply numeric formatting only to columns that exist and are numeric
     for col, fmt in numeric_format.items():
-        if col in df.columns and df[col].dtype in ['float64', 'int64']:
+        if df[col].dtype in ['float64', 'int64']:
             styler.format({col: fmt})
 
     return styler
