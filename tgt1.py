@@ -323,11 +323,6 @@ def style_dataframe(df):
         'October 2023 Sales': '{:.2f}',
         'YoY Growth(Projected)': '{:.2f}%'
     }
-    
-    # Apply numeric formatting only to columns that exist and are numeric
-    for col, fmt in numeric_format.items():
-        if df[col].dtype in ['float64', 'int64']:
-            styler.format({col: fmt})
 
     return styler
 def main():
