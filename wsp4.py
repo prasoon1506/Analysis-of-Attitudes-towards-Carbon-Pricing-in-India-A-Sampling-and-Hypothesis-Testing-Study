@@ -1540,7 +1540,6 @@ def descriptive_statistics_and_prediction():
 
     st.markdown('<div class="section-box">', unsafe_allow_html=True)
     st.subheader("Analysis Settings")
-
     col1, col2 = st.columns(2)
     with col1:
         zone_names = st.session_state.df["Zone"].unique().tolist()
