@@ -28,7 +28,7 @@ st.markdown("""
     .big-font {
         font-size: 48px !important;
         font-weight: bold;
-        color: #4a69bd;
+        color: lime;
         text-align: center;
         text-shadow: 2px 2px 4px #000000;
     }
