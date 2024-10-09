@@ -136,7 +136,7 @@ def create_monthly_performance_graph(data):
 
     for i, month in enumerate(months):
         if month != 'Oct':
-            target = data[f'Monthly Target({month})'].iloc[0]
+            target = data[f'Month Tgt ({month})'].iloc[0]
             achievement = data[f'Monthly Achievement({month})'].iloc[0]
             percentage = (achievement / target * 100) if target != 0 else 0
             
