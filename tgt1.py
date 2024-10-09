@@ -200,7 +200,7 @@ def create_monthly_performance_graph(data):
         title_font_color='#ffffff',
         legend_font_color='#ffffff',
         height=600,
-        width=1000
+        width=300
     )
     fig.update_xaxes(tickfont_color='#ffffff')
     fig.update_yaxes(title_text='Sales', tickfont_color='#ffffff')
