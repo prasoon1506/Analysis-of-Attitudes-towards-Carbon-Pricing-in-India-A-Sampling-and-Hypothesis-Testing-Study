@@ -404,7 +404,6 @@ def style_dataframe(df):
     styler.format(numeric_format)
     return styler
 def main():
-    st.markdown('<p class="big-font">Advanced Sales Prediction Simulator</p>', unsafe_allow_html=True)
     st.markdown('<p class="subheader">Upload your data and unlock the future of sales!</p>', unsafe_allow_html=True)
     uploaded_file = custom_file_uploader("Choose your sales data file (Excel format)", ["xlsx"])
 
