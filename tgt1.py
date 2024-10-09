@@ -14,24 +14,56 @@ from reportlab.lib.units import inch
 import plotly.express as px
 import plotly.graph_objects as go
 
-st.set_page_config(page_title="Sales Prediction Dashboard", layout="wide")
+# Set page config
+st.set_page_config(page_title="Sales Prediction Simulator", layout="wide", initial_sidebar_state="collapsed")
 
-# Custom CSS to improve the app's aesthetics
+# Custom CSS to give a gaming app vibe
 st.markdown("""
-    <style>
-    .reportview-container {
-        background: #f0f2f6
+<style>
+    body {
+        background-color: #0e1117;
+        color: #ffffff;
+    }
+    .stApp {
+        background-image: linear-gradient(45deg, #1e3799, #0c2461);
     }
     .big-font {
-        font-size:30px !important;
+        font-size: 48px !important;
         font-weight: bold;
-        color: #1E3A8A;
+        color: #4a69bd;
+        text-align: center;
+        text-shadow: 2px 2px 4px #000000;
+    }
+    .subheader {
+        font-size: 24px;
+        color: #82ccdd;
+        text-align: center;
+    }
+    .stButton>button {
+        background-color: #4a69bd;
+        color: white;
+        border-radius: 20px;
+        border: 2px solid #82ccdd;
+        padding: 10px 24px;
+        font-size: 16px;
+        transition: all 0.3s;
+    }
+    .stButton>button:hover {
+        background-color: #82ccdd;
+        color: #0c2461;
+        transform: scale(1.05);
     }
     .stProgress > div > div > div > div {
-        background-color: #1E3A8A;
+        background-color: #4a69bd;
     }
-    </style>
-    """, unsafe_allow_html=True)
+    .stSelectbox {
+        background-color: #1e3799;
+    }
+    .stDataFrame {
+        background-color: #0c2461;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 @st.cache_data
 def load_data(file):
@@ -44,6 +76,7 @@ def train_model(X, y):
     model = RandomForestRegressor(n_estimators=100, random_state=42)
     model.fit(X_train, y_train)
     return model, X_test, y_test
+
 def prepare_data_for_pdf(data):
     # Filter out specified zones
     excluded_zones = ['Bihar', 'J&K', 'North-I', 'Punjab,HP and J&K', 'U.P.+U.K.', 'Odisha+Jharkhand+Bihar']
@@ -150,10 +183,10 @@ def create_pdf(data):
     return buffer
 
 def main():
-    st.markdown('<p class="big-font">Sales Prediction Dashboard</p>', unsafe_allow_html=True)
+    st.markdown('<p class="big-font">Sales Prediction Simulator</p>', unsafe_allow_html=True)
+    st.markdown('<p class="subheader">Upload your data and unlock the future of sales!</p>', unsafe_allow_html=True)
 
-    # File uploader
-    uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
+    uploaded_file = st.file_uploader("Choose your sales data file (Excel format)", type="xlsx")
 
     if uploaded_file is not None:
         data = load_data(uploaded_file)
@@ -167,22 +200,49 @@ def main():
 
         model, X_test, y_test = train_model(X, y)
 
-        st.sidebar.header("Filters")
-        selected_brands = st.sidebar.multiselect("Select Brands", data['Brand'].unique(), default=data['Brand'].unique())
-        selected_zones = st.sidebar.multiselect("Select Zones", data['Zone'].unique(), default=data['Zone'].unique())
+        st.sidebar.header("Control Panel")
+        
+        # Initialize session state for filters if not already present
+        if 'selected_brands' not in st.session_state:
+            st.session_state.selected_brands = []
+        if 'selected_zones' not in st.session_state:
+            st.session_state.selected_zones = []
 
-        filtered_data = data[(data['Brand'].isin(selected_brands)) & (data['Zone'].isin(selected_zones))]
+        # Brand filter
+        st.sidebar.subheader("Select Brands")
+        for brand in data['Brand'].unique():
+            if st.sidebar.checkbox(brand, key=f"brand_{brand}"):
+                if brand not in st.session_state.selected_brands:
+                    st.session_state.selected_brands.append(brand)
+            elif brand in st.session_state.selected_brands:
+                st.session_state.selected_brands.remove(brand)
+
+        # Zone filter
+        st.sidebar.subheader("Select Zones")
+        for zone in data['Zone'].unique():
+            if st.sidebar.checkbox(zone, key=f"zone_{zone}"):
+                if zone not in st.session_state.selected_zones:
+                    st.session_state.selected_zones.append(zone)
+            elif zone in st.session_state.selected_zones:
+                st.session_state.selected_zones.remove(zone)
+
+        # Apply filters
+        if st.session_state.selected_brands and st.session_state.selected_zones:
+            filtered_data = data[data['Brand'].isin(st.session_state.selected_brands) & 
+                                 data['Zone'].isin(st.session_state.selected_zones)]
+        else:
+            filtered_data = data
 
         col1, col2 = st.columns(2)
 
         with col1:
-            st.subheader("Model Performance")
+            st.subheader("Model Performance Metrics")
             y_pred = model.predict(X_test)
             mse = mean_squared_error(y_test, y_pred)
             r2 = r2_score(y_test, y_pred)
 
-            st.metric("Mean Squared Error", f"{mse:.2f}")
-            st.metric("R-squared Score", f"{r2:.2f}")
+            st.metric("Accuracy Score", f"{r2:.2f}")
+            st.metric("Error Margin", f"{np.sqrt(mse):.2f}")
 
             feature_importance = pd.DataFrame({
                 'feature': features,
@@ -190,11 +250,12 @@ def main():
             }).sort_values('importance', ascending=False)
 
             fig_importance = px.bar(feature_importance, x='importance', y='feature', orientation='h',
-                                    title='Feature Importance', labels={'importance': 'Importance', 'feature': 'Feature'})
+                                    title='Feature Impact Analysis', labels={'importance': 'Impact', 'feature': 'Feature'})
+            fig_importance.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font_color='#ffffff')
             st.plotly_chart(fig_importance, use_container_width=True)
 
         with col2:
-            st.subheader("Sales Predictions")
+            st.subheader("Sales Forecast Visualization")
             X_2024 = filtered_data[features].copy()
             X_2024['Total Oct 2023'] = filtered_data['Total Oct 2023']
             predictions_2024 = model.predict(X_2024)
@@ -202,25 +263,23 @@ def main():
             filtered_data['YoY Growth'] = (filtered_data['Predicted Oct 2024'] - filtered_data['Total Oct 2023']) / filtered_data['Total Oct 2023'] * 100
 
             fig_predictions = go.Figure()
-            fig_predictions.add_trace(go.Bar(x=filtered_data['Zone'], y=filtered_data['Total Oct 2023'], name='Oct 2023 Sales'))
-            fig_predictions.add_trace(go.Bar(x=filtered_data['Zone'], y=filtered_data['Predicted Oct 2024'], name='Predicted Oct 2024 Sales'))
-            fig_predictions.update_layout(title='Sales Comparison: Oct 2023 vs Predicted Oct 2024', barmode='group')
+            fig_predictions.add_trace(go.Bar(x=filtered_data['Zone'], y=filtered_data['Total Oct 2023'], name='Oct 2023 Sales', marker_color='#4a69bd'))
+            fig_predictions.add_trace(go.Bar(x=filtered_data['Zone'], y=filtered_data['Predicted Oct 2024'], name='Predicted Oct 2024 Sales', marker_color='#82ccdd'))
+            fig_predictions.update_layout(title='Sales Projection: 2023 vs 2024', barmode='group', plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font_color='#ffffff')
             st.plotly_chart(fig_predictions, use_container_width=True)
 
-        st.subheader("Detailed Predictions")
+        st.subheader("Detailed Sales Forecast")
         st.dataframe(filtered_data[['Zone', 'Brand', 'Month Tgt (Oct)', 'Predicted Oct 2024', 'Total Oct 2023', 'YoY Growth']])
 
         pdf_buffer = create_pdf(filtered_data)
-        pdf_data = base64.b64encode(pdf_buffer.getvalue()).decode()
-
         st.download_button(
-            label="Download PDF Report",
+            label="Download Forecast Report",
             data=pdf_buffer,
-            file_name="sales_predictions_oct_2024.pdf",
+            file_name="sales_forecast_2024.pdf",
             mime="application/pdf"
         )
     else:
-        st.info("Please upload an Excel file to start the analysis.")
+        st.info("Upload your sales data to begin the simulation!")
 
 if __name__ == "__main__":
     main()
