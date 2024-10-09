@@ -318,9 +318,9 @@ def style_dataframe(df):
             styler.apply(lambda x: ['background-color: #f0f0f0'] * len(x), subset=[col])
 
     numeric_format = {
-        'October 2024 Target': '{:.2f}',
+        'October 2024 Target': '{:.0f}',
         'October Projection': '{:.2f}',
-        'October 2023 Sales': '{:.2f}',
+        'October 2023 Sales': '{:.0f}',
         'YoY Growth(Projected)': '{:.2f}%'
     }
     styler.format(numeric_format)
@@ -405,6 +405,20 @@ def main():
             )
             fig_importance.update_xaxes(tickfont_color='peru')
             fig_importance.update_yaxes(tickfont_color='peru')
+            fig_predictions1 = go.Figure()
+            fig_predictions1.add_trace(go.Bar(x=filtered_data['Zone'], y=filtered_data['FY2025 Till Sep'], name='Oct 2023 Sales', marker_color='darkseagreen'))
+            fig_predictions1.update_layout(
+                title='FY2025 Till September', 
+                plot_bgcolor='rgba(255,255,255,0.1)', 
+                paper_bgcolor='rgba(0,0,0,0)', 
+                font_color='burlywood',
+                xaxis_title_font_color='burlywood',
+                yaxis_title_font_color='burlywood',
+                title_font_color='burlywood',
+                legend_font_color='burlywood'
+            )
+            fig_predictions1.update_xaxes(title_text='Zone', tickfont_color='peru')
+            fig_predictions1.update_yaxes(title_text='Sales', tickfont_color='peru')
             st.plotly_chart(fig_importance, use_container_width=True)
 
         with col2:
