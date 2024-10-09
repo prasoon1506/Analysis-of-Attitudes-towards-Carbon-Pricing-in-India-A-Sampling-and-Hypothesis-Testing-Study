@@ -391,7 +391,7 @@ def main():
                 'feature': features,
                 'importance': model.feature_importances_
             }).sort_values('importance', ascending=False)
-
+            filtered_data['FY2025 Till Sep']=filtered_data['Monthly Achievement(Sep)']+filtered_data['Monthly Achievement(Aug)']+filtered_data['Monthly Achievement(July)']+filtered_data['Monthly Achievement(June)']+filtered_data['Monthly Achievement(May)']+filtered_data['Monthly Achievement(Apr)']
             fig_importance = px.bar(feature_importance, x='importance', y='feature', orientation='h',
                                     title='Feature Impact Analysis', labels={'importance': 'Impact', 'feature': 'Feature'})
             fig_importance.update_layout(
@@ -406,7 +406,7 @@ def main():
             fig_importance.update_xaxes(tickfont_color='peru')
             fig_importance.update_yaxes(tickfont_color='peru')
             fig_predictions1 = go.Figure()
-            fig_predictions1.add_trace(go.Bar(x=filtered_data['Zone'], y=data['FY2025 Till Sep'], name='Oct 2023 Sales', marker_color='darkseagreen'))
+            fig_predictions1.add_trace(go.Bar(x=filtered_data['Zone'], y=filtered_data['FY2025 Till Sep'], name='Oct 2023 Sales', marker_color='darkseagreen'))
             fig_predictions1.update_layout(
                 title='FY2025 Till September', 
                 plot_bgcolor='rgba(255,255,255,0.1)', 
