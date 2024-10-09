@@ -127,6 +127,7 @@ def train_model(X, y):
     model = RandomForestRegressor(n_estimators=100, random_state=42)
     model.fit(X_train, y_train)
     return model, X_test, y_test
+
 def create_monthly_performance_graph(data):
     months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']
     colors = px.colors.qualitative.Pastel
@@ -135,18 +136,30 @@ def create_monthly_performance_graph(data):
 
     for i, month in enumerate(months):
         if month != 'Oct':
+            target = data[f'Monthly Target({month})'].iloc[0]
+            achievement = data[f'Monthly Achievement({month})'].iloc[0]
+            percentage = (achievement / target * 100) if target != 0 else 0
+            
             fig.add_trace(go.Bar(
                 x=[f"{month} Tgt", f"{month} Ach"],
-                y=[0, 0],  # Placeholder values
+                y=[target, achievement],
                 name=month,
-                marker_color=colors[i]
+                marker_color=colors[i],
+                text=[f"{target:,.0f}", f"{achievement:,.0f}<br>{percentage:.1f}%"],
+                textposition='auto'
             ))
         else:
+            target = data['Month Tgt (Oct)'].iloc[0]
+            projection = data['Predicted Oct 2024'].iloc[0]
+            percentage = (projection / target * 100) if target != 0 else 0
+            
             fig.add_trace(go.Bar(
                 x=[f"{month} Tgt", f"{month} Proj"],
-                y=[0, 0],  # Placeholder values
+                y=[target, projection],
                 name=month,
-                marker_color=colors[i]
+                marker_color=[colors[i], 'red'],
+                text=[f"{target:,.0f}", f"{projection:,.0f}<br><span style='color:red'>{percentage:.1f}%</span>"],
+                textposition='auto'
             ))
 
     fig.update_layout(
@@ -162,9 +175,9 @@ def create_monthly_performance_graph(data):
     )
     fig.update_xaxes(tickfont_color='#ffffff')
     fig.update_yaxes(title_text='Sales', tickfont_color='#ffffff')
+    fig.update_traces(textfont_color='black')
     
     return fig
-
 def create_target_vs_projected_graph(data):
     fig = go.Figure()
     fig.add_trace(go.Bar(x=data['Zone'], y=data['Month Tgt (Oct)'], name='Month Target (Oct)', marker_color='#4a69bd'))
