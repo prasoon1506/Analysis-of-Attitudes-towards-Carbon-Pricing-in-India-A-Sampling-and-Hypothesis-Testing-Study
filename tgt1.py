@@ -348,7 +348,7 @@ def style_dataframe(df):
         if col in df.columns and df[col].dtype in ['float64', 'int64']:
             styler.format({col: fmt})
 
-    styler.hide(axis='index')
+    styler.hide(axis=0)
 
     return styler
 def main():
