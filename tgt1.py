@@ -199,7 +199,7 @@ def create_monthly_performance_graph(data):
         font_color='#ffffff',
         title_font_color='#ffffff',
         legend_font_color='#ffffff',
-        height=600,
+        height=100,
         width=300
     )
     fig.update_xaxes(tickfont_color='#ffffff')
