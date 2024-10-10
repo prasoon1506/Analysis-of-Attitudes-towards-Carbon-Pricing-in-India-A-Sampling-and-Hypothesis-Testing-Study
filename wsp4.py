@@ -4699,7 +4699,7 @@ def projection():
         # Password correct.
         return True
  if check_password():
- st.markdown("""
+  st.markdown("""
 <style>
     body {
         background-color: #0e1117;
