@@ -108,6 +108,7 @@ def check_password():
         if login_attempts > 0:
             st.warning(f"Incorrect password. Attempt {login_attempts} of {MAX_ATTEMPTS}.")
         return False
+
     else:
         # Password correct.
         return True
