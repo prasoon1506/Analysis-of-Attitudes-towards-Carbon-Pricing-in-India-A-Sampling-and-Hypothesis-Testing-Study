@@ -71,6 +71,12 @@ def check_password():
     .stButton > button:hover {
         background-color: #82ccdd;
     }
+    .attempt-text {
+        color: #ff4b4b;
+        font-size: 14px;
+        margin-top: 5px;
+        text-align: center;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -82,46 +88,55 @@ def check_password():
         return False
 
     # Initialize attempts if not present
-    login_attempts = cookies.get('login_attempts')
-    login_attempts = int(login_attempts) if login_attempts is not None else 0
+    if 'login_attempts' not in st.session_state:
+        st.session_state.login_attempts = int(cookies.get('login_attempts', 0))
 
     def password_entered():
         """Checks whether a password entered by the user is correct."""
-        nonlocal login_attempts
         if hash_password(st.session_state["password"]) == hash_password(CORRECT_PASSWORD):
             st.session_state["password_correct"] = True
-            login_attempts = 0
+            st.session_state.login_attempts = 0
             del st.session_state["password"]  # don't store password
         else:
             st.session_state["password_correct"] = False
-            login_attempts += 1
-            if login_attempts >= MAX_ATTEMPTS:
+            st.session_state.login_attempts += 1
+            if st.session_state.login_attempts >= MAX_ATTEMPTS:
                 cookies['lockout_time'] = str(time.time() + LOCKOUT_DURATION)
-            st.error(f"Incorrect password. Attempt {login_attempts} of {MAX_ATTEMPTS}.")
         
         # Update login_attempts in cookies
-        cookies['login_attempts'] = str(login_attempts)
+        cookies['login_attempts'] = str(st.session_state.login_attempts)
         cookies.save()
 
     # First run, show input for password
     if "password_correct" not in st.session_state:
         st.markdown("<h1 style='text-align: center; color: #4a69bd;'>Sales Prediction Simulator</h1>", unsafe_allow_html=True)
         st.markdown("<h3 style='text-align: center; color: #333;'>Please enter your password to access the application</h3>", unsafe_allow_html=True)
-        st.text_input("Password", type="password", on_change=password_entered, key="password")
-        st.button("Login")
+        st.text_input("Password", type="password", key="password")
+        if st.button("Login"):
+            password_entered()
+        
+        if st.session_state.login_attempts > 0:
+            st.markdown(f"<p class='attempt-text'>Incorrect password. Attempt {st.session_state.login_attempts} of {MAX_ATTEMPTS}.</p>", unsafe_allow_html=True)
+        
         return False
     
     # Password correct
-    elif st.session_state["password_correct"]:
+    elif st.session_state.get("password_correct", False):
         return True
     
     # Password incorrect, show input box again
     else:
         st.markdown("<h1 style='text-align: center; color: #4a69bd;'>Sales Prediction Simulator</h1>", unsafe_allow_html=True)
         st.markdown("<h3 style='text-align: center; color: #333;'>Please enter your password to access the application</h3>", unsafe_allow_html=True)
-        st.text_input("Password", type="password", on_change=password_entered, key="password")
-        st.button("Login")
+        st.text_input("Password", type="password", key="password")
+        if st.button("Login"):
+            password_entered()
+        
+        if st.session_state.login_attempts > 0:
+            st.markdown(f"<p class='attempt-text'>Incorrect password. Attempt {st.session_state.login_attempts} of {MAX_ATTEMPTS}.</p>", unsafe_allow_html=True)
+        
         return False
+
 if check_password():
  st.markdown("""
 <style>
