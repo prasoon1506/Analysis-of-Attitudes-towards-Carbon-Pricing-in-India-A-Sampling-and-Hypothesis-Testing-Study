@@ -103,7 +103,7 @@ def check_password():
                 cookies['lockout_time'] = str(time.time() + LOCKOUT_DURATION)
         
         # Update login_attempts in cookies
-        cookies['login_attempts'] = str(st.session_state.login_attempts)
+        cookies['login_attempts'] = str(login_attempts)
         cookies.save()
 
     # First run, show input for password
