@@ -14,7 +14,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch
 import plotly.express as px
 import plotly.graph_objects as go
-
+import time
 # Set page config
 st.set_page_config(page_title="Sales Prediction Simulator", layout="wide", initial_sidebar_state="collapsed")
 CORRECT_PASSWORD = "prasoonA1@"  # Replace with your desired password
