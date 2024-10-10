@@ -108,11 +108,6 @@ def check_password():
         if login_attempts > 0:
             st.warning(f"Incorrect password. Attempt {login_attempts} of {MAX_ATTEMPTS}.")
         return False
-    elif not st.session_state["password_correct"]:
-        # Password incorrect, show input + error.
-        st.text_input("Password", type="password", on_change=password_entered, key="password")
-        st.error("😕 Password incorrect")
-        return False
     else:
         # Password correct.
         return True
