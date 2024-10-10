@@ -14,9 +14,9 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch
 import plotly.express as px
 import plotly.graph_objects as go
-from datetime import datetime
 
-st.set_page_config(page_title="Advanced Sales Prediction Simulator", layout="wide", initial_sidebar_state="expanded")
+# Set page config
+st.set_page_config(page_title="Sales Prediction Simulator", layout="wide", initial_sidebar_state="collapsed")
 st.markdown("""
 <style>
     body {
@@ -110,86 +110,8 @@ st.markdown("""
         margin-top: 10px;
         font-weight: bold;
     }
-    /* Dark/Light mode toggle */
-    .toggle-container {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 20px;
-    }
-
-    .toggle-switch {
-        position: relative;
-        width: 60px;
-        height: 34px;
-        margin: 0 10px;
-    }
-
-    .toggle-switch input {
-        opacity: 0;
-        width: 0;
-        height: 0;
-    }
-
-    .toggle-slider {
-        position: absolute;
-        cursor: pointer;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: var(--primary-color);
-        transition: .4s;
-        border-radius: 34px;
-    }
-
-    .toggle-slider:before {
-        position: absolute;
-        content: "";
-        height: 26px;
-        width: 26px;
-        left: 4px;
-        bottom: 4px;
-        background-color: var(--text-color);
-        transition: .4s;
-        border-radius: 50%;
-    }
-
-    input:checked + .toggle-slider {
-        background-color: var(--secondary-color);
-    }
-
-    input:checked + .toggle-slider:before {
-        transform: translateX(26px);
-    }
 </style>
 """, unsafe_allow_html=True)
-# Dark/Light mode toggle
-if 'light_mode' not in st.session_state:
-    st.session_state.light_mode = False
-
-def toggle_mode():
-    st.session_state.light_mode = not st.session_state.light_mode
-
-# Add the toggle to the sidebar
-st.sidebar.markdown("<div class='toggle-container'>🌙 <label class='toggle-switch'><input type='checkbox' onclick='toggleMode()'><span class='toggle-slider'></span></label> ☀️</div>", unsafe_allow_html=True)
-
-# JavaScript for toggling dark/light mode
-st.markdown("""
-<script>
-function toggleMode() {
-    const body = document.body;
-    body.classList.toggle('light-mode');
-}
-</script>
-""", unsafe_allow_html=True)
-
-# Dynamic header with real-time updates
-def get_dynamic_header():
-    now = datetime.now()
-    return f"<p class='big-font'>Advanced Sales Prediction Simulator</p><p class='subheader'>Last updated: {now.strftime('%Y-%m-%d %H:%M:%S')}</p>"
-
-st.markdown(get_dynamic_header(), unsafe_allow_html=True)
 def custom_file_uploader(label, type):
     st.markdown(f'<p class="file-upload-text">{label}</p>', unsafe_allow_html=True)
     uploaded_file = st.file_uploader("Choose file", type=type, key="file_uploader", label_visibility="collapsed")
@@ -404,7 +326,8 @@ def style_dataframe(df):
     styler.format(numeric_format)
     return styler
 def main():
-    #st.markdown('<p class="subheader">Upload your data and unlock the future of sales!</p>', unsafe_allow_html=True)
+    st.markdown('<p class="big-font">Sales Prediction Simulator</p>', unsafe_allow_html=True)
+    st.markdown('<p class="subheader">Upload your data and unlock the future of sales!</p>', unsafe_allow_html=True)
     uploaded_file = custom_file_uploader("Choose your sales data file (Excel format)", ["xlsx"])
 
     if uploaded_file is not None:
@@ -468,7 +391,7 @@ def main():
                 'feature': features,
                 'importance': model.feature_importances_
             }).sort_values('importance', ascending=False)
-            filtered_data['FY2025 Till Sep']=filtered_data['Monthly Achievement(Sep)']+filtered_data['Monthly Achievement(Aug)']+filtered_data['Monthly Achievement(July)']+filtered_data['Monthly Achievement(June)']+filtered_data['Monthly Achievement(May)']+filtered_data['Monthly Achievement(Apr)']
+
             fig_importance = px.bar(feature_importance, x='importance', y='feature', orientation='h',
                                     title='Feature Impact Analysis', labels={'importance': 'Impact', 'feature': 'Feature'})
             fig_importance.update_layout(
@@ -482,22 +405,7 @@ def main():
             )
             fig_importance.update_xaxes(tickfont_color='peru')
             fig_importance.update_yaxes(tickfont_color='peru')
-            fig_predictions1 = go.Figure()
-            fig_predictions1.add_trace(go.Bar(x=filtered_data['Zone'], y=filtered_data['FY2025 Till Sep'], name='Oct 2023 Sales', marker_color='darkseagreen'))
-            fig_predictions1.update_layout(
-                title='FY2025 Till September', 
-                plot_bgcolor='rgba(255,255,255,0.1)', 
-                paper_bgcolor='rgba(0,0,0,0)', 
-                font_color='burlywood',
-                xaxis_title_font_color='burlywood',
-                yaxis_title_font_color='burlywood',
-                title_font_color='burlywood',
-                legend_font_color='burlywood'
-            )
-            fig_predictions1.update_xaxes(title_text='Zone', tickfont_color='peru')
-            fig_predictions1.update_yaxes(title_text='Sales', tickfont_color='peru')
             st.plotly_chart(fig_importance, use_container_width=True)
-            st.plotly_chart(fig_predictions1, use_container_width=True)
 
         with col2:
             
