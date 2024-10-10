@@ -48,14 +48,14 @@ def check_password():
         return False
 
     # Check if user is locked out
-    lockout_time = cookies.get('lockout_time', 0)
-    if time.time() < lockout_time:
-        remaining_time = int(lockout_time - time.time())
+    lockout_time = cookies.get('lockout_time', '0')
+    if time.time() < float(lockout_time):
+        remaining_time = int(float(lockout_time) - time.time())
         st.error(f"Too many incorrect attempts. Please try again in {remaining_time // 60} minutes and {remaining_time % 60} seconds.")
         return False
 
     # Initialize attempts if not present
-    login_attempts = cookies.get('login_attempts', 0)
+    login_attempts = int(cookies.get('login_attempts', '0'))
 
     def password_entered():
         """Checks whether a password entered by the user is correct."""
@@ -68,10 +68,10 @@ def check_password():
             st.session_state["password_correct"] = False
             login_attempts += 1
             if login_attempts >= MAX_ATTEMPTS:
-                cookies.set('lockout_time', int(time.time()) + LOCKOUT_DURATION)
+                cookies['lockout_time'] = str(time.time() + LOCKOUT_DURATION)
         
-        # Convert login_attempts to string before saving
-        cookies.set('login_attempts', str(login_attempts))
+        # Update login_attempts in cookies
+        cookies['login_attempts'] = str(login_attempts)
         cookies.save()
 
     if "password_correct" not in st.session_state:
