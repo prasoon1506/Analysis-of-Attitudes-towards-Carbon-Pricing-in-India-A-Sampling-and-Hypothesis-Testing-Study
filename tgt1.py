@@ -86,9 +86,10 @@ def check_password():
         remaining_time = int(float(lockout_time) - time.time())
         st.error(f"Too many incorrect attempts. Please try again in {remaining_time // 60} minutes and {remaining_time % 60} seconds.")
         return False
+    login_attempts = int(login_attempts) if login_attempts is not None else 0
     if 'login_attempts' not in st.session_state:
      login_attempts = cookies.get('login_attempts')
-     st.session_state.login_attempts = int(cookies.get('login_attempts', '0'))
+     st.session_state.login_attempts = int(login_attempts) if login_attempts is not None else 0
     def password_entered():
         """Checks whether a password entered by the user is correct."""
         if hash_password(st.session_state["password"]) == hash_password(CORRECT_PASSWORD):
