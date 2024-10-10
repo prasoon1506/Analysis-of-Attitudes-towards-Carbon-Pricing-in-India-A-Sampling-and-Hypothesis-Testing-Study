@@ -22,9 +22,15 @@ import os
 from streamlit_cookies_manager import EncryptedCookieManager
 # Set page config
 st.set_page_config(page_title="Sales Prediction Simulator", layout="wide", initial_sidebar_state="collapsed")
+def get_cookie_password():
+    if 'cookie_password' not in st.session_state:
+        st.session_state.cookie_password = secrets.token_hex(16)
+    return st.session_state.cookie_password
+
+# Initialize the encrypted cookie manager
 cookies = EncryptedCookieManager(
     prefix="sales_predictor_",
-    password=os.environ.get("COOKIE_PASSWORD", "default_secret_key")
+    password=get_cookie_password()
 )
 
 # Constants
