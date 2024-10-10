@@ -87,6 +87,7 @@ def check_password():
         st.error(f"Too many incorrect attempts. Please try again in {remaining_time // 60} minutes and {remaining_time % 60} seconds.")
         return False
     if 'login_attempts' not in st.session_state:
+     login_attempts = cookies.get('login_attempts')
      st.session_state.login_attempts = int(cookies.get('login_attempts', '0'))
     def password_entered():
         """Checks whether a password entered by the user is correct."""
