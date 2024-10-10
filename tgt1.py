@@ -405,7 +405,24 @@ def main():
             )
             fig_importance.update_xaxes(tickfont_color='peru')
             fig_importance.update_yaxes(tickfont_color='peru')
+            filtered_data['FY2025 Till Sep']= filtered_data['Monthly Achievement(Apr)']+filtered_data['Monthly Achievement(May)']+filtered_data['Monthly Achievement(June)']+filtered_data['Monthly Achievement(July)']+filtered_data['Monthly Achievement(Aug)']+filtered_data['Monthly Achievement(Sep)']
+            fig_predictions1 = go.Figure()
+            fig_predictions1.add_trace(go.Bar(x=filtered_data['Zone'], y=filtered_data['FY 2025 Till Sep'], name='Till SepSales', marker_color='#4a69bd'))
+            fig_predictions1.update_layout(
+                title='FY 2025 Till Sep', 
+                barmode='group', 
+                plot_bgcolor='rgba(255,255,255,0.1)', 
+                paper_bgcolor='rgba(0,0,0,0)', 
+                font_color='burlywood',
+                xaxis_title_font_color='burlywood',
+                yaxis_title_font_color='burlywood',
+                title_font_color='burlywood',
+                legend_font_color='burlywood'
+            )
+            fig_predictions1.update_xaxes(title_text='Zone', tickfont_color='peru')
+            fig_predictions1.update_yaxes(title_text='Sales', tickfont_color='peru')
             st.plotly_chart(fig_importance, use_container_width=True)
+            st.plotly_chart(fig_predictions1, use_container_width=True)
 
         with col2:
             
