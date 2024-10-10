@@ -15,52 +15,98 @@ from reportlab.lib.units import inch
 import plotly.express as px
 import plotly.graph_objects as go
 import time
+import time
+import datetime
+import hashlib
+import os
+from streamlit_cookies_manager import EncryptedCookieManager
 # Set page config
 st.set_page_config(page_title="Sales Prediction Simulator", layout="wide", initial_sidebar_state="collapsed")
+cookies = EncryptedCookieManager(
+    prefix="sales_predictor_",
+    password=os.environ.get("COOKIE_PASSWORD", "default_secret_key")
+)
+
+# Constants
 CORRECT_PASSWORD = "prasoonA1@"  # Replace with your desired password
 MAX_ATTEMPTS = 5
 LOCKOUT_DURATION = 3600  # 1 hour in seconds
 
-# Password Protection
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
+
 def check_password():
     """Returns `True` if the user had the correct password."""
+    if not cookies.ready():
+        st.warning("Initializing cookies...")
+        return False
 
-    if 'login_attempts' not in st.session_state:
-        st.session_state.login_attempts = 0
-        st.session_state.lockout_time = 0
-
-    current_time = int(time.time())
-
-    if current_time < st.session_state.lockout_time:
-        remaining_time = st.session_state.lockout_time - current_time
+    # Check if user is locked out
+    if 'lockout_time' in cookies and time.time() < cookies['lockout_time']:
+        remaining_time = int(cookies['lockout_time'] - time.time())
         st.error(f"Too many incorrect attempts. Please try again in {remaining_time // 60} minutes and {remaining_time % 60} seconds.")
         return False
 
+    # Initialize attempts if not present
+    if 'login_attempts' not in cookies:
+        cookies['login_attempts'] = 0
+
     def password_entered():
         """Checks whether a password entered by the user is correct."""
-        if st.session_state["password"] == CORRECT_PASSWORD:
+        if hash_password(st.session_state["password"]) == hash_password(CORRECT_PASSWORD):
             st.session_state["password_correct"] = True
-            st.session_state.login_attempts = 0
+            cookies['login_attempts'] = 0
             del st.session_state["password"]  # don't store password
         else:
             st.session_state["password_correct"] = False
-            st.session_state.login_attempts += 1
-            if st.session_state.login_attempts >= MAX_ATTEMPTS:
-                st.session_state.lockout_time = int(time.time()) + LOCKOUT_DURATION
+            cookies['login_attempts'] += 1
+            if cookies['login_attempts'] >= MAX_ATTEMPTS:
+                cookies['lockout_time'] = int(time.time()) + LOCKOUT_DURATION
+        cookies.save()
 
     if "password_correct" not in st.session_state:
         # First run, show input for password.
+        st.markdown("""
+        <style>
+        .stTextInput > div > div > input {
+            background-color: #f0f0f0;
+            color: #333;
+            border: 2px solid #4a69bd;
+            border-radius: 5px;
+            padding: 10px;
+            font-size: 16px;
+        }
+        .stButton > button {
+            background-color: #4a69bd;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .stButton > button:hover {
+            background-color: #82ccdd;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; color: #4a69bd;'>Sales Prediction Simulator</h1>", unsafe_allow_html=True)
+        st.markdown("<h3 style='text-align: center; color: #333;'>Please enter your password to access the application</h3>", unsafe_allow_html=True)
         st.text_input("Password", type="password", on_change=password_entered, key="password")
+        st.button("Login")
+        if cookies['login_attempts'] > 0:
+            st.warning(f"Incorrect password. Attempt {cookies['login_attempts']} of {MAX_ATTEMPTS}.")
         return False
     elif not st.session_state["password_correct"]:
         # Password incorrect, show input + error.
         st.text_input("Password", type="password", on_change=password_entered, key="password")
-        if st.session_state.login_attempts > 0:
-            st.error(f"😕 Password incorrect. Attempt {st.session_state.login_attempts} of {MAX_ATTEMPTS}.")
+        st.error("😕 Password incorrect")
         return False
     else:
         # Password correct.
         return True
+
 if check_password():
  st.markdown("""
 <style>
