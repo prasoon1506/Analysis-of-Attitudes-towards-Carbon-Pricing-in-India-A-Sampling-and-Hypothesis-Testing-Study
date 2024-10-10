@@ -18,36 +18,49 @@ import plotly.graph_objects as go
 # Set page config
 st.set_page_config(page_title="Sales Prediction Simulator", layout="wide", initial_sidebar_state="collapsed")
 CORRECT_PASSWORD = "prasoonA1@"  # Replace with your desired password
+MAX_ATTEMPTS = 5
+LOCKOUT_DURATION = 3600  # 1 hour in seconds
 
 # Password Protection
 def check_password():
     """Returns `True` if the user had the correct password."""
 
+    if 'login_attempts' not in st.session_state:
+        st.session_state.login_attempts = 0
+        st.session_state.lockout_time = 0
+
+    current_time = int(time.time())
+
+    if current_time < st.session_state.lockout_time:
+        remaining_time = st.session_state.lockout_time - current_time
+        st.error(f"Too many incorrect attempts. Please try again in {remaining_time // 60} minutes and {remaining_time % 60} seconds.")
+        return False
+
     def password_entered():
         """Checks whether a password entered by the user is correct."""
         if st.session_state["password"] == CORRECT_PASSWORD:
             st.session_state["password_correct"] = True
+            st.session_state.login_attempts = 0
             del st.session_state["password"]  # don't store password
         else:
             st.session_state["password_correct"] = False
+            st.session_state.login_attempts += 1
+            if st.session_state.login_attempts >= MAX_ATTEMPTS:
+                st.session_state.lockout_time = int(time.time()) + LOCKOUT_DURATION
 
     if "password_correct" not in st.session_state:
         # First run, show input for password.
-        st.text_input(
-            "Password", type="password", on_change=password_entered, key="password"
-        )
+        st.text_input("Password", type="password", on_change=password_entered, key="password")
         return False
     elif not st.session_state["password_correct"]:
         # Password incorrect, show input + error.
-        st.text_input(
-            "Password", type="password", on_change=password_entered, key="password"
-        )
-        st.error("😕 Password incorrect")
+        st.text_input("Password", type="password", on_change=password_entered, key="password")
+        if st.session_state.login_attempts > 0:
+            st.error(f"😕 Password incorrect. Attempt {st.session_state.login_attempts} of {MAX_ATTEMPTS}.")
         return False
     else:
         # Password correct.
         return True
-
 if check_password():
  st.markdown("""
 <style>
