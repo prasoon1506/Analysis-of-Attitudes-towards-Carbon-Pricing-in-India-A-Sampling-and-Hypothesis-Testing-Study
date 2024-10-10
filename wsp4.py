@@ -4654,28 +4654,76 @@ import plotly.graph_objects as go
 import time
 # Set page config
 def projection():
+ def get_cookie_password():
+    if 'cookie_password' not in st.session_state:
+        st.session_state.cookie_password = secrets.token_hex(16)
+    return st.session_state.cookie_password
+
+# Initialize the encrypted cookie manager
+ cookies = EncryptedCookieManager(
+    prefix="sales_predictor_",
+    password=get_cookie_password()
+)
+
+# Constants
  CORRECT_PASSWORD = "prasoonA1@"  # Replace with your desired password
  MAX_ATTEMPTS = 5
  LOCKOUT_DURATION = 3600  # 1 hour in seconds
 
-# Password Protection
+ def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
  def check_password():
     """Returns `True` if the user had the correct password."""
+    if not cookies.ready():
+        st.warning("Initializing cookies...")
+        return False
 
-    if 'login_attempts' not in st.session_state:
-        st.session_state.login_attempts = 0
-        st.session_state.lockout_time = 0
+    # Apply custom CSS
+    st.markdown("""
+    <style>
+    .stTextInput > div > div > input {
+        background-color: #f0f0f0;
+        color: #333;
+        border: 2px solid #4a69bd;
+        border-radius: 5px;
+        padding: 10px;
+        font-size: 16px;
+    }
+    .stButton > button {
+        background-color: #4a69bd;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+    .stButton > button:hover {
+        background-color: #82ccdd;
+    }
+    .attempt-text {
+        color: #ff4b4b;
+        font-size: 14px;
+        margin-top: 5px;
+        text-align: center;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
-    current_time = int(time.time())
-
-    if current_time < st.session_state.lockout_time:
-        remaining_time = st.session_state.lockout_time - current_time
+    # Check if user is locked out
+    lockout_time = cookies.get('lockout_time')
+    if lockout_time is not None and time.time() < float(lockout_time):
+        remaining_time = int(float(lockout_time) - time.time())
         st.error(f"Too many incorrect attempts. Please try again in {remaining_time // 60} minutes and {remaining_time % 60} seconds.")
         return False
 
+    if 'login_attempts' not in st.session_state:
+     login_attempts = cookies.get('login_attempts')
+     st.session_state.login_attempts = int(login_attempts) if login_attempts is not None else 0
     def password_entered():
         """Checks whether a password entered by the user is correct."""
-        if st.session_state["password"] == CORRECT_PASSWORD:
+        if hash_password(st.session_state["password"]) == hash_password(CORRECT_PASSWORD):
             st.session_state["password_correct"] = True
             st.session_state.login_attempts = 0
             del st.session_state["password"]  # don't store password
@@ -4683,21 +4731,41 @@ def projection():
             st.session_state["password_correct"] = False
             st.session_state.login_attempts += 1
             if st.session_state.login_attempts >= MAX_ATTEMPTS:
-                st.session_state.lockout_time = int(time.time()) + LOCKOUT_DURATION
+                cookies['lockout_time'] = str(time.time() + LOCKOUT_DURATION)
+        
+        # Update login_attempts in cookies
+        cookies['login_attempts'] = str(st.session_state.login_attempts)
+        cookies.save()
 
+    # First run, show input for password
     if "password_correct" not in st.session_state:
-        # First run, show input for password.
-        st.text_input("Password", type="password", on_change=password_entered, key="password")
-        return False
-    elif not st.session_state["password_correct"]:
-        # Password incorrect, show input + error.
-        st.text_input("Password", type="password", on_change=password_entered, key="password")
+        st.markdown("<h1 style='text-align: center; color: #4a69bd;'>Sales Prediction Simulator</h1>", unsafe_allow_html=True)
+        st.markdown("<h3 style='text-align: center; color: #333;'>Please enter your password to access the application</h3>", unsafe_allow_html=True)
+        st.text_input("Password", type="password", key="password")
+        if st.button("Login"):
+            password_entered()
+        
         if st.session_state.login_attempts > 0:
-            st.error(f"😕 Password incorrect. Attempt {st.session_state.login_attempts} of {MAX_ATTEMPTS}.")
+            st.markdown(f"<p class='attempt-text'>Incorrect password. Attempt {st.session_state.login_attempts} of {MAX_ATTEMPTS}.</p>", unsafe_allow_html=True)
+        
         return False
-    else:
-        # Password correct.
+    
+    # Password correct
+    elif st.session_state.get("password_correct", False):
         return True
+    
+    # Password incorrect, show input box again
+    else:
+        st.markdown("<h1 style='text-align: center; color: #4a69bd;'>Sales Prediction Simulator</h1>", unsafe_allow_html=True)
+        st.markdown("<h3 style='text-align: center; color: #333;'>Please enter your password to access the application</h3>", unsafe_allow_html=True)
+        st.text_input("Password", type="password", key="password")
+        if st.button("Login"):
+            password_entered()
+        
+        if st.session_state.login_attempts > 0:
+            st.markdown(f"<p class='attempt-text'>Incorrect password. Attempt {st.session_state.login_attempts} of {MAX_ATTEMPTS}.</p>", unsafe_allow_html=True)
+        
+        return False
  if check_password():
   st.markdown("""
 <style>
