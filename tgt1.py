@@ -89,7 +89,7 @@ def check_password():
 
     # Initialize attempts if not present
     if 'login_attempts' not in st.session_state:
-        st.session_state.login_attempts = int(cookies.get('login_attempts', 0))
+        st.session_state.login_attempts = int(cookies.get('login_attempts', '0'))
 
     def password_entered():
         """Checks whether a password entered by the user is correct."""
