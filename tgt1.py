@@ -17,7 +17,39 @@ import plotly.graph_objects as go
 
 # Set page config
 st.set_page_config(page_title="Sales Prediction Simulator", layout="wide", initial_sidebar_state="collapsed")
-st.markdown("""
+CORRECT_PASSWORD = "prasoonA1@"  # Replace with your desired password
+
+# Password Protection
+def check_password():
+    """Returns `True` if the user had the correct password."""
+
+    def password_entered():
+        """Checks whether a password entered by the user is correct."""
+        if st.session_state["password"] == CORRECT_PASSWORD:
+            st.session_state["password_correct"] = True
+            del st.session_state["password"]  # don't store password
+        else:
+            st.session_state["password_correct"] = False
+
+    if "password_correct" not in st.session_state:
+        # First run, show input for password.
+        st.text_input(
+            "Password", type="password", on_change=password_entered, key="password"
+        )
+        return False
+    elif not st.session_state["password_correct"]:
+        # Password incorrect, show input + error.
+        st.text_input(
+            "Password", type="password", on_change=password_entered, key="password"
+        )
+        st.error("😕 Password incorrect")
+        return False
+    else:
+        # Password correct.
+        return True
+
+if check_password():
+ st.markdown("""
 <style>
     body {
         background-color: #0e1117;
@@ -112,22 +144,22 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
-def custom_file_uploader(label, type):
+ def custom_file_uploader(label, type):
     st.markdown(f'<p class="file-upload-text">{label}</p>', unsafe_allow_html=True)
     uploaded_file = st.file_uploader("Choose file", type=type, key="file_uploader", label_visibility="collapsed")
     return uploaded_file
-@st.cache_data
-def load_data(file):
+ @st.cache_data
+ def load_data(file):
     data = pd.read_excel(file)
     return data
 
-@st.cache_resource
-def train_model(X, y):
+ @st.cache_resource
+ def train_model(X, y):
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     model = RandomForestRegressor(n_estimators=100, random_state=42)
     model.fit(X_train, y_train)
     return model, X_test, y_test
-def create_monthly_performance_graph(data):
+ def create_monthly_performance_graph(data):
     months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']
     colors = px.colors.qualitative.Pastel
 
@@ -179,7 +211,7 @@ def create_monthly_performance_graph(data):
     fig.update_traces(textfont_color='black')
     
     return fig
-def create_target_vs_projected_graph(data):
+ def create_target_vs_projected_graph(data):
     fig = go.Figure()
     fig.add_trace(go.Bar(x=data['Zone'], y=data['Month Tgt (Oct)'], name='Month Target (Oct)', marker_color='#4a69bd'))
     fig.add_trace(go.Bar(x=data['Zone'], y=data['Predicted Oct 2024'], name='Projected Sales (Oct)', marker_color='#82ccdd'))
@@ -201,7 +233,7 @@ def create_target_vs_projected_graph(data):
     
     return fig
 
-def prepare_data_for_pdf(data):
+ def prepare_data_for_pdf(data):
     # Filter out specified zones
     excluded_zones = ['Bihar', 'J&K', 'North-I', 'Punjab,HP and J&K', 'U.P.+U.K.', 'Odisha+Jharkhand+Bihar']
     filtered_data = data[~data['Zone'].isin(excluded_zones)]
@@ -241,7 +273,7 @@ def prepare_data_for_pdf(data):
 
     return final_data
 
-def create_pdf(data):
+ def create_pdf(data):
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter,
                             rightMargin=inch, leftMargin=inch,
@@ -305,9 +337,9 @@ def create_pdf(data):
     doc.build(elements)
     buffer.seek(0)
     return buffer
-from reportlab.lib import colors
+ from reportlab.lib import colors
 
-def style_dataframe(df):
+ def style_dataframe(df):
     styler = df.style
 
     for col in df.columns:
@@ -324,7 +356,7 @@ def style_dataframe(df):
     }
     styler.format(numeric_format)
     return styler
-def main():
+ def main():
     st.markdown('<p class="big-font">Sales Prediction Simulator</p>', unsafe_allow_html=True)
     st.markdown('<p class="subheader">Upload your data and unlock the future of sales!</p>', unsafe_allow_html=True)
     uploaded_file = custom_file_uploader("Choose your sales data file (Excel format)", ["xlsx"])
@@ -506,5 +538,7 @@ def main():
     else:
         st.info("Upload your sales data to begin the simulation!")
 
-if __name__ == "__main__":
+ if __name__ == "__main__":
     main()
+else:
+    st.stop()
