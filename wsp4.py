@@ -1127,7 +1127,7 @@ def Home():
     """, unsafe_allow_html=True)
 
     # Main title and subtitle
-    st.markdown('<h1 class="title">Statistica Pro</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="title">Statistica</h1>', unsafe_allow_html=True)
     st.markdown('<p class="subtitle">Analyze, Visualize, Optimize.</p>', unsafe_allow_html=True)
 
     # Load and display Lottie animation
@@ -4635,6 +4635,7 @@ def green():
     - Descriptive statistics and share analysis
     - Customizable Green and Yellow share adjustments
     """)
+
 def load_visit_data():
     try:
         with open('visit_data.json', 'r') as f:
