@@ -41,7 +41,6 @@ LOCKOUT_DURATION = 3600  # 1 hour in seconds
 
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
-
 def check_password():
     """Returns `True` if the user had the correct password."""
     if not cookies.ready():
@@ -69,43 +68,15 @@ def check_password():
             st.session_state["password_correct"] = False
             login_attempts += 1
             if login_attempts >= MAX_ATTEMPTS:
-                cookies['lockout_time'] = int(time.time()) + LOCKOUT_DURATION
-        cookies['login_attempts'] = login_attempts
+                cookies.set('lockout_time', int(time.time()) + LOCKOUT_DURATION)
+        
+        # Convert login_attempts to string before saving
+        cookies.set('login_attempts', str(login_attempts))
         cookies.save()
 
     if "password_correct" not in st.session_state:
         # First run, show input for password.
-        st.markdown("""
-        <style>
-        .stTextInput > div > div > input {
-            background-color: #f0f0f0;
-            color: #333;
-            border: 2px solid #4a69bd;
-            border-radius: 5px;
-            padding: 10px;
-            font-size: 16px;
-        }
-        .stButton > button {
-            background-color: #4a69bd;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        .stButton > button:hover {
-            background-color: #82ccdd;
-        }
-        </style>
-        """, unsafe_allow_html=True)
-        st.markdown("<h1 style='text-align: center; color: #4a69bd;'>Sales Prediction Simulator</h1>", unsafe_allow_html=True)
-        st.markdown("<h3 style='text-align: center; color: #333;'>Please enter your password to access the application</h3>", unsafe_allow_html=True)
         st.text_input("Password", type="password", on_change=password_entered, key="password")
-        st.button("Login")
-        if login_attempts > 0:
-            st.warning(f"Incorrect password. Attempt {login_attempts} of {MAX_ATTEMPTS}.")
         return False
     elif not st.session_state["password_correct"]:
         # Password incorrect, show input + error.
