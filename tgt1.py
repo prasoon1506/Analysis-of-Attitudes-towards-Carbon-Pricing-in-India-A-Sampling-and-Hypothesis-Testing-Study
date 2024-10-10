@@ -47,6 +47,33 @@ def check_password():
         st.warning("Initializing cookies...")
         return False
 
+    # Apply custom CSS
+    st.markdown("""
+    <style>
+    .stTextInput > div > div > input {
+        background-color: #f0f0f0;
+        color: #333;
+        border: 2px solid #4a69bd;
+        border-radius: 5px;
+        padding: 10px;
+        font-size: 16px;
+    }
+    .stButton > button {
+        background-color: #4a69bd;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+    .stButton > button:hover {
+        background-color: #82ccdd;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     # Check if user is locked out
     lockout_time = cookies.get('lockout_time')
     if lockout_time is not None and time.time() < float(lockout_time):
@@ -70,49 +97,31 @@ def check_password():
             login_attempts += 1
             if login_attempts >= MAX_ATTEMPTS:
                 cookies['lockout_time'] = str(time.time() + LOCKOUT_DURATION)
+            st.error(f"Incorrect password. Attempt {login_attempts} of {MAX_ATTEMPTS}.")
         
         # Update login_attempts in cookies
         cookies['login_attempts'] = str(login_attempts)
         cookies.save()
+
+    # First run, show input for password
     if "password_correct" not in st.session_state:
-        # First run, show input for password.
-        st.markdown("""
-        <style>
-        .stTextInput > div > div > input {
-            background-color: #f0f0f0;
-            color: #333;
-            border: 2px solid #4a69bd;
-            border-radius: 5px;
-            padding: 10px;
-            font-size: 16px;
-        }
-        .stButton > button {
-            background-color: #4a69bd;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        .stButton > button:hover {
-            background-color: #82ccdd;
-        }
-        </style>
-        """, unsafe_allow_html=True)
         st.markdown("<h1 style='text-align: center; color: #4a69bd;'>Sales Prediction Simulator</h1>", unsafe_allow_html=True)
         st.markdown("<h3 style='text-align: center; color: #333;'>Please enter your password to access the application</h3>", unsafe_allow_html=True)
         st.text_input("Password", type="password", on_change=password_entered, key="password")
         st.button("Login")
-        if login_attempts > 0:
-            st.warning(f"Incorrect password. Attempt {login_attempts} of {MAX_ATTEMPTS}.")
         return False
-
-    else:
-        # Password correct.
+    
+    # Password correct
+    elif st.session_state["password_correct"]:
         return True
-
+    
+    # Password incorrect, show input box again
+    else:
+        st.markdown("<h1 style='text-align: center; color: #4a69bd;'>Sales Prediction Simulator</h1>", unsafe_allow_html=True)
+        st.markdown("<h3 style='text-align: center; color: #333;'>Please enter your password to access the application</h3>", unsafe_allow_html=True)
+        st.text_input("Password", type="password", on_change=password_entered, key="password")
+        st.button("Login")
+        return False
 if check_password():
  st.markdown("""
 <style>
