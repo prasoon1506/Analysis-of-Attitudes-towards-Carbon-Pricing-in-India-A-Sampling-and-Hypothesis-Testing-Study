@@ -127,7 +127,6 @@ def train_model(X, y):
     model = RandomForestRegressor(n_estimators=100, random_state=42)
     model.fit(X_train, y_train)
     return model, X_test, y_test
-
 def create_monthly_performance_graph(data):
     months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']
     colors = px.colors.qualitative.Pastel
