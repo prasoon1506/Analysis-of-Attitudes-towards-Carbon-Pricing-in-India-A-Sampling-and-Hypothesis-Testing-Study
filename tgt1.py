@@ -42,26 +42,28 @@ def check_password():
         return False
 
     # Check if user is locked out
-    if 'lockout_time' in cookies and time.time() < cookies['lockout_time']:
-        remaining_time = int(cookies['lockout_time'] - time.time())
+    lockout_time = cookies.get('lockout_time', 0)
+    if time.time() < lockout_time:
+        remaining_time = int(lockout_time - time.time())
         st.error(f"Too many incorrect attempts. Please try again in {remaining_time // 60} minutes and {remaining_time % 60} seconds.")
         return False
 
     # Initialize attempts if not present
-    if 'login_attempts' not in cookies:
-        cookies['login_attempts'] = 0
+    login_attempts = cookies.get('login_attempts', 0)
 
     def password_entered():
         """Checks whether a password entered by the user is correct."""
+        nonlocal login_attempts
         if hash_password(st.session_state["password"]) == hash_password(CORRECT_PASSWORD):
             st.session_state["password_correct"] = True
-            cookies['login_attempts'] = 0
+            login_attempts = 0
             del st.session_state["password"]  # don't store password
         else:
             st.session_state["password_correct"] = False
-            cookies['login_attempts'] += 1
-            if cookies['login_attempts'] >= MAX_ATTEMPTS:
+            login_attempts += 1
+            if login_attempts >= MAX_ATTEMPTS:
                 cookies['lockout_time'] = int(time.time()) + LOCKOUT_DURATION
+        cookies['login_attempts'] = login_attempts
         cookies.save()
 
     if "password_correct" not in st.session_state:
@@ -95,8 +97,8 @@ def check_password():
         st.markdown("<h3 style='text-align: center; color: #333;'>Please enter your password to access the application</h3>", unsafe_allow_html=True)
         st.text_input("Password", type="password", on_change=password_entered, key="password")
         st.button("Login")
-        if cookies['login_attempts'] > 0:
-            st.warning(f"Incorrect password. Attempt {cookies['login_attempts']} of {MAX_ATTEMPTS}.")
+        if login_attempts > 0:
+            st.warning(f"Incorrect password. Attempt {login_attempts} of {MAX_ATTEMPTS}.")
         return False
     elif not st.session_state["password_correct"]:
         # Password incorrect, show input + error.
