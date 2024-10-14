@@ -5346,7 +5346,7 @@ def main():
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
     .visit-counter h3 {
-        color: #333;
+        color: #FFD700;
         font-size: 18px;
         margin-bottom: 10px;
     }
