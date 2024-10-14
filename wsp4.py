@@ -5369,6 +5369,8 @@ def main():
     st.sidebar.markdown(f"""
     <div class="user-info">
         <i class="fas fa-user"></i> Logged in as: {st.session_state.username}
+        <br>
+        <small>Last login: {datetime.now().strftime('%Y-%m-%d %H:%M')}</small>
     </div>
     """, unsafe_allow_html=True)
 
