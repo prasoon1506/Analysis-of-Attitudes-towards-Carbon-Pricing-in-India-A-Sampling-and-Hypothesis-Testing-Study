@@ -1020,7 +1020,7 @@ def plot_district_graph(df, district_names, benchmark_brands_dict, desired_diff_
                             actual_diff = jklc_prices[i] - benchmark_prices[i]
                             break
                 desired_diff_str = f" ({desired_diff_dict[district_name][benchmark_brand]:.0f} Rs.)" if district_name in desired_diff_dict and benchmark_brand in desired_diff_dict[district_name] else ""
-                brand_text = [f"Benchmark Brand: {benchmark_brand}{desired_diff_str}", f"Actual Diff: {actual_diff:+.2f} Rs."]
+                brand_text = [f"Benchmark Brand: {benchmark_brand}{desired_diff_str}", f"Actual Diff: {actual_diff:+.0f} Rs."]
                 brand_texts.append(brand_text)
                 max_left_length = max(max_left_length, len(brand_text[0]))
             num_brands = len(brand_texts)
