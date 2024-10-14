@@ -2661,7 +2661,7 @@ def folder_menu():
         "The largest file size theoretically possible in Windows is 16 exabytes minus 1 KB.",
         "The PDF file format was invented by Adobe in 1993.",
         "The first widely-used image format on the web was GIF, created in 1987.",
-        "John McCarthy,an American computer scientist, coined the term "Artificial Intelligence" in 1956.",
+        "John McCarthy,an American computer scientist, coined the term Artificial Intelligence in 1956.",
         "About 90% of the World's Currency only exists on Computers.",
         "MyDoom is the most expensive computer virus in history.",
         "The original name of windows was Interface Manager.",
