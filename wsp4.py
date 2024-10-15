@@ -4454,7 +4454,7 @@ def green():
     return buffer
 
  if selected == "Home":
-    st.title("📊 Advanced GYR Analysis")
+    st.title("📊 Advanced Geo Mix Analysis")
     st.markdown("Welcome to our advanced data analysis platform. Upload your Excel file to get started with interactive visualizations and insights.")
     
     st.markdown("<div class='upload-section'>", unsafe_allow_html=True)
