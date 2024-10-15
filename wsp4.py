@@ -3460,16 +3460,16 @@ def normal():
         st.markdown("</div>", unsafe_allow_html=True)
 
  elif selected == "About":
-    st.title("About the GYR Analysis App")
+    st.title("About the Product Mix Analysis App")
     st.markdown("""
-    This advanced data analysis application is designed to provide insightful visualizations and statistics for your GYR (Green, Yellow, Red) data. 
+    This advanced data analysis application is designed to provide insightful visualizations and statistics for your Product(Normal and Premium) Mix data. 
     
     Key features include:
     - Interactive data filtering
     - Multiple analysis types (NSR, Contribution, EBITDA)
     - Dynamic visualizations with Plotly
     - Descriptive statistics and share analysis
-    - Customizable Green and Yellow share adjustments
+    - Customizable Premium share adjustments
     """)
 def load_lottieurl(url: str):
     try:
@@ -4008,16 +4008,16 @@ def trade():
         st.markdown("</div>", unsafe_allow_html=True)
 
  elif selected == "About":
-    st.title("About the GYR Analysis App")
+    st.title("About the Segment Mix Analysis App")
     st.markdown("""
-    This advanced data analysis application is designed to provide insightful visualizations and statistics for your GYR (Green, Yellow, Red) data. 
+    This advanced data analysis application is designed to provide insightful visualizations and statistics for your Segment(Trade,Non-Trade) Mix data. 
     
     Key features include:
     - Interactive data filtering
     - Multiple analysis types (NSR, Contribution, EBITDA)
     - Dynamic visualizations with Plotly
     - Descriptive statistics and share analysis
-    - Customizable Green and Yellow share adjustments
+    - Customizable Trade share adjustments
     """)
 from plotly.subplots import make_subplots
 import matplotlib.pyplot as plt
