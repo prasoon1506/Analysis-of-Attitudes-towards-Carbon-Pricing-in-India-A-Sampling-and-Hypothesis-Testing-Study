@@ -225,11 +225,43 @@ def excel_editor():
 
 def data_analyzer():
     st.header("Advanced Data Analyzer")
+    data_source = st.radio("Choose data source", ["Upload Excel File", "Create DataFrame", "Paste Data"])
     
-    uploaded_file = st.file_uploader("Choose an Excel file for analysis", type="xlsx", key="analyser")
+    if data_source == "Upload Excel File":
+        uploaded_file = st.file_uploader("Choose an Excel file for analysis", type="xlsx", key="analyser")
+        if uploaded_file is not None:
+            df = pd.read_excel(uploaded_file)
     
-    if uploaded_file is not None:
-        df = pd.read_excel(uploaded_file)
+    elif data_source == "Create DataFrame":
+        st.subheader("Create Your DataFrame")
+        num_rows = st.number_input("Number of rows", min_value=1, value=5)
+        num_cols = st.number_input("Number of columns", min_value=1, value=3)
+        
+        data = {}
+        for col in range(num_cols):
+            col_name = st.text_input(f"Column {col+1} name")
+            col_type = st.selectbox(f"Column {col+1} type", ["Numeric", "Categorical"])
+            
+            if col_type == "Numeric":
+                col_data = st.text_input(f"Enter {num_rows} numeric values for {col_name} (comma-separated)")
+                data[col_name] = [float(x.strip()) for x in col_data.split(',') if x.strip()]
+            else:
+                col_data = st.text_input(f"Enter {num_rows} categorical values for {col_name} (comma-separated)")
+                data[col_name] = [x.strip() for x in col_data.split(',') if x.strip()]
+        
+        df = pd.DataFrame(data)
+    
+    elif data_source == "Paste Data":
+        st.subheader("Paste Your Data")
+        data_format = st.radio("Data format", ["CSV", "JSON"])
+        pasted_data = st.text_area("Paste your data here")
+        
+        if data_format == "CSV":
+            df = pd.read_csv(StringIO(pasted_data))
+        else:  # JSON
+            df = pd.read_json(StringIO(pasted_data))
+    
+    if 'df' in locals():
         
         st.write("Dataset Information:")
         st.write(f"Number of rows: {df.shape[0]}")
