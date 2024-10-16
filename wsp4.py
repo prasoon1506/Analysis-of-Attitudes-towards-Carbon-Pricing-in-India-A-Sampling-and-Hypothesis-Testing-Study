@@ -243,13 +243,13 @@ def data_analyzer():
             col_type = st.selectbox(f"Column {col+1} type", ["Numeric", "Categorical"])
             
             if col_type == "Numeric":
-                col_data = st.text_input(f"Enter {num_rows} numeric values for {col_name} (comma-separated)")
+                col_data = st.text_input(f"Enter {num_rows} numeric values for {col_name} (comma-separated)",key="unique1")
                 data[col_name] = [float(x.strip()) for x in col_data.split(',') if x.strip()]
             else:
-                col_data = st.text_input(f"Enter {num_rows} categorical values for {col_name} (comma-separated)")
+                col_data = st.text_input(f"Enter {num_rows} categorical values for {col_name} (comma-separated)",key="unique2")
                 data[col_name] = [x.strip() for x in col_data.split(',') if x.strip()]
         
-        df = pd.DataFrame(data,key="unique")
+        df = pd.DataFrame(data)
     
     if 'df' in locals():
         
