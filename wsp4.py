@@ -225,7 +225,7 @@ def excel_editor():
 
 def data_analyzer():
     st.header("Advanced Data Analyzer")
-    data_source = st.radio("Choose data source", ["Upload Excel File", "Create DataFrame", "Paste Data"])
+    data_source = st.radio("Choose data source", ["Upload Excel File", "Create DataFrame"])
     
     if data_source == "Upload Excel File":
         uploaded_file = st.file_uploader("Choose an Excel file for analysis", type="xlsx", key="analyser")
@@ -249,7 +249,7 @@ def data_analyzer():
                 col_data = st.text_input(f"Enter {num_rows} categorical values for {col_name} (comma-separated)")
                 data[col_name] = [x.strip() for x in col_data.split(',') if x.strip()]
         
-        df = pd.DataFrame(data)
+        df = pd.DataFrame(data,key="unique")
     
     if 'df' in locals():
         
