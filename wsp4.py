@@ -251,16 +251,6 @@ def data_analyzer():
         
         df = pd.DataFrame(data)
     
-    elif data_source == "Paste Data":
-        st.subheader("Paste Your Data")
-        data_format = st.radio("Data format", ["CSV", "JSON"])
-        pasted_data = st.text_area("Paste your data here")
-        
-        if data_format == "CSV":
-            df = pd.read_csv(StringIO(pasted_data))
-        else:  # JSON
-            df = pd.read_json(StringIO(pasted_data))
-    
     if 'df' in locals():
         
         st.write("Dataset Information:")
