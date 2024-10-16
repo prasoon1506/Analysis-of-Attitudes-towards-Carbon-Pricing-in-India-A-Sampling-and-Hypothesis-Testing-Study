@@ -2502,7 +2502,7 @@ def folder_menu():
     </style>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="title"><span>🗃️ Advanced File Manager</span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="title"><span>📓 Advanced File Manager</span></div>', unsafe_allow_html=True)
 
     # Load Lottie animation
     lottie_urls = [
@@ -3292,7 +3292,7 @@ def normal():
 
 
  if selected == "Home":
-    st.title("📊 Advanced Product Mix Analysis")
+    st.title("🔍 Advanced Product Mix Analysis")
     st.markdown("Welcome to our advanced data analysis platform. Upload your Excel file to get started with interactive visualizations and insights.")
     
     st.markdown("<div class='upload-section'>", unsafe_allow_html=True)
@@ -3310,7 +3310,7 @@ def normal():
             st.image("https://cdn-icons-png.flaticon.com/512/4503/4503700.png", width=150)
     st.markdown("</div>", unsafe_allow_html=True)
  elif selected == "Analysis":
-    st.title("🔍 Product Mix Dashboard")
+    st.title("📈 Product Mix Dashboard")
     
     if 'uploaded_file' not in st.session_state or st.session_state.uploaded_file is None:
         st.warning("Please upload an Excel file on the Home page to begin the analysis.")
@@ -3840,7 +3840,7 @@ def trade():
 
 
  if selected == "Home":
-    st.title("📊 Advanced Segment Mix Analysis")
+    st.title("🔍 Advanced Segment Mix Analysis")
     st.markdown("Welcome to our advanced data analysis platform. Upload your Excel file to get started with interactive visualizations and insights.")
     
     st.markdown("<div class='upload-section'>", unsafe_allow_html=True)
@@ -3858,7 +3858,7 @@ def trade():
             st.image("https://cdn-icons-png.flaticon.com/512/4503/4503700.png", width=150)
     st.markdown("</div>", unsafe_allow_html=True)
  elif selected == "Analysis":
-    st.title("🔍 Segment Mix Dashboard")
+    st.title("📈 Segment Mix Dashboard")
     
     if 'uploaded_file' not in st.session_state or st.session_state.uploaded_file is None:
         st.warning("Please upload an Excel file on the Home page to begin the analysis.")
@@ -4472,7 +4472,7 @@ def green():
             st.image("https://cdn-icons-png.flaticon.com/512/4503/4503700.png", width=150)
     st.markdown("</div>", unsafe_allow_html=True)
  elif selected == "Analysis":
-    st.title("📈 GYR Dashboard")
+    st.title("📈 Geo Mix Dashboard")
     
     if 'uploaded_file' not in st.session_state or st.session_state.uploaded_file is None:
         st.warning("Please upload an Excel file on the Home page to begin the analysis.")
