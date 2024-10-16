@@ -222,7 +222,7 @@ def excel_editor():
 
     else:
         st.info("Please upload an Excel file to begin editing.")
-import StringIO
+
 def data_analyzer():
     st.header("Advanced Data Analyzer")
     data_source = st.radio("Choose data source", ["Upload Excel File", "Create DataFrame", "Paste Data"])
