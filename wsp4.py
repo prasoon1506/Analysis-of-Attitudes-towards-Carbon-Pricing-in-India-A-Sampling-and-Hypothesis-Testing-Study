@@ -793,7 +793,7 @@ def create_prediction_pdf(prediction_data, district):
     buffer.seek(0)
     return buffer
 
-st.set_page_config(page_title="WSP Analysis",page_icon="📊", layout="wide")
+st.set_page_config(page_title="WSP Analysis",page_icon="🔬", layout="wide")
 
 # [Keep the existing custom CSS here]
 # Custom CSS for the entire app
