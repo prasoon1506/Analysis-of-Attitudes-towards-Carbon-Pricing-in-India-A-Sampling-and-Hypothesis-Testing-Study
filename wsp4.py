@@ -1828,7 +1828,7 @@ def create_visualization(region_data, region, brand, months):
                  f"{region_data['Green Till Now Oct'].iloc[-1]/region_data['Total Till Now'].iloc[-1]*100:.0f}",
                  f"{region_data['Yellow Till Now Oct'].iloc[-1]/region_data['Total Till Now'].iloc[-1]*100:.0f}",
                  f"{region_data['Red Till Now Oct'].iloc[-1]/region_data['Total Till Now'].iloc[-1]*100:.0f}",
-                 f"{region_data['Premium Till Now Oct'].iloc[-1]/region_data['Total Till Now'].iloc[-1]*100:.0f}"
+                 f"{region_data['Premium Till Now Oct'].iloc[-1]/region_data['Total Till Now'].iloc[-1]*100:.0f}"],
             ]
     current_table = ax_current.table(cellText=current_data[1:], colLabels=current_data[0], cellLoc='center', loc='center')
     current_table.auto_set_font_size(False)
