@@ -1846,7 +1846,7 @@ def create_visualization(region_data, region, brand, months):
     table_data = [
                 ['Levers', 'October 2023', 'September 2024'],
                 ['Overall', f"{region_data['Total Oct 2023'].iloc[-1]:.2f}", 
-                 f"{region_data['Total Sep'].iloc[-1]:.2f}"
+                 f"{region_data['Total Sep'].iloc[-1]:.2f}"],
             ]
     table = ax_table.table(cellText=table_data[1:], colLabels=table_data[0], cellLoc='center', loc='center')
     table.auto_set_font_size(False)
