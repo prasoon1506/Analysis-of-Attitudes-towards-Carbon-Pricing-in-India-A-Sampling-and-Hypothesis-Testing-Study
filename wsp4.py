@@ -1914,9 +1914,9 @@ def create_visualization(region_data, region, brand, months):
     last_year = 2023
 
     channel_data = [
-        ('Trade', region_data['Trade Oct'].iloc[-1], region_data['Trade Oct 2023'].iloc[-1]),
-        ('Premium', region_data['Premium Oct'].iloc[-1], region_data['Premium Oct 2023'].iloc[-1]),
-        ('Blended', region_data['Blended Oct'].iloc[-1], region_data['Blended Oct 2023'].iloc[-1])
+        ('Trade', region_data['Trade Sep'].iloc[-1], region_data['Trade Oct 2023'].iloc[-1]),
+        ('Premium', region_data['Premium Sep'].iloc[-1], region_data['Premium Oct 2023'].iloc[-1]),
+        ('Blended', region_data['Blended Sep'].iloc[-1], region_data['Blended Oct 2023'].iloc[-1])
     ]
     monthly_achievement_aug = region_data['Monthly Achievement(Sep)'].iloc[-1]
     total_sep_current = region_data['Monthly Achievement(Sep)'].iloc[-1]
