@@ -1872,7 +1872,7 @@ def create_visualization(region_data, region, brand, months):
     ax1.set_ylabel('Target and Achievement', fontsize=12, fontweight='bold')
     ax1.set_title(f"Monthly Targets and Achievements for FY 2025", fontsize=18, fontweight='bold')
     ax1.set_xticks(x)
-    ax1.set_xticklabels(all_months)
+    ax1.set_xticklabels(months)
     ax1.legend()
     
     def autolabel(rects):
