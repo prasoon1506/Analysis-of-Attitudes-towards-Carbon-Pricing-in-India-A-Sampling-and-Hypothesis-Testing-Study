@@ -1857,17 +1857,13 @@ def create_visualization(region_data, region, brand, months):
                     cell.set_text_props(fontweight='bold', color='black')
                     cell.set_facecolor('goldenrod')
                 cell.set_edgecolor('brown')
-
-    
-    
-    
     # Main bar chart (same as before)
     ax1 = fig.add_subplot(gs[3, :])
     
     actual_achievements = [region_data[f'Monthly Achievement({month})'].iloc[-1] for month in months]
     actual_targets = [region_data[f'Month Tgt ({month})'].iloc[-1] for month in months]
     
-    x = np.arange(len(all_months))
+    x = np.arange(len(months))
     width = 0.35
     
     rects1 = ax1.bar(x - width/2, actual_targets, width, label='Target', color='pink', alpha=0.8)
