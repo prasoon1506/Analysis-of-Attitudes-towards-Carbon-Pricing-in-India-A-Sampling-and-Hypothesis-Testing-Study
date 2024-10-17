@@ -1927,8 +1927,6 @@ def create_visualization(region_data, region, brand, months):
     # Helper function to create arrow
     def get_arrow(value):
         return '↑' if value > 0 else '↓' if value < 0 else '→'
-
-    # Helper function to get color
     def get_color(value):
         return 'green' if value > 0 else 'red' if value < 0 else 'black'
 
