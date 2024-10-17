@@ -1902,7 +1902,7 @@ def create_visualization(region_data, region, brand, months):
     ax2.set_xlabel('Month', fontsize=12, fontweight='bold')
     ax2.set_ylabel('% Achievement', fontsize=12, fontweight='bold')
     ax2.set_xticks(x)
-    ax2.set_xticklabels(all_months)
+    ax2.set_xticklabels(months)
     
     for i, pct in enumerate(percent_achievements):
         ax2.annotate(f'{pct:.1f}%', (i, pct), xytext=(0, 5), textcoords='offset points', 
