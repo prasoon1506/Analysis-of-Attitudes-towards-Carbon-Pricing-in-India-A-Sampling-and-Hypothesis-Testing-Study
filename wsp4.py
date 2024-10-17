@@ -1896,7 +1896,7 @@ def create_visualization(region_data, region, brand, months):
     
     # Percentage achievement line chart (same as before)
     ax2 = fig.add_subplot(gs[4, :])
-    percent_achievements = [((ach / tgt) * 100) for ach, tgt in zip(actual_achievements, all_targets)]
+    percent_achievements = [((ach / tgt) * 100) for ach, tgt in zip(actual_achievements, actual_targets)]
     ax2.plot(x, percent_achievements, marker='o', linestyle='-', color='purple')
     ax2.axhline(y=100, color='r', linestyle='--', alpha=0.7)
     ax2.set_xlabel('Month', fontsize=12, fontweight='bold')
