@@ -1996,7 +1996,6 @@ def create_visualization(region_data, region, brand, months):
     ax5.set_title('Quarterly Requirements for October 2024', fontsize=16, fontweight='bold')
     plt.tight_layout()
     return fig
-fig = create_visualization(region_data, region, brand, months)
 def sales_prediction_app():
     st.title("📊 Sales Prediction App")
     
@@ -2030,36 +2029,45 @@ def sales_prediction_app():
             st.session_state['regions'] = regions
             st.session_state['brands'] = brands
             st.success("File uploaded and processed successfully!")
-    
     elif page == "Predictions":
-        st.subheader("🔮 Sales Predictions")
-        if st.session_state['df'] is None:
-            st.warning("Please upload a file on the Home page first.")
-        else:
-            df = st.session_state['df']
-            regions = st.session_state['regions']
-            brands = st.session_state['brands']
+     st.subheader("🔮 Sales Predictions")
+     if st.session_state['df'] is None:
+        st.warning("Please upload a file on the Home page first.")
+     else:
+        df = st.session_state['df']
+        regions = st.session_state['regions']
+        brands = st.session_state['brands']
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            region = st.selectbox("Select Region", regions)
+        with col2:
+            brand = st.selectbox("Select Brand", brands)
+        
+        if st.button("Run Prediction"):
+            # Filter the dataframe for the selected region and brand
+            region_data = df[(df['Region'] == region) & (df['Brand'] == brand)]
             
-            col1, col2 = st.columns(2)
-            with col1:
-                region = st.selectbox("Select Region", regions)
-            with col2:
-                brand = st.selectbox("Select Brand", brands)
+            # Define months (you might want to extract this from your data)
+            months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep']
             
-            if st.button("Run Prediction"):
-                    st.pyplot(fig)
-                    
-                    # Individual report download
-                    buf = BytesIO()
-                    fig.savefig(buf, format="pdf")
-                    buf.seek(0)
-                    b64 = base64.b64encode(buf.getvalue()).decode()
-                    st.download_button(
-                        label="Download Individual PDF Report",
-                        data=buf,
-                        file_name=f"prediction_report_{region}_{brand}.pdf",
-                        mime="application/pdf"
-                    )
+            # Create the visualization
+            fig = create_visualization(region_data, region, brand, months)
+            
+            # Display the plot
+            st.pyplot(fig)
+            
+            # Individual report download
+            buf = BytesIO()
+            fig.savefig(buf, format="pdf")
+            buf.seek(0)
+            b64 = base64.b64encode(buf.getvalue()).decode()
+            st.download_button(
+                label="Download Individual PDF Report",
+                data=buf,
+                file_name=f"prediction_report_{region}_{brand}.pdf",
+                mime="application/pdf"
+            )
                
     elif page == "About":
         st.subheader("ℹ️ About the Sales Prediction App")
