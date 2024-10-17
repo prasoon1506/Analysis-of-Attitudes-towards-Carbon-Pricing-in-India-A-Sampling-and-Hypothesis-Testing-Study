@@ -2046,7 +2046,7 @@ def sales_prediction_app():
         
         if st.button("Run Prediction"):
             # Filter the dataframe for the selected region and brand
-            region_data = df[(df['Region'] == region) & (df['Brand'] == brand)]
+            region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)]
             
             # Define months (you might want to extract this from your data)
             months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep']
