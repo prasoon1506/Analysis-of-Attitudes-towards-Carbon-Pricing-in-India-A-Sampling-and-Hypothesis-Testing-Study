@@ -2060,8 +2060,7 @@ def sales_prediction_app():
                         file_name=f"prediction_report_{region}_{brand}.pdf",
                         mime="application/pdf"
                     )
-                else:
-                    st.error(f"No data available for {region} and {brand}")
+               
     elif page == "About":
         st.subheader("ℹ️ About the Sales Prediction App")
         st.write("""
