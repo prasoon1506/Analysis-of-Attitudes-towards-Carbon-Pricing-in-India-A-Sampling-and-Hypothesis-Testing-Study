@@ -1996,7 +1996,7 @@ def create_visualization(region_data, region, brand, months):
     ax5.set_title('Quarterly Requirements for October 2024', fontsize=16, fontweight='bold')
     plt.tight_layout()
     return fig
-fig = create_visualization(region_data, region, brand, months, oct_target, oct_achievement, lower_achievement, upper_achievement, rmse)
+fig = create_visualization(region_data, region, brand, months)
 def sales_prediction_app():
     st.title("📊 Sales Prediction App")
     
