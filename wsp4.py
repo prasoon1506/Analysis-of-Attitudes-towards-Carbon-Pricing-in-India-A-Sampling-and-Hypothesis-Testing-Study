@@ -1821,7 +1821,9 @@ def create_visualization(region_data, region, brand, months):
     ax_current.axis('off')
     current_data = [
                 ['AGS Target','Plan','Actual','Trade %', 'Green %', 'Yellow %', 'Red %', 'Premium %'],
-                [f"{region_data["AGS Tgt (Oct)"].iloc[-1]}",f"{region_data["Month Tgt (Oct)"].iloc[-1]}",f"{region_data["Total Till Now"].iloc[-1]}",
+                [f"{region_data["AGS Tgt (Oct)"].iloc[-1]}",
+                 f"{region_data["Month Tgt (Oct)"].iloc[-1]}",
+                 f"{region_data["Total Till Now"].iloc[-1]}",
                  f"{region_data['Trade Till Now Oct'].iloc[-1]/region_data['Total Till Now'].iloc[-1]*100:.0f}",
                  f"{region_data['Green Till Now Oct'].iloc[-1]/region_data['Total Till Now'].iloc[-1]*100:.0f}",
                  f"{region_data['Yellow Till Now Oct'].iloc[-1]/region_data['Total Till Now'].iloc[-1]*100:.0f}",
