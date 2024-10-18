@@ -1836,6 +1836,7 @@ def create_visualization(region_data, region, brand, months):
         ('Yellow', region_data['Yellow Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1]),
         ('Red', region_data['Red Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1]),
         ('Premium', region_data['Premium Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1])
+        ('Blended', region_data['Blended Till Now Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1])
     ]
     
     # Create a styled table for main metrics
@@ -1876,7 +1877,7 @@ def create_visualization(region_data, region, brand, months):
             else:
                 detailed_table[i, j].set_facecolor('#E6F3FF' if j == 0 else '#F2F2F2')
     
-    ax_current.text(0.5, 1.05, 'October 2024 Sales Overview', fontsize=16, fontweight='bold', ha='center', va='bottom')
+    ax_current.text(0.30, 1.05, 'October 2024 Sales Overview', fontsize=16, fontweight='bold', ha='center', va='bottom')
     ax_table = fig.add_subplot(gs[2, :])
     ax_table.axis('off')
     ax_table.set_title(f"Quarterly Requirement for November and Decemeber 2024", fontsize=18, fontweight='bold')
