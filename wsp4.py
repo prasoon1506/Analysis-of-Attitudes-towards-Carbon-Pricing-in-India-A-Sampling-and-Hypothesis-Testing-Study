@@ -1879,7 +1879,7 @@ def create_visualization(region_data, region, brand, months):
         for rect in rects:
             height = rect.get_height()
             ax1.annotate(f'{height:.0f}',
-                        xy=(rect.get_x() + rect.get_width() / 2, height),
+                        xy=(rect.get_x() + rect.get_width() / 3, height),
                         xytext=(0, 3),
                         textcoords="offset points",
                         ha='center', va='bottom', fontsize=8)
