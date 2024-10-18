@@ -1811,7 +1811,7 @@ import plotly.subplots as sp
 from scipy import stats
 def create_visualization(region_data, region, brand, months):
     fig = plt.figure(figsize=(20, 28))  # Increased height to accommodate new table
-    gs = fig.add_gridspec(9, 3, height_ratios=[0.5, 0.5, 0.5, 3, 1, 2,1, 1,1])
+    gs = fig.add_gridspec(9, 3, height_ratios=[0.5, 0.5, 0.5, 3, 1, 2,1.5,1.5,1.5])
     ax_region = fig.add_subplot(gs[0, :])
     ax_region.axis('off')
     ax_region.text(0.5, 0.5, f'{region}({brand})', fontsize=28, fontweight='bold', ha='center', va='center')
@@ -1843,10 +1843,11 @@ def create_visualization(region_data, region, brand, months):
             # Existing table (same as before)
     ax_table = fig.add_subplot(gs[2, :])
     ax_table.axis('off')
+    ax_table.set_title(f"Quarterly Requirement for November and Decemeber 2024", fontsize=18, fontweight='bold')
     table_data = [
-                ['Levers', 'October 2023', 'September 2024'],
-                ['Overall', f"{region_data['Total Oct 2023'].iloc[-1]:.2f}", 
-                 f"{region_data['Total Sep '].iloc[-1]:.2f}"],
+                ['Overall', 'Trade', 'Premium','Blended'],
+                [f"{region_data['Q3 2023 Total'].iloc[-1]-region_data['Monthly Achievement(Oct)'].iloc[-1]:.0f}", f"{region_data['Q3 2023 Trade'].iloc[-1]-region_data['Trade Oct'].iloc[-1]:.0f}",f"{region_data['Q3 2023 Premium'].iloc[-1]-region_data['Premium Oct'].iloc[-1]:.0f}", 
+                 f"{region_data['Q3 2023 Blended'].iloc[-1]-region_data['Blended Oct'].iloc[-1]:.0f}"],
             ]
     table = ax_table.table(cellText=table_data[1:], colLabels=table_data[0], cellLoc='center', loc='center')
     table.auto_set_font_size(False)
