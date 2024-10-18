@@ -1868,8 +1868,8 @@ def create_visualization(region_data, region, brand, months):
     detailed_table.auto_set_font_size(False)
     detailed_table.set_fontsize(10)
     detailed_table.scale(1, 1.5)
-    for i in range(len(main_metrics)):
-        main_table[i, -1].set_text_props(fontweight='bold')
+    for i in range(len(detailed_metrics)):
+        detailed_table[i, -1].set_text_props(fontweight='bold')
     for i in range(len(detailed_metrics) + 1):
         for j in range(2):
             if i == 0:
