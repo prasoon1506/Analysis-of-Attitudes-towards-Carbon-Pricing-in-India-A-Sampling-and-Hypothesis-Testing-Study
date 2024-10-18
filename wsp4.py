@@ -1992,16 +1992,15 @@ def create_visualization(region_data, region, brand, months):
     ]
     region_type_labels = ['G', 'Y', 'R']
     colors = ['green', 'yellow', 'red']
-    
-    def make_autopct(values):
-        def my_autopct(pct):
-            total = sum(values)
-            val = int(round(pct*total/100.0))
-            return f'{pct:.1f}%\n({val:.0f})'
-        return my_autopct
+    def make_autopct(values, total_achievement):
+      def my_autopct(pct):
+        val = int(round(pct / total_achievement*100))
+        return f'{pct:.1f}%\n({val:.0f})'
+      return my_autopct
+    total_achievement = region_data['Monthly Achievement(Oct)'].iloc[-1]
     explode=(0.10,0.10,0.10)
     ax5.pie(region_type_data, labels=region_type_labels, colors=colors,
-            autopct=make_autopct(region_type_data), startangle=90,explode=explode)
+            autopct=make_autopct(region_type_data,total_achievement), startangle=90,explode=explode)
     ax5.set_title('October 2024 Region Type Breakdown:-', fontsize=16, fontweight='bold')
     ax5 = fig.add_subplot(gs[6, 1])
     region_type_data = [
@@ -2011,16 +2010,9 @@ def create_visualization(region_data, region, brand, months):
     ]
     region_type_labels = ['G', 'Y', 'R']
     colors = ['green', 'yellow', 'red']
-    
-    def make_autopct(values):
-        def my_autopct(pct):
-            total = sum(values)
-            val = int(round(pct*total/f"{region_data['Monthly Achievement(Oct)'].iloc[-1]}"))
-            return f'{pct:.1f}%\n({val:.0f})'
-        return my_autopct
-    
+    total_achievement1 = region_data['Total Oct 2023'].iloc[-1]
     ax5.pie(region_type_data, labels=region_type_labels, colors=colors,
-            autopct=make_autopct(region_type_data), startangle=90,explode=explode)
+            autopct=make_autopct(region_type_data, total_achievement1), startangle=90,explode=explode)
     ax5.set_title('October 2023 Region Type Breakdown:-', fontsize=16, fontweight='bold')
     ax5 = fig.add_subplot(gs[6, 2])
     region_type_data = [
@@ -2030,16 +2022,9 @@ def create_visualization(region_data, region, brand, months):
     ]
     region_type_labels = ['G', 'Y', 'R']
     colors = ['green', 'yellow', 'red']
-    
-    def make_autopct(values):
-        def my_autopct(pct):
-            total = sum(values)
-            val = int(round(pct*total/100.0))
-            return f'{pct:.1f}%\n({val:.0f})'
-        return my_autopct
-    
+    total_achievement2 = region_data['Total Sep'].iloc[-1]
     ax5.pie(region_type_data, labels=region_type_labels, colors=colors,
-            autopct=make_autopct(region_type_data), startangle=90,explode=explode)
+            autopct=make_autopct(region_type_data,total_achievement2), startangle=90,explode=explode)
     ax5.set_title('September 2024 Region Type Breakdown:-', fontsize=16, fontweight='bold')
     plt.tight_layout()
     return fig
