@@ -2092,79 +2092,114 @@ def create_visualization(region_data, region, brand, months):
                           fontsize=20, fontweight='bold', pad=20)
 
     def create_modern_quarterly_box(ax, x, y, width, height, q_data, quarter):
-        # Background rectangle with rounded corners
-        rect = patches.FancyBboxPatch(
+        # Adjust the background rectangle
+        rect = patches.Rectangle(
             (x, y), width, height,
-            boxstyle=patches.BoxStyle("Round", pad=0.02),
-            facecolor='#f8f9fa', edgecolor='#dee2e6', linewidth=2
+            facecolor='#f8f9fa',
+            edgecolor='#dee2e6',
+            linewidth=2,
+            alpha=0.9,
+            zorder=1
         )
         ax.add_patch(rect)
         
-        # Quarter title with accent bar
-        ax.add_patch(patches.Rectangle(
-            (x + 0.05, y + height - 0.1),
-            width - 0.1, 0.02,
-            facecolor='#4a90e2'
-        ))
+        # Title bar
+        title_height = height * 0.15
+        title_bar = patches.Rectangle(
+            (x, y + height - title_height),
+            width,
+            title_height,
+            facecolor='#4a90e2',
+            alpha=0.9,
+            zorder=2
+        )
+        ax.add_patch(title_bar)
         
-        ax.text(x + width/2, y + height - 0.05,
+        # Quarter title
+        ax.text(x + width/2, y + height - title_height/2,
                 f"{quarter} Performance Overview",
                 ha='center', va='center',
                 fontsize=14, fontweight='bold',
-                color='#2c3e50')
+                color='white',
+                zorder=3)
 
         # Calculate metrics
         total_2023, total_2024 = q_data['total_2023'], q_data['total_2024']
         pct_change = ((total_2024 - total_2023) / total_2023) * 100
         trade_2023, trade_2024 = q_data['trade_2023'], q_data['trade_2024']
         trade_pct_change = ((trade_2024 - trade_2023) / trade_2023) * 100
-
-        # Create comparison metrics table
-        metrics_data = [
-            ['Metric', '2023', '2024', 'Change'],
-            ['Total Sales', f'${total_2023:,.0f}', f'${total_2024:,.0f}',
-             f'{pct_change:+.1f}%'],
-            ['Trade Volume', f'${trade_2023:,.0f}', f'${trade_2024:,.0f}',
-             f'{trade_pct_change:+.1f}%']
-        ]
-
-        table = ax.table(
-            cellText=metrics_data[1:],
-            colLabels=metrics_data[0],
-            loc='center',
-            bbox=[x + 0.05, y + 0.15, width - 0.1, 0.3]
+        
+        # Add metric comparisons
+        y_offset = y + height - title_height - 0.1
+        
+        # Total Sales
+        ax.text(x + 0.05, y_offset,
+                "Total Sales Comparison:",
+                fontsize=12, fontweight='bold',
+                color='#2c3e50')
+        
+        y_offset -= 0.08
+        ax.text(x + 0.05, y_offset,
+                f"2023: ${total_2023:,.0f}",
+                fontsize=11)
+        ax.text(x + width/2, y_offset,
+                f"2024: ${total_2024:,.0f}",
+                fontsize=11)
+        ax.text(x + width - 0.15, y_offset,
+                f"{pct_change:+.1f}%",
+                fontsize=11,
+                color='green' if pct_change > 0 else 'red')
+        
+        # Trade Volume
+        y_offset -= 0.12
+        ax.text(x + 0.05, y_offset,
+                "Trade Volume:",
+                fontsize=12, fontweight='bold',
+                color='#2c3e50')
+        
+        y_offset -= 0.08
+        ax.text(x + 0.05, y_offset,
+                f"2023: ${trade_2023:,.0f}",
+                fontsize=11)
+        ax.text(x + width/2, y_offset,
+                f"2024: ${trade_2024:,.0f}",
+                fontsize=11)
+        ax.text(x + width - 0.15, y_offset,
+                f"{trade_pct_change:+.1f}%",
+                fontsize=11,
+                color='green' if trade_pct_change > 0 else 'red')
+        
+        # Add trend arrow
+        if pct_change > 0:
+            arrow_style = 'fancy,head_length=8,head_width=6'
+            arrow_color = 'green'
+            start_x = x + width * 0.3
+            end_x = x + width * 0.7
+            start_y = y + 0.15
+            end_y = y + 0.25
+        else:
+            arrow_style = 'fancy,head_length=8,head_width=6'
+            arrow_color = 'red'
+            start_x = x + width * 0.3
+            end_x = x + width * 0.7
+            start_y = y + 0.25
+            end_y = y + 0.15
+            
+        arrow = patches.FancyArrowPatch(
+            (start_x, start_y),
+            (end_x, end_y),
+            arrowstyle=arrow_style,
+            color=arrow_color,
+            linewidth=2,
+            zorder=3
         )
+        ax.add_patch(arrow)
 
-        # Style the table
-        table.auto_set_font_size(False)
-        table.set_fontsize(10)
-        
-        # Color coding for cells
-        for i in range(len(metrics_data)):
-            for j in range(len(metrics_data[0])):
-                cell = table[i, j]
-                if i == 0:  # Header row
-                    cell.set_facecolor('#4a90e2')
-                    cell.set_text_props(color='white', weight='bold')
-                else:
-                    if j == 3:  # Change column
-                        value = float(cell.get_text().get_text().strip('%+'))
-                        cell.set_facecolor('#d4edda' if value > 0 else '#f8d7da')
-                    else:
-                        cell.set_facecolor('#ffffff')
-                cell.set_height(0.15)
-
-        # Add trend visualization
-        y_trend = y + 0.1
-        trend_x = [x + 0.2, x + width - 0.2]
-        trend_y = [total_2023/1000, total_2024/1000]  # Scaled for visibility
-        
-        ax.plot(trend_x, [y_trend, y_trend],
-                color='#e9ecef', linewidth=2, zorder=1)
-        ax.plot(trend_x, [y_trend + trend_y[0]/max(trend_y), y_trend + trend_y[1]/max(trend_y)],
-                color='#4a90e2', linewidth=3, marker='o', zorder=2)
-
-    # Create quarterly comparison boxes
+    # Create quarterly comparison boxes with adjusted positions
+    # Make boxes taller and adjust vertical position
+    box_height = 0.6  # Increased height
+    box_y = 0.2      # Adjusted vertical position
+    
     q1_data = {
         'total_2023': region_data['Q1 2023 Total'].iloc[-1],
         'total_2024': region_data['Q1 2024 Total'].iloc[-1],
@@ -2179,8 +2214,14 @@ def create_visualization(region_data, region, brand, months):
         'trade_2024': region_data['Q2 2024 Trade'].iloc[-1]
     }
 
-    create_modern_quarterly_box(ax_comparison, 0.05, 0.1, 0.4, 0.8, q1_data, "Q1")
-    create_modern_quarterly_box(ax_comparison, 0.55, 0.1, 0.4, 0.8, q2_data, "Q2")
+    # Adjust box positioning
+    create_modern_quarterly_box(ax_comparison, 0.1, box_y, 0.35, box_height, q1_data, "Q1")
+    create_modern_quarterly_box(ax_comparison, 0.55, box_y, 0.35, box_height, q2_data, "Q2")
+
+    # Set the axis limits explicitly
+    ax_comparison.set_xlim(0, 1)
+    ax_comparison.set_ylim(0, 1)
+
     plt.tight_layout()
     return fig
 def sales_prediction_app():
