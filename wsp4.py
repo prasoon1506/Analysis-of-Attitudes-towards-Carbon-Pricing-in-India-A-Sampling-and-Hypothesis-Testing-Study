@@ -1824,9 +1824,9 @@ def create_visualization(region_data, region, brand, months):
     
     # Main metrics
     main_metrics = [
-        ('AGS Target', f"{region_data['AGS Tgt (Oct)'].iloc[-1]:,.0f}"),
-        ('Plan', f"{region_data['Month Tgt (Oct)'].iloc[-1]:,.0f}"),
-        ('Actual', f"{region_data['Monthly Achievement(Oct)'].iloc[-1]:,.0f}")
+        ('AGS Target', f"{region_data['AGS Tgt (Oct)'].iloc[-1]:.0f}"),
+        ('Plan', f"{region_data['Month Tgt (Oct)'].iloc[-1]:.0f}"),
+        ('Actual', f"{region_data['Monthly Achievement(Oct)'].iloc[-1]:.0f}")
     ]
     
     # Detailed metrics with percentages
@@ -1840,7 +1840,7 @@ def create_visualization(region_data, region, brand, months):
     
     # Create a styled table for main metrics
     main_table = ax_current.table(
-        cellText=[[f"{value:,}"] for _, value in main_metrics],
+        cellText=[[value] for _, value in main_metrics],
         rowLabels=[label for label, _ in main_metrics],
         cellLoc='center',
         loc='center left',
