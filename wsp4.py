@@ -1991,7 +1991,7 @@ def create_visualization(region_data, region, brand, months):
         region_data['Red Oct'].iloc[-1],
         region_data['Unidentified Oct'].iloc[-1]
     ]
-    region_type_labels = ['Green', 'Yellow', 'Red', 'Unidentified']
+    region_type_labels = ['G', 'Y', 'R', 'Unknown']
     colors = ['green', 'yellow', 'red', 'gray']
     
     def make_autopct(values):
@@ -2000,9 +2000,9 @@ def create_visualization(region_data, region, brand, months):
             val = int(round(pct*total/100.0))
             return f'{pct:.1f}%\n({val:.0f})'
         return my_autopct
-    
+    explode=(0.05,0.05,0.05,0.05)
     ax5.pie(region_type_data, labels=region_type_labels, colors=colors,
-            autopct=make_autopct(region_type_data), startangle=90)
+            autopct=make_autopct(region_type_data), startangle=90,explode=explode)
     ax5.set_title('October 2024 Region Type Breakdown:-', fontsize=16, fontweight='bold')
     ax5 = fig.add_subplot(gs[6, 1])
     region_type_data = [
@@ -2011,7 +2011,7 @@ def create_visualization(region_data, region, brand, months):
         region_data['Red Oct 2023'].iloc[-1],
         region_data['Unidentified Oct 2023'].iloc[-1]
     ]
-    region_type_labels = ['Green', 'Yellow', 'Red', 'Unidentified']
+    region_type_labels = ['G', 'Y', 'R', 'Unknown']
     colors = ['green', 'yellow', 'red', 'gray']
     
     def make_autopct(values):
@@ -2042,7 +2042,7 @@ def create_visualization(region_data, region, brand, months):
         return my_autopct
     
     ax5.pie(region_type_data, labels=region_type_labels, colors=colors,
-            autopct=make_autopct(region_type_data), startangle=90,hole=0.5)
+            autopct=make_autopct(region_type_data), startangle=90)
     ax5.set_title('September 2024 Region Type Breakdown:-', fontsize=16, fontweight='bold')
     plt.tight_layout()
     return fig
