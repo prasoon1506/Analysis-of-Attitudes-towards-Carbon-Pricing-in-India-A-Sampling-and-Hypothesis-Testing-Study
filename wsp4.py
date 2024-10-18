@@ -1850,9 +1850,11 @@ def create_visualization(region_data, region, brand, months):
     """
     
     ax_watermark.text(0.5, 0.5, logo_text, ha='center', va='center', 
-                      fontsize=14, color='gray', alpha=0.9, 
+                      fontsize=24, color='gray', alpha=0.2, 
                       family='monospace', fontweight='bold')
-
+    rect = patches.Rectangle((0.25, 0.25), 0.5, 0.5, fill=True, 
+                             facecolor='white', edgecolor='none', alpha=0.1)
+    ax_watermark.add_patch(rect)
     # Region and Brand Title
     ax_region = fig.add_subplot(gs[0, :])
     ax_region.axis('off')
