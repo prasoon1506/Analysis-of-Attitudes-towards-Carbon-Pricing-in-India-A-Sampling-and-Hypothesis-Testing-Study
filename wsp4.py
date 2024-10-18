@@ -1988,11 +1988,10 @@ def create_visualization(region_data, region, brand, months):
     region_type_data = [
         region_data['Green Oct'].iloc[-1],
         region_data['Yellow Oct'].iloc[-1],
-        region_data['Red Oct'].iloc[-1],
-        region_data['Unidentified Oct'].iloc[-1]
+        region_data['Red Oct'].iloc[-1]
     ]
-    region_type_labels = ['G', 'Y', 'R', 'Unknown']
-    colors = ['green', 'yellow', 'red', 'gray']
+    region_type_labels = ['G', 'Y', 'R']
+    colors = ['green', 'yellow', 'red']
     
     def make_autopct(values):
         def my_autopct(pct):
@@ -2008,11 +2007,10 @@ def create_visualization(region_data, region, brand, months):
     region_type_data = [
         region_data['Green Oct 2023'].iloc[-1],
         region_data['Yellow Oct 2023'].iloc[-1],
-        region_data['Red Oct 2023'].iloc[-1],
-        region_data['Unidentified Oct 2023'].iloc[-1]
+        region_data['Red Oct 2023'].iloc[-1]
     ]
-    region_type_labels = ['G', 'Y', 'R', 'Unknown']
-    colors = ['green', 'yellow', 'red', 'gray']
+    region_type_labels = ['G', 'Y', 'R']
+    colors = ['green', 'yellow', 'red']
     
     def make_autopct(values):
         def my_autopct(pct):
@@ -2028,11 +2026,10 @@ def create_visualization(region_data, region, brand, months):
     region_type_data = [
         region_data['Green Sep'].iloc[-1],
         region_data['Yellow Sep'].iloc[-1],
-        region_data['Red Sep'].iloc[-1],
-        region_data['Unidentified Sep'].iloc[-1]
+        region_data['Red Sep'].iloc[-1]
     ]
-    region_type_labels = ['G', 'Y', 'R', 'Unknown']
-    colors = ['green', 'yellow', 'red', 'gray']
+    region_type_labels = ['G', 'Y', 'R']
+    colors = ['green', 'yellow', 'red']
     
     def make_autopct(values):
         def my_autopct(pct):
