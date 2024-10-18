@@ -1985,10 +1985,10 @@ def create_visualization(region_data, region, brand, months):
         ax4.text(0.55, y_pos-0.05, f"({change:.1f}% {arrow})", fontsize=12, color=color)
     # Updated: August Region Type Breakdown with values
     def make_autopct(values, total_achievement):
-    def my_autopct(pct):
+     def my_autopct(pct):
         val = int(pct * total_achievement / 100)
         return f'{pct:.1f}%\n({val:.0f})'
-    return my_autopct
+     return my_autopct
     ax5 = fig.add_subplot(gs[6, 0])
     total_achievement_oct = region_data['Monthly Achievement(Oct)'].iloc[-1]
     region_type_data_oct = [
