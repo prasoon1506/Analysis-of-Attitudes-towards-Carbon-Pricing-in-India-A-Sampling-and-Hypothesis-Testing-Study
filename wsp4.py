@@ -1810,37 +1810,73 @@ import plotly.graph_objects as go
 import plotly.subplots as sp
 from scipy import stats
 def create_visualization(region_data, region, brand, months):
-    fig = plt.figure(figsize=(20, 28))  # Increased height to accommodate new table
-    gs = fig.add_gridspec(9, 3, height_ratios=[0.5, 0.5, 0.5, 3, 1, 2,1.5,1.5,1.5])
+    fig = plt.figure(figsize=(20, 30))  # Increased height to accommodate new layout
+    gs = fig.add_gridspec(10, 3, height_ratios=[0.5, 1, 0.5, 3, 1, 2, 1.5, 1.5, 1.5, 1])
+    
+    # Region and Brand Title
     ax_region = fig.add_subplot(gs[0, :])
     ax_region.axis('off')
-    ax_region.text(0.5, 0.5, f'{region}({brand})', fontsize=28, fontweight='bold', ha='center', va='center')
-    months=['Apr','May','June','July','Aug','Sep','Oct']     
-    # New table for current month sales data
+    ax_region.text(0.5, 0.5, f'{region} ({brand})', fontsize=28, fontweight='bold', ha='center', va='center')
+    
+    # New layout for current month sales data
     ax_current = fig.add_subplot(gs[1, :])
     ax_current.axis('off')
-    current_data = [
-                ['AGS Target','Plan','Actual','Trade %', 'Green %', 'Yellow %', 'Red %', 'Premium %'],
-                [f"{region_data["AGS Tgt (Oct)"].iloc[-1]:.0f}",
-                 f"{region_data["Month Tgt (Oct)"].iloc[-1]:.0f}",
-                 f"{region_data["Monthly Achievement(Oct)"].iloc[-1]:.0f}",
-                 f"{region_data['Trade Oct'].iloc[-1]/region_data['Monthly Achievement(Oct)'].iloc[-1]*100:.0f}",
-                 f"{region_data['Green Oct'].iloc[-1]/region_data['Monthly Achievement(Oct)'].iloc[-1]*100:.0f}",
-                 f"{region_data['Yellow Oct'].iloc[-1]/region_data['Monthly Achievement(Oct)'].iloc[-1]*100:.0f}",
-                 f"{region_data['Red Oct'].iloc[-1]/region_data['Monthly Achievement(Oct)'].iloc[-1]*100:.0f}",
-                 f"{region_data['Premium Oct'].iloc[-1]/region_data['Monthly Achievement(Oct)'].iloc[-1]*100:.0f}"],
-            ]
-    current_table = ax_current.table(cellText=current_data[1:], colLabels=current_data[0], cellLoc='center', loc='center')
-    current_table.auto_set_font_size(False)
-    current_table.set_fontsize(10)
-    current_table.scale(1, 1.7)
-    for (row, col), cell in current_table.get_celld().items():
-                if row == 0:
-                    cell.set_text_props(fontweight='bold', color='black')
-                    cell.set_facecolor('goldenrod')
-                cell.set_edgecolor('brown')
-            
-            # Existing table (same as before)
+    
+    # Main metrics
+    main_metrics = [
+        ('AGS Target', f"{region_data['AGS Tgt (Oct)'].iloc[-1]:,.0f}"),
+        ('Plan', f"{region_data['Month Tgt (Oct)'].iloc[-1]:,.0f}"),
+        ('Actual', f"{region_data['Monthly Achievement(Oct)'].iloc[-1]:,.0f}")
+    ]
+    
+    # Detailed metrics with percentages
+    detailed_metrics = [
+        ('Trade', region_data['Trade Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1]),
+        ('Green', region_data['Green Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1]),
+        ('Yellow', region_data['Yellow Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1]),
+        ('Red', region_data['Red Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1]),
+        ('Premium', region_data['Premium Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1])
+    ]
+    
+    # Create a styled table for main metrics
+    main_table = ax_current.table(
+        cellText=[[f"{value:,}"] for _, value in main_metrics],
+        rowLabels=[label for label, _ in main_metrics],
+        cellLoc='center',
+        loc='center left',
+        bbox=[0, 0.2, 0.3, 0.6]
+    )
+    main_table.auto_set_font_size(False)
+    main_table.set_fontsize(12)
+    main_table.scale(1, 1.5)
+    
+    for i in range(len(main_metrics)):
+        main_table[i, -1].set_facecolor('#E6F3FF')
+        main_table[i, -1].set_text_props(fontweight='bold')
+    
+    # Create a styled table for detailed metrics
+    detailed_data = [[f"{value:,.0f}", f"{(value/total)*100:.1f}%"] for _, value, total in detailed_metrics]
+    detailed_table = ax_current.table(
+        cellText=detailed_data,
+        rowLabels=[label for label, _, _ in detailed_metrics],
+        colLabels=['Value', 'Percentage'],
+        cellLoc='center',
+        loc='center right',
+        bbox=[0.4, 0, 0.6, 1]
+    )
+    detailed_table.auto_set_font_size(False)
+    detailed_table.set_fontsize(10)
+    detailed_table.scale(1, 1.5)
+    
+    for i in range(len(detailed_metrics) + 1):
+        for j in range(2):
+            if i == 0:
+                detailed_table[i, j].set_facecolor('#FFF2CC')
+                detailed_table[i, j].set_text_props(fontweight='bold')
+            else:
+                detailed_table[i, j].set_facecolor('#E6F3FF' if j == 0 else '#F2F2F2')
+    
+    ax_current.text(0.5, 1.05, 'October 2024 Sales Overview', fontsize=16, fontweight='bold', ha='center', va='bottom')
     ax_table = fig.add_subplot(gs[2, :])
     ax_table.axis('off')
     ax_table.set_title(f"Quarterly Requirement for November and Decemeber 2024", fontsize=18, fontweight='bold')
