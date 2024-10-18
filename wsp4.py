@@ -1984,38 +1984,66 @@ def create_visualization(region_data, region, brand, months):
         ax4.text(0.10, y_pos-0.05, f"vs Last Month: {value_last:.0f}", fontsize=12)
         ax4.text(0.55, y_pos-0.05, f"({change:.1f}% {arrow})", fontsize=12, color=color)
     # Updated: August Region Type Breakdown with values
-    def percentage_label(pct):
-      return f'{pct:.1f}%'
     ax5 = fig.add_subplot(gs[6, 0])
-    total_achievement_oct = region_data['Monthly Achievement(Oct)'].iloc[-1]
-    region_type_data_oct = [
-    region_data['Green Oct'].iloc[-1] / total_achievement_oct * 100,
-    region_data['Yellow Oct'].iloc[-1] / total_achievement_oct * 100,
-    region_data['Red Oct'].iloc[-1] / total_achievement_oct * 100]
-    region_type_labels = ['G', 'Y', 'R']
-    colors = ['green', 'yellow', 'red']
-    explode = (0.10, 0.10, 0.10)
-    ax5.pie(region_type_data_oct, labels=region_type_labels, colors=colors,
-        autopct=percentage_label, startangle=90, explode=explode)
-    ax5.set_title('October 2024 Region Type Breakdown:-', fontsize=16, fontweight='bold')
+    region_type_data = [
+        region_data['Green Oct'].iloc[-1],
+        region_data['Yellow Oct'].iloc[-1],
+        region_data['Red Oct'].iloc[-1],
+        region_data['Unidentified Oct'].iloc[-1]
+    ]
+    region_type_labels = ['G', 'Y', 'R', 'Other']
+    colors = ['green', 'yellow', 'red', 'gray']
+    explode=[0.05,0.05,0.05,0.05]
+    def make_autopct(values):
+        def my_autopct(pct):
+            total = sum(values)
+            val = int(round(pct*total/100.0))
+            return f'{pct:.1f}%\n({val:.0f})'
+        return my_autopct
+    
+    ax5.pie(region_type_data, labels=region_type_labels, colors=colors,
+            autopct=make_autopct(region_type_data), startangle=90,explode=explode)
+    ax5.set_title('August 2024 Region Type Breakdown:-', fontsize=16, fontweight='bold')
     ax6 = fig.add_subplot(gs[6, 1])
-    total_achievement_oct_2023 = region_data['Total Oct 2023'].iloc[-1]
-    region_type_data_oct_2023 = [
-    region_data['Green Oct 2023'].iloc[-1] / total_achievement_oct_2023 * 100,
-    region_data['Yellow Oct 2023'].iloc[-1] / total_achievement_oct_2023 * 100,
-    region_data['Red Oct 2023'].iloc[-1] / total_achievement_oct_2023 * 100]
-    ax6.pie(region_type_data_oct_2023, labels=region_type_labels, colors=colors,
-        autopct=percentage_label, startangle=90, explode=explode)
-    ax6.set_title('October 2023 Region Type Breakdown:-', fontsize=16, fontweight='bold')
+    region_type_data = [
+        region_data['Green Oct 2023'].iloc[-1],
+        region_data['Yellow Oct 2023'].iloc[-1],
+        region_data['Red Oct 2023'].iloc[-1],
+        region_data['Unidentified Oct 2023'].iloc[-1]
+    ]
+    region_type_labels = ['G', 'Y', 'R', 'Other']
+    colors = ['green', 'yellow', 'red', 'gray']
+    explode=[0.05,0.05,0.05,0.05]
+    def make_autopct(values):
+        def my_autopct(pct):
+            total = sum(values)
+            val = int(round(pct*total/100.0))
+            return f'{pct:.1f}%\n({val:.0f})'
+        return my_autopct
+    
+    ax5.pie(region_type_data, labels=region_type_labels, colors=colors,
+            autopct=make_autopct(region_type_data), startangle=90,explode=explode)
+    ax5.set_title('August 2024 Region Type Breakdown:-', fontsize=16, fontweight='bold')
     ax7 = fig.add_subplot(gs[6, 2])
-    total_achievement_sep = region_data['Total Sep '].iloc[-1]
-    region_type_data_sep = [
-    region_data['Green Sep'].iloc[-1] / total_achievement_sep * 100,
-    region_data['Yellow Sep'].iloc[-1] / total_achievement_sep * 100,
-    region_data['Red Sep'].iloc[-1] / total_achievement_sep * 100]
-    ax7.pie(region_type_data_sep, labels=region_type_labels, colors=colors,
-        autopct=percentage_label, startangle=90, explode=explode)
-    ax7.set_title('September 2024 Region Type Breakdown:-', fontsize=16, fontweight='bold')
+    region_type_data = [
+        region_data['Green Sep'].iloc[-1],
+        region_data['Yellow Sep'].iloc[-1],
+        region_data['Red Sep'].iloc[-1],
+        region_data['Unidentified Sep'].iloc[-1]
+    ]
+    region_type_labels = ['G', 'Y', 'R', 'Other']
+    colors = ['green', 'yellow', 'red', 'gray']
+    explode=[0.05,0.05,0.05,0.05]
+    def make_autopct(values):
+        def my_autopct(pct):
+            total = sum(values)
+            val = int(round(pct*total/100.0))
+            return f'{pct:.1f}%\n({val:.0f})'
+        return my_autopct
+    
+    ax5.pie(region_type_data, labels=region_type_labels, colors=colors,
+            autopct=make_autopct(region_type_data), startangle=90,explode=explode)
+    ax5.set_title('September 2024 Region Type Breakdown:-', fontsize=16, fontweight='bold')
     plt.tight_layout()
     return fig
 def sales_prediction_app():
