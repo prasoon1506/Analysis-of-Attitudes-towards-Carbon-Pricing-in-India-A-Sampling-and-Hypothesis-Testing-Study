@@ -1980,7 +1980,6 @@ def create_visualization(region_data, region, brand, months, logo):
                      ha='center', va='bottom', fontsize=12)
     ax3 = fig.add_subplot(gs[5, :])
     ax3.axis('off')
-    
     current_year = 2024  # Assuming the current year is 2024
     last_year = 2023
 
