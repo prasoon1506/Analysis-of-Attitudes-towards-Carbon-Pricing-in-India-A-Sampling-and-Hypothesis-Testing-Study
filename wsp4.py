@@ -1909,15 +1909,15 @@ def create_visualization(region_data, region, brand, months):
     last_year = 2023
 
     channel_data = [
-        ('Trade', region_data['Trade Sep'].iloc[-1], region_data['Trade Oct 2023'].iloc[-1]),
-        ('Premium', region_data['Premium Sep'].iloc[-1], region_data['Premium Oct 2023'].iloc[-1]),
-        ('Blended', region_data['Blended Sep'].iloc[-1], region_data['Blended Oct 2023'].iloc[-1])
+        ('Trade', region_data['Trade Oct'].iloc[-1], region_data['Trade Oct 2023'].iloc[-1]),
+        ('Premium', region_data['Premium Oct'].iloc[-1], region_data['Premium Oct 2023'].iloc[-1]),
+        ('Blended', region_data['Blended Oct'].iloc[-1], region_data['Blended Oct 2023'].iloc[-1])
     ]
-    monthly_achievement_aug = region_data['Monthly Achievement(Sep)'].iloc[-1]
-    total_sep_current = region_data['Monthly Achievement(Sep)'].iloc[-1]
-    total_sep_last = region_data['Total Sep 2023'].iloc[-1]
+    monthly_achievement_oct = region_data['Monthly Achievement(Oct)'].iloc[-1]
+    total_oct_current = region_data['Monthly Achievement(Oct)'].iloc[-1]
+    total_oct_last = region_data['Total Oct 2023'].iloc[-1]
     
-    ax3.text(0.2, 1, f'\nAugust {current_year} Sales Breakdown:-', fontsize=16, fontweight='bold', ha='center', va='center')
+    ax3.text(0.2, 1, f'\October {current_year} Sales Comparison to October 2023:-', fontsize=16, fontweight='bold', ha='center', va='center')
     
     # Helper function to create arrow
     def get_arrow(value):
@@ -1926,13 +1926,13 @@ def create_visualization(region_data, region, brand, months):
         return 'green' if value > 0 else 'red' if value < 0 else 'black'
 
     # Display total sales
-    total_change = ((total_sep_current - total_sep_last) / total_sep_last) * 100
+    total_change = ((total_oct_current - total_oct_last) / total_oct_last) * 100
     arrow = get_arrow(total_change)
     color = get_color(total_change)
-    ax3.text(0.21, 0.9, f"August 2024: {total_sep_current:.0f}", fontsize=14, fontweight='bold', ha='center')
-    ax3.text(0.22, 0.85, f"vs August 2023: {total_sep_last:.0f} ({total_change:.1f}% {arrow})", fontsize=12, color=color, ha='center')
+    ax3.text(0.21, 0.9, f"October 2024: {total_oct_current:.0f}", fontsize=14, fontweight='bold', ha='center')
+    ax3.text(0.22, 0.85, f"vs October 2023: {total_oct_last:.0f} ({total_change:.1f}% {arrow})", fontsize=12, color=color, ha='center')
     for i, (channel, value_current, value_last) in enumerate(channel_data):
-        percentage = (value_current / monthly_achievement_aug) * 100
+        percentage = (value_current / monthly_achievement_oct) * 100
         change = ((value_current - value_last) / value_last) * 100
         arrow = get_arrow(change)
         color = get_color(change)
