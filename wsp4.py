@@ -2054,7 +2054,7 @@ def create_visualization(region_data, region, brand, months):
         region_data['Red Oct 2023'].iloc[-1],
         region_data['Unidentified Oct 2023'].iloc[-1]
     ]
-    region_type_labels = ['G', 'Y', 'R', 'Other']
+    region_type_labels = ['G', 'Y', 'R', '']
     colors = ['green', 'yellow', 'red', 'gray']
     explode=[0.05,0.05,0.05,0.05]
     def make_autopct(values):
@@ -2074,14 +2074,14 @@ def create_visualization(region_data, region, brand, months):
         region_data['Red Sep'].iloc[-1],
         region_data['Unidentified Sep'].iloc[-1]
     ]
-    region_type_labels = ['G', 'Y', 'R', 'Other']
+    region_type_labels = ['G', 'Y', 'R', '']
     colors = ['green', 'yellow', 'red', 'gray']
     explode=[0.05,0.05,0.05,0.05]
     def make_autopct(values):
         def my_autopct(pct):
             total = sum(values)
             val = int(round(pct*total/100.0))
-            return f'{pct:.1f}%\n({val:.0f})'
+            return f'{pct:.0f}%\n({val:.0f})'
         return my_autopct
     
     ax7.pie(region_type_data, labels=region_type_labels, colors=colors,
