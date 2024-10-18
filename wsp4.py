@@ -1994,7 +1994,7 @@ def create_visualization(region_data, region, brand, months):
     colors = ['green', 'yellow', 'red']
     def make_autopct(values, total_achievement):
       def my_autopct(pct):
-        val = int(round(pct / total_achievement*100))
+        val = int(round(values / total_achievement*100))
         return f'{pct:.1f}%\n({val:.0f})'
       return my_autopct
     total_achievement = region_data['Monthly Achievement(Oct)'].iloc[-1]
