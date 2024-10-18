@@ -2021,9 +2021,9 @@ def create_visualization(region_data, region, brand, months):
             return f'{pct:.1f}%\n({val:.0f})'
         return my_autopct
     
-    ax5.pie(region_type_data, labels=region_type_labels, colors=colors,
+    ax6.pie(region_type_data, labels=region_type_labels, colors=colors,
             autopct=make_autopct(region_type_data), startangle=90,explode=explode)
-    ax5.set_title('August 2024 Region Type Breakdown:-', fontsize=16, fontweight='bold')
+    ax6.set_title('August 2024 Region Type Breakdown:-', fontsize=16, fontweight='bold')
     ax7 = fig.add_subplot(gs[6, 2])
     region_type_data = [
         region_data['Green Sep'].iloc[-1],
@@ -2041,9 +2041,9 @@ def create_visualization(region_data, region, brand, months):
             return f'{pct:.1f}%\n({val:.0f})'
         return my_autopct
     
-    ax5.pie(region_type_data, labels=region_type_labels, colors=colors,
+    ax7.pie(region_type_data, labels=region_type_labels, colors=colors,
             autopct=make_autopct(region_type_data), startangle=90,explode=explode)
-    ax5.set_title('September 2024 Region Type Breakdown:-', fontsize=16, fontweight='bold')
+    ax7.set_title('September 2024 Region Type Breakdown:-', fontsize=16, fontweight='bold')
     plt.tight_layout()
     return fig
 def sales_prediction_app():
