@@ -1811,7 +1811,7 @@ import plotly.subplots as sp
 from scipy import stats
 def create_visualization(region_data, region, brand, months):
     fig = plt.figure(figsize=(20, 28))  # Increased height to accommodate new table
-    gs = fig.add_gridspec(9, 2, height_ratios=[0.5, 0.5, 0.5, 3, 1, 2,1, 1,1])
+    gs = fig.add_gridspec(9, 3, height_ratios=[0.5, 0.5, 0.5, 3, 1, 2,1, 1,1])
     ax_region = fig.add_subplot(gs[0, :])
     ax_region.axis('off')
     ax_region.text(0.5, 0.5, f'{region}({brand})', fontsize=28, fontweight='bold', ha='center', va='center')
