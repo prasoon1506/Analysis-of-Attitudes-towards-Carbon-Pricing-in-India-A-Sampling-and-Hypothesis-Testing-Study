@@ -1854,7 +1854,7 @@ def create_visualization(region_data, region, brand, months):
         bbox=[0, 0.2, 0.3, 0.6]
     )
     main_table.auto_set_font_size(False)
-    main_table.set_fontsize(12)
+    main_table.set_fontsize(14)
     main_table.scale(1, 1.5)
     
     for i in range(len(main_metrics)):
@@ -1872,7 +1872,7 @@ def create_visualization(region_data, region, brand, months):
         bbox=[0.4, 0, 0.6, 1]
     )
     detailed_table.auto_set_font_size(False)
-    detailed_table.set_fontsize(10)
+    detailed_table.set_fontsize(14)
     detailed_table.scale(1, 1.5)
     for i in range(len(detailed_metrics) + 1):
         for j in range(2):
@@ -1925,7 +1925,7 @@ def create_visualization(region_data, region, brand, months):
                         xy=(rect.get_x() + rect.get_width() / 3, height),
                         xytext=(0, 3),
                         textcoords="offset points",
-                        ha='center', va='bottom', fontsize=8)
+                        ha='center', va='bottom', fontsize=12)
     
     autolabel(rects1)
     autolabel(rects2)
@@ -1938,13 +1938,13 @@ def create_visualization(region_data, region, brand, months):
     ax2.plot(x, percent_achievements, marker='o', linestyle='-', color='purple')
     ax2.axhline(y=100, color='r', linestyle='--', alpha=0.7)
     ax2.set_xlabel('Month', fontsize=12, fontweight='bold')
-    ax2.set_ylabel('% Achievement', fontsize=12, fontweight='bold')
+    ax2.set_ylabel('% Achievement w.r.t. Plan', fontsize=12, fontweight='bold')
     ax2.set_xticks(x)
     ax2.set_xticklabels(months)
     
     for i, pct in enumerate(percent_achievements):
         ax2.annotate(f'{pct:.1f}%', (i, pct), xytext=(0, 5), textcoords='offset points', 
-                     ha='center', va='bottom', fontsize=8)
+                     ha='center', va='bottom', fontsize=12)
     ax3 = fig.add_subplot(gs[5, :])
     ax3.axis('off')
     
@@ -2045,7 +2045,7 @@ def create_visualization(region_data, region, brand, months):
     
     ax5.pie(region_type_data, labels=region_type_labels, colors=colors,
             autopct=make_autopct(region_type_data), startangle=90,explode=explode)
-    ax5.set_title('August 2024 Region Type Breakdown:-', fontsize=16, fontweight='bold')
+    ax5.set_title('October 2024 Region Type Breakdown:-', fontsize=16, fontweight='bold')
     ax6 = fig.add_subplot(gs[6, 1])
     region_type_data = [
         region_data['Green Oct 2023'].iloc[-1],
@@ -2065,7 +2065,7 @@ def create_visualization(region_data, region, brand, months):
     
     ax6.pie(region_type_data, labels=region_type_labels, colors=colors,
             autopct=make_autopct(region_type_data), startangle=90,explode=explode)
-    ax6.set_title('August 2024 Region Type Breakdown:-', fontsize=16, fontweight='bold')
+    ax6.set_title('October 2023 Region Type Breakdown:-', fontsize=16, fontweight='bold')
     ax7 = fig.add_subplot(gs[6, 2])
     region_type_data = [
         region_data['Green Sep'].iloc[-1],
@@ -2135,38 +2135,38 @@ def create_visualization(region_data, region, brand, months):
         # Total Sales
         ax.text(x + 0.05, y_offset,
                 "Total Sales Comparison:",
-                fontsize=12, fontweight='bold',
+                fontsize=16, fontweight='bold',
                 color='#2c3e50')
         
         y_offset -= 0.08
         ax.text(x + 0.05, y_offset,
                 f"2023: {total_2023:,.0f}",
-                fontsize=11)
+                fontsize=14)
         ax.text(x + width/2, y_offset,
                 f"2024: {total_2024:,.0f}",
-                fontsize=11)
+                fontsize=14)
         ax.text(x + 0.375*width, y_offset,
                 f"{pct_change:+.1f}%",
-                fontsize=11,
+                fontsize=14,
                 color='green' if pct_change > 0 else 'red')
         
         # Trade Volume
         y_offset -= 0.12
         ax.text(x + 0.05, y_offset,
                 "Trade Volume:",
-                fontsize=12, fontweight='bold',
+                fontsize=16, fontweight='bold',
                 color='#2c3e50')
         
         y_offset -= 0.08
         ax.text(x + 0.05, y_offset,
                 f"2023: {trade_2023:,.0f}",
-                fontsize=11)
+                fontsize=14)
         ax.text(x + width/2, y_offset,
                 f"2024: {trade_2024:,.0f}",
-                fontsize=11)
+                fontsize=14)
         ax.text(x + 0.375*width, y_offset,
                 f"{trade_pct_change:+.1f}%",
-                fontsize=11,
+                fontsize=14,
                 color='green' if trade_pct_change > 0 else 'red')
         
         # Add trend arrow
