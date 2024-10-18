@@ -1811,7 +1811,7 @@ import plotly.subplots as sp
 from scipy import stats
 def create_visualization(region_data, region, brand, months):
     fig = plt.figure(figsize=(20, 28))  # Increased height to accommodate new table
-    gs = fig.add_gridspec(7, 2, height_ratios=[0.5, 0.5, 0.5, 3, 1, 2, 1])
+    gs = fig.add_gridspec(8, 2, height_ratios=[0.5, 0.5, 0.5, 3, 1, 2,1, 1])
     ax_region = fig.add_subplot(gs[0, :])
     ax_region.axis('off')
     ax_region.text(0.5, 0.5, f'{region}({brand})', fontsize=28, fontweight='bold', ha='center', va='center')
@@ -1917,7 +1917,7 @@ def create_visualization(region_data, region, brand, months):
     total_oct_current = region_data['Monthly Achievement(Oct)'].iloc[-1]
     total_oct_last = region_data['Total Oct 2023'].iloc[-1]
     
-    ax3.text(0.2, 1, f'\October {current_year} Sales Comparison to October 2023:-', fontsize=16, fontweight='bold', ha='center', va='center')
+    ax3.text(0.2, 1, f'October {current_year} Sales Comparison to October 2023:-', fontsize=16, fontweight='bold', ha='center', va='center')
     
     # Helper function to create arrow
     def get_arrow(value):
@@ -1942,8 +1942,48 @@ def create_visualization(region_data, region, brand, months):
         ax3.text(0.2, y_pos, f"{value_current:.0f} ({percentage:.1f}%)", fontsize=14)
         ax3.text(0.1, y_pos-0.05, f"vs Last Year: {value_last:.0f}", fontsize=12)
         ax3.text(0.2, y_pos-0.05, f"({change:.1f}% {arrow})", fontsize=12, color=color)
-    # Updated: August Region Type Breakdown with values
     ax4 = fig.add_subplot(gs[5, 1])
+    ax4.axis('off')
+    
+    current_year = 2024  # Assuming the current year is 2024
+    last_year = 2024
+
+    channel_data1 = [
+        ('Trade', region_data['Trade Oct'].iloc[-1], region_data['Trade Sep'].iloc[-1]),
+        ('Premium', region_data['Premium Oct'].iloc[-1], region_data['Premium Sep'].iloc[-1]),
+        ('Blended', region_data['Blended Till Now Oct'].iloc[-1], region_data['Blended Sep'].iloc[-1])
+    ]
+    monthly_achievement_oct = region_data['Monthly Achievement(Oct)'].iloc[-1]
+    total_oct_current = region_data['Monthly Achievement(Oct)'].iloc[-1]
+    total_sep_current = region_data['Total Sep'].iloc[-1]
+    
+    ax3.text(0.2, 1, f'October {current_year} Sales Comparison to Spetember 2024:-', fontsize=16, fontweight='bold', ha='center', va='center')
+    
+    # Helper function to create arrow
+    def get_arrow(value):
+        return '↑' if value > 0 else '↓' if value < 0 else '→'
+    def get_color(value):
+        return 'green' if value > 0 else 'red' if value < 0 else 'black'
+
+    # Display total sales
+    total_change = ((total_oct_current - total_sep_current) / total_sep_current) * 100
+    arrow = get_arrow(total_change)
+    color = get_color(total_change)
+    ax3.text(0.21, 0.9, f"October 2024: {total_oct_current:.0f}", fontsize=14, fontweight='bold', ha='center')
+    ax3.text(0.22, 0.85, f"vs October 2023: {total_sep_current:.0f} ({total_change:.1f}% {arrow})", fontsize=12, color=color, ha='center')
+    for i, (channel, value_current, value_last) in enumerate(channel_data):
+        percentage = (value_current / monthly_achievement_oct) * 100
+        change = ((value_current - value_last) / value_last) * 100
+        arrow = get_arrow(change)
+        color = get_color(change)
+        
+        y_pos = 0.75 - i*0.25
+        ax3.text(0.1, y_pos, f"{channel}:", fontsize=14, fontweight='bold')
+        ax3.text(0.2, y_pos, f"{value_current:.0f} ({percentage:.1f}%)", fontsize=14)
+        ax3.text(0.1, y_pos-0.05, f"vs Last Year: {value_last:.0f}", fontsize=12)
+        ax3.text(0.2, y_pos-0.05, f"({change:.1f}% {arrow})", fontsize=12, color=color)
+    # Updated: August Region Type Breakdown with values
+    ax4 = fig.add_subplot(gs[6, :])
     region_type_data = [
         region_data['Green Sep'].iloc[-1],
         region_data['Yellow Sep'].iloc[-1],
@@ -1963,7 +2003,7 @@ def create_visualization(region_data, region, brand, months):
     ax4.pie(region_type_data, labels=region_type_labels, colors=colors,
             autopct=make_autopct(region_type_data), startangle=90)
     ax4.set_title('August 2024 Region Type Breakdown:-', fontsize=16, fontweight='bold')
-    ax5 = fig.add_subplot(gs[6, :])
+    ax5 = fig.add_subplot(gs[7, :])
     ax5.axis('off')
     
     q3_table_data = [
