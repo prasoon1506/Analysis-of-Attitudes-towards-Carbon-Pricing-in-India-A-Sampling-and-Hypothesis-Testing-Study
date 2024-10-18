@@ -2333,7 +2333,7 @@ def sales_prediction_app():
             
             # Define months (you might want to extract this from your data)
             months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep','Oct']
-            logo_url = "https://github.com/prasoon1506/Analysis-of-Attitudes-towards-Carbon-Pricing-in-India-A-Sampling-and-Hypothesis-Testing-Study/blob/main/IMG_20241018_162028.jpg?raw=true"
+            logo_url="IMG_20241018_162028.jpg"
             response = requests.get(logo_url)
             logo = Image.open(BytesIO(response.content))
             fig = create_visualization(region_data, region, brand, months,logo_path)
