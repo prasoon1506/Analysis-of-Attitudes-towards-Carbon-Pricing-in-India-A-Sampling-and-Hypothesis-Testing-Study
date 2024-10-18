@@ -1815,7 +1815,7 @@ import plotly.subplots as sp
 from scipy import stats
 def create_visualization(region_data, region, brand, months):
     fig = plt.figure(figsize=(20, 34))  # Increased height to accommodate new comparison boxes
-    gs = fig.add_gridspec(7, 3, height_ratios=[0.5, 1, 0.5, 3, 1, 2, 1.5])
+    gs = fig.add_gridspec(8, 3, height_ratios=[0.5,0.5, 1, 0.5, 3, 1, 2, 1.5])
     # Region and Brand Title
     ax_region = fig.add_subplot(gs[0, :])
     ax_region.axis('off')
