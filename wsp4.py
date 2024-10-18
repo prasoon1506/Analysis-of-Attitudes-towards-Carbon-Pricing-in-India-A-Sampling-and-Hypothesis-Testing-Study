@@ -1820,22 +1820,24 @@ import matplotlib.image as mpimg
 import plotly.graph_objects as go
 import plotly.subplots as sp
 from scipy import stats
-def create_visualization(region_data, region, brand, months, logo_path):
-    fig = plt.figure(figsize=(20, 34))  # Increased height to accommodate new comparison boxes
+import requests
+from io import BytesIO
+from PIL import Image
+def create_visualization(region_data, region, brand, months, logo):
+    fig = plt.figure(figsize=(20, 34))
     gs = fig.add_gridspec(8, 3, height_ratios=[0.5,1, 1, 3, 2, 2, 2, 2])
-    logo = mpimg.imread(logo_path)
+    
     # Create a new axes for the watermark that spans the entire figure
     ax_watermark = fig.add_axes([0, 0, 1, 1], zorder=-1)
     ax_watermark.axis('off')
     
     # Calculate the size and position for the watermark
-    # This will center the logo and make it cover about 30% of the figure width
     fig_width = fig.get_size_inches()[0]
     fig_height = fig.get_size_inches()[1]
     logo_display_size = fig_width * 0.3  # 30% of figure width
     
     # Calculate aspect ratio to maintain logo proportions
-    logo_aspect = logo.shape[1] / logo.shape[0]
+    logo_aspect = logo.width / logo.height
     logo_display_height = logo_display_size / logo_aspect
     
     # Center the logo
@@ -1848,7 +1850,8 @@ def create_visualization(region_data, region, brand, months, logo_path):
                               x_center + logo_display_size/2/fig_width,
                               y_center - logo_display_height/2/fig_height,
                               y_center + logo_display_height/2/fig_height],
-                       alpha=0.1)  # Adjust alpha for transparency level
+                       alpha=0.1)
+
     # Region and Brand Title
     ax_region = fig.add_subplot(gs[0, :])
     ax_region.axis('off')
@@ -2331,8 +2334,9 @@ def sales_prediction_app():
             
             # Define months (you might want to extract this from your data)
             months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep','Oct']
-            logo_path="https://github.com/prasoon1506/Analysis-of-Attitudes-towards-Carbon-Pricing-in-India-A-Sampling-and-Hypothesis-Testing-Study/blob/main/IMG_20241018_162028.jpg"
-            # Create the visualization
+            logo_url = "https://github.com/prasoon1506/Analysis-of-Attitudes-towards-Carbon-Pricing-in-India-A-Sampling-and-Hypothesis-Testing-Study/blob/main/IMG_20241018_162028.jpg?raw=true"
+            response = requests.get(logo_url)
+            logo = Image.open(BytesIO(response.content))
             fig = create_visualization(region_data, region, brand, months,logo_path)
             
             # Display the plot
