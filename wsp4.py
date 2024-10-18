@@ -2194,7 +2194,30 @@ def create_visualization(region_data, region, brand, months):
             zorder=3
         )
         ax.add_patch(arrow)
-
+        if trade_pct_change > 0:
+            arrow_style = 'fancy,head_length=4,head_width=6'
+            arrow_color = 'green'
+            start_x = x + 0.115
+            end_x = x + width * 0.49
+            start_y = y + 0.15
+            end_y = y + 0.15
+        else:
+            arrow_style = 'fancy,head_length=4,head_width=6'
+            arrow_color = 'red'
+            start_x = x + 0.115
+            end_x = x + width * 0.49
+            start_y = y + 0.15
+            end_y = y + 0.15
+            
+        arrow = patches.FancyArrowPatch(
+            (start_x, start_y),
+            (end_x, end_y),
+            arrowstyle=arrow_style,
+            color=arrow_color,
+            linewidth=2,
+            zorder=3
+        )
+        ax.add_patch(arrow)
     # Create quarterly comparison boxes with adjusted positions
     # Make boxes taller and adjust vertical position
     box_height = 0.6  # Increased height
