@@ -1957,7 +1957,7 @@ def create_visualization(region_data, region, brand, months):
     total_oct_current = region_data['Monthly Achievement(Oct)'].iloc[-1]
     total_sep_current = region_data['Total Sep '].iloc[-1]
     
-    ax4.text(0.45, 1, f'October {current_year} Sales Comparison to September 2024:-', fontsize=16, fontweight='bold', ha='center', va='center')
+    ax4.text(0.35, 1, f'October {current_year} Sales Comparison to September 2024:-', fontsize=16, fontweight='bold', ha='center', va='center')
     
     # Helper function to create arrow
     def get_arrow(value):
@@ -1969,8 +1969,8 @@ def create_visualization(region_data, region, brand, months):
     total_change = ((total_oct_current - total_sep_current) / total_sep_current) * 100
     arrow = get_arrow(total_change)
     color = get_color(total_change)
-    ax4.text(0.46, 0.9, f"October 2024: {total_oct_current:.0f}", fontsize=14, fontweight='bold', ha='center')
-    ax4.text(0.47, 0.85, f"vs October 2023: {total_sep_current:.0f} ({total_change:.1f}% {arrow})", fontsize=12, color=color, ha='center')
+    ax4.text(0.36, 0.9, f"October 2024: {total_oct_current:.0f}", fontsize=14, fontweight='bold', ha='center')
+    ax4.text(0.37, 0.85, f"vs October 2023: {total_sep_current:.0f} ({total_change:.1f}% {arrow})", fontsize=12, color=color, ha='center')
     for i, (channel, value_current, value_last) in enumerate(channel_data1):
         percentage = (value_current / monthly_achievement_oct) * 100
         change = ((value_current - value_last) / value_last) * 100
@@ -1978,10 +1978,10 @@ def create_visualization(region_data, region, brand, months):
         color = get_color(change)
         
         y_pos = 0.75 - i*0.25
-        ax4.text(0.25, y_pos, f"{channel}:", fontsize=14, fontweight='bold')
-        ax4.text(0.45, y_pos, f"{value_current:.0f} ({percentage:.1f}%)", fontsize=14)
-        ax4.text(0.25, y_pos-0.05, f"vs Last Month: {value_last:.0f}", fontsize=12)
-        ax4.text(0.45, y_pos-0.05, f"({change:.1f}% {arrow})", fontsize=12, color=color)
+        ax4.text(0.15, y_pos, f"{channel}:", fontsize=14, fontweight='bold')
+        ax4.text(0.25, y_pos, f"{value_current:.0f} ({percentage:.1f}%)", fontsize=14)
+        ax4.text(0.15, y_pos-0.05, f"vs Last Month: {value_last:.0f}", fontsize=12)
+        ax4.text(0.25, y_pos-0.05, f"({change:.1f}% {arrow})", fontsize=12, color=color)
     # Updated: August Region Type Breakdown with values
     ax5 = fig.add_subplot(gs[6, 0])
     region_type_data = [
