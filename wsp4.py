@@ -1801,6 +1801,7 @@ from urllib.parse import quote
 @st.cache_data
 def load_data(uploaded_file):
     df = pd.read_excel(uploaded_file)
+    df = df.fillna(0)
     regions = df['Zone'].unique().tolist()
     brands = df['Brand'].unique().tolist()
     return df, regions, brands
