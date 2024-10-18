@@ -1811,7 +1811,7 @@ import plotly.subplots as sp
 from scipy import stats
 def create_visualization(region_data, region, brand, months):
     fig = plt.figure(figsize=(20, 28))  # Increased height to accommodate new table
-    gs = fig.add_gridspec(8, 2, height_ratios=[0.5, 0.5, 0.5, 3, 1, 2,1, 1])
+    gs = fig.add_gridspec(9, 2, height_ratios=[0.5, 0.5, 0.5, 3, 1, 2,1, 1,1])
     ax_region = fig.add_subplot(gs[0, :])
     ax_region.axis('off')
     ax_region.text(0.5, 0.5, f'{region}({brand})', fontsize=28, fontweight='bold', ha='center', va='center')
@@ -1957,7 +1957,7 @@ def create_visualization(region_data, region, brand, months):
     total_oct_current = region_data['Monthly Achievement(Oct)'].iloc[-1]
     total_sep_current = region_data['Total Sep '].iloc[-1]
     
-    ax4.text(0.45, 1, f'October {current_year} Sales Comparison to Spetember 2024:-', fontsize=16, fontweight='bold', ha='center', va='center')
+    ax4.text(0.45, 1, f'October {current_year} Sales Comparison to September 2024:-', fontsize=16, fontweight='bold', ha='center', va='center')
     
     # Helper function to create arrow
     def get_arrow(value):
@@ -1983,7 +1983,47 @@ def create_visualization(region_data, region, brand, months):
         ax4.text(0.25, y_pos-0.05, f"vs Last Month: {value_last:.0f}", fontsize=12)
         ax4.text(0.45, y_pos-0.05, f"({change:.1f}% {arrow})", fontsize=12, color=color)
     # Updated: August Region Type Breakdown with values
-    ax5 = fig.add_subplot(gs[6, :])
+    ax5 = fig.add_subplot(gs[6, 0])
+    region_type_data = [
+        region_data['Green Oct'].iloc[-1],
+        region_data['Yellow Oct'].iloc[-1],
+        region_data['Red Oct'].iloc[-1],
+        region_data['Unidentified Oct'].iloc[-1]
+    ]
+    region_type_labels = ['Green', 'Yellow', 'Red', 'Unidentified']
+    colors = ['green', 'yellow', 'red', 'gray']
+    
+    def make_autopct(values):
+        def my_autopct(pct):
+            total = sum(values)
+            val = int(round(pct*total/100.0))
+            return f'{pct:.1f}%\n({val:.0f})'
+        return my_autopct
+    
+    ax5.pie(region_type_data, labels=region_type_labels, colors=colors,
+            autopct=make_autopct(region_type_data), startangle=90)
+    ax5.set_title('October 2024 Region Type Breakdown:-', fontsize=16, fontweight='bold')
+    ax5 = fig.add_subplot(gs[6, 1])
+    region_type_data = [
+        region_data['Green Oct 2023'].iloc[-1],
+        region_data['Yellow Oct 2023'].iloc[-1],
+        region_data['Red Oct 2023'].iloc[-1],
+        region_data['Unidentified Oct 2023'].iloc[-1]
+    ]
+    region_type_labels = ['Green', 'Yellow', 'Red', 'Unidentified']
+    colors = ['green', 'yellow', 'red', 'gray']
+    
+    def make_autopct(values):
+        def my_autopct(pct):
+            total = sum(values)
+            val = int(round(pct*total/100.0))
+            return f'{pct:.1f}%\n({val:.0f})'
+        return my_autopct
+    
+    ax5.pie(region_type_data, labels=region_type_labels, colors=colors,
+            autopct=make_autopct(region_type_data), startangle=90)
+    ax5.set_title('October 2023 Region Type Breakdown:-', fontsize=16, fontweight='bold')
+    ax5 = fig.add_subplot(gs[6, 2])
     region_type_data = [
         region_data['Green Sep'].iloc[-1],
         region_data['Yellow Sep'].iloc[-1],
@@ -2002,27 +2042,7 @@ def create_visualization(region_data, region, brand, months):
     
     ax5.pie(region_type_data, labels=region_type_labels, colors=colors,
             autopct=make_autopct(region_type_data), startangle=90)
-    ax5.set_title('August 2024 Region Type Breakdown:-', fontsize=16, fontweight='bold')
-    ax6 = fig.add_subplot(gs[7, :])
-    ax6.axis('off')
-    
-    q3_table_data = [
-        ['Overall Requirement', 'Requirement in\nTrade Channel', 'Requirement in\nBlednded Product Category', 'Requirement for\nPremium Product'],
-        [f"{region_data['Q3 2023 Total'].iloc[-1]:.0f}", f"{region_data['Q3 2023 Trade'].iloc[-1]:.0f}", 
-         f"{region_data['Q3 2023 Green'].iloc[-1]:.0f}", f"{region_data['Q3 2023 Yellow'].iloc[-1]:.0f}"]
-    ]
-    
-    q3_table = ax5.table(cellText=q3_table_data[1:], colLabels=q3_table_data[0], cellLoc='center', loc='center')
-    q3_table.auto_set_font_size(False)
-    q3_table.set_fontsize(10)
-    q3_table.scale(1, 1.7)
-    for (row, col), cell in q3_table.get_celld().items():
-        if row == 0:
-            cell.set_text_props(fontweight='bold', color='black')
-            cell.set_facecolor('goldenrod')
-        cell.set_edgecolor('brown')
-    
-    ax6.set_title('Quarterly Requirements for October 2024', fontsize=16, fontweight='bold')
+    ax5.set_title('September 2024 Region Type Breakdown:-', fontsize=16, fontweight='bold')
     plt.tight_layout()
     return fig
 def sales_prediction_app():
