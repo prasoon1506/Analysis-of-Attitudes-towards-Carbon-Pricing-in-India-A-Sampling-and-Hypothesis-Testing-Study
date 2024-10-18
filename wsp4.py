@@ -2173,14 +2173,14 @@ def create_visualization(region_data, region, brand, months):
         if pct_change > 0:
             arrow_style = 'fancy,head_length=4,head_width=6'
             arrow_color = 'green'
-            start_x = x + 0.115
+            start_x = x + 0.11
             end_x = x + width * 0.49
             start_y = y + 0.31
             end_y = y + 0.31
         else:
             arrow_style = 'fancy,head_length=4,head_width=6'
             arrow_color = 'red'
-            start_x = x + 0.115
+            start_x = x + 0.11
             end_x = x + width * 0.49
             start_y = y + 0.31
             end_y = y + 0.31
@@ -2197,17 +2197,17 @@ def create_visualization(region_data, region, brand, months):
         if trade_pct_change > 0:
             arrow_style = 'fancy,head_length=4,head_width=6'
             arrow_color = 'green'
-            start_x = x + 0.115
+            start_x = x + 0.11
             end_x = x + width * 0.49
-            start_y = y + 0.15
-            end_y = y + 0.15
+            start_y = y + 0.13
+            end_y = y + 0.13
         else:
             arrow_style = 'fancy,head_length=4,head_width=6'
             arrow_color = 'red'
-            start_x = x + 0.115
+            start_x = x + 0.11
             end_x = x + width * 0.49
-            start_y = y + 0.15
-            end_y = y + 0.15
+            start_y = y + 0.13
+            end_y = y + 0.13
             
         arrow = patches.FancyArrowPatch(
             (start_x, start_y),
