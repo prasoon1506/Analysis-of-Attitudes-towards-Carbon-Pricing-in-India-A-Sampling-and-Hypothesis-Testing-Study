@@ -2083,7 +2083,7 @@ def create_visualization(region_data, region, brand, months):
     ax7.pie(region_type_data, labels=region_type_labels, colors=colors,
             autopct=make_autopct(region_type_data), startangle=90,explode=explode)
     ax7.set_title('September 2024 Region Type Breakdown:-', fontsize=16, fontweight='bold')
-    ax_comparison = fig.add_subplot(gs[9:, :])
+    ax_comparison = fig.add_subplot(gs[7, :])
     ax_comparison.axis('off')
     ax_comparison.set_title('Quarterly Comparisons: 2023 vs 2024', fontsize=18, fontweight='bold')
 
