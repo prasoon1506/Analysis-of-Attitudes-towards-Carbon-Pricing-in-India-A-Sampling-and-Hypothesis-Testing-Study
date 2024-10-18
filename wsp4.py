@@ -9,6 +9,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from io import BytesIO
 import base64
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from matplotlib.patches import Rectangle
 import matplotlib.backends.backend_pdf
 from scipy import stats
 from statsmodels.tsa.arima.model import ARIMA
