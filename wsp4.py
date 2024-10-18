@@ -1826,35 +1826,6 @@ from PIL import Image
 def create_visualization(region_data, region, brand, months):
     fig = plt.figure(figsize=(20, 34))
     gs = fig.add_gridspec(8, 3, height_ratios=[0.5,1, 1, 3, 2, 2, 2, 2])
-    
-    # Create a new axes for the watermark that spans the entire figure
-    ax_watermark = fig.add_axes([0, 0, 1, 1], zorder=-1)
-    ax_watermark.axis('off')
-    
-    # Create a more professional text-based logo for JK Lakshmi Cement
-    logo_text = """
-    ╭────────────────────────╮
-    │   ╭─────────────────╮  │
-    │   │  JK LAKSHMI     │  │
-    │   │    CEMENT       │  │
-    │   ╰─────────────────╯  │
-    │                        │
-    │   ╭───╮      ╭───╮     │
-    │   │   │      │   │     │
-    │   │   │      │   │     │
-    │ ╭─┴───┴──────┴───┴─╮   │
-    │ │    STRENGTH     │   │
-    │ │    & QUALITY    │   │
-    │ ╰─────────────────╯   │
-    ╰────────────────────────╯
-    """
-    
-    ax_watermark.text(0.5, 0.5, logo_text, ha='center', va='center', 
-                      fontsize=72, color='gray', alpha=0.2, 
-                      family='monospace', fontweight='bold')
-    rect = patches.Rectangle((0.25, 0.25), 0.5, 0.5, fill=True, 
-                             facecolor='white', edgecolor='none', alpha=0.1)
-    ax_watermark.add_patch(rect)
     # Region and Brand Title
     ax_region = fig.add_subplot(gs[0, :])
     ax_region.axis('off')
