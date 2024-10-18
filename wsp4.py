@@ -1810,9 +1810,8 @@ import plotly.graph_objects as go
 import plotly.subplots as sp
 from scipy import stats
 def create_visualization(region_data, region, brand, months):
-    fig = plt.figure(figsize=(20, 30))  # Increased height to accommodate new layout
-    gs = fig.add_gridspec(10, 3, height_ratios=[0.5, 1, 0.5, 3, 1, 2, 1.5, 1.5, 1.5, 1])
-    
+    fig = plt.figure(figsize=(20, 34))  # Increased height to accommodate new comparison boxes
+    gs = fig.add_gridspec(11, 3, height_ratios=[0.5, 1, 0.5, 3, 1, 2, 1.5, 1.5, 1.5, 1.5, 1])
     # Region and Brand Title
     ax_region = fig.add_subplot(gs[0, :])
     ax_region.axis('off')
@@ -2080,6 +2079,62 @@ def create_visualization(region_data, region, brand, months):
     ax7.pie(region_type_data, labels=region_type_labels, colors=colors,
             autopct=make_autopct(region_type_data), startangle=90,explode=explode)
     ax7.set_title('September 2024 Region Type Breakdown:-', fontsize=16, fontweight='bold')
+    ax_comparison = fig.add_subplot(gs[9:, :])
+    ax_comparison.axis('off')
+    ax_comparison.set_title('Quarterly Comparisons: 2023 vs 2024', fontsize=18, fontweight='bold')
+
+    # Function to create comparison box
+    def create_comparison_box(ax, x, y, width, height, q_data, quarter):
+        rect = Rectangle((x, y), width, height, fill=False, edgecolor='gray')
+        ax.add_patch(rect)
+        
+        # Total Sales comparison
+        total_2023, total_2024 = q_data['total_2023'], q_data['total_2024']
+        pct_change = (total_2024 - total_2023) / total_2023 * 100
+        
+        ax.text(x + width/2, y + height - 0.02, f"{quarter} Comparison", ha='center', va='top', fontweight='bold')
+        ax.text(x + 0.01, y + height - 0.06, f"Total Sales 2023: ${total_2023:,.0f}", va='top')
+        ax.text(x + 0.01, y + height - 0.10, f"Total Sales 2024: ${total_2024:,.0f}", va='top')
+        ax.text(x + 0.01, y + height - 0.14, f"Change: {pct_change:+.1f}%", va='top', color='green' if pct_change > 0 else 'red')
+        
+        # Trade Volume comparison
+        trade_2023, trade_2024 = q_data['trade_2023'], q_data['trade_2024']
+        trade_pct_2023 = trade_2023 / total_2023 * 100
+        trade_pct_2024 = trade_2024 / total_2024 * 100
+        trade_pct_change = trade_pct_2024 - trade_pct_2023
+        
+        ax.text(x + 0.01, y + height - 0.20, "Trade Volume:", va='top', fontweight='bold')
+        ax.text(x + 0.01, y + height - 0.24, f"2023: ${trade_2023:,.0f} ({trade_pct_2023:.1f}%)", va='top')
+        ax.text(x + 0.01, y + height - 0.28, f"2024: ${trade_2024:,.0f} ({trade_pct_2024:.1f}%)", va='top')
+        ax.text(x + 0.01, y + height - 0.32, f"Change: {trade_pct_change:+.1f}%", va='top', color='green' if trade_pct_change > 0 else 'red')
+        
+        # Create bar chart for total sales comparison
+        bar_width = 0.2
+        ax.bar(x + width/4, total_2023, bar_width, bottom=y+0.05, color='lightblue', label='2023')
+        ax.bar(x + width/4 + bar_width, total_2024, bar_width, bottom=y+0.05, color='darkblue', label='2024')
+        
+        # Add legend
+        ax.legend(loc='lower right', bbox_to_anchor=(x + width, y))
+
+    # Q1 Data (example data, replace with actual data from region_data)
+    q1_data = {
+        'total_2023': region_data['Q1 2023 Total'].iloc[-1],
+        'total_2024': region_data['Q1 2024 Total'].iloc[-1],
+        'trade_2023': region_data['Q1 2023 Trade'].iloc[-1],
+        'trade_2024': region_data['Q1 2024 Trade'].iloc[-1]
+    }
+
+    # Q2 Data (example data, replace with actual data from region_data)
+    q2_data = {
+        'total_2023': region_data['Q2 2023 Total'].iloc[-1],
+        'total_2024': region_data['Q2 2024 Total'].iloc[-1],
+        'trade_2023': region_data['Q2 2023 Trade'].iloc[-1],
+        'trade_2024': region_data['Q2 2024 Trade'].iloc[-1]
+    }
+
+    # Create comparison boxes
+    create_comparison_box(ax_comparison, 0.05, 0.1, 0.4, 0.8, q1_data, "Q1")
+    create_comparison_box(ax_comparison, 0.55, 0.1, 0.4, 0.8, q2_data, "Q2")
     plt.tight_layout()
     return fig
 def sales_prediction_app():
