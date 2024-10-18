@@ -1957,7 +1957,7 @@ def create_visualization(region_data, region, brand, months):
     total_oct_current = region_data['Monthly Achievement(Oct)'].iloc[-1]
     total_sep_current = region_data['Total Sep '].iloc[-1]
     
-    ax4.text(0.75, 1, f'October {current_year} Sales Comparison to Spetember 2024:-', fontsize=16, fontweight='bold', ha='center', va='center')
+    ax4.text(0.70, 1, f'October {current_year} Sales Comparison to Spetember 2024:-', fontsize=16, fontweight='bold', ha='center', va='center')
     
     # Helper function to create arrow
     def get_arrow(value):
