@@ -2331,7 +2331,7 @@ def sales_prediction_app():
             
             # Define months (you might want to extract this from your data)
             months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep','Oct']
-            logo_path=
+            logo_path="https://github.com/prasoon1506/Analysis-of-Attitudes-towards-Carbon-Pricing-in-India-A-Sampling-and-Hypothesis-Testing-Study/blob/main/IMG_20241018_162028.jpg"
             # Create the visualization
             fig = create_visualization(region_data, region, brand, months,logo_path)
             
