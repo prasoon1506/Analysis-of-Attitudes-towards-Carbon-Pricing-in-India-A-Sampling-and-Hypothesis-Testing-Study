@@ -2085,42 +2085,83 @@ def create_visualization(region_data, region, brand, months):
     ax7.set_title('September 2024 Region Type Breakdown:-', fontsize=16, fontweight='bold')
     ax_comparison = fig.add_subplot(gs[7, :])
     ax_comparison.axis('off')
-    ax_comparison.set_title('Quarterly Comparisons: 2023 vs 2024', fontsize=18, fontweight='bold')
+    ax_comparison.set_title('Quarterly Performance Analysis (2023 vs 2024)', 
+                          fontsize=20, fontweight='bold', pad=20)
 
-    # Function to create comparison box
-    def create_comparison_box(ax, x, y, width, height, q_data, quarter):
-        rect = Rectangle((x, y), width, height, fill=False, edgecolor='gray')
+    def create_modern_quarterly_box(ax, x, y, width, height, q_data, quarter):
+        # Background rectangle with rounded corners
+        rect = patches.FancyBboxPatch(
+            (x, y), width, height,
+            boxstyle=patches.BoxStyle("Round", pad=0.02),
+            facecolor='#f8f9fa', edgecolor='#dee2e6', linewidth=2
+        )
         ax.add_patch(rect)
         
-        # Total Sales comparison
-        total_2023, total_2024 = q_data['total_2023'], q_data['total_2024']
-        pct_change = (total_2024 - total_2023) / total_2023 * 100
+        # Quarter title with accent bar
+        ax.add_patch(patches.Rectangle(
+            (x + 0.05, y + height - 0.1),
+            width - 0.1, 0.02,
+            facecolor='#4a90e2'
+        ))
         
-        ax.text(x + width/2, y + height - 0.02, f"{quarter} Comparison", ha='center', va='top', fontweight='bold')
-        ax.text(x + 0.01, y + height - 0.09, f"Total Sales 2023: ${total_2023:,.0f}", va='top')
-        ax.text(x + 0.01, y + height - 0.15, f"Total Sales 2024: ${total_2024:,.0f}", va='top')
-        ax.text(x + 0.01, y + height - 0.21, f"Change: {pct_change:+.1f}%", va='top', color='green' if pct_change > 0 else 'red')
-        
-        # Trade Volume comparison
-        trade_2023, trade_2024 = q_data['trade_2023'], q_data['trade_2024']
-        trade_pct_2023 = trade_2023 / total_2023 * 100
-        trade_pct_2024 = trade_2024 / total_2024 * 100
-        trade_pct_change = trade_pct_2024 - trade_pct_2023
-        
-        ax.text(x + 0.01, y + height - 0.20, "Trade Volume:", va='top', fontweight='bold')
-        ax.text(x + 0.01, y + height - 0.24, f"2023: ${trade_2023:,.0f} ({trade_pct_2023:.1f}%)", va='top')
-        ax.text(x + 0.01, y + height - 0.28, f"2024: ${trade_2024:,.0f} ({trade_pct_2024:.1f}%)", va='top')
-        ax.text(x + 0.01, y + height - 0.32, f"Change: {trade_pct_change:+.1f}%", va='top', color='green' if trade_pct_change > 0 else 'red')
-        
-        # Create bar chart for total sales comparison
-        bar_width = 0.2
-        ax.bar(x + width/4, total_2023, bar_width, bottom=y+0.05, color='lightblue', label='2023')
-        ax.bar(x + width/4 + bar_width, total_2024, bar_width, bottom=y+0.05, color='darkblue', label='2024')
-        
-        # Add legend
-        ax.legend(loc='lower right', bbox_to_anchor=(x + width, y))
+        ax.text(x + width/2, y + height - 0.05,
+                f"{quarter} Performance Overview",
+                ha='center', va='center',
+                fontsize=14, fontweight='bold',
+                color='#2c3e50')
 
-    # Q1 Data (example data, replace with actual data from region_data)
+        # Calculate metrics
+        total_2023, total_2024 = q_data['total_2023'], q_data['total_2024']
+        pct_change = ((total_2024 - total_2023) / total_2023) * 100
+        trade_2023, trade_2024 = q_data['trade_2023'], q_data['trade_2024']
+        trade_pct_change = ((trade_2024 - trade_2023) / trade_2023) * 100
+
+        # Create comparison metrics table
+        metrics_data = [
+            ['Metric', '2023', '2024', 'Change'],
+            ['Total Sales', f'${total_2023:,.0f}', f'${total_2024:,.0f}',
+             f'{pct_change:+.1f}%'],
+            ['Trade Volume', f'${trade_2023:,.0f}', f'${trade_2024:,.0f}',
+             f'{trade_pct_change:+.1f}%']
+        ]
+
+        table = ax.table(
+            cellText=metrics_data[1:],
+            colLabels=metrics_data[0],
+            loc='center',
+            bbox=[x + 0.05, y + 0.15, width - 0.1, 0.3]
+        )
+
+        # Style the table
+        table.auto_set_font_size(False)
+        table.set_fontsize(10)
+        
+        # Color coding for cells
+        for i in range(len(metrics_data)):
+            for j in range(len(metrics_data[0])):
+                cell = table[i, j]
+                if i == 0:  # Header row
+                    cell.set_facecolor('#4a90e2')
+                    cell.set_text_props(color='white', weight='bold')
+                else:
+                    if j == 3:  # Change column
+                        value = float(cell.get_text().get_text().strip('%+'))
+                        cell.set_facecolor('#d4edda' if value > 0 else '#f8d7da')
+                    else:
+                        cell.set_facecolor('#ffffff')
+                cell.set_height(0.15)
+
+        # Add trend visualization
+        y_trend = y + 0.1
+        trend_x = [x + 0.2, x + width - 0.2]
+        trend_y = [total_2023/1000, total_2024/1000]  # Scaled for visibility
+        
+        ax.plot(trend_x, [y_trend, y_trend],
+                color='#e9ecef', linewidth=2, zorder=1)
+        ax.plot(trend_x, [y_trend + trend_y[0]/max(trend_y), y_trend + trend_y[1]/max(trend_y)],
+                color='#4a90e2', linewidth=3, marker='o', zorder=2)
+
+    # Create quarterly comparison boxes
     q1_data = {
         'total_2023': region_data['Q1 2023 Total'].iloc[-1],
         'total_2024': region_data['Q1 2024 Total'].iloc[-1],
@@ -2128,7 +2169,6 @@ def create_visualization(region_data, region, brand, months):
         'trade_2024': region_data['Q1 2024 Trade'].iloc[-1]
     }
 
-    # Q2 Data (example data, replace with actual data from region_data)
     q2_data = {
         'total_2023': region_data['Q2 2023 Total'].iloc[-1],
         'total_2024': region_data['Q2 2024 Total'].iloc[-1],
@@ -2136,9 +2176,8 @@ def create_visualization(region_data, region, brand, months):
         'trade_2024': region_data['Q2 2024 Trade'].iloc[-1]
     }
 
-    # Create comparison boxes
-    create_comparison_box(ax_comparison, 0.05, 0.1, 0.4, 0.8, q1_data, "Q1")
-    create_comparison_box(ax_comparison, 0.55, 0.1, 0.4, 0.8, q2_data, "Q2")
+    create_modern_quarterly_box(ax_comparison, 0.05, 0.1, 0.4, 0.8, q1_data, "Q1")
+    create_modern_quarterly_box(ax_comparison, 0.55, 0.1, 0.4, 0.8, q2_data, "Q2")
     plt.tight_layout()
     return fig
 def sales_prediction_app():
