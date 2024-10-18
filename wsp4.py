@@ -1864,10 +1864,10 @@ def create_visualization(region_data, region, brand, months):
     actual_targets = [region_data[f'Month Tgt ({month})'].iloc[-1] for month in months]
     
     x = np.arange(len(months))
-    width = 0.35
-    rects1 = ax1.bar(x-width/3, actual_ags, width, label='AGS Target', color='brown', alpha=0.8)
-    rects2 = ax1.bar(x - width/3, actual_targets, width, label='Plan', color='pink', alpha=0.8)
-    rects3 = ax1.bar(x + width/3, actual_achievements, width, label='Achievement', color='yellow', alpha=0.8)
+    width = 0.25
+    rects1 = ax1.bar(x-width, actual_ags, width, label='AGS Target', color='brown', alpha=0.8)
+    rects2 = ax1.bar(x, actual_targets, width, label='Plan', color='pink', alpha=0.8)
+    rects3 = ax1.bar(x + width, actual_achievements, width, label='Achievement', color='yellow', alpha=0.8)
     
     ax1.set_ylabel('Targets and Achievement', fontsize=12, fontweight='bold')
     ax1.set_title(f"Monthly Targets and Achievements for FY 2025", fontsize=18, fontweight='bold')
