@@ -1854,7 +1854,7 @@ def create_visualization(region_data, region, brand, months):
         bbox=[0, 0.2, 0.3, 0.6]
     )
     main_table.auto_set_font_size(False)
-    main_table.set_fontsize(14)
+    main_table.set_fontsize(12)
     main_table.scale(1, 1.5)
     
     for i in range(len(main_metrics)):
@@ -1872,7 +1872,7 @@ def create_visualization(region_data, region, brand, months):
         bbox=[0.4, 0, 0.6, 1]
     )
     detailed_table.auto_set_font_size(False)
-    detailed_table.set_fontsize(14)
+    detailed_table.set_fontsize(12)
     detailed_table.scale(1, 1.5)
     for i in range(len(detailed_metrics) + 1):
         for j in range(2):
@@ -1893,7 +1893,7 @@ def create_visualization(region_data, region, brand, months):
             ]
     table = ax_table.table(cellText=table_data[1:], colLabels=table_data[0], cellLoc='center', loc='center')
     table.auto_set_font_size(False)
-    table.set_fontsize(10)
+    table.set_fontsize(12)
     table.scale(1, 1.7)
     for (row, col), cell in table.get_celld().items():
                 if row == 0:
@@ -1925,7 +1925,7 @@ def create_visualization(region_data, region, brand, months):
                         xy=(rect.get_x() + rect.get_width() / 3, height),
                         xytext=(0, 3),
                         textcoords="offset points",
-                        ha='center', va='bottom', fontsize=12)
+                        ha='center', va='bottom', fontsize=11)
     
     autolabel(rects1)
     autolabel(rects2)
@@ -2135,38 +2135,38 @@ def create_visualization(region_data, region, brand, months):
         # Total Sales
         ax.text(x + 0.05, y_offset,
                 "Total Sales Comparison:",
-                fontsize=16, fontweight='bold',
+                fontsize=14, fontweight='bold',
                 color='#2c3e50')
         
         y_offset -= 0.08
         ax.text(x + 0.05, y_offset,
                 f"2023: {total_2023:,.0f}",
-                fontsize=14)
+                fontsize=11)
         ax.text(x + width/2, y_offset,
                 f"2024: {total_2024:,.0f}",
-                fontsize=14)
+                fontsize=11)
         ax.text(x + 0.375*width, y_offset,
                 f"{pct_change:+.1f}%",
-                fontsize=14,
+                fontsize=11,
                 color='green' if pct_change > 0 else 'red')
         
         # Trade Volume
         y_offset -= 0.12
         ax.text(x + 0.05, y_offset,
                 "Trade Volume:",
-                fontsize=16, fontweight='bold',
+                fontsize=14, fontweight='bold',
                 color='#2c3e50')
         
         y_offset -= 0.08
         ax.text(x + 0.05, y_offset,
                 f"2023: {trade_2023:,.0f}",
-                fontsize=14)
+                fontsize=11)
         ax.text(x + width/2, y_offset,
                 f"2024: {trade_2024:,.0f}",
-                fontsize=14)
+                fontsize=11)
         ax.text(x + 0.375*width, y_offset,
                 f"{trade_pct_change:+.1f}%",
-                fontsize=14,
+                fontsize=11,
                 color='green' if trade_pct_change > 0 else 'red')
         
         # Add trend arrow
