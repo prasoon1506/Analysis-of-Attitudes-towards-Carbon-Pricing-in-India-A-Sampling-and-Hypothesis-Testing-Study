@@ -2022,7 +2022,7 @@ def create_visualization(region_data, region, brand, months):
         return my_autopct
     
     ax5.pie(region_type_data, labels=region_type_labels, colors=colors,
-            autopct=make_autopct(region_type_data), startangle=90)
+            autopct=make_autopct(region_type_data), startangle=90,explode=explode)
     ax5.set_title('October 2023 Region Type Breakdown:-', fontsize=16, fontweight='bold')
     ax5 = fig.add_subplot(gs[6, 2])
     region_type_data = [
@@ -2042,7 +2042,7 @@ def create_visualization(region_data, region, brand, months):
         return my_autopct
     
     ax5.pie(region_type_data, labels=region_type_labels, colors=colors,
-            autopct=make_autopct(region_type_data), startangle=90)
+            autopct=make_autopct(region_type_data), startangle=90,explode=explode)
     ax5.set_title('September 2024 Region Type Breakdown:-', fontsize=16, fontweight='bold')
     plt.tight_layout()
     return fig
