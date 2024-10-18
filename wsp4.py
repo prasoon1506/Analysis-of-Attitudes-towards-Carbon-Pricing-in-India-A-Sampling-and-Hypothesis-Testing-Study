@@ -1983,7 +1983,7 @@ def create_visualization(region_data, region, brand, months):
         ax4.text(0.25, y_pos-0.05, f"vs Last Month: {value_last:.0f}", fontsize=12)
         ax4.text(0.45, y_pos-0.05, f"({change:.1f}% {arrow})", fontsize=12, color=color)
     # Updated: August Region Type Breakdown with values
-    ax5 = fig.add_subplot(gs[6, 0])
+    ax5 = fig.add_subplot(gs[6, :])
     region_type_data = [
         region_data['Green Oct'].iloc[-1],
         region_data['Yellow Oct'].iloc[-1],
