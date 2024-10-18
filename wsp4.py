@@ -1955,7 +1955,7 @@ def create_visualization(region_data, region, brand, months):
     ]
     monthly_achievement_oct = region_data['Monthly Achievement(Oct)'].iloc[-1]
     total_oct_current = region_data['Monthly Achievement(Oct)'].iloc[-1]
-    total_sep_current = region_data['Total Sep'].iloc[-1]
+    total_sep_current = region_data['Total Sep '].iloc[-1]
     
     ax3.text(0.2, 1, f'October {current_year} Sales Comparison to Spetember 2024:-', fontsize=16, fontweight='bold', ha='center', va='center')
     
