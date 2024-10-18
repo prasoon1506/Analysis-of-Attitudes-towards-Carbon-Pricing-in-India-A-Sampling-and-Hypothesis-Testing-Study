@@ -1821,9 +1821,9 @@ def create_visualization(region_data, region, brand, months):
     ax_current.axis('off')
     current_data = [
                 ['AGS Target','Plan','Actual','Trade %', 'Green %', 'Yellow %', 'Red %', 'Premium %'],
-                [f"{region_data["AGS Tgt (Oct)"].iloc[-1]}",
-                 f"{region_data["Month Tgt (Oct)"].iloc[-1]}",
-                 f"{region_data["Monthly Achievement(Oct)"].iloc[-1]}",
+                [f"{region_data["AGS Tgt (Oct)"].iloc[-1]:.0f}",
+                 f"{region_data["Month Tgt (Oct)"].iloc[-1]:.0f}",
+                 f"{region_data["Monthly Achievement(Oct)"].iloc[-1]:.0f}",
                  f"{region_data['Trade Oct'].iloc[-1]/region_data['Monthly Achievement(Oct)'].iloc[-1]*100:.0f}",
                  f"{region_data['Green Oct'].iloc[-1]/region_data['Monthly Achievement(Oct)'].iloc[-1]*100:.0f}",
                  f"{region_data['Yellow Oct'].iloc[-1]/region_data['Monthly Achievement(Oct)'].iloc[-1]*100:.0f}",
@@ -1859,17 +1859,17 @@ def create_visualization(region_data, region, brand, months):
                 cell.set_edgecolor('brown')
     # Main bar chart (same as before)
     ax1 = fig.add_subplot(gs[3, :])
-    
+    actual_ags = [region_data[f'AGS Tgt ({month})'].iloc[-1] for month in months]
     actual_achievements = [region_data[f'Monthly Achievement({month})'].iloc[-1] for month in months]
     actual_targets = [region_data[f'Month Tgt ({month})'].iloc[-1] for month in months]
     
     x = np.arange(len(months))
     width = 0.35
+    rects1 = ax1.bar(x-width/3, actual_ags, width, label='AGS Target', color='brown', alpha=0.8)
+    rects2 = ax1.bar(x - width/3, actual_targets, width, label='Plan', color='pink', alpha=0.8)
+    rects3 = ax1.bar(x + width/3, actual_achievements, width, label='Achievement', color='yellow', alpha=0.8)
     
-    rects1 = ax1.bar(x - width/2, actual_targets, width, label='Target', color='pink', alpha=0.8)
-    rects2 = ax1.bar(x + width/2, actual_achievements, width, label='Achievement', color='yellow', alpha=0.8)
-    
-    ax1.set_ylabel('Target and Achievement', fontsize=12, fontweight='bold')
+    ax1.set_ylabel('Targets and Achievement', fontsize=12, fontweight='bold')
     ax1.set_title(f"Monthly Targets and Achievements for FY 2025", fontsize=18, fontweight='bold')
     ax1.set_xticks(x)
     ax1.set_xticklabels(months)
@@ -1886,12 +1886,7 @@ def create_visualization(region_data, region, brand, months):
     
     autolabel(rects1)
     autolabel(rects2)
-    
-    for i, (target, achievement) in enumerate(zip(actual_targets, actual_achievements)):
-        percentage = (achievement / target) * 100
-        color = 'green' if percentage >= 100 else 'red'
-        ax1.text(i, (max(target, achievement)+min(target,achievement))/2, f'{percentage:.1f}%', 
-                 ha='center', va='bottom', fontsize=10, color=color, fontweight='bold')
+    autolabel(rects3)
 
     
     # Percentage achievement line chart (same as before)
