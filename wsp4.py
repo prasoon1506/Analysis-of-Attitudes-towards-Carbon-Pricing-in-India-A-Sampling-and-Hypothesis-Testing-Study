@@ -1847,7 +1847,7 @@ def create_visualization(region_data, region, brand, months):
     table_data = [
                 ['Overall', 'Trade', 'Premium','Blended'],
                 [f"{region_data['Q3 2023 Total'].iloc[-1]-region_data['Monthly Achievement(Oct)'].iloc[-1]:.0f}", f"{region_data['Q3 2023 Trade'].iloc[-1]-region_data['Trade Oct'].iloc[-1]:.0f}",f"{region_data['Q3 2023 Premium'].iloc[-1]-region_data['Premium Oct'].iloc[-1]:.0f}", 
-                 f"{region_data['Q3 2023 Blended '].iloc[-1]-region_data['Blended Oct'].iloc[-1]:.0f}"],
+                 f"{region_data['Q3 2023 Blended '].iloc[-1]-region_data['Blended Till Now Oct'].iloc[-1]:.0f}"],
             ]
     table = ax_table.table(cellText=table_data[1:], colLabels=table_data[0], cellLoc='center', loc='center')
     table.auto_set_font_size(False)
