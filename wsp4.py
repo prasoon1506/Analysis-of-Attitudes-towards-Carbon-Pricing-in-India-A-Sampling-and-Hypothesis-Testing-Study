@@ -2036,7 +2036,7 @@ def create_visualization(region_data, region, brand, months):
     ]
     region_type_labels = ['G', 'Y', 'R', '']
     colors = ['green', 'yellow', 'red', 'gray']
-    explode=[0.05,0.05,0.05,0.10]
+    explode=[0.05,0.05,0.05,0.05]
     def make_autopct(values):
         def my_autopct(pct):
             total = sum(values)
