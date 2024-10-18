@@ -1815,7 +1815,7 @@ def create_visualization(region_data, region, brand, months):
     ax_region = fig.add_subplot(gs[0, :])
     ax_region.axis('off')
     ax_region.text(0.5, 0.5, f'{region}({brand})', fontsize=28, fontweight='bold', ha='center', va='center')
-    months=['Apr','May','June','July','Aug','Sep']     
+    months=['Apr','May','June','July','Aug','Sep','Oct']     
     # New table for current month sales data
     ax_current = fig.add_subplot(gs[1, :])
     ax_current.axis('off')
@@ -1823,12 +1823,12 @@ def create_visualization(region_data, region, brand, months):
                 ['AGS Target','Plan','Actual','Trade %', 'Green %', 'Yellow %', 'Red %', 'Premium %'],
                 [f"{region_data["AGS Tgt (Oct)"].iloc[-1]}",
                  f"{region_data["Month Tgt (Oct)"].iloc[-1]}",
-                 f"{region_data["Total Till Now"].iloc[-1]}",
-                 f"{region_data['Trade Till Now Oct'].iloc[-1]/region_data['Total Till Now'].iloc[-1]*100:.0f}",
-                 f"{region_data['Green Till Now Oct'].iloc[-1]/region_data['Total Till Now'].iloc[-1]*100:.0f}",
-                 f"{region_data['Yellow Till Now Oct'].iloc[-1]/region_data['Total Till Now'].iloc[-1]*100:.0f}",
-                 f"{region_data['Red Till Now Oct'].iloc[-1]/region_data['Total Till Now'].iloc[-1]*100:.0f}",
-                 f"{region_data['Premium Till Now Oct'].iloc[-1]/region_data['Total Till Now'].iloc[-1]*100:.0f}"],
+                 f"{region_data["Monthly Achievement(Oct)"].iloc[-1]}",
+                 f"{region_data['Trade Oct'].iloc[-1]/region_data['Monthly Achievement(Oct)'].iloc[-1]*100:.0f}",
+                 f"{region_data['Green Oct'].iloc[-1]/region_data['Monthly Achievement(Oct)'].iloc[-1]*100:.0f}",
+                 f"{region_data['Yellow Oct'].iloc[-1]/region_data['Monthly Achievement(Oct)'].iloc[-1]*100:.0f}",
+                 f"{region_data['Red Oct'].iloc[-1]/region_data['Monthly Achievement(Oct)'].iloc[-1]*100:.0f}",
+                 f"{region_data['Premium Oct'].iloc[-1]/region_data['Monthly Achievement(Oct)'].iloc[-1]*100:.0f}"],
             ]
     current_table = ax_current.table(cellText=current_data[1:], colLabels=current_data[0], cellLoc='center', loc='center')
     current_table.auto_set_font_size(False)
@@ -2043,7 +2043,7 @@ def sales_prediction_app():
             region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)]
             
             # Define months (you might want to extract this from your data)
-            months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep']
+            months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep','Oct']
             
             # Create the visualization
             fig = create_visualization(region_data, region, brand, months)
