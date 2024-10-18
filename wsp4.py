@@ -1978,9 +1978,9 @@ def create_visualization(region_data, region, brand, months):
         color = get_color(change)
         
         y_pos = 0.75 - i*0.25
-        ax4.text(0.35, y_pos, f"{channel}:", fontsize=14, fontweight='bold')
+        ax4.text(0.30, y_pos, f"{channel}:", fontsize=14, fontweight='bold')
         ax4.text(0.45, y_pos, f"{value_current:.0f} ({percentage:.1f}%)", fontsize=14)
-        ax4.text(0.35, y_pos-0.05, f"vs Last Month: {value_last:.0f}", fontsize=12)
+        ax4.text(0.30, y_pos-0.05, f"vs Last Month: {value_last:.0f}", fontsize=12)
         ax4.text(0.45, y_pos-0.05, f"({change:.1f}% {arrow})", fontsize=12, color=color)
     # Updated: August Region Type Breakdown with values
     ax5 = fig.add_subplot(gs[6, :])
