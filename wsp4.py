@@ -1835,7 +1835,7 @@ def create_visualization(region_data, region, brand, months):
         ('Green', region_data['Green Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1]),
         ('Yellow', region_data['Yellow Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1]),
         ('Red', region_data['Red Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1]),
-        ('Premium', region_data['Premium Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1])
+        ('Premium', region_data['Premium Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1]),
         ('Blended', region_data['Blended Till Now Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1])
     ]
     
