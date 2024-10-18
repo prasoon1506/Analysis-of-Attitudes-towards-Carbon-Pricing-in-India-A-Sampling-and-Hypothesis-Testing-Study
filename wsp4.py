@@ -1850,7 +1850,7 @@ def create_visualization(region_data, region, brand, months):
     """
     
     ax_watermark.text(0.5, 0.5, logo_text, ha='center', va='center', 
-                      fontsize=14, color='gray', alpha=0.1, 
+                      fontsize=14, color='gray', alpha=0.9, 
                       family='monospace', fontweight='bold')
 
     # Region and Brand Title
