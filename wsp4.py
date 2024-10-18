@@ -2097,9 +2097,9 @@ def create_visualization(region_data, region, brand, months):
         pct_change = (total_2024 - total_2023) / total_2023 * 100
         
         ax.text(x + width/2, y + height - 0.02, f"{quarter} Comparison", ha='center', va='top', fontweight='bold')
-        ax.text(x + 0.01, y + height - 0.06, f"Total Sales 2023: ${total_2023:,.0f}", va='top')
-        ax.text(x + 0.01, y + height - 0.10, f"Total Sales 2024: ${total_2024:,.0f}", va='top')
-        ax.text(x + 0.01, y + height - 0.14, f"Change: {pct_change:+.1f}%", va='top', color='green' if pct_change > 0 else 'red')
+        ax.text(x + 0.01, y + height - 0.09, f"Total Sales 2023: ${total_2023:,.0f}", va='top')
+        ax.text(x + 0.01, y + height - 0.15, f"Total Sales 2024: ${total_2024:,.0f}", va='top')
+        ax.text(x + 0.01, y + height - 0.21, f"Change: {pct_change:+.1f}%", va='top', color='green' if pct_change > 0 else 'red')
         
         # Trade Volume comparison
         trade_2023, trade_2024 = q_data['trade_2023'], q_data['trade_2024']
