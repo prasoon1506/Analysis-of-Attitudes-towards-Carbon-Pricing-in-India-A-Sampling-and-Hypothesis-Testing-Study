@@ -2145,7 +2145,7 @@ def create_visualization(region_data, region, brand, months):
         ax.text(x + width/2, y_offset,
                 f"2024: {total_2024:,.0f}",
                 fontsize=11)
-        ax.text(x + width - 0.15, y_offset,
+        ax.text(x + 0.25*width, y_offset,
                 f"{pct_change:+.1f}%",
                 fontsize=11,
                 color='green' if pct_change > 0 else 'red')
@@ -2164,7 +2164,7 @@ def create_visualization(region_data, region, brand, months):
         ax.text(x + width/2, y_offset,
                 f"2024: {trade_2024:,.0f}",
                 fontsize=11)
-        ax.text(x + width - 0.15, y_offset,
+        ax.text(x + 0.25*width, y_offset,
                 f"{trade_pct_change:+.1f}%",
                 fontsize=11,
                 color='green' if trade_pct_change > 0 else 'red')
@@ -2182,8 +2182,8 @@ def create_visualization(region_data, region, brand, months):
             arrow_color = 'red'
             start_x = x + width * 0.3
             end_x = x + width * 0.7
-            start_y = y + 0.25
-            end_y = y + 0.25
+            start_y = y + 0.15
+            end_y = y + 0.15
             
         arrow = patches.FancyArrowPatch(
             (start_x, start_y),
