@@ -1911,7 +1911,7 @@ def create_visualization(region_data, region, brand, months):
     channel_data = [
         ('Trade', region_data['Trade Oct'].iloc[-1], region_data['Trade Oct 2023'].iloc[-1]),
         ('Premium', region_data['Premium Oct'].iloc[-1], region_data['Premium Oct 2023'].iloc[-1]),
-        ('Blended', region_data['Blended Oct'].iloc[-1], region_data['Blended Oct 2023'].iloc[-1])
+        ('Blended', region_data['Blended Till Now Oct'].iloc[-1], region_data['Blended Oct 2023'].iloc[-1])
     ]
     monthly_achievement_oct = region_data['Monthly Achievement(Oct)'].iloc[-1]
     total_oct_current = region_data['Monthly Achievement(Oct)'].iloc[-1]
