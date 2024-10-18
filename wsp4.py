@@ -2022,7 +2022,7 @@ def create_visualization(region_data, region, brand, months):
     ]
     region_type_labels = ['G', 'Y', 'R']
     colors = ['green', 'yellow', 'red']
-    total_achievement2 = region_data['Total Sep'].iloc[-1]
+    total_achievement2 = region_data['Total Sep '].iloc[-1]
     ax5.pie(region_type_data, labels=region_type_labels, colors=colors,
             autopct=make_autopct(region_type_data,total_achievement2), startangle=90,explode=explode)
     ax5.set_title('September 2024 Region Type Breakdown:-', fontsize=16, fontweight='bold')
