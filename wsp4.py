@@ -2034,7 +2034,7 @@ def create_visualization(region_data, region, brand, months):
         region_data['Red Oct'].iloc[-1],
         region_data['Unidentified Oct'].iloc[-1]
     ]
-    region_type_labels = ['G', 'Y', 'R', 'Other']
+    region_type_labels = ['G', 'Y', 'R', '']
     colors = ['green', 'yellow', 'red', 'gray']
     explode=[0.05,0.05,0.05,0.05]
     def make_autopct(values):
