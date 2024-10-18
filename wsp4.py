@@ -2036,12 +2036,12 @@ def create_visualization(region_data, region, brand, months):
     ]
     region_type_labels = ['G', 'Y', 'R', '']
     colors = ['green', 'yellow', 'red', 'gray']
-    explode=[0.05,0.05,0.05,0.05]
+    explode=[0.05,0.05,0.05,0.10]
     def make_autopct(values):
         def my_autopct(pct):
             total = sum(values)
             val = int(round(pct*total/100.0))
-            return f'{pct:.1f}%\n({val:.0f})'
+            return f'{pct:.0f}%\n({val:.0f})'
         return my_autopct
     
     ax5.pie(region_type_data, labels=region_type_labels, colors=colors,
@@ -2061,7 +2061,7 @@ def create_visualization(region_data, region, brand, months):
         def my_autopct(pct):
             total = sum(values)
             val = int(round(pct*total/100.0))
-            return f'{pct:.1f}%\n({val:.0f})'
+            return f'{pct:.0f}%\n({val:.0f})'
         return my_autopct
     
     ax6.pie(region_type_data, labels=region_type_labels, colors=colors,
