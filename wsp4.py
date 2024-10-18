@@ -1823,7 +1823,7 @@ from scipy import stats
 import requests
 from io import BytesIO
 from PIL import Image
-def create_visualization(region_data, region, brand, months, logo):
+def create_visualization(region_data, region, brand, months):
     fig = plt.figure(figsize=(20, 34))
     gs = fig.add_gridspec(8, 3, height_ratios=[0.5,1, 1, 3, 2, 2, 2, 2])
     
@@ -1831,26 +1831,27 @@ def create_visualization(region_data, region, brand, months, logo):
     ax_watermark = fig.add_axes([0, 0, 1, 1], zorder=-1)
     ax_watermark.axis('off')
     
-    # Calculate the size and position for the watermark
-    fig_width = fig.get_size_inches()[0]
-    fig_height = fig.get_size_inches()[1]
-    logo_display_size = fig_width * 0.3  # 30% of figure width
+    # Create a more professional text-based logo for JK Lakshmi Cement
+    logo_text = """
+    ╭────────────────────────╮
+    │   ╭─────────────────╮  │
+    │   │  JK LAKSHMI     │  │
+    │   │    CEMENT       │  │
+    │   ╰─────────────────╯  │
+    │                        │
+    │   ╭───╮      ╭───╮     │
+    │   │   │      │   │     │
+    │   │   │      │   │     │
+    │ ╭─┴───┴──────┴───┴─╮   │
+    │ │    STRENGTH     │   │
+    │ │    & QUALITY    │   │
+    │ ╰─────────────────╯   │
+    ╰────────────────────────╯
+    """
     
-    # Calculate aspect ratio to maintain logo proportions
-    logo_aspect = logo.width / logo.height
-    logo_display_height = logo_display_size / logo_aspect
-    
-    # Center the logo
-    x_center = 0.5
-    y_center = 0.5
-    
-    # Display the logo with transparency
-    ax_watermark.imshow(logo, 
-                       extent=[x_center - logo_display_size/2/fig_width,
-                              x_center + logo_display_size/2/fig_width,
-                              y_center - logo_display_height/2/fig_height,
-                              y_center + logo_display_height/2/fig_height],
-                       alpha=0.1)
+    ax_watermark.text(0.5, 0.5, logo_text, ha='center', va='center', 
+                      fontsize=14, color='gray', alpha=0.1, 
+                      family='monospace', fontweight='bold')
 
     # Region and Brand Title
     ax_region = fig.add_subplot(gs[0, :])
@@ -2333,10 +2334,7 @@ def sales_prediction_app():
             
             # Define months (you might want to extract this from your data)
             months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep','Oct']
-            logo_url="IMG_20241018_162028.jpg"
-            response = requests.get(logo_url)
-            logo = Image.open(BytesIO(response.content))
-            fig = create_visualization(region_data, region, brand, months,logo_path)
+            fig = create_visualization(region_data, region, brand, months)
             
             # Display the plot
             st.pyplot(fig)
