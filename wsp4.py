@@ -1983,7 +1983,7 @@ def create_visualization(region_data, region, brand, months):
         ax4.text(0.65, y_pos-0.05, f"vs Last Month: {value_last:.0f}", fontsize=12)
         ax4.text(0.75, y_pos-0.05, f"({change:.1f}% {arrow})", fontsize=12, color=color)
     # Updated: August Region Type Breakdown with values
-    ax4 = fig.add_subplot(gs[6, :])
+    ax5 = fig.add_subplot(gs[6, :])
     region_type_data = [
         region_data['Green Sep'].iloc[-1],
         region_data['Yellow Sep'].iloc[-1],
@@ -2000,11 +2000,11 @@ def create_visualization(region_data, region, brand, months):
             return f'{pct:.1f}%\n({val:.0f})'
         return my_autopct
     
-    ax4.pie(region_type_data, labels=region_type_labels, colors=colors,
+    ax5.pie(region_type_data, labels=region_type_labels, colors=colors,
             autopct=make_autopct(region_type_data), startangle=90)
-    ax4.set_title('August 2024 Region Type Breakdown:-', fontsize=16, fontweight='bold')
-    ax5 = fig.add_subplot(gs[7, :])
-    ax5.axis('off')
+    ax5.set_title('August 2024 Region Type Breakdown:-', fontsize=16, fontweight='bold')
+    ax6 = fig.add_subplot(gs[7, :])
+    ax6.axis('off')
     
     q3_table_data = [
         ['Overall Requirement', 'Requirement in\nTrade Channel', 'Requirement in\nBlednded Product Category', 'Requirement for\nPremium Product'],
@@ -2022,7 +2022,7 @@ def create_visualization(region_data, region, brand, months):
             cell.set_facecolor('goldenrod')
         cell.set_edgecolor('brown')
     
-    ax5.set_title('Quarterly Requirements for October 2024', fontsize=16, fontweight='bold')
+    ax6.set_title('Quarterly Requirements for October 2024', fontsize=16, fontweight='bold')
     plt.tight_layout()
     return fig
 def sales_prediction_app():
