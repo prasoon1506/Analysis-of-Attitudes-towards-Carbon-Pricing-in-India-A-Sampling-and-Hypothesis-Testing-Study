@@ -2272,7 +2272,7 @@ def sales_review_report_generator():
     with st.sidebar:
         st_lottie(lottie_json, height=200)
         st.title("Navigation")
-        page = st.radio("Go to", ["Home", "Predictions","About"])
+        page = st.radio("Go to", ["Home", "Report Generator","About"])
     
     if page == "Home":
         st.write("This app helps you predict and visualize sales achievements for different regions and brands.")
