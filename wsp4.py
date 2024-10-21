@@ -2045,7 +2045,7 @@ def create_visualization(region_data, region, brand, months):
     def make_autopct(values):
         def my_autopct(pct):
             total = sum(values)
-            val = int((pct*total/100.0))
+            val = int(round(pct*total/100.0))
             return f'{pct:.0f}%\n({val:.0f})'
         return my_autopct
     
@@ -2065,7 +2065,7 @@ def create_visualization(region_data, region, brand, months):
     def make_autopct(values):
         def my_autopct(pct):
             total = sum(values)
-            val = int((pct*total/100.0))
+            val = int(round(pct*total/100.0))
             return f'{pct:.0f}%\n({val:.0f})'
         return my_autopct
     
@@ -2085,7 +2085,7 @@ def create_visualization(region_data, region, brand, months):
     def make_autopct(values):
         def my_autopct(pct):
             total = sum(values)
-            val = int((pct*total/100.0))
+            val = int(round(pct*total/100.0))
             return f'{pct:.0f}%\n({val:.0f})'
         return my_autopct
     
