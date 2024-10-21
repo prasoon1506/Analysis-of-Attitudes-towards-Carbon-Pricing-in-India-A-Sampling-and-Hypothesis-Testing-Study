@@ -1843,9 +1843,9 @@ def create_visualization(region_data, region, brand, months):
     ]
     detailed_metrics = [
         ('Trade', region_data['Trade Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Channel'),
-        ('Green', region_data['Green Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Channel'),
-        ('Yellow', region_data['Yellow Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Channel'),
-        ('Red', region_data['Red Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Channel'),
+        ('Green', region_data['Green Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Region'),
+        ('Yellow', region_data['Yellow Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Region'),
+        ('Red', region_data['Red Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Region'),
         ('Premium', region_data['Premium Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Product'),
         ('Blended', region_data['Blended Till Now Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Product')
     ]
@@ -1866,15 +1866,12 @@ def create_visualization(region_data, region, brand, months):
         main_table[i, -1].set_facecolor('#E6F3FF')
         main_table[i, -1].set_text_props(fontweight='bold')
     
-    # Replace detailed table with bullet points
-    ax_current.text(0.50, 1.05, 'Sales Breakdown', fontsize=16, fontweight='bold', ha='center', va='bottom')
-    
     colors = ['#FF9999', '#66B2FF', '#99FF99', '#FFCC99', '#FF99CC', '#99CCFF']
     for i, (label, value, total, category) in enumerate(detailed_metrics):
         percentage = (value / total) * 100
         y_pos = 0.85 - i * 0.13
         text = f'• {label} {category} has a share of {percentage:.1f}% in total sales, i.e., {value:.0f}'
-        ax_current.text(0.4, y_pos, text, fontsize=12, color=colors[i])
+        ax_current.text(0.4, y_pos, text, fontsize=14,fontweight="bold", color=colors[i])
     ax_current.text(0.50, 1.05, 'Sales Breakown', fontsize=16, fontweight='bold', ha='center', va='bottom')
     ax_table = fig.add_subplot(gs[2, :])
     ax_table.axis('off')
