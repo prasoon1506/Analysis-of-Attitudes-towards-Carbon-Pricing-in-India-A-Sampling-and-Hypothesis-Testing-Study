@@ -5348,7 +5348,7 @@ def main():
         analysis_menu = option_menu(
             menu_title="Analysis Dashboards",
             options=["WSP Analysis", "Sales Dashboard","Sales Review Report", "Product-Mix", "Segment-Mix","Geo-Mix"],
-            icons=["clipboard-data", "cash","books", "arrow-up-right", "shuffle", "globe"],
+            icons=["clipboard-data", "cash","bar-chart", "arrow-up-right", "shuffle", "globe"],
             orientation="horizontal",
         )
         if analysis_menu == "WSP Analysis":
