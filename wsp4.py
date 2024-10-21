@@ -1873,7 +1873,7 @@ def create_visualization(region_data, region, brand, months):
     detailed_table = ax_current.table(
         cellText=detailed_data,
         rowLabels=[label for label, _, _ in detailed_metrics],
-        colLabels=['Value', 'Percentage'],
+        colLabels=['Value', 'Share in Total Sales'],
         cellLoc='center',
         loc='center right',
         bbox=[0.4, 0, 0.6, 1]
@@ -1972,7 +1972,7 @@ def create_visualization(region_data, region, brand, months):
     def get_arrow(value):
         return '↑' if value > 0 else '↓' if value < 0 else '→'
     def get_color(value):
-        return 'green' if value > 0 else 'darkred' if value < 0 else 'black'
+        return 'green' if value > 0 else 'red' if value < 0 else 'black'
 
     # Display total sales
     total_change = ((total_oct_current - total_oct_last) / total_oct_last) * 100
@@ -2028,7 +2028,7 @@ def create_visualization(region_data, region, brand, months):
         
         y_pos = 0.75 - i*0.25
         ax4.text(0.10, y_pos, f"{channel}:", fontsize=14, fontweight='bold')
-        ax4.text(0.55, y_pos, f"{value_current:.0f} ({percentage:.1f}%)", fontsize=14)
+        ax4.text(0.55, y_pos, f"{value_current:.0f}", fontsize=14)
         ax4.text(0.10, y_pos-0.05, f"vs Last Month: {value_last:.0f}", fontsize=12)
         ax4.text(0.55, y_pos-0.05, f"({change:.1f}% {arrow})", fontsize=12, color=color)
     # Updated: August Region Type Breakdown with values
