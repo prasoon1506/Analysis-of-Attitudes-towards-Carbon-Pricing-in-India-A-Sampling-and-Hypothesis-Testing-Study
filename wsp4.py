@@ -2254,7 +2254,7 @@ def create_visualization(region_data, region, brand, months):
     plt.tight_layout()
     return fig
 def sales_review_report_generator():
-    st.title("📊 Sales Prediction App")
+    st.title("📊 Sales Review Report Generator")
     
     # Load Lottie animation
     lottie_url = "https://assets5.lottiefiles.com/packages/lf20_V9t630.json"
@@ -2272,7 +2272,7 @@ def sales_review_report_generator():
     with st.sidebar:
         st_lottie(lottie_json, height=200)
         st.title("Navigation")
-        page = st.radio("Go to", ["Home", "Predictions", "XGBoost Explained", "About"])
+        page = st.radio("Go to", ["Home", "Predictions","About"])
     
     if page == "Home":
         st.write("This app helps you predict and visualize sales achievements for different regions and brands.")
@@ -2286,8 +2286,8 @@ def sales_review_report_generator():
             st.session_state['regions'] = regions
             st.session_state['brands'] = brands
             st.success("File uploaded and processed successfully!")
-    elif page == "Predictions":
-     st.subheader("🔮 Sales Predictions")
+    elif page == "Report Generator":
+     st.subheader("🔮 Report Generator")
      if st.session_state['df'] is None:
         st.warning("Please upload a file on the Home page first.")
      else:
