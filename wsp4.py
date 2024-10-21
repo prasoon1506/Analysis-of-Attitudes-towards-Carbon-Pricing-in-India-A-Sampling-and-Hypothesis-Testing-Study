@@ -2480,15 +2480,11 @@ def sales_review_report_generator():
                     
                     # Add dashboard to PDF
                     dashboard_fig = create_dashboard(region_data, region, brand, months)
-                    dashboard_img = dashboard_fig.to_image(format="png", width=800, height=1000, scale=2)
                     story.append(Paragraph(f"Dashboard for {region} - {brand}", getSampleStyleSheet()['Heading1']))
                     story.append(Image(BytesIO(dashboard_img)))
                     
                     # Add detailed visualizations
                     fig = create_visualization(region_data, region, brand, months)
-                    img_buffer = BytesIO()
-                    fig.savefig(img_buffer, format='png', dpi=300, bbox_inches='tight')
-                    img_buffer.seek(0)
                     story.append(Paragraph(f"Detailed Analysis for {region} - {brand}", getSampleStyleSheet()['Heading2']))
                     story.append(Image(img_buffer))
                     story.append(PageBreak())
