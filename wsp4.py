@@ -1841,15 +1841,13 @@ def create_visualization(region_data, region, brand, months):
         ('Plan', f"{region_data['Month Tgt (Oct)'].iloc[-1]:.0f}"),
         ('Actual', f"{region_data['Monthly Achievement(Oct)'].iloc[-1]:.0f}")
     ]
-    
-    # Detailed metrics with percentages
     detailed_metrics = [
-        ('Trade', region_data['Trade Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1]),
-        ('Green', region_data['Green Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1]),
-        ('Yellow', region_data['Yellow Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1]),
-        ('Red', region_data['Red Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1]),
-        ('Premium', region_data['Premium Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1]),
-        ('Blended', region_data['Blended Till Now Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1])
+        ('Trade', region_data['Trade Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Channel'),
+        ('Green', region_data['Green Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Channel'),
+        ('Yellow', region_data['Yellow Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Channel'),
+        ('Red', region_data['Red Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Channel'),
+        ('Premium', region_data['Premium Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Product'),
+        ('Blended', region_data['Blended Till Now Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Product')
     ]
     
     # Create a styled table for main metrics
@@ -1868,27 +1866,15 @@ def create_visualization(region_data, region, brand, months):
         main_table[i, -1].set_facecolor('#E6F3FF')
         main_table[i, -1].set_text_props(fontweight='bold')
     
-    # Create a styled table for detailed metrics
-    detailed_data = [[f"{value:,.0f}", f"{(value/total)*100:.1f}%"] for _, value, total in detailed_metrics]
-    detailed_table = ax_current.table(
-        cellText=detailed_data,
-        rowLabels=[label for label, _, _ in detailed_metrics],
-        colLabels=['Value', 'Share in Total Sales'],
-        cellLoc='center',
-        loc='center right',
-        bbox=[0.4, 0, 0.6, 1]
-    )
-    detailed_table.auto_set_font_size(False)
-    detailed_table.set_fontsize(12)
-    detailed_table.scale(1, 1.5)
-    for i in range(len(detailed_metrics) + 1):
-        for j in range(2):
-            if i == 0:
-                detailed_table[i, j].set_facecolor('#FFF2CC')
-                detailed_table[i, j].set_text_props(fontweight='bold')
-            else:
-                detailed_table[i, j].set_facecolor('#E6F3FF' if j == 0 else '#F2F2F2')
+    # Replace detailed table with bullet points
+    ax_current.text(0.50, 1.05, 'Sales Breakdown', fontsize=16, fontweight='bold', ha='center', va='bottom')
     
+    colors = ['#FF9999', '#66B2FF', '#99FF99', '#FFCC99', '#FF99CC', '#99CCFF']
+    for i, (label, value, total, category) in enumerate(detailed_metrics):
+        percentage = (value / total) * 100
+        y_pos = 0.85 - i * 0.13
+        text = f'• {label} {category} has a share of {percentage:.1f}% in total sales, i.e., {value:.0f}'
+        ax_current.text(0.4, y_pos, text, fontsize=12, color=colors[i])
     ax_current.text(0.50, 1.05, 'Sales Breakown', fontsize=16, fontweight='bold', ha='center', va='bottom')
     ax_table = fig.add_subplot(gs[2, :])
     ax_table.axis('off')
