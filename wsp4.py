@@ -2019,7 +2019,7 @@ def create_visualization(region_data, region, brand, months):
     arrow = get_arrow(total_change)
     color = get_color(total_change)
     ax4.text(0.36, 0.9, f"October 2024: {total_oct_current:.0f}", fontsize=14, fontweight='bold', ha='center')
-    ax4.text(0.37, 0.85, f"vs October 2023: {total_sep_current:.0f} ({total_change:.1f}% {arrow})", fontsize=12, color=color, ha='center')
+    ax4.text(0.37, 0.85, f"vs September 2024: {total_sep_current:.0f} ({total_change:.1f}% {arrow})", fontsize=12, color=color, ha='center')
     for i, (channel, value_current, value_last) in enumerate(channel_data1):
         percentage = (value_current / monthly_achievement_oct) * 100
         change = ((value_current - value_last) / value_last) * 100
@@ -2253,7 +2253,7 @@ def create_visualization(region_data, region, brand, months):
 
     plt.tight_layout()
     return fig
-def sales_prediction_app():
+def sales_review_report_generator():
     st.title("📊 Sales Prediction App")
     
     # Load Lottie animation
@@ -5347,14 +5347,16 @@ def main():
     elif selected == "Analysis Dashboards":
         analysis_menu = option_menu(
             menu_title="Analysis Dashboards",
-            options=["WSP Analysis", "Sales Dashboard", "Product-Mix", "Segment-Mix","Geo-Mix"],
-            icons=["clipboard-data", "cash", "arrow-up-right", "shuffle", "globe"],
+            options=["WSP Analysis", "Sales Dashboard","Sales Review Report", "Product-Mix", "Segment-Mix","Geo-Mix"],
+            icons=["clipboard-data", "cash","report", "arrow-up-right", "shuffle", "globe"],
             orientation="horizontal",
         )
         if analysis_menu == "WSP Analysis":
             wsp_analysis_dashboard()
         elif analysis_menu == "Sales Dashboard":
             sales_dashboard()
+        elif analysis_menu == "Sales Review Report":
+            sales_review_report_generator()
         elif analysis_menu == "Product-Mix":
             normal()
         elif analysis_menu == "Segment-Mix":
@@ -5364,15 +5366,13 @@ def main():
     elif selected == "Predictions":
         prediction_menu = option_menu(
             menu_title="Predictions",
-            options=["Descriptive Statistics", "Sales Prediction","Projection"],
+            options=["WSP Projection","Sales Projection"],
             icons=["bar-chart", "graph-up-arrow"],
             orientation="horizontal",
         )
-        if prediction_menu == "Descriptive Statistics":
+        if prediction_menu == "WSP Projection":
             descriptive_statistics_and_prediction()
-        elif prediction_menu == "Sales Prediction":
-            sales_prediction_app()
-        elif prediction_menu == "Projection":
+        elif prediction_menu == "Sales Projection":
             projection()
     elif selected == "Settings":
         st.title("Settings")
