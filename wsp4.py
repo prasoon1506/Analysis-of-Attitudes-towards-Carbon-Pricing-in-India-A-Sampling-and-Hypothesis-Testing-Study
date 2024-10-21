@@ -2645,8 +2645,6 @@ def sales_dashboard():
     </style>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="title"><span>Welcome to SalesDashboard</span></div>', unsafe_allow_html=True)
-
     # Load Lottie animation
     lottie_url = "https://assets2.lottiefiles.com/packages/lf20_V9t630.json"  # New interesting animation
     lottie_json = load_lottie_url(lottie_url)
