@@ -2450,10 +2450,6 @@ def sales_review_report_generator():
                 
                 # Add detailed visualizations
                 fig = create_visualization(region_data, region, brand, months)
-                img_buffer = BytesIO()
-                fig.savefig(img_buffer, format='png', dpi=300, bbox_inches='tight')
-                img_buffer.seek(0)
-                story.append(Image(img_buffer))
                 
                 pdf.build(story)
                 buffer.seek(0)
