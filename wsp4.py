@@ -1861,7 +1861,7 @@ def create_visualization(region_data, region, brand, months):
     main_table.auto_set_font_size(False)
     main_table.set_fontsize(12)
     main_table.scale(1, 1.5)
-    
+
     for i in range(len(main_metrics)):
         main_table[i, -1].set_facecolor('#E6F3FF')
         main_table[i, -1].set_text_props(fontweight='bold')
