@@ -1972,7 +1972,7 @@ def create_visualization(region_data, region, brand, months):
     def get_arrow(value):
         return '↑' if value > 0 else '↓' if value < 0 else '→'
     def get_color(value):
-        return 'green' if value > 0 else 'red' if value < 0 else 'black'
+        return 'green' if value > 0 else 'darkred' if value < 0 else 'black'
 
     # Display total sales
     total_change = ((total_oct_current - total_oct_last) / total_oct_last) * 100
@@ -1988,7 +1988,7 @@ def create_visualization(region_data, region, brand, months):
         
         y_pos = 0.75 - i*0.25
         ax3.text(0.15, y_pos, f"{channel}:", fontsize=14, fontweight='bold')
-        ax3.text(0.25, y_pos, f"{value_current:.0f} ({percentage:.1f}%)", fontsize=14)
+        ax3.text(0.25, y_pos, f"{value_current:.0f}", fontsize=14)
         ax3.text(0.15, y_pos-0.05, f"vs Last Year: {value_last:.0f}", fontsize=12)
         ax3.text(0.25, y_pos-0.05, f"({change:.1f}% {arrow})", fontsize=12, color=color)
     ax4 = fig.add_subplot(gs[5, 2])
