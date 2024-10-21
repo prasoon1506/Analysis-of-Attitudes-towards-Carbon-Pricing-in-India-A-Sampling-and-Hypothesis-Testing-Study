@@ -2390,7 +2390,6 @@ def sales_review_report_generator():
                     img_buffer.seek(0)
                     
                     story.append(Paragraph(f"Report for {region} - {brand}", getSampleStyleSheet()['Heading1']))
-                    story.append(Image(img_buffer))
                     story.append(PageBreak())
                 
                 pdf.build(story)
