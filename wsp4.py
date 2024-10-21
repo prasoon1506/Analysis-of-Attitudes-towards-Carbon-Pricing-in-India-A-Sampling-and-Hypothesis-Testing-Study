@@ -2253,14 +2253,59 @@ def create_visualization(region_data, region, brand, months):
 
     plt.tight_layout()
     return fig
+
+def create_front_page(output):
+    doc = SimpleDocTemplate(output, pagesize=letter)
+    styles = getSampleStyleSheet()
+    story = []
+
+    # Custom style for the title
+    title_style = ParagraphStyle(
+        'Title',
+        parent=styles['Title'],
+        fontSize=36,
+        textColor=colors.darkblue,
+        spaceAfter=30,
+        alignment=1
+    )
+
+    # Custom style for the subtitle
+    subtitle_style = ParagraphStyle(
+        'Subtitle',
+        parent=styles['Normal'],
+        fontSize=18,
+        textColor=colors.darkslategray,
+        spaceAfter=60,
+        alignment=1
+    )
+
+    # Add a decorative line
+    story.append(Spacer(1, 2*inch))
+    story.append(Paragraph("_" * 40, ParagraphStyle('Line', alignment=1)))
+    story.append(Spacer(1, 0.5*inch))
+
+    # Add title and subtitle
+    story.append(Paragraph("Sales Review Report", title_style))
+    story.append(Paragraph("Fiscal Year 2024", subtitle_style))
+
+    # Add another decorative line
+    story.append(Spacer(1, 0.5*inch))
+    story.append(Paragraph("_" * 40, ParagraphStyle('Line', alignment=1)))
+
+    # Add some additional information
+    story.append(Spacer(1, 1*inch))
+    info_style = ParagraphStyle('Info', parent=styles['Normal'], alignment=1, fontSize=14)
+    story.append(Paragraph("Prepared by: Sales Analytics Team", info_style))
+    story.append(Paragraph("Date: October 21, 2024", info_style))
+
+    doc.build(story)
+
 def sales_review_report_generator():
     st.title("📊 Sales Review Report Generator")
     
-    # Load Lottie animation
     lottie_url = "https://assets5.lottiefiles.com/packages/lf20_V9t630.json"
     lottie_json = load_lottie_url(lottie_url)
     
-    # Initialize session state variables if they don't exist
     if 'df' not in st.session_state:
         st.session_state['df'] = None
     if 'regions' not in st.session_state:
@@ -2268,17 +2313,16 @@ def sales_review_report_generator():
     if 'brands' not in st.session_state:
         st.session_state['brands'] = []
     
-    # Sidebar
     with st.sidebar:
         st_lottie(lottie_json, height=200)
         st.title("Navigation")
-        page = st.radio("Go to", ["Home", "Report Generator","About"])
+        page = st.radio("Go to", ["Home", "Report Generator", "About"])
     
     if page == "Home":
         st.write("This app helps you generate monthly sales review report for different regions and brands.")
         st.write("Use the sidebar to navigate between pages and upload your data to get started!")
         
-        uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx",key="Sales_Prediction_uploader")
+        uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx", key="Sales_Prediction_uploader")
         if uploaded_file is not None:
             with st.spinner("Loading data..."):
                 df, regions, brands = load_data(uploaded_file)
@@ -2286,44 +2330,79 @@ def sales_review_report_generator():
             st.session_state['regions'] = regions
             st.session_state['brands'] = brands
             st.success("File uploaded and processed successfully!")
+
     elif page == "Report Generator":
-     st.subheader("🔮 Report Generator")
-     if st.session_state['df'] is None:
-        st.warning("Please upload a file on the Home page first.")
-     else:
-        df = st.session_state['df']
-        regions = st.session_state['regions']
-        brands = st.session_state['brands']
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            region = st.selectbox("Select Region", regions)
-        with col2:
-            brand = st.selectbox("Select Brand", brands)
-        
-        if st.button("Generate Report"):
-            # Filter the dataframe for the selected region and brand
-            region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)]
+        st.subheader("🔮 Report Generator")
+        if st.session_state['df'] is None:
+            st.warning("Please upload a file on the Home page first.")
+        else:
+            df = st.session_state['df']
+            regions = st.session_state['regions']
             
-            # Define months (you might want to extract this from your data)
-            months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep','Oct']
-            fig = create_visualization(region_data, region, brand, months)
+            col1, col2 = st.columns(2)
+            with col1:
+                region = st.selectbox("Select Region", regions)
             
-            # Display the plot
-            st.pyplot(fig)
+            # Filter brands based on the selected region
+            region_brands = df[df['Zone'] == region]['Brand'].unique().tolist()
             
-            # Individual report download
-            buf = BytesIO()
-            fig.savefig(buf, format="pdf")
-            buf.seek(0)
-            b64 = base64.b64encode(buf.getvalue()).decode()
-            st.download_button(
-                label="Download Individual PDF Report",
-                data=buf,
-                file_name=f"prediction_report_{region}_{brand}.pdf",
-                mime="application/pdf"
-            )
-               
+            with col2:
+                brand = st.selectbox("Select Brand", region_brands)
+            
+            if st.button("Generate Individual Report"):
+                region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)]
+                months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']
+                fig = create_visualization(region_data, region, brand, months)
+                
+                st.pyplot(fig)
+                
+                buf = BytesIO()
+                fig.savefig(buf, format="pdf")
+                buf.seek(0)
+                b64 = base64.b64encode(buf.getvalue()).decode()
+                st.download_button(
+                    label="Download Individual PDF Report",
+                    data=buf,
+                    file_name=f"prediction_report_{region}_{brand}.pdf",
+                    mime="application/pdf"
+                )
+            
+            if st.button("Generate Combined Report"):
+                combined_pdf = BytesIO()
+                pdf = SimpleDocTemplate(combined_pdf, pagesize=letter)
+                
+                # Create front page
+                create_front_page(combined_pdf)
+                
+                # Generate reports for all unique region-brand combinations
+                unique_combinations = df.groupby(['Zone', 'Brand']).size().reset_index()[['Zone', 'Brand']]
+                story = []
+                
+                for _, row in unique_combinations.iterrows():
+                    region = row['Zone']
+                    brand = row['Brand']
+                    region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)]
+                    months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']
+                    fig = create_visualization(region_data, region, brand, months)
+                    
+                    img_buffer = BytesIO()
+                    fig.savefig(img_buffer, format='png')
+                    img_buffer.seek(0)
+                    
+                    story.append(Paragraph(f"Report for {region} - {brand}", getSampleStyleSheet()['Heading1']))
+                    story.append(Image(img_buffer))
+                    story.append(PageBreak())
+                
+                pdf.build(story)
+                combined_pdf.seek(0)
+                
+                st.download_button(
+                    label="Download Combined PDF Report",
+                    data=combined_pdf,
+                    file_name="combined_prediction_report.pdf",
+                    mime="application/pdf"
+                )
+
     elif page == "About":
         st.subheader("ℹ️ About the Sales Prediction App")
         st.write("""
@@ -2335,7 +2414,7 @@ def sales_review_report_generator():
         - Combined report generation
         - Interactive visualizations
         
-        For any questions or support, please contact our team at support@salespredictionapp.com
+        For any questions or support, please contact us at prasoon.bajai@lc.jkmail.com
         """)
 def load_lottie_url(url: str):
     try:
