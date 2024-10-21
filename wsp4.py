@@ -1870,7 +1870,7 @@ def create_visualization(region_data, region, brand, months):
     for i, (label, value, total, category) in enumerate(detailed_metrics):
         percentage = (value / total) * 100
         y_pos = 0.85 - i * 0.13
-        text = f'• {label} {category} has a share of {percentage:.1f}% in total sales, i.e., {value:.0f}'
+        text = f'• {label} {category} has a share of {percentage:.1f}% in total sales, i.e., {value:.0f} MT.'
         ax_current.text(0.4, y_pos, text, fontsize=14,fontweight="bold", color=colors[i])
     ax_current.text(0.50, 1.05, 'Sales Breakown', fontsize=16, fontweight='bold', ha='center', va='bottom')
     ax_table = fig.add_subplot(gs[2, :])
