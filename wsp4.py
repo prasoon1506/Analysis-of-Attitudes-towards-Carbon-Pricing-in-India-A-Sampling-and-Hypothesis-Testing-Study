@@ -2447,9 +2447,6 @@ def sales_review_report_generator():
                 # Add front page
                 create_front_page(buffer)
                 
-                # Add dashboard to PDF
-                dashboard_img = dashboard_fig.to_image(format="png", width=800, height=1000, scale=2)
-                story.append(Image(BytesIO(dashboard_img)))
                 
                 # Add detailed visualizations
                 fig = create_visualization(region_data, region, brand, months)
