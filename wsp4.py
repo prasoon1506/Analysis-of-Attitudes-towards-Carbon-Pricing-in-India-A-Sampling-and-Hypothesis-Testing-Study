@@ -2275,7 +2275,7 @@ def sales_review_report_generator():
         page = st.radio("Go to", ["Home", "Report Generator","About"])
     
     if page == "Home":
-        st.write("This app helps you predict and visualize sales achievements for different regions and brands.")
+        st.write("This app helps you generate monthly sales review report for different regions and brands.")
         st.write("Use the sidebar to navigate between pages and upload your data to get started!")
         
         uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx",key="Sales_Prediction_uploader")
@@ -2301,7 +2301,7 @@ def sales_review_report_generator():
         with col2:
             brand = st.selectbox("Select Brand", brands)
         
-        if st.button("Run Prediction"):
+        if st.button("Generate Report"):
             # Filter the dataframe for the selected region and brand
             region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)]
             
