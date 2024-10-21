@@ -1823,6 +1823,51 @@ from scipy import stats
 import requests
 from io import BytesIO
 from PIL import Image
+def create_front_page(output):
+    doc = SimpleDocTemplate(output, pagesize=letter)
+    styles = getSampleStyleSheet()
+    story = []
+
+    # Custom style for the title
+    title_style = ParagraphStyle(
+        'Title',
+        parent=styles['Title'],
+        fontSize=36,
+        textColor=colors.darkblue,
+        spaceAfter=30,
+        alignment=1
+    )
+
+    # Custom style for the subtitle
+    subtitle_style = ParagraphStyle(
+        'Subtitle',
+        parent=styles['Normal'],
+        fontSize=18,
+        textColor=colors.darkslategray,
+        spaceAfter=60,
+        alignment=1
+    )
+
+    # Add a decorative line
+    story.append(Spacer(1, 2*inch))
+    story.append(Paragraph("_" * 40, ParagraphStyle('Line', alignment=1)))
+    story.append(Spacer(1, 0.5*inch))
+
+    # Add title and subtitle
+    story.append(Paragraph("Sales Review Report", title_style))
+    story.append(Paragraph("Fiscal Year 2024", subtitle_style))
+
+    # Add another decorative line
+    story.append(Spacer(1, 0.5*inch))
+    story.append(Paragraph("_" * 40, ParagraphStyle('Line', alignment=1)))
+
+    # Add some additional information
+    story.append(Spacer(1, 1*inch))
+    info_style = ParagraphStyle('Info', parent=styles['Normal'], alignment=1, fontSize=14)
+    story.append(Paragraph("Prepared by: Sales Analytics Team", info_style))
+    story.append(Paragraph("Date: October 21, 2024", info_style))
+
+    doc.build(story)
 def create_visualization(region_data, region, brand, months):
     fig = plt.figure(figsize=(20, 34))
     gs = fig.add_gridspec(8, 3, height_ratios=[0.5,1, 1, 3, 2, 2, 2, 2])
@@ -2254,52 +2299,90 @@ def create_visualization(region_data, region, brand, months):
     plt.tight_layout()
     return fig
 
-def create_front_page(output):
-    doc = SimpleDocTemplate(output, pagesize=letter)
-    styles = getSampleStyleSheet()
-    story = []
 
-    # Custom style for the title
-    title_style = ParagraphStyle(
-        'Title',
-        parent=styles['Title'],
-        fontSize=36,
-        textColor=colors.darkblue,
-        spaceAfter=30,
-        alignment=1
+def create_dashboard(region_data, region, brand, months):
+    fig = sp.make_subplots(
+        rows=3, cols=2,
+        subplot_titles=(
+            "Monthly Targets and Achievements",
+            "Percentage Achievement",
+            "Sales Breakdown (Current Month)",
+            "Region Type Breakdown",
+            "Quarterly Performance Analysis",
+            "Year-over-Year Comparison"
+        ),
+        specs=[
+            [{"type": "bar"}, {"type": "scatter"}],
+            [{"type": "pie"}, {"type": "pie"}],
+            [{"type": "table"}, {"type": "bar"}],
+        ],
+        vertical_spacing=0.1,
+        horizontal_spacing=0.1,
     )
 
-    # Custom style for the subtitle
-    subtitle_style = ParagraphStyle(
-        'Subtitle',
-        parent=styles['Normal'],
-        fontSize=18,
-        textColor=colors.darkslategray,
-        spaceAfter=60,
-        alignment=1
-    )
+    # Monthly Targets and Achievements
+    actual_ags = [region_data[f'AGS Tgt ({month})'].iloc[-1] for month in months]
+    actual_achievements = [region_data[f'Monthly Achievement({month})'].iloc[-1] for month in months]
+    actual_targets = [region_data[f'Month Tgt ({month})'].iloc[-1] for month in months]
 
-    # Add a decorative line
-    story.append(Spacer(1, 2*inch))
-    story.append(Paragraph("_" * 40, ParagraphStyle('Line', alignment=1)))
-    story.append(Spacer(1, 0.5*inch))
+    fig.add_trace(go.Bar(x=months, y=actual_ags, name="AGS Target"), row=1, col=1)
+    fig.add_trace(go.Bar(x=months, y=actual_targets, name="Plan"), row=1, col=1)
+    fig.add_trace(go.Bar(x=months, y=actual_achievements, name="Achievement"), row=1, col=1)
 
-    # Add title and subtitle
-    story.append(Paragraph("Sales Review Report", title_style))
-    story.append(Paragraph("Fiscal Year 2024", subtitle_style))
+    # Percentage Achievement
+    percent_achievements = [((ach / tgt) * 100) for ach, tgt in zip(actual_achievements, actual_targets)]
+    fig.add_trace(go.Scatter(x=months, y=percent_achievements, mode='lines+markers', name="% Achievement"), row=1, col=2)
+    fig.add_hline(y=100, line_dash="dash", line_color="red", row=1, col=2)
 
-    # Add another decorative line
-    story.append(Spacer(1, 0.5*inch))
-    story.append(Paragraph("_" * 40, ParagraphStyle('Line', alignment=1)))
+    # Sales Breakdown (Current Month)
+    current_month = "Oct"  # Assuming October is the current month
+    sales_breakdown = [
+        region_data[f'Trade {current_month}'].iloc[-1],
+        region_data[f'Premium {current_month}'].iloc[-1],
+        region_data[f'Blended Till Now {current_month}'].iloc[-1]
+    ]
+    fig.add_trace(go.Pie(labels=['Trade', 'Premium', 'Blended'], values=sales_breakdown), row=2, col=1)
 
-    # Add some additional information
-    story.append(Spacer(1, 1*inch))
-    info_style = ParagraphStyle('Info', parent=styles['Normal'], alignment=1, fontSize=14)
-    story.append(Paragraph("Prepared by: Sales Analytics Team", info_style))
-    story.append(Paragraph("Date: October 21, 2024", info_style))
+    # Region Type Breakdown
+    region_type_data = [
+        region_data[f'Green {current_month}'].iloc[-1],
+        region_data[f'Yellow {current_month}'].iloc[-1],
+        region_data[f'Red {current_month}'].iloc[-1],
+        region_data[f'Unidentified {current_month}'].iloc[-1]
+    ]
+    fig.add_trace(go.Pie(labels=['Green', 'Yellow', 'Red', 'Unidentified'], values=region_type_data), row=2, col=2)
 
-    doc.build(story)
+    # Quarterly Performance Analysis
+    q1_data = {
+        'total_2023': region_data['Q1 2023 Total'].iloc[-1],
+        'total_2024': region_data['Q1 2024 Total'].iloc[-1],
+    }
+    q2_data = {
+        'total_2023': region_data['Q2 2023 Total'].iloc[-1],
+        'total_2024': region_data['Q2 2024 Total'].iloc[-1],
+    }
+    fig.add_trace(go.Table(
+        header=dict(values=['Quarter', '2023', '2024', 'Change']),
+        cells=dict(values=[
+            ['Q1', 'Q2'],
+            [q1_data['total_2023'], q2_data['total_2023']],
+            [q1_data['total_2024'], q2_data['total_2024']],
+            [f"{((q1_data['total_2024'] - q1_data['total_2023']) / q1_data['total_2023'] * 100):.1f}%",
+             f"{((q2_data['total_2024'] - q2_data['total_2023']) / q2_data['total_2023'] * 100):.1f}%"]
+        ])
+    ), row=3, col=1)
 
+    # Year-over-Year Comparison
+    yoy_data = {
+        'Trade': [region_data['Trade Oct 2023'].iloc[-1], region_data['Trade Oct'].iloc[-1]],
+        'Premium': [region_data['Premium Oct 2023'].iloc[-1], region_data['Premium Oct'].iloc[-1]],
+        'Blended': [region_data['Blended Oct 2023'].iloc[-1], region_data['Blended Till Now Oct'].iloc[-1]]
+    }
+    fig.add_trace(go.Bar(x=['Trade', 'Premium', 'Blended'], y=[yoy_data['Trade'][0], yoy_data['Premium'][0], yoy_data['Blended'][0]], name='2023'), row=3, col=2)
+    fig.add_trace(go.Bar(x=['Trade', 'Premium', 'Blended'], y=[yoy_data['Trade'][1], yoy_data['Premium'][1], yoy_data['Blended'][1]], name='2024'), row=3, col=2)
+
+    fig.update_layout(height=1200, width=1000, title_text=f"Sales Dashboard - {region} ({brand})")
+    return fig
 def sales_review_report_generator():
     st.title("📊 Sales Review Report Generator")
     
@@ -2343,53 +2426,78 @@ def sales_review_report_generator():
             with col1:
                 region = st.selectbox("Select Region", regions)
             
-            # Filter brands based on the selected region
             region_brands = df[df['Zone'] == region]['Brand'].unique().tolist()
             
             with col2:
                 brand = st.selectbox("Select Brand", region_brands)
             
-            if st.button("Generate Individual Report"):
+            if st.button("Generate Report"):
                 region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)]
                 months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']
+                
+                # Create and display the dashboard
+                dashboard_fig = create_dashboard(region_data, region, brand, months)
+                st.plotly_chart(dashboard_fig, use_container_width=True)
+                
+                # Generate PDF report
+                buffer = BytesIO()
+                pdf = SimpleDocTemplate(buffer, pagesize=letter)
+                story = []
+                
+                # Add front page
+                create_front_page(buffer)
+                
+                # Add dashboard to PDF
+                dashboard_img = dashboard_fig.to_image(format="png", width=800, height=1000, scale=2)
+                story.append(Image(BytesIO(dashboard_img)))
+                
+                # Add detailed visualizations
                 fig = create_visualization(region_data, region, brand, months)
+                img_buffer = BytesIO()
+                fig.savefig(img_buffer, format='png', dpi=300, bbox_inches='tight')
+                img_buffer.seek(0)
+                story.append(Image(img_buffer))
                 
-                st.pyplot(fig)
+                pdf.build(story)
+                buffer.seek(0)
                 
-                buf = BytesIO()
-                fig.savefig(buf, format="pdf")
-                buf.seek(0)
-                b64 = base64.b64encode(buf.getvalue()).decode()
                 st.download_button(
-                    label="Download Individual PDF Report",
-                    data=buf,
-                    file_name=f"prediction_report_{region}_{brand}.pdf",
+                    label="Download PDF Report",
+                    data=buffer,
+                    file_name=f"sales_review_report_{region}_{brand}.pdf",
                     mime="application/pdf"
                 )
             
             if st.button("Generate Combined Report"):
                 combined_pdf = BytesIO()
                 pdf = SimpleDocTemplate(combined_pdf, pagesize=letter)
+                story = []
                 
                 # Create front page
                 create_front_page(combined_pdf)
                 
                 # Generate reports for all unique region-brand combinations
                 unique_combinations = df.groupby(['Zone', 'Brand']).size().reset_index()[['Zone', 'Brand']]
-                story = []
                 
                 for _, row in unique_combinations.iterrows():
                     region = row['Zone']
                     brand = row['Brand']
                     region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)]
                     months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']
+                    
+                    # Add dashboard to PDF
+                    dashboard_fig = create_dashboard(region_data, region, brand, months)
+                    dashboard_img = dashboard_fig.to_image(format="png", width=800, height=1000, scale=2)
+                    story.append(Paragraph(f"Dashboard for {region} - {brand}", getSampleStyleSheet()['Heading1']))
+                    story.append(Image(BytesIO(dashboard_img)))
+                    
+                    # Add detailed visualizations
                     fig = create_visualization(region_data, region, brand, months)
-                    
                     img_buffer = BytesIO()
-                    fig.savefig(img_buffer, format='png')
+                    fig.savefig(img_buffer, format='png', dpi=300, bbox_inches='tight')
                     img_buffer.seek(0)
-                    
-                    story.append(Paragraph(f"Report for {region} - {brand}", getSampleStyleSheet()['Heading1']))
+                    story.append(Paragraph(f"Detailed Analysis for {region} - {brand}", getSampleStyleSheet()['Heading2']))
+                    story.append(Image(img_buffer))
                     story.append(PageBreak())
                 
                 pdf.build(story)
@@ -2398,22 +2506,22 @@ def sales_review_report_generator():
                 st.download_button(
                     label="Download Combined PDF Report",
                     data=combined_pdf,
-                    file_name="combined_prediction_report.pdf",
+                    file_name="combined_sales_review_report.pdf",
                     mime="application/pdf"
                 )
 
     elif page == "About":
-        st.subheader("ℹ️ About the Sales Prediction App")
+        st.subheader("ℹ️ About the Sales Review Report Generator")
         st.write("""
-        This app is designed to help sales teams predict and visualize their performance across different regions and brands.
+        This app is designed to help sales teams generate comprehensive review reports across different regions and brands.
         
         Key features:
         - Data upload and processing
-        - Individual predictions for each region and brand
-        - Combined report generation
-        - Interactive visualizations
+        - Interactive dashboard for each region and brand
+        - Individual and combined PDF report generation
+        - Beautiful visualizations and analytics
         
-        For any questions or support, please contact us at prasoon.bajai@lc.jkmail.com
+        For any questions or support, please contact our team at support@salesreviewapp.com
         """)
 def load_lottie_url(url: str):
     try:
