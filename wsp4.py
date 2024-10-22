@@ -2572,11 +2572,10 @@ def sales_review_report_generator():
                     progress.progress(i + 1)
                 
                 if report_type == "Individual Report":
+                    region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)]
                     months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']
                     fig = create_visualization(region_data, region, brand, months)
-                    
                     st.pyplot(fig)
-                    
                     buf = BytesIO()
                     fig.savefig(buf, format="pdf")
                     buf.seek(0)
