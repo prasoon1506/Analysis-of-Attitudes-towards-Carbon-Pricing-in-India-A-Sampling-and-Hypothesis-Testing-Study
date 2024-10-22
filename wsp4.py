@@ -1874,7 +1874,7 @@ def create_visualization(region_data, region, brand, months):
         elif j == 2 and i == 1:  # Skip second row in Achievement column
             continue  # Skip this cell as it's covered by the merged cell above
         else:  # All other cells
-            cell = table.add_cell(i + 1, j,1,1,
+            cell = table.add_cell(i + 2, j,1,1,
                                 text=table_data[i][j])
             if j == 0:  # First column
                 cell.set_facecolor('#ECF0F1')
