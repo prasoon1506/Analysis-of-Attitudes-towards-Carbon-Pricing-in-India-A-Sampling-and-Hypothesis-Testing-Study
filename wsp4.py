@@ -1848,6 +1848,8 @@ def create_visualization(region_data, region, brand, months):
     [f"{overall_oct:.0f}"],
     [f"{trade_oct:.0f}"],
     [f"{non_trade_oct:.0f}"]]
+    ax_current.text(0.45, 0.9, 'Targets', fontsize=12, fontweight='bold', ha='center')
+    ax_current.text(0.35, 0.9, 'Achievement', fontsize=12, fontweight='bold', ha='center')
     table_left = ax_current.table(
     cellText=table_data_left,
     cellLoc='center',
