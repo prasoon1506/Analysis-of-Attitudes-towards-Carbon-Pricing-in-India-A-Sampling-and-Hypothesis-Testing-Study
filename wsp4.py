@@ -1882,7 +1882,7 @@ def create_visualization(region_data, region, brand, months):
                            facecolor='#E8F6F3')
     cell.set_text_props(fontweight='bold')
     table_right.auto_set_font_size(False)
-    table_right.set_fontsize(12)
+    table_right.set_fontsize(13)
     table_right.scale(1.2, 1.8)
     ax_current.text(0.2, 1.0, 'October 2024 Performance Metrics', 
                fontsize=16, fontweight='bold', ha='center', va='bottom')
@@ -1900,7 +1900,7 @@ def create_visualization(region_data, region, brand, months):
         y_pos = 0.85 - i * 0.13
         text = f'• {label} {category} has a share of {percentage:.1f}% in total sales, i.e., {value:.0f} MT.'
         ax_current.text(0.50, y_pos, text, fontsize=14, fontweight="bold", color=colors[i])
-    ax_current.text(0.50, 1.05, 'Sales Breakown', fontsize=16, fontweight='bold', ha='center', va='bottom')
+    ax_current.text(0.50, 1.0, 'Sales Breakown', fontsize=16, fontweight='bold', ha='center', va='bottom')
     ax_table = fig.add_subplot(gs[2, :])
     ax_table.axis('off')
     ax_table.set_title(f"Quarterly Requirement for November and Decemeber 2024", fontsize=18, fontweight='bold')
