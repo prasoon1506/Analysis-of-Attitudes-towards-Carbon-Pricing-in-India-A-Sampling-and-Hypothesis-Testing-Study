@@ -2088,9 +2088,9 @@ def create_visualization(region_data, region, brand, months):
         ax3.text(0.15, y_pos-0.05, f"vs Last Year: {value_last:.0f}", fontsize=12)
         ax3.text(0.28, y_pos-0.05, f"({change:.1f}% {arrow})", fontsize=12, color=color)
         # Add the share percentage comparison
-        ax3.text(0.10, y_pos-0.1, 
-                f"{channel} {x} has share of {percentage_last_year:.1f}% in October last year as compared to {percentage:.1f}% in October 2024",
-                fontsize=11, color='navy')
+        ax3.text(0.12, y_pos-0.1, 
+                f"•{channel} {x} has share of {percentage_last_year:.1f}% in October last year as compared to {percentage:.1f}% in October 2024.",
+                fontsize=11, color='darkcyan')
 
     # Update the September comparison section similarly
     ax4 = fig.add_subplot(gs[5, 2])
@@ -2124,9 +2124,9 @@ def create_visualization(region_data, region, brand, months):
         ax4.text(0.10, y_pos-0.05, f"vs Last Month: {value_last:.0f}", fontsize=12)
         ax4.text(0.65, y_pos-0.05, f"({change:.1f}% {arrow})", fontsize=12, color=color)
         # Add the share percentage comparison
-        ax4.text(0.40, y_pos-0.1, 
-                f"{channel} {t} has share of {percentage_last_month:.1f}% in September as compared to {percentage:.1f}% in October 2024",
-                fontsize=11, color='navy')
+        ax4.text(0.00, y_pos-0.1, 
+                f"•{channel} {t} has share of {percentage_last_month:.1f}% in September as compared to {percentage:.1f}% in October 2024.",
+                fontsize=11, color='darkcyan')
     # Updated: August Region Type Breakdown with values
     ax5 = fig.add_subplot(gs[6, 0])
     region_type_data = [
