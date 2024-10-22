@@ -1889,15 +1889,31 @@ def create_visualization(region_data, region, brand, months):
     table_right.scale(1.2, 1.8)
     ax_current.text(0.2, 1.0, 'October 2024 Performance Metrics', 
                fontsize=16, fontweight='bold', ha='center', va='bottom')
+    # Modify the detailed metrics section
     detailed_metrics = [
-        ('Trade', region_data['Trade Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Channel'),
-        ('Green', region_data['Green Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Region'),
-        ('Yellow', region_data['Yellow Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Region'),
-        ('Red', region_data['Red Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Region'),
-        ('Premium', region_data['Premium Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Product'),
-        ('Blended', region_data['Blended Till Now Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Product')
-    ]
+    ('Trade', region_data['Trade Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Channel'),
+    ('Green', region_data['Green Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Region'),
+    ('Yellow', region_data['Yellow Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Region'),
+    ('Red', region_data['Red Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Region'),
+    ('Premium', region_data['Premium Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Product'),
+    ('Blended', region_data['Blended Till Now Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Product')]
     colors = ['gold', 'green', 'yellow', 'red', 'darkmagenta', 'saddlebrown']
+    for i, (label, value, total, category) in enumerate(detailed_metrics):
+     percentage = (value / total) * 100 if total != 0 else 0
+     if i == 0:  # Trade (first box)
+        y_pos = 0.77
+     elif i <= 3:  # Region types (second box)
+        y_pos = 0.63 - (i-1) * 0.11
+     else:  # Products (third box)
+        y_pos = 0.24 - (i-4) * 0.11
+    
+    # Modified text generation to handle zero percentages for region types
+    if category == 'Region' and value == 0:
+        text = f'• {label} region not present'
+    else:
+        text = f'• {label} {category} has a share of {percentage:.1f}% in total sales, i.e., {value:.0f} MT.'
+    
+    ax_current.text(0.50, y_pos, text, fontsize=14, fontweight="bold", color=colors[i])
     
     # Add boxes for grouping metrics
     # Box 1 for Trade
@@ -1923,27 +1939,6 @@ def create_visualization(region_data, region, brand, months):
                                   alpha=1,
                                   transform=ax_current.transAxes)
     ax_current.add_patch(product_box)
-    
-    # Add category labels for each box
-    #ax_current.text(0.47, 0.88, 'Channel Breakdown:', 
-                   #fontsize=14, fontweight='bold', color='#444444')
-    #ax_current.text(0.47, 0.49, 'Region Type Breakdown:', 
-                   #fontsize=14, fontweight='bold', color='#444444')
-    #ax_current.text(0.47, 0.22, 'Product Breakdown:', 
-                   #fontsize=14, fontweight='bold', color='#444444')
-    
-    # Add metrics with adjusted positions
-    for i, (label, value, total, category) in enumerate(detailed_metrics):
-        percentage = (value / total) * 100
-        if i == 0:  # Trade (first box)
-            y_pos = 0.77
-        elif i <= 3:  # Region types (second box)
-            y_pos = 0.63 - (i-1) * 0.11
-        else:  # Products (third box)
-            y_pos = 0.24 - (i-4) * 0.11
-            
-        text = f'• {label} {category} has a share of {percentage:.1f}% in total sales, i.e., {value:.0f} MT.'
-        ax_current.text(0.50, y_pos, text, fontsize=14, fontweight="bold", color=colors[i])
     ax_current.text(0.50, 0.90, 'Sales Breakown', fontsize=16, fontweight='bold', ha='center', va='bottom')
     ax_table = fig.add_subplot(gs[2, :])
     ax_table.axis('off')
