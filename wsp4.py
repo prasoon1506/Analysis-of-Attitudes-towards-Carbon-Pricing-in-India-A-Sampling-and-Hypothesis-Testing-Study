@@ -1897,7 +1897,7 @@ def create_visualization(region_data, region, brand, months):
         ('Premium', region_data['Premium Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Product'),
         ('Blended', region_data['Blended Till Now Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Product')
     ]
-    colors = ['#FF9999', 'yellowgreen', 'light mustard', 'indianred', '#FF99CC', '#99CCFF']
+    colors = ['#FF9999', 'yellowgreen', '#f7d560', 'indianred', '#FF99CC', '#99CCFF']
     
     # Add boxes for grouping metrics
     # Box 1 for Trade
