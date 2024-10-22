@@ -1839,7 +1839,11 @@ def create_visualization(region_data, region, brand, months):
     main_metrics = [
         ('AGS Target', f"{region_data['AGS Tgt (Oct)'].iloc[-1]:.0f}"),
         ('Plan', f"{region_data['Month Tgt (Oct)'].iloc[-1]:.0f}"),
-        ('Actual', f"{region_data['Monthly Achievement(Oct)'].iloc[-1]:.0f}")
+        ('Overall Oct', f"{region_data['Monthly Achievement(Oct)'].iloc[-1]:.0f}"),
+        ('Trade Target',f"{region_data['Trade Tgt (Oct)'].iloc[-1]:.0f}"),
+        ('Non-Trade Target',f"{region_data['Non-Trade Tgt (Oct)'].iloc[-1]:.0f}"),
+        ('Trade Oct',f"{region_data['Trade Oct'].iloc[-1]:.0f}"),
+        ('Non-Trade Oct',f"{region_data['Trade Tgt (Oct)'].iloc[-1]-region_data['Montly Achievement(Oct)'].iloc[-1]:.0f}")
     ]
     detailed_metrics = [
         ('Trade', region_data['Trade Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Channel'),
@@ -1859,7 +1863,7 @@ def create_visualization(region_data, region, brand, months):
         bbox=[0, 0.2, 0.3, 0.6]
     )
     main_table.auto_set_font_size(False)
-    main_table.set_fontsize(12)
+    main_table.set_fontsize(14)
     main_table.scale(1, 1.5)
 
     for i in range(len(main_metrics)):
