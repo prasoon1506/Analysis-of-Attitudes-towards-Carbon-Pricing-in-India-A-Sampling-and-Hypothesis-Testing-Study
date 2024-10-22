@@ -1951,7 +1951,6 @@ def create_visualization(region_data, region, brand, months):
     autolabel(rects1)
     autolabel(rects2)
     autolabel(rects3)
-
     ax2 = fig.add_subplot(gs[4, :])
     percent_achievements_plan = [((ach / tgt) * 100) for ach, tgt in zip(actual_achievements, actual_targets)]
     percent_achievements_ags = [((ach / ags) * 100) for ach, ags in zip(actual_achievements, actual_ags)]
@@ -1967,27 +1966,47 @@ def create_visualization(region_data, region, brand, months):
     ax2.set_xticklabels(months)
     ax2.legend(loc='upper right')
     
-    # Add annotations for both lines
+    # Add annotations with dynamic positioning
     for i, (pct_plan, pct_ags) in enumerate(zip(percent_achievements_plan, percent_achievements_ags)):
-        # Annotation for Plan achievement
-        ax2.annotate(f'{pct_plan:.1f}%', 
-                    (i, pct_plan), 
-                    xytext=(0, 10), 
-                    textcoords='offset points', 
-                    ha='center', 
-                    va='bottom', 
-                    fontsize=12,
-                    color='purple')
-        
-        # Annotation for AGS achievement
-        ax2.annotate(f'{pct_ags:.1f}%', 
-                    (i, pct_ags), 
-                    xytext=(0, -10), 
-                    textcoords='offset points', 
-                    ha='center', 
-                    va='top', 
-                    fontsize=12,
-                    color='brown')
+        # Determine which value is higher
+        if pct_plan >= pct_ags:
+            # Plan is higher or equal, put Plan above and AGS below
+            ax2.annotate(f'{pct_plan:.1f}%', 
+                        (i, pct_plan), 
+                        xytext=(0, 10), 
+                        textcoords='offset points', 
+                        ha='center', 
+                        va='bottom', 
+                        fontsize=12,
+                        color='purple')
+            
+            ax2.annotate(f'{pct_ags:.1f}%', 
+                        (i, pct_ags), 
+                        xytext=(0, -15), 
+                        textcoords='offset points', 
+                        ha='center', 
+                        va='top', 
+                        fontsize=12,
+                        color='brown')
+        else:
+            # AGS is higher, put AGS above and Plan below
+            ax2.annotate(f'{pct_ags:.1f}%', 
+                        (i, pct_ags), 
+                        xytext=(0, 10), 
+                        textcoords='offset points', 
+                        ha='center', 
+                        va='bottom', 
+                        fontsize=12,
+                        color='brown')
+            
+            ax2.annotate(f'{pct_plan:.1f}%', 
+                        (i, pct_plan), 
+                        xytext=(0, -15), 
+                        textcoords='offset points', 
+                        ha='center', 
+                        va='top', 
+                        fontsize=12,
+                        color='purple')
     ax3 = fig.add_subplot(gs[5, :])
     ax3.axis('off')
     current_year = 2024  # Assuming the current year is 2024
