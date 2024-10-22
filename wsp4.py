@@ -2054,9 +2054,9 @@ def create_visualization(region_data, region, brand, months):
     last_year = 2023
 
     channel_data = [
-        ('Trade', region_data['Trade Oct'].iloc[-1], region_data['Trade Oct 2023'].iloc[-1]),
-        ('Premium', region_data['Premium Oct'].iloc[-1], region_data['Premium Oct 2023'].iloc[-1]),
-        ('Blended', region_data['Blended Till Now Oct'].iloc[-1], region_data['Blended Oct 2023'].iloc[-1])
+        ('Trade', region_data['Trade Oct'].iloc[-1], region_data['Trade Oct 2023'].iloc[-1],'Channel'),
+        ('Premium', region_data['Premium Oct'].iloc[-1], region_data['Premium Oct 2023'].iloc[-1],'Product'),
+        ('Blended', region_data['Blended Till Now Oct'].iloc[-1], region_data['Blended Oct 2023'].iloc[-1],'Product')
     ]
     monthly_achievement_oct = region_data['Monthly Achievement(Oct)'].iloc[-1]
     total_oct_current = region_data['Monthly Achievement(Oct)'].iloc[-1]
@@ -2075,7 +2075,7 @@ def create_visualization(region_data, region, brand, months):
     ax3.text(0.21, 0.9, f"October 2024: {total_oct_current:.0f}", fontsize=14, fontweight='bold', ha='center')
     ax3.text(0.22, 0.85, f"vs October 2023: {total_oct_last:.0f} ({total_change:.1f}% {arrow})", fontsize=12, color=color, ha='center')
     
-    for i, (channel, value_current, value_last) in enumerate(channel_data):
+    for i, (channel, value_current, value_last,x) in enumerate(channel_data):
         percentage = (value_current / monthly_achievement_oct) * 100
         percentage_last_year = (value_last / total_oct_last) * 100
         change = ((value_current - value_last) / value_last) * 100
@@ -2084,12 +2084,12 @@ def create_visualization(region_data, region, brand, months):
         
         y_pos = 0.75 - i*0.25
         ax3.text(0.15, y_pos, f"{channel}:", fontsize=14, fontweight='bold')
-        ax3.text(0.25, y_pos, f"{value_current:.0f}", fontsize=14)
+        ax3.text(0.35, y_pos, f"{value_current:.0f}", fontsize=14)
         ax3.text(0.15, y_pos-0.05, f"vs Last Year: {value_last:.0f}", fontsize=12)
-        ax3.text(0.25, y_pos-0.05, f"({change:.1f}% {arrow})", fontsize=12, color=color)
+        ax3.text(0.35, y_pos-0.05, f"({change:.1f}% {arrow})", fontsize=12, color=color)
         # Add the share percentage comparison
-        ax3.text(0.15, y_pos-0.1, 
-                f"{channel} Channel has share of {percentage_last_year:.1f}% in October last year as compared to {percentage:.1f}% in October 2024",
+        ax3.text(0.10, y_pos-0.1, 
+                f"{channel} {x} has share of {percentage_last_year:.1f}% in October last year as compared to {percentage:.1f}% in October 2024",
                 fontsize=11, color='navy')
 
     # Update the September comparison section similarly
@@ -2097,9 +2097,9 @@ def create_visualization(region_data, region, brand, months):
     ax4.axis('off')
     
     channel_data1 = [
-        ('Trade', region_data['Trade Oct'].iloc[-1], region_data['Trade Sep'].iloc[-1]),
-        ('Premium', region_data['Premium Oct'].iloc[-1], region_data['Premium Sep'].iloc[-1]),
-        ('Blended', region_data['Blended Till Now Oct'].iloc[-1], region_data['Blended Sep'].iloc[-1])
+        ('Trade', region_data['Trade Oct'].iloc[-1], region_data['Trade Sep'].iloc[-1],'Channel'),
+        ('Premium', region_data['Premium Oct'].iloc[-1], region_data['Premium Sep'].iloc[-1],'Product'),
+        ('Blended', region_data['Blended Till Now Oct'].iloc[-1], region_data['Blended Sep'].iloc[-1],'Product')
     ]
     total_sep_current = region_data['Total Sep '].iloc[-1]
     
@@ -2111,7 +2111,7 @@ def create_visualization(region_data, region, brand, months):
     ax4.text(0.36, 0.9, f"October 2024: {total_oct_current:.0f}", fontsize=14, fontweight='bold', ha='center')
     ax4.text(0.37, 0.85, f"vs September 2024: {total_sep_current:.0f} ({total_change:.1f}% {arrow})", fontsize=12, color=color, ha='center')
     
-    for i, (channel, value_current, value_last) in enumerate(channel_data1):
+    for i, (channel, value_current, value_last,t) in enumerate(channel_data1):
         percentage = (value_current / monthly_achievement_oct) * 100
         percentage_last_month = (value_last / total_sep_current) * 100
         change = ((value_current - value_last) / value_last) * 100
@@ -2120,12 +2120,12 @@ def create_visualization(region_data, region, brand, months):
         
         y_pos = 0.75 - i*0.25
         ax4.text(0.10, y_pos, f"{channel}:", fontsize=14, fontweight='bold')
-        ax4.text(0.55, y_pos, f"{value_current:.0f}", fontsize=14)
+        ax4.text(0.65, y_pos, f"{value_current:.0f}", fontsize=14)
         ax4.text(0.10, y_pos-0.05, f"vs Last Month: {value_last:.0f}", fontsize=12)
-        ax4.text(0.55, y_pos-0.05, f"({change:.1f}% {arrow})", fontsize=12, color=color)
+        ax4.text(0.65, y_pos-0.05, f"({change:.1f}% {arrow})", fontsize=12, color=color)
         # Add the share percentage comparison
-        ax4.text(0.10, y_pos-0.1, 
-                f"{channel} Channel has share of {percentage_last_month:.1f}% in September as compared to {percentage:.1f}% in October 2024",
+        ax4.text(0.05, y_pos-0.1, 
+                f"{channel} {t} has share of {percentage_last_month:.1f}% in September as compared to {percentage:.1f}% in October 2024",
                 fontsize=11, color='navy')
     # Updated: August Region Type Breakdown with values
     ax5 = fig.add_subplot(gs[6, 0])
