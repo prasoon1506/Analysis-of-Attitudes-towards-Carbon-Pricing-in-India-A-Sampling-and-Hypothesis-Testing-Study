@@ -1853,7 +1853,6 @@ def create_visualization(region_data, region, brand, months):
     # Create table with column labels
     table = ax_current.table(
         cellText=table_data,
-        colLabels=column_labels,
         cellLoc='center',
         loc='center',
         bbox=[0, 0.0, 0.4, 0.8]
