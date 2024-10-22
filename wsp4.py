@@ -1848,7 +1848,7 @@ def create_visualization(region_data, region, brand, months):
     [f"{overall_oct:.0f}"],
     [f"{trade_oct:.0f}"],
     [f"{non_trade_oct:.0f}"]]
-    ax_current.text(0.22, 0.9, 'Targets', fontsize=12, fontweight='bold', ha='center')
+    ax_current.text(0.23, 0.9, 'Targets', fontsize=12, fontweight='bold', ha='center')
     ax_current.text(0.35, 0.9, 'Achievement', fontsize=12, fontweight='bold', ha='center')
     table_left = ax_current.table(
     cellText=table_data_left,
@@ -1865,6 +1865,7 @@ def create_visualization(region_data, region, brand, months):
       cell.set_text_props(fontweight='bold')
       cell = table_left[i, 1]
       cell.set_facecolor('#F7F9F9')
+      cell.set_text_props(fontweight='bold')
     table_right = ax_current.table(
     cellText=table_data_right,
     cellLoc='center',
