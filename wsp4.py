@@ -2393,13 +2393,6 @@ def initialize_session_state():
         st.session_state['theme'] = 'light'
 
 def sales_review_report_generator():
-    # Page configuration
-    st.set_page_config(
-        page_title="Sales Review Dashboard",
-        page_icon="📊",
-        layout="wide",
-        initial_sidebar_state="expanded"
-    )
     
     # Initialize session state
     initialize_session_state()
