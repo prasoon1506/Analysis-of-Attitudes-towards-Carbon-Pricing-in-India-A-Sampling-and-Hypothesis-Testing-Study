@@ -1866,14 +1866,14 @@ def create_visualization(region_data, region, brand, months):
      for j in range(3):
         if j == 2 and i == 0:  # First row in Achievement column
             # Create a cell that spans 2 rows
-            cell = table.add_cell(i+1, j, 1, 2, 
+            cell = table.add_cell(i, j, 1, 2, 
                                 text=table_data[i][j],
                                 facecolor='#E8F6F3')
             cell.set_text_props(fontweight='bold')
         elif j == 2 and i == 1:  # Skip second row in Achievement column
             continue  # Skip this cell as it's covered by the merged cell above
         else:  # All other cells
-            cell = table.add_cell(i + 1, j,1,1,
+            cell = table.add_cell(i, j,1,1,
                                 text=table_data[i][j])
             if j == 0:  # First column
                 cell.set_facecolor('#ECF0F1')
