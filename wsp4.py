@@ -1901,9 +1901,9 @@ def create_visualization(region_data, region, brand, months):
     
     # Add boxes for grouping metrics
     # Box 1 for Trade
-    trade_box = patches.Rectangle((0.45, 0.73), 0.45, 0.15, 
+    trade_box = patches.Rectangle((0.45, 0.73), 0.45, 0.20, 
                                 facecolor='#F0F0F0', 
-                                edgecolor='#CCCCCC',
+                                edgecolor='black',
                                 alpha=0.3,
                                 transform=ax_current.transAxes)
     ax_current.add_patch(trade_box)
@@ -1911,7 +1911,7 @@ def create_visualization(region_data, region, brand, months):
     # Box 2 for Region types (Green, Yellow, Red)
     region_box = patches.Rectangle((0.45, 0.34), 0.45, 0.38,
                                  facecolor='#F0F0F0',
-                                 edgecolor='#CCCCCC',
+                                 edgecolor='black',
                                  alpha=0.3,
                                  transform=ax_current.transAxes)
     ax_current.add_patch(region_box)
@@ -1919,7 +1919,7 @@ def create_visualization(region_data, region, brand, months):
     # Box 3 for Products (Premium, Blended)
     product_box = patches.Rectangle((0.45, 0.08), 0.45, 0.25,
                                   facecolor='#F0F0F0',
-                                  edgecolor='#CCCCCC',
+                                  edgecolor='black',
                                   alpha=0.3,
                                   transform=ax_current.transAxes)
     ax_current.add_patch(product_box)
