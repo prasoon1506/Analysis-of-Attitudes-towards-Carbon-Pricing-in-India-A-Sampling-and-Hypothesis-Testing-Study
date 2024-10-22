@@ -1999,7 +1999,7 @@ def create_visualization(region_data, region, brand, months):
     # Plot both lines
     line1 = ax2.plot(x, percent_achievements_plan, marker='o', linestyle='-', color='purple', label='Achievement vs Plan')
     line2 = ax2.plot(x, percent_achievements_ags, marker='s', linestyle='-', color='brown', label='Achievement vs AGS')
-    ax2.axhline(y=100, color='r', linestyle='--', alpha=0.7)
+    ax2.axhline(y=100, color='lightcoral', linestyle='--', alpha=0.7)
     
     ax2.set_xlabel('Month', fontsize=12, fontweight='bold')
     ax2.set_ylabel('% Achievement', fontsize=12, fontweight='bold')
