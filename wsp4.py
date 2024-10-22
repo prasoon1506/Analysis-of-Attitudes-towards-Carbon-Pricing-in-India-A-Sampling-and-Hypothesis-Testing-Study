@@ -1863,14 +1863,6 @@ def create_visualization(region_data, region, brand, months):
     table.auto_set_font_size(False)
     table.set_fontsize(12)
     table.scale(1.2, 1.8)
-    
-    # Apply custom styling
-    # Style header row
-    for j in range(3):
-        cell = table[(1, j)]  # Header cells
-        cell.set_facecolor('#2C3E50')
-        cell.set_text_props(color='white', fontweight='bold')
-    # Create the table with merged cells in the Achievement column
     for i in range(len(table_data)):
      for j in range(3):
         if j == 2 and i == 1:  # First row in Achievement column
