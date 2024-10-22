@@ -1898,12 +1898,52 @@ def create_visualization(region_data, region, brand, months):
         ('Blended', region_data['Blended Till Now Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Product')
     ]
     colors = ['#FF9999', '#66B2FF', '#99FF99', '#FFCC99', '#FF99CC', '#99CCFF']
+    
+    # Add boxes for grouping metrics
+    # Box 1 for Trade
+    trade_box = patches.Rectangle((0.45, 0.73), 0.45, 0.15, 
+                                facecolor='#F0F0F0', 
+                                edgecolor='#CCCCCC',
+                                alpha=0.3,
+                                transform=ax_current.transAxes)
+    ax_current.add_patch(trade_box)
+    
+    # Box 2 for Region types (Green, Yellow, Red)
+    region_box = patches.Rectangle((0.45, 0.34), 0.45, 0.38,
+                                 facecolor='#F0F0F0',
+                                 edgecolor='#CCCCCC',
+                                 alpha=0.3,
+                                 transform=ax_current.transAxes)
+    ax_current.add_patch(region_box)
+    
+    # Box 3 for Products (Premium, Blended)
+    product_box = patches.Rectangle((0.45, 0.08), 0.45, 0.25,
+                                  facecolor='#F0F0F0',
+                                  edgecolor='#CCCCCC',
+                                  alpha=0.3,
+                                  transform=ax_current.transAxes)
+    ax_current.add_patch(product_box)
+    
+    # Add category labels for each box
+    ax_current.text(0.47, 0.86, 'Channel Breakdown:', 
+                   fontsize=14, fontweight='bold', color='#444444')
+    ax_current.text(0.47, 0.70, 'Region Type Breakdown:', 
+                   fontsize=14, fontweight='bold', color='#444444')
+    ax_current.text(0.47, 0.31, 'Product Breakdown:', 
+                   fontsize=14, fontweight='bold', color='#444444')
+    
+    # Add metrics with adjusted positions
     for i, (label, value, total, category) in enumerate(detailed_metrics):
         percentage = (value / total) * 100
-        y_pos = 0.85 - i * 0.13
+        if i == 0:  # Trade (first box)
+            y_pos = 0.77
+        elif i <= 3:  # Region types (second box)
+            y_pos = 0.63 - (i-1) * 0.11
+        else:  # Products (third box)
+            y_pos = 0.25 - (i-4) * 0.11
+            
         text = f'• {label} {category} has a share of {percentage:.1f}% in total sales, i.e., {value:.0f} MT.'
         ax_current.text(0.50, y_pos, text, fontsize=14, fontweight="bold", color=colors[i])
-    ax_current.text(0.50, 1.0, 'Sales Breakown', fontsize=16, fontweight='bold', ha='center', va='bottom')
     ax_table = fig.add_subplot(gs[2, :])
     ax_table.axis('off')
     ax_table.set_title(f"Quarterly Requirement for November and Decemeber 2024", fontsize=18, fontweight='bold')
@@ -1930,7 +1970,7 @@ def create_visualization(region_data, region, brand, months):
     x = np.arange(len(months))
     width = 0.25
     rects1 = ax1.bar(x-width, actual_ags, width, label='AGS Target', color='brown', alpha=0.8)
-    rects2 = ax1.bar(x, actual_targets, width, label='Plan', color='pink', alpha=0.8)
+    rects2 = ax1.bar(x, actual_targets, width, label='Plan', color='purple', alpha=0.8)
     rects3 = ax1.bar(x + width, actual_achievements, width, label='Achievement', color='yellow', alpha=0.8)
     
     ax1.set_ylabel('Targets and Achievement', fontsize=12, fontweight='bold')
