@@ -1885,13 +1885,13 @@ def create_visualization(region_data, region, brand, months):
                 if i == 0:  # First row in Achievement column
                     cell.set_text_props(fontweight='bold')
                     # Set edges individually
-                    cell.set_edgecolor('none')  # Remove all edges first
+                    cell.set_edgecolor('#dee2e6')  # Remove all edges first
                     # Add back the edges we want
                     for edge in ['left', 'right', 'top']:
                         cell.set_edgecolor('#dee2e6')
                 elif i == 1:  # Second row in Achievement column
                     cell.set_facecolor('#E8F6F3')
-                    cell.set_edgecolor('none')  # Remove all edges
+                    cell.set_edgecolor('#dee2e6')  # Remove all edges
                     # Add back only side edges
                     for edge in ['left', 'right']:
                         cell.set_edgecolor('#dee2e6')
