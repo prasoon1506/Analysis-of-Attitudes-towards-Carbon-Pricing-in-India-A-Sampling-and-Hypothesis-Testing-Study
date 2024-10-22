@@ -1873,7 +1873,7 @@ def create_visualization(region_data, region, brand, months):
                            text=f"{overall_oct:.0f}",
                            facecolor='#E8F6F3')
     cell.set_text_props(fontweight='bold')
-    cell = table_right.add_cell(0, 0, 0, 1, 
+    cell = table_right.add_cell(1, 0, 0, 1, 
                            text=f"",
                            facecolor='#E8F6F3')
     cell.set_text_props(fontweight='bold')
