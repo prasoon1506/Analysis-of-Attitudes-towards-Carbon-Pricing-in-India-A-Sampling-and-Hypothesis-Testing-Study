@@ -1848,7 +1848,7 @@ def create_visualization(region_data, region, brand, months):
     [f"{overall_oct:.0f}"],
     [f"{trade_oct:.0f}"],
     [f"{non_trade_oct:.0f}"]]
-    ax_current.text(0.23, 0.9, 'Targets', fontsize=12, fontweight='bold', ha='center')
+    ax_current.text(0.225, 0.9, 'Targets', fontsize=12, fontweight='bold', ha='center')
     ax_current.text(0.35, 0.9, 'Achievement', fontsize=12, fontweight='bold', ha='center')
     table_left = ax_current.table(
     cellText=table_data_left,
@@ -1952,20 +1952,42 @@ def create_visualization(region_data, region, brand, months):
     autolabel(rects2)
     autolabel(rects3)
 
-    
-    # Percentage achievement line chart (same as before)
     ax2 = fig.add_subplot(gs[4, :])
-    percent_achievements = [((ach / tgt) * 100) for ach, tgt in zip(actual_achievements, actual_targets)]
-    ax2.plot(x, percent_achievements, marker='o', linestyle='-', color='purple')
+    percent_achievements_plan = [((ach / tgt) * 100) for ach, tgt in zip(actual_achievements, actual_targets)]
+    percent_achievements_ags = [((ach / ags) * 100) for ach, ags in zip(actual_achievements, actual_ags)]
+    
+    # Plot both lines
+    line1 = ax2.plot(x, percent_achievements_plan, marker='o', linestyle='-', color='purple', label='Achievement vs Plan')
+    line2 = ax2.plot(x, percent_achievements_ags, marker='s', linestyle='-', color='brown', label='Achievement vs AGS')
     ax2.axhline(y=100, color='r', linestyle='--', alpha=0.7)
+    
     ax2.set_xlabel('Month', fontsize=12, fontweight='bold')
-    ax2.set_ylabel('% Achievement w.r.t. Plan', fontsize=12, fontweight='bold')
+    ax2.set_ylabel('% Achievement', fontsize=12, fontweight='bold')
     ax2.set_xticks(x)
     ax2.set_xticklabels(months)
+    ax2.legend(loc='upper right')
     
-    for i, pct in enumerate(percent_achievements):
-        ax2.annotate(f'{pct:.1f}%', (i, pct), xytext=(0, 5), textcoords='offset points', 
-                     ha='center', va='bottom', fontsize=12)
+    # Add annotations for both lines
+    for i, (pct_plan, pct_ags) in enumerate(zip(percent_achievements_plan, percent_achievements_ags)):
+        # Annotation for Plan achievement
+        ax2.annotate(f'{pct_plan:.1f}%', 
+                    (i, pct_plan), 
+                    xytext=(0, 10), 
+                    textcoords='offset points', 
+                    ha='center', 
+                    va='bottom', 
+                    fontsize=12,
+                    color='purple')
+        
+        # Annotation for AGS achievement
+        ax2.annotate(f'{pct_ags:.1f}%', 
+                    (i, pct_ags), 
+                    xytext=(0, -15), 
+                    textcoords='offset points', 
+                    ha='center', 
+                    va='top', 
+                    fontsize=12,
+                    color='brown')
     ax3 = fig.add_subplot(gs[5, :])
     ax3.axis('off')
     current_year = 2024  # Assuming the current year is 2024
