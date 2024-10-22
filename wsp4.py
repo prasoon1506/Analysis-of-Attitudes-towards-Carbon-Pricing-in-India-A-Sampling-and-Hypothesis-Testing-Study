@@ -1843,7 +1843,7 @@ def create_visualization(region_data, region, brand, months):
         ('Trade Target',f"{region_data['Trade Tgt (Oct)'].iloc[-1]:.0f}"),
         ('Non-Trade Target',f"{region_data['Non-Trade Tgt (Oct)'].iloc[-1]:.0f}"),
         ('Trade Oct',f"{region_data['Trade Oct'].iloc[-1]:.0f}"),
-        ('Non-Trade Oct',f"{region_data['Trade Tgt (Oct)'].iloc[-1]-region_data['Montly Achievement(Oct)'].iloc[-1]:.0f}")
+        ('Non-Trade Oct',f"{region_data['Trade Tgt (Oct)'].iloc[-1]-region_data['Monthly Achievement(Oct)'].iloc[-1]:.0f}")
     ]
     detailed_metrics = [
         ('Trade', region_data['Trade Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Channel'),
