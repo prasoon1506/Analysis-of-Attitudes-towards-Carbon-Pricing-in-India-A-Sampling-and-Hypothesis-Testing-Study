@@ -1948,7 +1948,7 @@ def create_visualization(region_data, region, brand, months):
     ax_table.axis('off')
     ax_table.set_title(f"Quarterly Requirement for November and Decemeber 2024", fontsize=18, fontweight='bold')
     table_data = [
-                ['Overall', 'Trade', 'Premium','Blended'],
+                ['Overall Requirement', 'Trade Channel\nRequirement', 'Premium Product\nRequirement','Blended Product\nRequirement'],
                 [f"{region_data['Q3 2023 Total'].iloc[-1]-region_data['Monthly Achievement(Oct)'].iloc[-1]:.0f}", f"{region_data['Q3 2023 Trade'].iloc[-1]-region_data['Trade Oct'].iloc[-1]:.0f}",f"{region_data['Q3 2023 Premium'].iloc[-1]-region_data['Premium Oct'].iloc[-1]:.0f}", 
                  f"{region_data['Q3 2023 Blended '].iloc[-1]-region_data['Blended Till Now Oct'].iloc[-1]:.0f}"],
             ]
