@@ -2510,10 +2510,6 @@ def sales_review_report_generator():
             
             style_metric_cards()
             
-            # Quick summary section
-            st.markdown("### Quick Summary")
-            col1, col2 = st.columns([2, 1])
-            
             with col1:
                 st.markdown('<div class="info-card">', unsafe_allow_html=True)
                 st.markdown("#### Available Regions")
@@ -2550,8 +2546,7 @@ def sales_review_report_generator():
             )
             
             region_brands = st.session_state['df'][
-                st.session_state['df']['Zone'] == region
-            ]['Brand'].unique().tolist()
+                st.session_state['df']['Zone'] == region]['Brand'].unique().tolist()
             
             brand = st.selectbox(
                 "Select Brand",
@@ -2577,7 +2572,6 @@ def sales_review_report_generator():
                     progress.progress(i + 1)
                 
                 if report_type == "Individual Report":
-                    region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)]
                     months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']
                     fig = create_visualization(region_data, region, brand, months)
                     
