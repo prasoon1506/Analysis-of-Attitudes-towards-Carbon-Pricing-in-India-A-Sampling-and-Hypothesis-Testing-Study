@@ -1848,7 +1848,7 @@ def create_visualization(region_data, region, brand, months):
     cellText=table_data_left,
     cellLoc='center',
     loc='center',
-    bbox=[0, 0.0, 0.3, 0.8]  # Adjusted bbox to be narrower and on the left)
+    bbox=[0, 0.0, 0.3, 0.8]) 
     table_left.auto_set_font_size(False)
     table_left.set_fontsize(12)
     table_left.scale(1.2, 1.8)
@@ -1862,7 +1862,7 @@ def create_visualization(region_data, region, brand, months):
     table_right = ax_current.table(
     cellLoc='center',
     loc='center',
-    bbox=[0.3, 0.0, 0.1, 0.8])  # Adjusted bbox to be narrow and right next to left table)
+    bbox=[0.3, 0.0, 0.1, 0.8])  
     cell = table_right.add_cell(0, 0, 2, 1, 
                            text=f"{overall_oct:.0f}",
                            facecolor='#E8F6F3')
