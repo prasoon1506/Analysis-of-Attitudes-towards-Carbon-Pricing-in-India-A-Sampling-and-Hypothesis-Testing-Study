@@ -2084,11 +2084,11 @@ def create_visualization(region_data, region, brand, months):
         
         y_pos = 0.75 - i*0.25
         ax3.text(0.15, y_pos, f"{channel}:", fontsize=14, fontweight='bold')
-        ax3.text(0.30, y_pos, f"{value_current:.0f}", fontsize=14)
+        ax3.text(0.28, y_pos, f"{value_current:.0f}", fontsize=14)
         ax3.text(0.15, y_pos-0.05, f"vs Last Year: {value_last:.0f}", fontsize=12)
-        ax3.text(0.30, y_pos-0.05, f"({change:.1f}% {arrow})", fontsize=12, color=color)
+        ax3.text(0.28, y_pos-0.05, f"({change:.1f}% {arrow})", fontsize=12, color=color)
         # Add the share percentage comparison
-        ax3.text(0.05, y_pos-0.1, 
+        ax3.text(0.10, y_pos-0.1, 
                 f"{channel} {x} has share of {percentage_last_year:.1f}% in October last year as compared to {percentage:.1f}% in October 2024",
                 fontsize=11, color='navy')
 
