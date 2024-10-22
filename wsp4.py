@@ -2129,25 +2129,22 @@ def create_visualization(region_data, region, brand, months):
                 fontsize=11, color='darkcyan')
     # Updated: August Region Type Breakdown with values
     def create_pie_data(data_values, labels, colors):
-    # Filter out zero values and corresponding labels and colors
      non_zero_data = []
      non_zero_labels = []
      non_zero_colors = []
-    
-    for value, label, color in zip(data_values, labels, colors):
+     for value, label, color in zip(data_values, labels, colors):
         if value > 0:
             non_zero_data.append(value)
             non_zero_labels.append(label)
-            non_zero_colors.append(color)
-            
-    return non_zero_data, non_zero_labels, non_zero_colors
+            non_zero_colors.append(color)       
+     return non_zero_data, non_zero_labels, non_zero_colors
 
     def make_autopct(values):
      def my_autopct(pct):
         total = sum(values)
         val = int(round(pct*total/100.0))
         return f'{pct:.0f}%\n({val:.0f})'
-    return my_autopct
+     return my_autopct
     ax5 = fig.add_subplot(gs[6, 0])
     region_type_data = [
     region_data['Green Oct'].iloc[-1],
