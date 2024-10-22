@@ -1825,7 +1825,7 @@ from io import BytesIO
 from PIL import Image
 def create_visualization(region_data, region, brand, months):
     fig = plt.figure(figsize=(20, 34))
-    gs = fig.add_gridspec(8, 3, height_ratios=[0.5,1, 1, 3, 2, 2, 2, 2])
+    gs = fig.add_gridspec(8, 3, height_ratios=[0.5,1, 1, 3, 2.25, 2, 2, 2])
     # Region and Brand Title
     ax_region = fig.add_subplot(gs[0, :])
     ax_region.axis('off')
@@ -1982,7 +1982,7 @@ def create_visualization(region_data, region, brand, months):
         # Annotation for AGS achievement
         ax2.annotate(f'{pct_ags:.1f}%', 
                     (i, pct_ags), 
-                    xytext=(0, -15), 
+                    xytext=(0, -10), 
                     textcoords='offset points', 
                     ha='center', 
                     va='top', 
