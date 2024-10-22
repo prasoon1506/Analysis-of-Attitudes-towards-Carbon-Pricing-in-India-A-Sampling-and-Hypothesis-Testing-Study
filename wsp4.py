@@ -2089,7 +2089,7 @@ def create_visualization(region_data, region, brand, months):
         ax3.text(0.28, y_pos-0.05, f"({change:.1f}% {arrow})", fontsize=12, color=color)
         # Add the share percentage comparison
         ax3.text(0.12, y_pos-0.1, 
-                f"•{channel} {x} has share of {percentage_last_year:.1f}% in October last year as compared to {percentage:.1f}% in October 2024.",
+                f"•{channel} {x} has share of {percentage_last_year:.1f}% in Oct. last year as compared to {percentage:.1f}% in Oct. this year.",
                 fontsize=11, color='darkcyan')
 
     # Update the September comparison section similarly
@@ -2125,7 +2125,7 @@ def create_visualization(region_data, region, brand, months):
         ax4.text(0.65, y_pos-0.05, f"({change:.1f}% {arrow})", fontsize=12, color=color)
         # Add the share percentage comparison
         ax4.text(0.00, y_pos-0.1, 
-                f"•{channel} {t} has share of {percentage_last_month:.1f}% in September as compared to {percentage:.1f}% in October 2024.",
+                f"•{channel} {t} has share of {percentage_last_month:.1f}% in Sept. as compared to {percentage:.1f}% in Oct.",
                 fontsize=11, color='darkcyan')
     # Updated: August Region Type Breakdown with values
     def create_pie_data(data_values, labels, colors):
