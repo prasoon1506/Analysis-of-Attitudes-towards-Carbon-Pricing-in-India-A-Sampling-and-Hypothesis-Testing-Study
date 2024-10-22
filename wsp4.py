@@ -1835,16 +1835,61 @@ def create_visualization(region_data, region, brand, months):
     ax_current = fig.add_subplot(gs[1, :])
     ax_current.axis('off')
     
-    # Main metrics
-    main_metrics = [
-        ('AGS Target', f"{region_data['AGS Tgt (Oct)'].iloc[-1]:.0f}"),
-        ('Plan', f"{region_data['Month Tgt (Oct)'].iloc[-1]:.0f}"),
-        ('Overall Oct', f"{region_data['Monthly Achievement(Oct)'].iloc[-1]:.0f}"),
-        ('Trade Target',f"{region_data['Trade Tgt (Oct)'].iloc[-1]:.0f}"),
-        ('Non-Trade Target',f"{region_data['Non-Trade Tgt (Oct)'].iloc[-1]:.0f}"),
-        ('Trade Oct',f"{region_data['Trade Oct'].iloc[-1]:.0f}"),
-        ('Non-Trade Oct',f"{region_data['Trade Tgt (Oct)'].iloc[-1]-region_data['Monthly Achievement(Oct)'].iloc[-1]:.0f}")
+    # Calculate values
+    overall_oct = region_data['Monthly Achievement(Oct)'].iloc[-1]
+    trade_oct = region_data['Trade Oct'].iloc[-1]
+    non_trade_oct = overall_oct - trade_oct
+    
+    # Create the restructured table data
+    table_data = [
+        ['Targets', 'Value', 'Achievement'],
+        ['AGS Target', f"{region_data['AGS Tgt (Oct)'].iloc[-1]:.0f}", f"Overall Oct\n{overall_oct:.0f}"],
+        ['Plan', f"{region_data['Month Tgt (Oct)'].iloc[-1]:.0f}", ''],
+        ['Trade Target', f"{region_data['Trade Tgt (Oct)'].iloc[-1]:.0f}", f"Trade Oct\n{trade_oct:.0f}"],
+        ['Non-Trade Target', f"{region_data['Non-Trade Tgt (Oct)'].iloc[-1]:.0f}", f"Non-Trade Oct\n{non_trade_oct:.0f}"]
     ]
+    
+    # Create table
+    table = ax_current.table(
+        cellText=[row for row in table_data[1:]],
+        colLabels=table_data[0],
+        cellLoc='center',
+        loc='center',
+        bbox=[0.3, 0.0, 0.4, 0.8]
+    )
+    
+    # Style the table
+    table.auto_set_font_size(False)
+    table.set_fontsize(12)
+    table.scale(1.2, 1.8)
+    
+    # Apply custom styling
+    for i in range(len(table_data)):
+        for j in range(3):
+            if i == 0:  # Header row
+                cell = table[i-1, j]
+                cell.set_facecolor('#2C3E50')
+                cell.set_text_props(color='white', fontweight='bold')
+            else:
+                cell = table[i-1, j]
+                if j == 0:  # First column
+                    cell.set_facecolor('#ECF0F1')
+                    cell.set_text_props(fontweight='bold')
+                elif j == 1:  # Second column
+                    cell.set_facecolor('#F7F9F9')
+                elif j == 2:  # Third column
+                    cell.set_facecolor('#E8F6F3')
+                    if i in [1, 3, 4]:  # Rows with achievement values
+                        cell.set_text_props(fontweight='bold')
+    
+    # Merge cells for Overall Oct
+    table.combine_cells(0, 2, 1, 1)
+    
+    # Add title above the table
+    ax_current.text(0.5, 1.0, 'October 2024 Performance Metrics', 
+                   fontsize=16, fontweight='bold', ha='center', va='bottom')
+    
+    # Rest of the visualization code remains the same...
     detailed_metrics = [
         ('Trade', region_data['Trade Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Channel'),
         ('Green', region_data['Green Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Region'),
@@ -1854,28 +1899,12 @@ def create_visualization(region_data, region, brand, months):
         ('Blended', region_data['Blended Till Now Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Product')
     ]
     
-    # Create a styled table for main metrics
-    main_table = ax_current.table(
-        cellText=[[value] for _, value in main_metrics],
-        rowLabels=[label for label, _ in main_metrics],
-        cellLoc='center',
-        loc='center left',
-        bbox=[0, 0.2, 0.3, 0.6]
-    )
-    main_table.auto_set_font_size(False)
-    main_table.set_fontsize(14)
-    main_table.scale(1, 1.5)
-
-    for i in range(len(main_metrics)):
-        main_table[i, -1].set_facecolor('#E6F3FF')
-        main_table[i, -1].set_text_props(fontweight='bold')
-    
     colors = ['#FF9999', '#66B2FF', '#99FF99', '#FFCC99', '#FF99CC', '#99CCFF']
     for i, (label, value, total, category) in enumerate(detailed_metrics):
         percentage = (value / total) * 100
         y_pos = 0.85 - i * 0.13
         text = f'• {label} {category} has a share of {percentage:.1f}% in total sales, i.e., {value:.0f} MT.'
-        ax_current.text(0.4, y_pos, text, fontsize=14,fontweight="bold", color=colors[i])
+        ax_current.text(0.4, y_pos, text, fontsize=14, fontweight="bold", color=colors[i])
     ax_current.text(0.50, 1.05, 'Sales Breakown', fontsize=16, fontweight='bold', ha='center', va='bottom')
     ax_table = fig.add_subplot(gs[2, :])
     ax_table.axis('off')
