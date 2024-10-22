@@ -1842,17 +1842,18 @@ def create_visualization(region_data, region, brand, months):
     
     # Create the restructured table data
     table_data = [
-        ['Targets', 'Value', 'Achievement'],
         ['AGS Target', f"{region_data['AGS Tgt (Oct)'].iloc[-1]:.0f}", f"Overall Oct\n{overall_oct:.0f}"],
         ['Plan', f"{region_data['Month Tgt (Oct)'].iloc[-1]:.0f}", ''],
         ['Trade Target', f"{region_data['Trade Tgt (Oct)'].iloc[-1]:.0f}", f"Trade Oct\n{trade_oct:.0f}"],
         ['Non-Trade Target', f"{region_data['Non-Trade Tgt (Oct)'].iloc[-1]:.0f}", f"Non-Trade Oct\n{non_trade_oct:.0f}"]
     ]
     
-    # Create table
+    column_labels = ['Targets', 'Value', 'Achievement']
+    
+    # Create table with column labels
     table = ax_current.table(
-        cellText=[row for row in table_data[1:]],
-        colLabels=table_data[0],
+        cellText=table_data,
+        colLabels=column_labels,
         cellLoc='center',
         loc='center',
         bbox=[0.3, 0.0, 0.4, 0.8]
@@ -1864,26 +1865,28 @@ def create_visualization(region_data, region, brand, months):
     table.scale(1.2, 1.8)
     
     # Apply custom styling
-    for i in range(-1, len(table_data)):  # Start from -1 for header row
+    # Style header row
+    for j in range(3):
+        cell = table[(0, j)]  # Header cells
+        cell.set_facecolor('#2C3E50')
+        cell.set_text_props(color='white', fontweight='bold')
+    
+    # Style data rows
+    for i in range(len(table_data)):
         for j in range(3):
-            if i == -1:  # Header row
-                cell = table[i, j]
-                cell.set_facecolor('#2C3E50')
-                cell.set_text_props(color='white', fontweight='bold')
-            else:
-                cell = table[i, j]
-                if j == 0:  # First column
-                    cell.set_facecolor('#ECF0F1')
+            cell = table[(i + 1, j)]  # Add 1 to account for header row
+            if j == 0:  # First column
+                cell.set_facecolor('#ECF0F1')
+                cell.set_text_props(fontweight='bold')
+            elif j == 1:  # Second column
+                cell.set_facecolor('#F7F9F9')
+            elif j == 2:  # Third column
+                cell.set_facecolor('#E8F6F3')
+                if i in [0, 2, 3]:  # Rows with achievement values
                     cell.set_text_props(fontweight='bold')
-                elif j == 1:  # Second column
-                    cell.set_facecolor('#F7F9F9')
-                elif j == 2:  # Third column
-                    cell.set_facecolor('#E8F6F3')
-                    if i in [0, 2, 3]:  # Rows with achievement values
-                        cell.set_text_props(fontweight='bold')
     
     # Merge cells for Overall Oct
-    table.combine_cells(0, 2, 1, 1)
+    table.combine_cells(1, 2, 2, 1)  # Adjusted indices for merging
     
     # Add title above the table
     ax_current.text(0.5, 1.0, 'October 2024 Performance Metrics', 
