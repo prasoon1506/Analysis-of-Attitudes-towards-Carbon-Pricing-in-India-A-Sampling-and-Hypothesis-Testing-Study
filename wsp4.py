@@ -1844,6 +1844,11 @@ def create_visualization(region_data, region, brand, months):
     ['Plan', f"{region_data['Month Tgt (Oct)'].iloc[-1]:.0f}"],
     ['Trade Target', f"{region_data['Trade Tgt (Oct)'].iloc[-1]:.0f}"],
     ['Non-Trade Target', f"{region_data['Non-Trade Tgt (Oct)'].iloc[-1]:.0f}"]]
+    table_data_right = [
+    [f"{overall_oct:.0f}"],
+    [''],  # Empty cell for the merged overall cell
+    [f"{trade_oct:.0f}"],
+    [f"{non_trade_oct:.0f}"]]
     table_left = ax_current.table(
     cellText=table_data_left,
     cellLoc='center',
@@ -1860,6 +1865,7 @@ def create_visualization(region_data, region, brand, months):
       cell = table_left[i, 1]
       cell.set_facecolor('#F7F9F9')
     table_right = ax_current.table(
+    cellText=table_data_right,
     cellLoc='center',
     loc='center',
     bbox=[0.3, 0.0, 0.1, 0.8])  
