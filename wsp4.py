@@ -2445,31 +2445,15 @@ def sales_review_report_generator():
     
     # Sidebar with modern navigation
     with st.sidebar:
-        # Logo and title
-        st.image("https://via.placeholder.com/150x150.png?text=SR", width=100)
         st.title("Sales Review")
         
         # Modern navigation menu
         st.markdown("### Navigation")
         nav_selection = st.radio(
             "",
-            ["🏠 Home", "📊 Reports", "📈 Analytics", "⚙️ Settings"],
+            ["🏠 Home", "📊 Reports","⚙️ Settings"],
             key="nav"
         )
-        
-        # User info section
-        st.markdown("---")
-        st.markdown("### User Info")
-        st.markdown("👤 Guest User")
-        
-        # Quick actions
-        st.markdown("---")
-        st.markdown("### Quick Actions")
-        if st.button("📥 Export Data"):
-            if st.session_state.df is not None:
-                st.sidebar.success("Ready to export!")
-            else:
-                st.sidebar.warning("No data available")
     
     # Main content area
     if nav_selection == "🏠 Home":
@@ -2582,8 +2566,6 @@ def sales_review_report_generator():
                 "Report Type",
                 ["Individual Report", "Complete Report"]
             )
-            include_predictions = st.checkbox("Include Predictions", value=True)
-            include_summary = st.checkbox("Include Summary Statistics", value=True)
             st.markdown('</div>', unsafe_allow_html=True)
         
         # Generate report button
@@ -2595,26 +2577,32 @@ def sales_review_report_generator():
                     progress.progress(i + 1)
                 
                 if report_type == "Individual Report":
-                    # Call your existing individual report generation function here
+                    region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)]
+                    months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']
+                    fig = create_visualization(region_data, region, brand, months)
+                    
+                    st.pyplot(fig)
+                    
+                    buf = BytesIO()
+                    fig.savefig(buf, format="pdf")
+                    buf.seek(0)
+                    st.download_button(
+                        label="Download Individual PDF Report",
+                        data=buf,
+                        file_name=f"prediction_report_{region}_{brand}.pdf",
+                        mime="application/pdf"
+                    )
                     st.success("✅ Individual report generated!")
                 else:
-                    # Call your existing complete report generation function here
+                    with st.spinner("Generating complete report... This may take a few minutes."):
+                        pdf_buffer = generate_full_report(df, regions)
+                    st.download_button(
+                            label="Download Complete PDF Report",
+                            data=pdf_buffer,
+                            file_name="complete_sales_report.pdf",
+                            mime="application/pdf"
+                        )
                     st.success("✅ Complete report generated!")
-    
-    elif nav_selection == "📈 Analytics":
-        colored_header(
-            label="Analytics Dashboard",
-            description="Explore your sales data",
-            color_name="blue-70"
-        )
-        
-        if st.session_state['df'] is None:
-            st.warning("⚠️ Please upload data first in the Home section")
-            return
-        
-        # Analytics interface placeholder
-        st.markdown("### Sales Analytics")
-        st.info("Analytics dashboard is under development")
     
     elif nav_selection == "⚙️ Settings":
         colored_header(
