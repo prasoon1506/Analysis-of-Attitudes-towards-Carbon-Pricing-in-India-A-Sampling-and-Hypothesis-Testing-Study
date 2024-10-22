@@ -1901,7 +1901,7 @@ def create_visualization(region_data, region, brand, months):
                     cell.set_edgecolor('#dee2e6')  # Normal edges for other rows
     
     # Add title above the table
-    ax_current.text(0.5, 1.0, 'October 2024 Performance Metrics', 
+    ax_current.text(0.2, 1.0, 'October 2024 Performance Metrics', 
                    fontsize=16, fontweight='bold', ha='center', va='bottom')
     detailed_metrics = [
         ('Trade', region_data['Trade Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Channel'),
