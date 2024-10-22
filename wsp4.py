@@ -1856,7 +1856,7 @@ def create_visualization(region_data, region, brand, months):
         colLabels=column_labels,
         cellLoc='center',
         loc='center',
-        bbox=[0.1, 0.0, 0.4, 0.8]
+        bbox=[0, 0.0, 0.4, 0.8]
     )
     
     # Style the table
@@ -1917,7 +1917,7 @@ def create_visualization(region_data, region, brand, months):
         percentage = (value / total) * 100
         y_pos = 0.85 - i * 0.13
         text = f'• {label} {category} has a share of {percentage:.1f}% in total sales, i.e., {value:.0f} MT.'
-        ax_current.text(0.4, y_pos, text, fontsize=14, fontweight="bold", color=colors[i])
+        ax_current.text(0.50, y_pos, text, fontsize=14, fontweight="bold", color=colors[i])
     ax_current.text(0.50, 1.05, 'Sales Breakown', fontsize=16, fontweight='bold', ha='center', va='bottom')
     ax_table = fig.add_subplot(gs[2, :])
     ax_table.axis('off')
