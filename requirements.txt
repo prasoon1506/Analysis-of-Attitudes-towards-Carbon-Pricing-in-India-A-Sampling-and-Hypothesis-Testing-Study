@@ -21,4 +21,5 @@ catboost
 twilio
 kaleido
 streamlit_cookies_manager
+streamlit_extras
 
