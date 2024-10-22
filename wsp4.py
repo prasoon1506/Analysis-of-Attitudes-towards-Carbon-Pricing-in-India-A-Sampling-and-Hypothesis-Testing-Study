@@ -1944,6 +1944,7 @@ def create_visualization(region_data, region, brand, months):
             
         text = f'• {label} {category} has a share of {percentage:.1f}% in total sales, i.e., {value:.0f} MT.'
         ax_current.text(0.50, y_pos, text, fontsize=14, fontweight="bold", color=colors[i])
+    ax_current.text(0.50, 0.90, 'Sales Breakown', fontsize=16, fontweight='bold', ha='center', va='bottom')
     ax_table = fig.add_subplot(gs[2, :])
     ax_table.axis('off')
     ax_table.set_title(f"Quarterly Requirement for November and Decemeber 2024", fontsize=18, fontweight='bold')
