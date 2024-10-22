@@ -1895,7 +1895,7 @@ def create_visualization(region_data, region, brand, months):
                     # Add back only side edges
                     for edge in ['left', 'right']:
                         cell.set_edgecolor('#dee2e6')
-                    cell.set_height(0.001)  # Make the cell very small
+                    cell.set_height(0)  # Make the cell very small
                 elif i in [2, 3]:  # Other Achievement rows
                     cell.set_text_props(fontweight='bold')
                     cell.set_edgecolor('#dee2e6')  # Normal edges for other rows
