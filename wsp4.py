@@ -1865,13 +1865,13 @@ def create_visualization(region_data, region, brand, months):
     table.scale(1.2, 1.8)
     for i in range(len(table_data)):
      for j in range(3):
-        if j == 2 and i == 1:  # First row in Achievement column
+        if j == 2 and i == 0:  # First row in Achievement column
             # Create a cell that spans 2 rows
             cell = table.add_cell(i + 1, j, 1, 2, 
                                 text=table_data[i][j],
                                 facecolor='#E8F6F3')
             cell.set_text_props(fontweight='bold')
-        elif j == 2 and i == 2:  # Skip second row in Achievement column
+        elif j == 2 and i == 1:  # Skip second row in Achievement column
             continue  # Skip this cell as it's covered by the merged cell above
         else:  # All other cells
             cell = table.add_cell(i + 1, j,1,1,
@@ -1883,7 +1883,7 @@ def create_visualization(region_data, region, brand, months):
                 cell.set_facecolor('#F7F9F9')
             elif j == 2:  # Third column (remaining rows)
                 cell.set_facecolor('#E8F6F3')
-                if i in [3, 4]:  # Other Achievement rows
+                if i in [2, 3]:  # Other Achievement rows
                     cell.set_text_props(fontweight='bold')
     
     # Add title above the table
