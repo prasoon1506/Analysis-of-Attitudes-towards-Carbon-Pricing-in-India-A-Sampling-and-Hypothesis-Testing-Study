@@ -1884,15 +1884,11 @@ def create_visualization(region_data, region, brand, months):
                 cell.set_facecolor('#E8F6F3')
                 if i == 0:  # First row in Achievement column
                     cell.set_text_props(fontweight='bold')
-                    cell.set_edgecolor('#dee2e6')
                 elif i == 1:  # Second row in Achievement column
                     cell.set_facecolor('#E8F6F3')
-                    cell.set_edgecolor('#dee2e6')  # Remove all edges
-                    cell.set_edgecolor('#dee2e6')
                     cell.set_height(0)  # Make the cell very small
                 elif i in [2, 3]:  # Other Achievement rows
-                    cell.set_text_props(fontweight='bold')
-                    cell.set_edgecolor('#dee2e6')  # Normal edges for other rows
+                    cell.set_text_props(fontweight='bold')  # Normal edges for other rows
     
     # Add title above the table
     ax_current.text(0.2, 1.0, 'October 2024 Performance Metrics', 
