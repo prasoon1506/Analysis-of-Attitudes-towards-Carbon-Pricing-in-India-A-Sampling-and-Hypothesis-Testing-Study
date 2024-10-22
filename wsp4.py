@@ -2128,65 +2128,63 @@ def create_visualization(region_data, region, brand, months):
                 f"•{channel} {t} has share of {percentage_last_month:.1f}% in September as compared to {percentage:.1f}% in October 2024.",
                 fontsize=11, color='darkcyan')
     # Updated: August Region Type Breakdown with values
+    def create_pie_data(data_values, labels, colors):
+    # Filter out zero values and corresponding labels and colors
+     non_zero_data = []
+     non_zero_labels = []
+     non_zero_colors = []
+    
+    for value, label, color in zip(data_values, labels, colors):
+        if value > 0:
+            non_zero_data.append(value)
+            non_zero_labels.append(label)
+            non_zero_colors.append(color)
+            
+    return non_zero_data, non_zero_labels, non_zero_colors
+
+    def make_autopct(values):
+     def my_autopct(pct):
+        total = sum(values)
+        val = int(round(pct*total/100.0))
+        return f'{pct:.0f}%\n({val:.0f})'
+    return my_autopct
     ax5 = fig.add_subplot(gs[6, 0])
     region_type_data = [
-        region_data['Green Oct'].iloc[-1],
-        region_data['Yellow Oct'].iloc[-1],
-        region_data['Red Oct'].iloc[-1],
-        region_data['Unidentified Oct'].iloc[-1]
-    ]
+    region_data['Green Oct'].iloc[-1],
+    region_data['Yellow Oct'].iloc[-1],
+    region_data['Red Oct'].iloc[-1],
+    region_data['Unidentified Oct'].iloc[-1]]
     region_type_labels = ['G', 'Y', 'R', '']
     colors = ['green', 'yellow', 'red', 'gray']
-    explode=[0.05,0.05,0.05,0.05]
-    def make_autopct(values):
-        def my_autopct(pct):
-            total = sum(values)
-            val = int(round(pct*total/100.0))
-            return f'{pct:.0f}%\n({val:.0f})'
-        return my_autopct
-    
-    ax5.pie(region_type_data, labels=region_type_labels, colors=colors,
-            autopct=make_autopct(region_type_data), startangle=90,explode=explode)
+    filtered_data, filtered_labels, filtered_colors = create_pie_data(
+    region_type_data, region_type_labels, colors)
+    explode = [0.05] * len(filtered_data)
+    ax5.pie(filtered_data, labels=filtered_labels, colors=filtered_colors,
+        autopct=make_autopct(filtered_data), startangle=90, explode=explode)
     ax5.set_title('October 2024 Region Type Breakdown:-', fontsize=16, fontweight='bold')
     ax6 = fig.add_subplot(gs[6, 1])
     region_type_data = [
-        region_data['Green Oct 2023'].iloc[-1],
-        region_data['Yellow Oct 2023'].iloc[-1],
-        region_data['Red Oct 2023'].iloc[-1],
-        region_data['Unidentified Oct 2023'].iloc[-1]
-    ]
-    region_type_labels = ['G', 'Y', 'R', '']
-    colors = ['green', 'yellow', 'red', 'gray']
-    explode=[0.05,0.05,0.05,0.05]
-    def make_autopct(values):
-        def my_autopct(pct):
-            total = sum(values)
-            val = int(round(pct*total/100.0))
-            return f'{pct:.0f}%\n({val:.0f})'
-        return my_autopct
-    
-    ax6.pie(region_type_data, labels=region_type_labels, colors=colors,
-            autopct=make_autopct(region_type_data), startangle=90,explode=explode)
+    region_data['Green Oct 2023'].iloc[-1],
+    region_data['Yellow Oct 2023'].iloc[-1],
+    region_data['Red Oct 2023'].iloc[-1],
+    region_data['Unidentified Oct 2023'].iloc[-1]]
+    filtered_data, filtered_labels, filtered_colors = create_pie_data(
+    region_type_data, region_type_labels, colors)
+    explode = [0.05] * len(filtered_data)
+    ax6.pie(filtered_data, labels=filtered_labels, colors=filtered_colors,
+        autopct=make_autopct(filtered_data), startangle=90, explode=explode)
     ax6.set_title('October 2023 Region Type Breakdown:-', fontsize=16, fontweight='bold')
     ax7 = fig.add_subplot(gs[6, 2])
     region_type_data = [
-        region_data['Green Sep'].iloc[-1],
-        region_data['Yellow Sep'].iloc[-1],
-        region_data['Red Sep'].iloc[-1],
-        region_data['Unidentified Sep'].iloc[-1]
-    ]
-    region_type_labels = ['G', 'Y', 'R', '']
-    colors = ['green', 'yellow', 'red', 'gray']
-    explode=[0.05,0.05,0.05,0.05]
-    def make_autopct(values):
-        def my_autopct(pct):
-            total = sum(values)
-            val = int(round(pct*total/100.0))
-            return f'{pct:.0f}%\n({val:.0f})'
-        return my_autopct
-    
-    ax7.pie(region_type_data, labels=region_type_labels, colors=colors,
-            autopct=make_autopct(region_type_data), startangle=90,explode=explode)
+    region_data['Green Sep'].iloc[-1],
+    region_data['Yellow Sep'].iloc[-1],
+    region_data['Red Sep'].iloc[-1],
+    region_data['Unidentified Sep'].iloc[-1]]
+    filtered_data, filtered_labels, filtered_colors = create_pie_data(
+    region_type_data, region_type_labels, colors)
+    explode = [0.05] * len(filtered_data)
+    ax7.pie(filtered_data, labels=filtered_labels, colors=filtered_colors,
+        autopct=make_autopct(filtered_data), startangle=90, explode=explode)
     ax7.set_title('September 2024 Region Type Breakdown:-', fontsize=16, fontweight='bold')
     ax_comparison = fig.add_subplot(gs[7, :])
     ax_comparison.axis('off')
