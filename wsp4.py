@@ -1924,7 +1924,7 @@ def create_visualization(region_data, region, brand, months):
                                   transform=ax_current.transAxes)
     ax_current.add_patch(product_box)
     for i, (label, value, total, category) in enumerate(detailed_metrics):
-     percentage = (value / total) * 100 if total != 0 else 0
+     percentage = (value / total) * 100 
      if i == 0:  # Trade (first box)
         y_pos = 0.77
      elif i <= 3:  # Region types (second box)
