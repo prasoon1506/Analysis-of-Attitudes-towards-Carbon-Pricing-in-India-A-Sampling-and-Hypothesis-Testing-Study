@@ -1864,14 +1864,14 @@ def create_visualization(region_data, region, brand, months):
     table.scale(1.2, 1.8)
     
     # Apply custom styling
-    for i in range(len(table_data)):
+    for i in range(-1, len(table_data)):  # Start from -1 for header row
         for j in range(3):
-            if i == 0:  # Header row
-                cell = table[i-1, j]
+            if i == -1:  # Header row
+                cell = table[i, j]
                 cell.set_facecolor('#2C3E50')
                 cell.set_text_props(color='white', fontweight='bold')
             else:
-                cell = table[i-1, j]
+                cell = table[i, j]
                 if j == 0:  # First column
                     cell.set_facecolor('#ECF0F1')
                     cell.set_text_props(fontweight='bold')
@@ -1879,7 +1879,7 @@ def create_visualization(region_data, region, brand, months):
                     cell.set_facecolor('#F7F9F9')
                 elif j == 2:  # Third column
                     cell.set_facecolor('#E8F6F3')
-                    if i in [1, 3, 4]:  # Rows with achievement values
+                    if i in [0, 2, 3]:  # Rows with achievement values
                         cell.set_text_props(fontweight='bold')
     
     # Merge cells for Overall Oct
