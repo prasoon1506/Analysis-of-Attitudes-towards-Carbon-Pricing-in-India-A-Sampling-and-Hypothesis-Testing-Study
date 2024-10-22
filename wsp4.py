@@ -2050,7 +2050,7 @@ def create_visualization(region_data, region, brand, months):
                         color='purple')
     ax3 = fig.add_subplot(gs[5, :])
     ax3.axis('off')
-    current_year = 2024  # Assuming the current year is 2024
+    current_year = 2024
     last_year = 2023
 
     channel_data = [
@@ -2064,20 +2064,20 @@ def create_visualization(region_data, region, brand, months):
     
     ax3.text(0.2, 1, f'October {current_year} Sales Comparison to October 2023:-', fontsize=16, fontweight='bold', ha='center', va='center')
     
-    # Helper function to create arrow
     def get_arrow(value):
         return '↑' if value > 0 else '↓' if value < 0 else '→'
     def get_color(value):
         return 'green' if value > 0 else 'red' if value < 0 else 'black'
 
-    # Display total sales
     total_change = ((total_oct_current - total_oct_last) / total_oct_last) * 100
     arrow = get_arrow(total_change)
     color = get_color(total_change)
     ax3.text(0.21, 0.9, f"October 2024: {total_oct_current:.0f}", fontsize=14, fontweight='bold', ha='center')
     ax3.text(0.22, 0.85, f"vs October 2023: {total_oct_last:.0f} ({total_change:.1f}% {arrow})", fontsize=12, color=color, ha='center')
+    
     for i, (channel, value_current, value_last) in enumerate(channel_data):
         percentage = (value_current / monthly_achievement_oct) * 100
+        percentage_last_year = (value_last / total_oct_last) * 100
         change = ((value_current - value_last) / value_last) * 100
         arrow = get_arrow(change)
         color = get_color(change)
@@ -2087,37 +2087,33 @@ def create_visualization(region_data, region, brand, months):
         ax3.text(0.25, y_pos, f"{value_current:.0f}", fontsize=14)
         ax3.text(0.15, y_pos-0.05, f"vs Last Year: {value_last:.0f}", fontsize=12)
         ax3.text(0.25, y_pos-0.05, f"({change:.1f}% {arrow})", fontsize=12, color=color)
+        # Add the share percentage comparison
+        ax3.text(0.15, y_pos-0.1, 
+                f"{channel} Channel has share of {percentage_last_year:.1f}% in October last year as compared to {percentage:.1f}% in October 2024",
+                fontsize=11, color='navy')
+
+    # Update the September comparison section similarly
     ax4 = fig.add_subplot(gs[5, 2])
     ax4.axis('off')
     
-    current_year = 2024  # Assuming the current year is 2024
-    last_year = 2024
-
     channel_data1 = [
         ('Trade', region_data['Trade Oct'].iloc[-1], region_data['Trade Sep'].iloc[-1]),
         ('Premium', region_data['Premium Oct'].iloc[-1], region_data['Premium Sep'].iloc[-1]),
         ('Blended', region_data['Blended Till Now Oct'].iloc[-1], region_data['Blended Sep'].iloc[-1])
     ]
-    monthly_achievement_oct = region_data['Monthly Achievement(Oct)'].iloc[-1]
-    total_oct_current = region_data['Monthly Achievement(Oct)'].iloc[-1]
     total_sep_current = region_data['Total Sep '].iloc[-1]
     
     ax4.text(0.35, 1, f'October {current_year} Sales Comparison to September 2024:-', fontsize=16, fontweight='bold', ha='center', va='center')
     
-    # Helper function to create arrow
-    def get_arrow(value):
-        return '↑' if value > 0 else '↓' if value < 0 else '→'
-    def get_color(value):
-        return 'green' if value > 0 else 'red' if value < 0 else 'black'
-
-    # Display total sales
     total_change = ((total_oct_current - total_sep_current) / total_sep_current) * 100
     arrow = get_arrow(total_change)
     color = get_color(total_change)
     ax4.text(0.36, 0.9, f"October 2024: {total_oct_current:.0f}", fontsize=14, fontweight='bold', ha='center')
     ax4.text(0.37, 0.85, f"vs September 2024: {total_sep_current:.0f} ({total_change:.1f}% {arrow})", fontsize=12, color=color, ha='center')
+    
     for i, (channel, value_current, value_last) in enumerate(channel_data1):
         percentage = (value_current / monthly_achievement_oct) * 100
+        percentage_last_month = (value_last / total_sep_current) * 100
         change = ((value_current - value_last) / value_last) * 100
         arrow = get_arrow(change)
         color = get_color(change)
@@ -2127,6 +2123,10 @@ def create_visualization(region_data, region, brand, months):
         ax4.text(0.55, y_pos, f"{value_current:.0f}", fontsize=14)
         ax4.text(0.10, y_pos-0.05, f"vs Last Month: {value_last:.0f}", fontsize=12)
         ax4.text(0.55, y_pos-0.05, f"({change:.1f}% {arrow})", fontsize=12, color=color)
+        # Add the share percentage comparison
+        ax4.text(0.10, y_pos-0.1, 
+                f"{channel} Channel has share of {percentage_last_month:.1f}% in September as compared to {percentage:.1f}% in October 2024",
+                fontsize=11, color='navy')
     # Updated: August Region Type Breakdown with values
     ax5 = fig.add_subplot(gs[6, 0])
     region_type_data = [
