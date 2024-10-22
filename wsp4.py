@@ -1866,7 +1866,7 @@ def create_visualization(region_data, region, brand, months):
      for j in range(3):
         if j == 2 and i == 0:  # First row in Achievement column
             # Create a cell that spans 2 rows
-            cell = table.add_cell(i, j, 1, 2, 
+            cell = table.add_cell(i+1, j, 1, 2, 
                                 text=table_data[i][j],
                                 facecolor='#E8F6F3')
             cell.set_text_props(fontweight='bold')
