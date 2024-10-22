@@ -1843,7 +1843,7 @@ def create_visualization(region_data, region, brand, months):
     # Create the restructured table data
     table_data = [
         ['AGS Target', f"{region_data['AGS Tgt (Oct)'].iloc[-1]:.0f}", f"Overall Oct\n{overall_oct:.0f}"],
-        ['Plan', f"{region_data['Month Tgt (Oct)'].iloc[-1]:.0f}", ''],
+        ['Plan', f"{region_data['Month Tgt (Oct)'].iloc[-1]:.0f}", ''],  # Empty cell for visual merging
         ['Trade Target', f"{region_data['Trade Tgt (Oct)'].iloc[-1]:.0f}", f"Trade Oct\n{trade_oct:.0f}"],
         ['Non-Trade Target', f"{region_data['Non-Trade Tgt (Oct)'].iloc[-1]:.0f}", f"Non-Trade Oct\n{non_trade_oct:.0f}"]
     ]
@@ -1882,11 +1882,17 @@ def create_visualization(region_data, region, brand, months):
                 cell.set_facecolor('#F7F9F9')
             elif j == 2:  # Third column
                 cell.set_facecolor('#E8F6F3')
-                if i in [0, 2, 3]:  # Rows with achievement values
+                if i == 0:  # First row in Achievement column
                     cell.set_text_props(fontweight='bold')
-    
-    # Merge cells for Overall Oct
-    table.combine_cells(1, 2, 2, 1)  # Adjusted indices for merging
+                    # Remove bottom edge to simulate merged cells
+                    cell._edges['bottom'].set_visible(False)
+                elif i == 1:  # Second row in Achievement column
+                    cell.set_facecolor('#E8F6F3')
+                    # Remove top edge to simulate merged cells
+                    cell._edges['top'].set_visible(False)
+                    cell.set_height(0.001)  # Make the cell very small
+                elif i in [2, 3]:  # Other Achievement rows
+                    cell.set_text_props(fontweight='bold')
     
     # Add title above the table
     ax_current.text(0.5, 1.0, 'October 2024 Performance Metrics', 
