@@ -1842,10 +1842,10 @@ def create_visualization(region_data, region, brand, months):
     
     # Create the restructured table data
     table_data = [
-        ['AGS Target', f"{region_data['AGS Tgt (Oct)'].iloc[-1]:.0f}", f"Overall Oct\n{overall_oct:.0f}"],
+        ['AGS Target', f"{region_data['AGS Tgt (Oct)'].iloc[-1]:.0f}", f"{overall_oct:.0f}"],
         ['Plan', f"{region_data['Month Tgt (Oct)'].iloc[-1]:.0f}", ''],  # Empty cell for visual merging
-        ['Trade Target', f"{region_data['Trade Tgt (Oct)'].iloc[-1]:.0f}", f"Trade Oct\n{trade_oct:.0f}"],
-        ['Non-Trade Target', f"{region_data['Non-Trade Tgt (Oct)'].iloc[-1]:.0f}", f"Non-Trade Oct\n{non_trade_oct:.0f}"]
+        ['Trade Target', f"{region_data['Trade Tgt (Oct)'].iloc[-1]:.0f}", f"{trade_oct:.0f}"],
+        ['Non-Trade Target', f"{region_data['Non-Trade Tgt (Oct)'].iloc[-1]:.0f}", f"{non_trade_oct:.0f}"]
     ]
     
     column_labels = ['Targets', 'Value', 'Achievement']
