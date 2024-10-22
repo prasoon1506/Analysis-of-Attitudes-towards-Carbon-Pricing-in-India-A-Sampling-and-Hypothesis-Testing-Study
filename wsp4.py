@@ -1870,25 +1870,29 @@ def create_visualization(region_data, region, brand, months):
         cell = table[(0, j)]  # Header cells
         cell.set_facecolor('#2C3E50')
         cell.set_text_props(color='white', fontweight='bold')
-    
-    # Style data rows
-    for i in range(len(table_data)):
-        for j in range(3):
-            cell = table[(i + 1, j)]  # Add 1 to account for header row
+    # Create the table with merged cells in the Achievement column
+for i in range(len(table_data)):
+    for j in range(3):
+        if j == 2 and i == 0:  # First row in Achievement column
+            # Create a cell that spans 2 rows
+            cell = table.add_cell(i + 1, j, 1, 2,  # row, col, width, height
+                                text=table_data[i][j],
+                                facecolor='#E8F6F3')
+            cell.set_text_props(fontweight='bold')
+        elif j == 2 and i == 1:  # Skip second row in Achievement column
+            continue  # Skip this cell as it's covered by the merged cell above
+        else:  # All other cells
+            cell = table.add_cell(i + 1, j,
+                                text=table_data[i][j])
             if j == 0:  # First column
                 cell.set_facecolor('#ECF0F1')
                 cell.set_text_props(fontweight='bold')
             elif j == 1:  # Second column
                 cell.set_facecolor('#F7F9F9')
-            elif j == 2:  # Third column
+            elif j == 2:  # Third column (remaining rows)
                 cell.set_facecolor('#E8F6F3')
-                if i == 0:  # First row in Achievement column
+                if i in [2, 3]:  # Other Achievement rows
                     cell.set_text_props(fontweight='bold')
-                elif i == 1:  # Second row in Achievement column
-                    cell.set_facecolor('#E8F6F3')
-                    cell.set_height(0)  # Make the cell very small
-                elif i in [2, 3]:  # Other Achievement rows
-                    cell.set_text_props(fontweight='bold')  # Normal edges for other rows
     
     # Add title above the table
     ax_current.text(0.2, 1.0, 'October 2024 Performance Metrics', 
