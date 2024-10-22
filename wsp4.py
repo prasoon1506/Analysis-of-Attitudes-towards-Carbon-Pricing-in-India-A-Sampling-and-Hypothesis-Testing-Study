@@ -1856,7 +1856,7 @@ def create_visualization(region_data, region, brand, months):
         colLabels=column_labels,
         cellLoc='center',
         loc='center',
-        bbox=[0.3, 0.0, 0.4, 0.8]
+        bbox=[0.3, 0.0, 0.2, 0.8]
     )
     
     # Style the table
