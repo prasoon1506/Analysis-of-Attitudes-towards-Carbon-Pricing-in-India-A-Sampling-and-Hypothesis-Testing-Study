@@ -1901,7 +1901,7 @@ def create_visualization(region_data, region, brand, months):
     
     # Add boxes for grouping metrics
     # Box 1 for Trade
-    trade_box = patches.Rectangle((0.45, 0.72), 0.47, 0.125, 
+    trade_box = patches.Rectangle((0.45, 0.725), 0.47, 0.125, 
                                 facecolor='#F0F0F0', 
                                 edgecolor='black',
                                 alpha=0.3,
@@ -1909,7 +1909,7 @@ def create_visualization(region_data, region, brand, months):
     ax_current.add_patch(trade_box)
     
     # Box 2 for Region types (Green, Yellow, Red)
-    region_box = patches.Rectangle((0.45, 0.33), 0.47, 0.375,
+    region_box = patches.Rectangle((0.45, 0.335), 0.47, 0.375,
                                  facecolor='#F0F0F0',
                                  edgecolor='black',
                                  alpha=0.3,
@@ -1917,7 +1917,7 @@ def create_visualization(region_data, region, brand, months):
     ax_current.add_patch(region_box)
     
     # Box 3 for Products (Premium, Blended)
-    product_box = patches.Rectangle((0.45, 0.06), 0.47, 0.25,
+    product_box = patches.Rectangle((0.45, 0.065), 0.47, 0.25,
                                   facecolor='#F0F0F0',
                                   edgecolor='black',
                                   alpha=0.3,
@@ -1925,12 +1925,12 @@ def create_visualization(region_data, region, brand, months):
     ax_current.add_patch(product_box)
     
     # Add category labels for each box
-    ax_current.text(0.47, 0.88, 'Channel Breakdown:', 
-                   fontsize=14, fontweight='bold', color='#444444')
-    ax_current.text(0.47, 0.49, 'Region Type Breakdown:', 
-                   fontsize=14, fontweight='bold', color='#444444')
-    ax_current.text(0.47, 0.22, 'Product Breakdown:', 
-                   fontsize=14, fontweight='bold', color='#444444')
+    #ax_current.text(0.47, 0.88, 'Channel Breakdown:', 
+                   #fontsize=14, fontweight='bold', color='#444444')
+    #ax_current.text(0.47, 0.49, 'Region Type Breakdown:', 
+                   #fontsize=14, fontweight='bold', color='#444444')
+    #ax_current.text(0.47, 0.22, 'Product Breakdown:', 
+                   #fontsize=14, fontweight='bold', color='#444444')
     
     # Add metrics with adjusted positions
     for i, (label, value, total, category) in enumerate(detailed_metrics):
