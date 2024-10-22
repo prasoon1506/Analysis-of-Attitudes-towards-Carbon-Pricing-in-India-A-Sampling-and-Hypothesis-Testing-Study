@@ -1839,55 +1839,47 @@ def create_visualization(region_data, region, brand, months):
     overall_oct = region_data['Monthly Achievement(Oct)'].iloc[-1]
     trade_oct = region_data['Trade Oct'].iloc[-1]
     non_trade_oct = overall_oct - trade_oct
-    
-    # Create the restructured table data
-    table_data = [
-        ['AGS Target', f"{region_data['AGS Tgt (Oct)'].iloc[-1]:.0f}", f"{overall_oct:.0f}"],
-        ['Plan', f"{region_data['Month Tgt (Oct)'].iloc[-1]:.0f}", ''],  # Empty cell for visual merging
-        ['Trade Target', f"{region_data['Trade Tgt (Oct)'].iloc[-1]:.0f}", f"{trade_oct:.0f}"],
-        ['Non-Trade Target', f"{region_data['Non-Trade Tgt (Oct)'].iloc[-1]:.0f}", f"{non_trade_oct:.0f}"]
-    ]
-    
+    table_data_left = [
+    ['AGS Target', f"{region_data['AGS Tgt (Oct)'].iloc[-1]:.0f}"],
+    ['Plan', f"{region_data['Month Tgt (Oct)'].iloc[-1]:.0f}"],
+    ['Trade Target', f"{region_data['Trade Tgt (Oct)'].iloc[-1]:.0f}"],
+    ['Non-Trade Target', f"{region_data['Non-Trade Tgt (Oct)'].iloc[-1]:.0f}"]]
+    table_left = ax_current.table(
+    cellText=table_data_left,
+    cellLoc='center',
+    loc='center',
+    bbox=[0, 0.0, 0.3, 0.8]  # Adjusted bbox to be narrower and on the left)
+    table_left.auto_set_font_size(False)
+    table_left.set_fontsize(12)
+    table_left.scale(1.2, 1.8)
 
-    
-    # Create table with column labels
-    table = ax_current.table(
-        cellText=table_data,
-        cellLoc='center',
-        loc='center',
-        bbox=[0, 0.0, 0.4, 0.8]
-    )
-    
-    # Style the table
-    table.auto_set_font_size(False)
-    table.set_fontsize(12)
-    table.scale(1.2, 1.8)
-    for i in range(len(table_data)):
-     for j in range(3):
-        if j == 2 and i == 0:  # First row in Achievement column
-            # Create a cell that spans 2 rows
-            cell = table.add_cell(i+1, j, 1, 2, 
-                                text=table_data[i][j],
-                                facecolor='#E8F6F3')
-            cell.set_text_props(fontweight='bold')
-        elif j == 2 and i == 1:  # Skip second row in Achievement column
-            continue  # Skip this cell as it's covered by the merged cell above
-        else:  # All other cells
-            cell = table.add_cell(i, j,1,1,
-                                text=table_data[i][j])
-            if j == 0:  # First column
-                cell.set_facecolor('#ECF0F1')
-                cell.set_text_props(fontweight='bold')
-            elif j == 1:  # Second column
-                cell.set_facecolor('#F7F9F9')
-            elif j == 2:  # Third column (remaining rows)
-                cell.set_facecolor('#E8F6F3')
-                if i in [2, 3]:  # Other Achievement rows
-                    cell.set_text_props(fontweight='bold')
-    
-    # Add title above the table
+    for i in range(len(table_data_left)):
+      cell = table_left[i, 0]
+      cell.set_facecolor('#ECF0F1')
+      cell.set_text_props(fontweight='bold')
+      cell = table_left[i, 1]
+      cell.set_facecolor('#F7F9F9')
+    table_right = ax_current.table(
+    cellLoc='center',
+    loc='center',
+    bbox=[0.3, 0.0, 0.1, 0.8])  # Adjusted bbox to be narrow and right next to left table)
+    cell = table_right.add_cell(0, 0, 2, 1, 
+                           text=f"{overall_oct:.0f}",
+                           facecolor='#E8F6F3')
+    cell.set_text_props(fontweight='bold')
+    cell = table_right.add_cell(2, 0, 1, 1,
+                           text=f"{trade_oct:.0f}",
+                           facecolor='#E8F6F3')
+    cell.set_text_props(fontweight='bold')
+    cell = table_right.add_cell(3, 0, 1, 1,
+                           text=f"{non_trade_oct:.0f}",
+                           facecolor='#E8F6F3')
+    cell.set_text_props(fontweight='bold')
+    table_right.auto_set_font_size(False)
+    table_right.set_fontsize(12)
+    table_right.scale(1.2, 1.8)
     ax_current.text(0.2, 1.0, 'October 2024 Performance Metrics', 
-                   fontsize=16, fontweight='bold', ha='center', va='bottom')
+               fontsize=16, fontweight='bold', ha='center', va='bottom')
     detailed_metrics = [
         ('Trade', region_data['Trade Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Channel'),
         ('Green', region_data['Green Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Region'),
@@ -1896,7 +1888,6 @@ def create_visualization(region_data, region, brand, months):
         ('Premium', region_data['Premium Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Product'),
         ('Blended', region_data['Blended Till Now Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Product')
     ]
-    
     colors = ['#FF9999', '#66B2FF', '#99FF99', '#FFCC99', '#FF99CC', '#99CCFF']
     for i, (label, value, total, category) in enumerate(detailed_metrics):
         percentage = (value / total) * 100
