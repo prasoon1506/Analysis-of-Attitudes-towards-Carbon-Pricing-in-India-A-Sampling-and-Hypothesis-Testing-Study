@@ -1871,8 +1871,8 @@ def create_visualization(region_data, region, brand, months):
         cell.set_facecolor('#2C3E50')
         cell.set_text_props(color='white', fontweight='bold')
     # Create the table with merged cells in the Achievement column
-for i in range(len(table_data)):
-    for j in range(3):
+    for i in range(len(table_data)):
+     for j in range(3):
         if j == 2 and i == 0:  # First row in Achievement column
             # Create a cell that spans 2 rows
             cell = table.add_cell(i + 1, j, 1, 2,  # row, col, width, height
