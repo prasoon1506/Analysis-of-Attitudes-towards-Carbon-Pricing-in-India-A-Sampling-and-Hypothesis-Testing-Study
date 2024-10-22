@@ -1897,7 +1897,7 @@ def create_visualization(region_data, region, brand, months):
         ('Premium', region_data['Premium Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Product'),
         ('Blended', region_data['Blended Till Now Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Product')
     ]
-    colors = ['#FF9999', '#66B2FF', '#99FF99', '#FFCC99', '#FF99CC', '#99CCFF']
+    colors = ['#FF9999', 'green', 'yellow', 'red', '#FF99CC', '#99CCFF']
     
     # Add boxes for grouping metrics
     # Box 1 for Trade
@@ -1940,7 +1940,7 @@ def create_visualization(region_data, region, brand, months):
         elif i <= 3:  # Region types (second box)
             y_pos = 0.63 - (i-1) * 0.11
         else:  # Products (third box)
-            y_pos = 0.25 - (i-4) * 0.11
+            y_pos = 0.24 - (i-4) * 0.11
             
         text = f'• {label} {category} has a share of {percentage:.1f}% in total sales, i.e., {value:.0f} MT.'
         ax_current.text(0.50, y_pos, text, fontsize=14, fontweight="bold", color=colors[i])
