@@ -1901,7 +1901,7 @@ def create_visualization(region_data, region, brand, months):
     
     # Add boxes for grouping metrics
     # Box 1 for Trade
-    trade_box = patches.Rectangle((0.45, 0.73), 0.45, 0.20, 
+    trade_box = patches.Rectangle((0.45, 0.73), 0.45, 0.15, 
                                 facecolor='#F0F0F0', 
                                 edgecolor='black',
                                 alpha=0.3,
@@ -1917,7 +1917,7 @@ def create_visualization(region_data, region, brand, months):
     ax_current.add_patch(region_box)
     
     # Box 3 for Products (Premium, Blended)
-    product_box = patches.Rectangle((0.45, 0.08), 0.45, 0.25,
+    product_box = patches.Rectangle((0.45, 0.06), 0.45, 0.25,
                                   facecolor='#F0F0F0',
                                   edgecolor='black',
                                   alpha=0.3,
