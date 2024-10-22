@@ -2344,6 +2344,44 @@ def create_visualization(region_data, region, brand, months):
 
     plt.tight_layout()
     return fig
+def generate_full_report(df, regions):
+    """
+    Generate a complete PDF report containing visualizations for all regions and their brands
+    """
+    from matplotlib.backends.backend_pdf import PdfPages
+    import matplotlib.pyplot as plt
+    from io import BytesIO
+    
+    # Create a BytesIO object to store the PDF
+    pdf_buffer = BytesIO()
+    
+    # Create PDF with multiple pages
+    with PdfPages(pdf_buffer) as pdf:
+        # Iterate through each region
+        for region in regions:
+            # Get unique brands for this region
+            region_brands = df[df['Zone'] == region]['Brand'].unique().tolist()
+            
+            # For each brand in the region
+            for brand in region_brands:
+                # Filter data for current region and brand
+                region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)]
+                months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']
+                
+                # Create visualization
+                fig = create_visualization(region_data, region, brand, months)
+                
+                # Add page to PDF
+                pdf.savefig(fig)
+                
+                # Close the figure to free memory
+                plt.close(fig)
+    
+    # Reset buffer position
+    pdf_buffer.seek(0)
+    return pdf_buffer
+
+# Update the main app code with new button
 def sales_review_report_generator():
     st.title("📊 Sales Review Report Generator")
     
@@ -2363,13 +2401,13 @@ def sales_review_report_generator():
     with st.sidebar:
         st_lottie(lottie_json, height=200)
         st.title("Navigation")
-        page = st.radio("Go to", ["Home", "Report Generator","About"])
+        page = st.radio("Go to", ["Home", "Report Generator", "About"])
     
     if page == "Home":
         st.write("This app helps you generate monthly sales review report for different regions and brands.")
         st.write("Use the sidebar to navigate between pages and upload your data to get started!")
         
-        uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx",key="Sales_Prediction_uploader")
+        uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx", key="Sales_Prediction_uploader")
         if uploaded_file is not None:
             with st.spinner("Loading data..."):
                 df, regions, brands = load_data(uploaded_file)
@@ -2377,41 +2415,59 @@ def sales_review_report_generator():
             st.session_state['regions'] = regions
             st.session_state['brands'] = brands
             st.success("File uploaded and processed successfully!")
+    
     elif page == "Report Generator":
-     st.subheader("🔮 Report Generator")
-     if st.session_state['df'] is None:
-        st.warning("Please upload a file on the Home page first.")
-     else:
+        st.subheader("🔮 Report Generator")
+        if st.session_state['df'] is None:
+            st.warning("Please upload a file on the Home page first.")
+        else:
             df = st.session_state['df']
             regions = st.session_state['regions']
             
+            # Create two columns for the report generation options
             col1, col2 = st.columns(2)
+            
             with col1:
                 region = st.selectbox("Select Region", regions)
-            
-            # Filter brands based on the selected region
-            region_brands = df[df['Zone'] == region]['Brand'].unique().tolist()
+                region_brands = df[df['Zone'] == region]['Brand'].unique().tolist()
+                brand = st.selectbox("Select Brand", region_brands)
+                
+                if st.button("Generate Individual Report"):
+                    region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)]
+                    months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']
+                    fig = create_visualization(region_data, region, brand, months)
+                    
+                    st.pyplot(fig)
+                    
+                    buf = BytesIO()
+                    fig.savefig(buf, format="pdf")
+                    buf.seek(0)
+                    st.download_button(
+                        label="Download Individual PDF Report",
+                        data=buf,
+                        file_name=f"prediction_report_{region}_{brand}.pdf",
+                        mime="application/pdf"
+                    )
             
             with col2:
-                brand = st.selectbox("Select Brand", region_brands)
-            
-            if st.button("Generate Individual Report"):
-                region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)]
-                months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']
-                fig = create_visualization(region_data, region, brand, months)
+                st.write("Generate Complete Report")
+                st.write("This will create a PDF containing reports for all regions and brands.")
                 
-                st.pyplot(fig)
-                
-                buf = BytesIO()
-                fig.savefig(buf, format="pdf")
-                buf.seek(0)
-                b64 = base64.b64encode(buf.getvalue()).decode()
-                st.download_button(
-                    label="Download Individual PDF Report",
-                    data=buf,
-                    file_name=f"prediction_report_{region}_{brand}.pdf",
-                    mime="application/pdf"
-                )
+                if st.button("Generate Complete Report"):
+                    with st.spinner("Generating complete report... This may take a few minutes."):
+                        # Generate the complete report
+                        pdf_buffer = generate_full_report(df, regions)
+                        
+                        # Offer the complete report for download
+                        st.download_button(
+                            label="Download Complete PDF Report",
+                            data=pdf_buffer,
+                            file_name="complete_sales_report.pdf",
+                            mime="application/pdf"
+                        )
+                        
+                        st.success("Complete report generated successfully!")
+    
     elif page == "About":
         st.subheader("ℹ️ About the Sales Report Generator App")
         st.write("""
@@ -2421,7 +2477,8 @@ def sales_review_report_generator():
         - Data upload and processing
         - Individual predictions for each region and brand
         - Combined report generation
-        - Interactive visualizations     
+        - Interactive visualizations
+        
         For any questions or support, please contact our team at support@salesreviewapp.com
         """)
 def load_lottie_url(url: str):
