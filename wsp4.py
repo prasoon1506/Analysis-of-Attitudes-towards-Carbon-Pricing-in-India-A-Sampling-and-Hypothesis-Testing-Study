@@ -1884,21 +1884,25 @@ def create_visualization(region_data, region, brand, months):
                 cell.set_facecolor('#E8F6F3')
                 if i == 0:  # First row in Achievement column
                     cell.set_text_props(fontweight='bold')
-                    # Remove bottom edge to simulate merged cells
-                    cell._edges['bottom'].set_visible(False)
+                    # Set edges individually
+                    cell.set_edgecolor('none')  # Remove all edges first
+                    # Add back the edges we want
+                    for edge in ['left', 'right', 'top']:
+                        cell.set_edgecolor('#dee2e6')
                 elif i == 1:  # Second row in Achievement column
                     cell.set_facecolor('#E8F6F3')
-                    # Remove top edge to simulate merged cells
-                    cell._edges['top'].set_visible(False)
+                    cell.set_edgecolor('none')  # Remove all edges
+                    # Add back only side edges
+                    for edge in ['left', 'right']:
+                        cell.set_edgecolor('#dee2e6')
                     cell.set_height(0.001)  # Make the cell very small
                 elif i in [2, 3]:  # Other Achievement rows
                     cell.set_text_props(fontweight='bold')
+                    cell.set_edgecolor('#dee2e6')  # Normal edges for other rows
     
     # Add title above the table
     ax_current.text(0.5, 1.0, 'October 2024 Performance Metrics', 
                    fontsize=16, fontweight='bold', ha='center', va='bottom')
-    
-    # Rest of the visualization code remains the same...
     detailed_metrics = [
         ('Trade', region_data['Trade Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Channel'),
         ('Green', region_data['Green Oct'].iloc[-1], region_data['Monthly Achievement(Oct)'].iloc[-1], 'Region'),
