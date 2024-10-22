@@ -1924,16 +1924,16 @@ def create_visualization(region_data, region, brand, months):
                                   transform=ax_current.transAxes)
     ax_current.add_patch(product_box)
     for i, (label, value, total, category) in enumerate(detailed_metrics):
-     percentage = (value / total) * 100 
+     percentage = (value / total) * 100 if total != 0 else 0
      if i == 0:  # Trade (first box)
         y_pos = 0.77
      elif i <= 3:  # Region types (second box)
         y_pos = 0.63 - (i-1) * 0.11
      else:  # Products (third box)
         y_pos = 0.24 - (i-4) * 0.11
-    if category == 'Region' and value == 0:
+     if category == 'Region' and value == 0:
         text = f'• {label} region not present'
-    else:
+     else:
         text = f'• {label} {category} has a share of {percentage:.1f}% in total sales, i.e., {value:.0f} MT.'
     ax_current.text(0.50, y_pos, text, fontsize=14, fontweight="bold", color=colors[i])
     ax_current.text(0.50, 0.90, 'Sales Breakown', fontsize=16, fontweight='bold', ha='center', va='bottom')
