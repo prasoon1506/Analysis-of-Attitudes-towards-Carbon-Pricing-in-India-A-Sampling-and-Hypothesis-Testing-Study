@@ -602,7 +602,7 @@ def file_converter():
                         
                         with col1:
                             resolution = st.slider("Image Resolution (DPI)", 
-                                                 min_value=72, max_value=300, value=150,
+                                                 min_value=30, max_value=300, value=150,
                                                  help="Lower DPI = smaller file size but lower image quality")
                         
                         with col2:
@@ -615,7 +615,7 @@ def file_converter():
                             for page in pdf_reader.pages:
                                 compressed_page = compress_pdf_page(
                                     page,
-                                    resolution=resolution if compression_mode == "Basic" else 72
+                                    resolution=resolution if compression_mode == "Basic" else 30
                                 )
                                 pdf_writer.add_page(compressed_page)
                     
