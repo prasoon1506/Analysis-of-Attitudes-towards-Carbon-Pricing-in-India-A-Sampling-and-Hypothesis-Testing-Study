@@ -109,7 +109,80 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from scipy.stats import jarque_bera, kurtosis, skew
 from statsmodels.stats.stattools import omni_normtest
+def add_watermark(pdf_writer, text, color, font_size=40, opacity=0.3):
+    """Add watermark to PDF pages"""
+    from reportlab.pdfgen.canvas import Canvas
+    from reportlab.lib.colors import Color
+    from pypdf import PdfReader
+    from io import BytesIO
+    
+    # Create watermark
+    watermark_buffer = BytesIO()
+    c = Canvas(watermark_buffer)
+    
+    # Convert hex color to RGB
+    r = int(color[1:3], 16) / 255
+    g = int(color[3:5], 16) / 255
+    b = int(color[5:7], 16) / 255
+    
+    c.setFillColor(Color(r, g, b, alpha=opacity))
+    c.setFont("Helvetica", font_size)
+    
+    # Add rotated watermark text
+    c.saveState()
+    c.translate(300, 400)
+    c.rotate(45)
+    c.drawString(0, 0, text)
+    c.restoreState()
+    
+    c.save()
+    
+    # Create PDF from watermark
+    watermark_buffer.seek(0)
+    watermark_pdf = PdfReader(watermark_buffer)
+    
+    # Merge watermark with each page
+    for page in pdf_writer.pages:
+        page.merge_page(watermark_pdf.pages[0])
+    
+    return pdf_writer
 
+def process_image(image, operations):
+    """Process image with various operations"""
+    from PIL import Image, ImageEnhance
+    
+    if "resize" in operations:
+        width = operations["resize"]["width"]
+        height = operations["resize"]["height"]
+        image = image.resize((width, height), Image.Resampling.LANCZOS)
+    
+    if "compress" in operations:
+        quality = operations["compress"]["quality"]
+        # Return image for JPEG saving with quality
+        return image, quality
+    
+    if "crop" in operations:
+        left = operations["crop"]["left"]
+        top = operations["crop"]["top"]
+        right = operations["crop"]["right"]
+        bottom = operations["crop"]["bottom"]
+        image = image.crop((left, top, right, bottom))
+    
+    if "rotate" in operations:
+        angle = operations["rotate"]["angle"]
+        image = image.rotate(angle, expand=True)
+    
+    if "brightness" in operations:
+        factor = operations["brightness"]["factor"]
+        enhancer = ImageEnhance.Brightness(image)
+        image = enhancer.enhance(factor)
+    
+    if "contrast" in operations:
+        factor = operations["contrast"]["factor"]
+        enhancer = ImageEnhance.Contrast(image)
+        image = enhancer.enhance(factor)
+    
+    return image, None
 def excel_editor_and_analyzer():
     
     st.title("🧩 Advanced Excel Editor, File Converter and Data Analyzer")
@@ -394,8 +467,6 @@ def file_converter():
                     st.error(f"Error: {str(e)}")
             
             st.markdown('</div>', unsafe_allow_html=True)
-
-    # PDF Editor
     elif converter_type == "PDF Editor":
         st.markdown("### PDF Editor")
         
@@ -421,6 +492,24 @@ def file_converter():
                         for page_num in range(start_page-1, end_page):
                             pdf_writer.add_page(pdf_reader.pages[page_num])
                     
+                    if "Merge PDFs" in operations:
+                        additional_pdfs = st.file_uploader(
+                            "Upload PDFs to merge",
+                            type=["pdf"],
+                            accept_multiple_files=True,
+                            key="merge_pdfs"
+                        )
+                        
+                        # Add pages from original PDF
+                        for page in pdf_reader.pages:
+                            pdf_writer.add_page(page)
+                        
+                        # Add pages from additional PDFs
+                        for pdf_file in additional_pdfs:
+                            pdf_reader = PdfReader(pdf_file)
+                            for page in pdf_reader.pages:
+                                pdf_writer.add_page(page)
+                    
                     if "Rotate Pages" in operations:
                         rotation = st.selectbox("Rotation angle", [90, 180, 270])
                         for page in pdf_reader.pages:
@@ -430,11 +519,17 @@ def file_converter():
                     if "Add Watermark" in operations:
                         watermark_text = st.text_input("Watermark text")
                         watermark_color = st.color_picker("Watermark color", "#000000")
+                        watermark_size = st.slider("Watermark size", 20, 100, 40)
+                        watermark_opacity = st.slider("Watermark opacity", 0.1, 1.0, 0.3)
                         
                         if watermark_text:
-                            for page in pdf_reader.pages:
-                                pdf_writer.add_page(page)
-                                # Add watermark logic here
+                            # Add all pages first
+                            if not pdf_writer.pages:
+                                for page in pdf_reader.pages:
+                                    pdf_writer.add_page(page)
+                            # Apply watermark
+                            pdf_writer = add_watermark(pdf_writer, watermark_text, watermark_color, 
+                                                     watermark_size, watermark_opacity)
                     
                     if pdf_writer.pages:
                         output = BytesIO()
@@ -445,6 +540,91 @@ def file_converter():
                             data=output.getvalue(),
                             file_name=f"modified_{uploaded_file.name}",
                             mime="application/pdf"
+                        )
+                
+                except Exception as e:
+                    st.error(f"Error: {str(e)}")
+            
+            st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Add new Image Editor section
+    elif converter_type == "Image Editor":
+        st.markdown("### Image Editor")
+        
+        with st.container():
+            st.markdown('<div class="converter-card">', unsafe_allow_html=True)
+            
+            uploaded_file = st.file_uploader(
+                "Upload image",
+                type=["png", "jpg", "jpeg"],
+                key="image_editor"
+            )
+            
+            if uploaded_file is not None:
+                try:
+                    image = Image.open(uploaded_file)
+                    
+                    # Show original image
+                    st.markdown("#### Original Image")
+                    st.image(image, use_column_width=True)
+                    
+                    # Image operations
+                    operations = {}
+                    
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        if st.checkbox("Resize"):
+                            st.markdown("##### Resize Settings")
+                            orig_width, orig_height = image.size
+                            width = st.number_input("Width", min_value=1, value=orig_width)
+                            height = st.number_input("Height", min_value=1, value=orig_height)
+                            operations["resize"] = {"width": width, "height": height}
+                        
+                        if st.checkbox("Crop"):
+                            st.markdown("##### Crop Settings")
+                            width, height = image.size
+                            left = st.number_input("Left", 0, width-1, 0)
+                            top = st.number_input("Top", 0, height-1, 0)
+                            right = st.number_input("Right", left+1, width, width)
+                            bottom = st.number_input("Bottom", top+1, height, height)
+                            operations["crop"] = {"left": left, "top": top, "right": right, "bottom": bottom}
+                    
+                    with col2:
+                        if st.checkbox("Rotate"):
+                            angle = st.slider("Rotation Angle", -180, 180, 0)
+                            operations["rotate"] = {"angle": angle}
+                        
+                        if st.checkbox("Adjust"):
+                            brightness = st.slider("Brightness", 0.0, 2.0, 1.0)
+                            contrast = st.slider("Contrast", 0.0, 2.0, 1.0)
+                            operations["brightness"] = {"factor": brightness}
+                            operations["contrast"] = {"factor": contrast}
+                        
+                        if st.checkbox("Compress"):
+                            quality = st.slider("Quality", 1, 100, 85)
+                            operations["compress"] = {"quality": quality}
+                    
+                    if operations:
+                        # Process image
+                        processed_image, quality = process_image(image, operations)
+                        
+                        # Show processed image
+                        st.markdown("#### Processed Image")
+                        st.image(processed_image, use_column_width=True)
+                        
+                        # Save processed image
+                        output = BytesIO()
+                        if quality is not None:
+                            processed_image.save(output, format=image.format, quality=quality)
+                        else:
+                            processed_image.save(output, format=image.format)
+                        
+                        st.download_button(
+                            label="📥 Download Processed Image",
+                            data=output.getvalue(),
+                            file_name=f"processed_{uploaded_file.name}",
+                            mime=f"image/{image.format.lower()}"
                         )
                 
                 except Exception as e:
