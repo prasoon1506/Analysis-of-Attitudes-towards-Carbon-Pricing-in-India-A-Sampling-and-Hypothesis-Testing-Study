@@ -1,4 +1,20 @@
 import os
+import streamlit as st
+import pandas as pd
+import openpyxl
+from io import BytesIO
+import base64
+from docx import Document
+from reportlab.pdfgen import canvas
+from pdf2docx import Converter
+from docx2pdf import convert
+import img2pdf
+from PIL import Image
+import PyPDF2
+import fitz  # PyMuPDF
+import tempfile
+import os
+import shutil
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
