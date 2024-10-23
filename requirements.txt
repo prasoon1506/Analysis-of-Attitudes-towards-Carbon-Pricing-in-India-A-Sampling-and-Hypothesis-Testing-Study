@@ -24,3 +24,5 @@ streamlit_cookies_manager
 streamlit_extras
 docx
 pdf2docx
+docx2pdf
+img2pdf
