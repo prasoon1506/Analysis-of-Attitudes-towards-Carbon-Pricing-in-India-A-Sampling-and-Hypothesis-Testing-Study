@@ -3058,7 +3058,7 @@ def normal():
  with st.sidebar:
     selected = option_menu(
         menu_title="Navigation",
-        options=["Home", "Analysis", "About"],
+        options=["Home", "Product-Mix Analysis", "About"],
         icons=["house", "graph-up", "info-circle"],
         menu_icon="cast",
         default_index=0,
@@ -3606,7 +3606,7 @@ def trade():
  with st.sidebar:
     selected = option_menu(
         menu_title="Navigation",
-        options=["Home", "Analysis", "About"],
+        options=["Home", "Segment-Mix Analysis", "About"],
         icons=["house", "graph-up", "info-circle"],
         menu_icon="cast",
         default_index=0,
@@ -4188,7 +4188,7 @@ def green():
  with st.sidebar:
     selected = option_menu(
         menu_title="Navigation",
-        options=["Home", "Analysis", "About"],
+        options=["Home", "Geo-Mix Analysis", "About"],
         icons=["house", "graph-up", "info-circle"],
         menu_icon="cast",
         default_index=0,
