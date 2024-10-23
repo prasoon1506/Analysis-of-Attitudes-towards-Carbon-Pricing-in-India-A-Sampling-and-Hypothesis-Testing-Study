@@ -3430,7 +3430,7 @@ def normal():
         else:
             st.image("https://cdn-icons-png.flaticon.com/512/4503/4503700.png", width=150)
     st.markdown("</div>", unsafe_allow_html=True)
- elif selected == "Analysis":
+ elif selected == "Product-Mix Analysis":
     st.title("📈 Product Mix Dashboard")
     
     if 'uploaded_file' not in st.session_state or st.session_state.uploaded_file is None:
@@ -3978,7 +3978,7 @@ def trade():
         else:
             st.image("https://cdn-icons-png.flaticon.com/512/4503/4503700.png", width=150)
     st.markdown("</div>", unsafe_allow_html=True)
- elif selected == "Analysis":
+ elif selected == "Segment-Mix Analysis":
     st.title("📈 Segment Mix Dashboard")
     
     if 'uploaded_file' not in st.session_state or st.session_state.uploaded_file is None:
@@ -4592,7 +4592,7 @@ def green():
         else:
             st.image("https://cdn-icons-png.flaticon.com/512/4503/4503700.png", width=150)
     st.markdown("</div>", unsafe_allow_html=True)
- elif selected == "Analysis":
+ elif selected == "Geo-Mix Analysis":
     st.title("📈 Geo Mix Dashboard")
     
     if 'uploaded_file' not in st.session_state or st.session_state.uploaded_file is None:
