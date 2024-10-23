@@ -641,7 +641,7 @@ def file_converter():
                         with col2:
                             st.metric("New Size", f"{new_size:.1f} KB")
                         with col3:
-                            reduction = ((new_size - original_size) / original_size) * 100
+                            reduction = ((original_size - new_size) / original_size) * 100
                             st.metric("Size Reduction", f"{reduction:.1f}%")
                 
                 except Exception as e:
