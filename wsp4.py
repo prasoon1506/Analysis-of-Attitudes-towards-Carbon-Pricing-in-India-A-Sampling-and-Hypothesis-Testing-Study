@@ -96,13 +96,13 @@ from statsmodels.stats.stattools import omni_normtest
 def excel_editor_and_analyzer():
     
     st.title("🧩 Advanced Excel Editor and Analyzer")
-    tab1, tab2 = st.tabs(["Excel Editor","CSV to Excel", "Data Analyzer"])
+    tab1, tab2, tab3= st.tabs(["Excel Editor","CSV to Excel", "Data Analyzer"])
     
     with tab1:
         excel_editor()
     with tab2:
         CSV_to_Excel()
-    with tab2:
+    with tab3:
         data_analyzer()
 def CSV_to_Excel():
         st.markdown("### Convert CSV to Excel")
