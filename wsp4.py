@@ -6,7 +6,7 @@ from io import BytesIO
 import base64
 from pypdf import PdfReader, PdfWriter
 from docx import Document
-from reportlab.pdfgen import canvas
+from reportlab.pdfgen.canvas import Canvas 
 from pdf2docx import Converter
 from docx2pdf import convert
 import img2pdf
@@ -363,7 +363,7 @@ def file_converter():
                     
                     # Convert images to PDF
                     output = BytesIO()
-                    pdf = canvas(output, pagesize=letter)
+                    pdf = Canvas(output, pagesize=letter)
                     
                     for image_file in uploaded_files:
                         img = Image.open(image_file)
