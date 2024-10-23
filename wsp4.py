@@ -109,73 +109,6 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from scipy.stats import jarque_bera, kurtosis, skew
 from statsmodels.stats.stattools import omni_normtest
-def compress_pdf(input_pdf, output, compression_level="medium"):
-    """Compress PDF file"""
-    from PyPDF2 import PdfReader, PdfWriter
-    from reportlab.pdfgen.canvas import Canvas
-    from reportlab.lib.pagesizes import letter
-    from PIL import Image
-    from io import BytesIO
-    
-    reader = PdfReader(input_pdf)
-    writer = PdfWriter()
-
-    # Compression settings
-    compression_params = {
-        "low": {"image_quality": 60, "dpi": 150},
-        "medium": {"image_quality": 40, "dpi": 120},
-        "high": {"image_quality": 20, "dpi": 96}
-    }
-    settings = compression_params[compression_level]
-
-    for page in reader.pages:
-        # Process each page
-        page_buf = BytesIO()
-        canvas = Canvas(page_buf, pagesize=letter)
-        
-        # If page has images, compress them
-        if '/Resources' in page and '/XObject' in page['/Resources']:
-            for obj in page['/Resources']['/XObject'].values():
-                if obj['/Subtype'] == '/Image':
-                    if '/ImageMask' not in obj:
-                        # Process image
-                        if obj['/ColorSpace'] == '/DeviceRGB':
-                            mode = "RGB"
-                        else:
-                            mode = "P"
-                        
-                        if '/Filter' in obj:
-                            if obj['/Filter'] == '/FlateDecode':
-                                img = Image.frombytes(mode, (obj['/Width'], obj['/Height']), obj.getData())
-                            elif obj['/Filter'] == '/DCTDecode':
-                                img = Image.open(BytesIO(obj._data))
-                            elif obj['/Filter'] == '/JPXDecode':
-                                img = Image.open(BytesIO(obj._data))
-                            else:
-                                continue
-                            
-                            # Resize and compress image
-                            img = img.resize(
-                                (int(img.width * settings["dpi"]/300),
-                                 int(img.height * settings["dpi"]/300)),
-                                Image.Resampling.LANCZOS
-                            )
-                            
-                            img_buf = BytesIO()
-                            img.save(img_buf, format='JPEG', quality=settings["image_quality"])
-                            img_buf.seek(0)
-                            
-                            # Replace original image with compressed version
-                            obj._data = img_buf.getvalue()
-        
-        writer.add_page(page)
-    
-    # Set compression parameters for the PDF
-    writer.add_metadata(reader.metadata)
-    
-    # Write compressed PDF
-    writer.write(output)
-    return output
 
 def process_pdf(input_pdf, operations):
     """Process PDF with various operations"""
@@ -209,14 +142,6 @@ def process_pdf(input_pdf, operations):
             page.rotate(angle)
         
         writer.add_page(page)
-    
-    if "compress" in operations:
-        output = BytesIO()
-        writer.write(output)
-        output.seek(0)
-        compressed_output = BytesIO()
-        compress_pdf(output, compressed_output, operations["compress"]["level"])
-        return compressed_output
     
     output = BytesIO()
     writer.write(output)
@@ -642,16 +567,6 @@ def file_converter():
                             "top": top,
                             "bottom": bottom
                         }
-                    
-                    if "Compress" in operations:
-                        st.markdown("#### Compress PDF")
-                        compression_level = st.select_slider(
-                            "Compression Level",
-                            options=["low", "medium", "high"],
-                            value="medium",
-                            help="Higher compression = smaller file size but lower quality"
-                        )
-                        pdf_operations["compress"] = {"level": compression_level}
                     
                     if "Rotate Pages" in operations:
                         st.markdown("#### Rotate Pages")
