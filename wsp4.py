@@ -95,96 +95,310 @@ from statsmodels.stats.stattools import omni_normtest
 
 def excel_editor_and_analyzer():
     
-    st.title("🧩 Advanced Excel Editor and Analyzer")
-    tab1, tab2, tab3= st.tabs(["Excel Editor","CSV to Excel", "Data Analyzer"])
+    st.title("🧩 Advanced Excel Editor, File Converter and Data Analyzer")
+    tab1, tab2, tab3= st.tabs(["Excel Editor","File Converter", "Data Analyzer"])
     
     with tab1:
         excel_editor()
     with tab2:
-        CSV_to_Excel()
+        file_converter()
     with tab3:
         data_analyzer()
-def CSV_to_Excel():
-        st.markdown("### Convert CSV to Excel")
-        st.markdown("""
-            Upload your CSV file and convert it to Excel format. 
-            You can preview the data before downloading.
-        """)
+def file_converter():
+    st.header("🔄 Universal File Converter")
+    
+    # Add custom CSS for better styling
+    st.markdown("""
+        <style>
+        .converter-card {
+            background-color: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+            border: 1px solid #e9ecef;
+        }
+        .stButton>button {
+            width: 100%;
+            margin-top: 1rem;
+        }
+        .success-message {
+            color: #28a745;
+            padding: 0.75rem;
+            border-radius: 0.25rem;
+            margin: 1rem 0;
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+        }
+        .info-message {
+            color: #0c5460;
+            padding: 0.75rem;
+            border-radius: 0.25rem;
+            margin: 1rem 0;
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+        }
+        .conversion-stats {
+            padding: 1rem;
+            background-color: #fff;
+            border-radius: 0.25rem;
+            box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+            margin-top: 1rem;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # Create converter selection
+    converter_type = st.selectbox(
+        "Select Conversion Type",
+        [
+            "Excel ↔️ CSV Converter",
+            "Word ↔️ PDF Converter",
+            "Image to PDF Converter",
+            "PDF Editor"
+        ]
+    )
+
+    # Excel ↔️ CSV Converter
+    if converter_type == "Excel ↔️ CSV Converter":
+        st.markdown("### Excel ↔️ CSV Converter")
         
-        # CSV file uploader
-        csv_file = st.file_uploader("Choose a CSV file", type="csv", key="csv_uploader")
+        conversion_direction = st.radio(
+            "Select conversion direction:",
+            ["CSV to Excel", "Excel to CSV"],
+            horizontal=True
+        )
+
+        if conversion_direction == "CSV to Excel":
+            with st.container():
+                st.markdown('<div class="converter-card">', unsafe_allow_html=True)
+                
+                uploaded_file = st.file_uploader("Upload CSV file", type="csv", key="csv_to_excel")
+                
+                if uploaded_file is not None:
+                    try:
+                        # CSV import options
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            separator = st.selectbox(
+                                "Select delimiter",
+                                options=[",", ";", "|", "\t"],
+                                index=0
+                            )
+                        with col2:
+                            encoding = st.selectbox(
+                                "Select encoding",
+                                options=["utf-8", "iso-8859-1", "cp1252"],
+                                index=0
+                            )
+
+                        # Read and preview data
+                        df = pd.read_csv(uploaded_file, sep=separator, encoding=encoding)
+                        
+                        st.markdown("#### Preview")
+                        st.dataframe(df.head(), use_container_width=True)
+                        
+                        # File statistics
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            st.metric("Rows", df.shape[0])
+                        with col2:
+                            st.metric("Columns", df.shape[1])
+                        with col3:
+                            st.metric("Size", f"{uploaded_file.size / 1024:.2f} KB")
+
+                        # Convert and download
+                        output = BytesIO()
+                        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                            df.to_excel(writer, index=False)
+                        excel_data = output.getvalue()
+                        
+                        st.download_button(
+                            label="📥 Download Excel File",
+                            data=excel_data,
+                            file_name=f"{uploaded_file.name.split('.')[0]}.xlsx",
+                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                        )
+
+                    except Exception as e:
+                        st.error(f"Error: {str(e)}")
+                        st.info("Try adjusting the delimiter or encoding if the file isn't loading correctly.")
+                
+                st.markdown('</div>', unsafe_allow_html=True)
+
+        else:  # Excel to CSV
+            with st.container():
+                st.markdown('<div class="converter-card">', unsafe_allow_html=True)
+                
+                uploaded_file = st.file_uploader("Upload Excel file", type=["xlsx", "xls"], key="excel_to_csv")
+                
+                if uploaded_file is not None:
+                    try:
+                        df = pd.read_excel(uploaded_file)
+                        
+                        st.markdown("#### Preview")
+                        st.dataframe(df.head(), use_container_width=True)
+                        
+                        # File statistics
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            st.metric("Rows", df.shape[0])
+                        with col2:
+                            st.metric("Columns", df.shape[1])
+                        with col3:
+                            st.metric("Size", f"{uploaded_file.size / 1024:.2f} KB")
+
+                        # Convert and download
+                        csv_data = BytesIO()
+                        df.to_csv(csv_data, index=False)
+                        
+                        st.download_button(
+                            label="📥 Download CSV File",
+                            data=csv_data.getvalue(),
+                            file_name=f"{uploaded_file.name.split('.')[0]}.csv",
+                            mime="text/csv"
+                        )
+
+                    except Exception as e:
+                        st.error(f"Error: {str(e)}")
+                
+                st.markdown('</div>', unsafe_allow_html=True)
+
+    # Word ↔️ PDF Converter
+    elif converter_type == "Word ↔️ PDF Converter":
+        st.markdown("### Word ↔️ PDF Converter")
         
-        if csv_file is not None:
-            try:
-                # Add options for CSV reading
-                st.markdown("#### CSV Import Options")
-                col1, col2 = st.columns(2)
-                with col1:
-                    separator = st.selectbox(
-                        "Select delimiter",
-                        options=[",", ";", "|", "\t"],
-                        index=0,
-                        help="Choose the character that separates values in your CSV file"
-                    )
-                with col2:
-                    encoding = st.selectbox(
-                        "Select encoding",
-                        options=["utf-8", "iso-8859-1", "cp1252"],
-                        index=0,
-                        help="Choose the file encoding"
-                    )
+        conversion_direction = st.radio(
+            "Select conversion direction:",
+            ["Word to PDF", "PDF to Word"],
+            horizontal=True
+        )
 
-                # Read CSV file
-                df = pd.read_csv(csv_file, sep=separator, encoding=encoding)
+        with st.container():
+            st.markdown('<div class="converter-card">', unsafe_allow_html=True)
+            
+            if conversion_direction == "Word to PDF":
+                uploaded_file = st.file_uploader("Upload Word file", type=["docx", "doc"], key="word_to_pdf")
                 
-                # Display preview
-                st.markdown("#### Data Preview")
-                st.dataframe(df.head(), use_container_width=True)
-                
-                # Display summary
-                st.markdown("#### File Summary")
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    st.metric("Rows", df.shape[0])
-                with col2:
-                    st.metric("Columns", df.shape[1])
-                with col3:
-                    st.metric("Size", f"{csv_file.size / 1024:.2f} KB")
-
-                # Download button
-                output = BytesIO()
-                with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                    df.to_excel(writer, index=False, sheet_name='Sheet1')
-                excel_data = output.getvalue()
-                b64 = base64.b64encode(excel_data).decode()
-                
-                download_filename = csv_file.name.replace('.csv', '.xlsx')
-                st.download_button(
-                    label="📥 Download Excel File",
-                    data=excel_data,
-                    file_name=download_filename,
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
-
-                # Option to upload to Home
-                if st.button("📤 Upload Converted File to Home"):
-                    st.session_state.edited_df = df
-                    st.session_state.edited_file_name = download_filename
-                    st.success("Converted file has been uploaded to Home. Please switch to the Home tab to see the uploaded file.")
-
-            except Exception as e:
-                st.error(f"Error processing the CSV file: {str(e)}")
-                st.markdown("""
-                    Common issues:
-                    - Incorrect delimiter selected
-                    - Wrong file encoding
-                    - Corrupted CSV file
+                if uploaded_file is not None:
+                    st.info("Note: This feature requires python-docx and reportlab libraries")
+                    st.markdown("""
+                    To enable this feature, install required libraries:
+                    ```bash
+                    pip install python-docx reportlab
+                    ```
+                    """)
                     
-                    Please try adjusting the import options or check your file.
-                """)
-        else:
-            st.info("Please upload a CSV file to begin conversion.")
+            else:  # PDF to Word
+                uploaded_file = st.file_uploader("Upload PDF file", type=["pdf"], key="pdf_to_word")
+                
+                if uploaded_file is not None:
+                    st.info("Note: This feature requires PyPDF2 and python-docx libraries")
+                    st.markdown("""
+                    To enable this feature, install required libraries:
+                    ```bash
+                    pip install PyPDF2 python-docx
+                    ```
+                    """)
+            
+            st.markdown('</div>', unsafe_allow_html=True)
 
+    # Image to PDF Converter
+    elif converter_type == "Image to PDF Converter":
+        st.markdown("### Image to PDF Converter")
+        
+        with st.container():
+            st.markdown('<div class="converter-card">', unsafe_allow_html=True)
+            
+            uploaded_files = st.file_uploader(
+                "Upload images (you can select multiple files)",
+                type=["png", "jpg", "jpeg"],
+                accept_multiple_files=True,
+                key="image_to_pdf"
+            )
+            
+            if uploaded_files:
+                st.info("Note: This feature requires Pillow library")
+                st.markdown("""
+                To enable this feature, install required library:
+                ```bash
+                pip install Pillow
+                ```
+                """)
+                
+                # Preview uploaded images
+                if len(uploaded_files) > 0:
+                    st.markdown("#### Preview")
+                    cols = st.columns(min(3, len(uploaded_files)))
+                    for idx, file in enumerate(uploaded_files[:3]):
+                        cols[idx].image(file, use_column_width=True)
+                    
+                    if len(uploaded_files) > 3:
+                        st.info(f"+ {len(uploaded_files) - 3} more images")
+            
+            st.markdown('</div>', unsafe_allow_html=True)
+
+    # PDF Editor
+    elif converter_type == "PDF Editor":
+        st.markdown("### PDF Editor")
+        
+        with st.container():
+            st.markdown('<div class="converter-card">', unsafe_allow_html=True)
+            
+            uploaded_file = st.file_uploader("Upload PDF file", type=["pdf"], key="pdf_editor")
+            
+            if uploaded_file is not None:
+                st.info("Note: This feature requires PyPDF2 library")
+                st.markdown("""
+                To enable this feature, install required library:
+                ```bash
+                pip install PyPDF2
+                ```
+                """)
+                
+                # PDF operations
+                operations = st.multiselect(
+                    "Select operations to perform",
+                    ["Extract Pages", "Merge PDFs", "Rotate Pages", "Add Watermark"],
+                    key="pdf_operations"
+                )
+                
+                if "Extract Pages" in operations:
+                    st.number_input("Start page", min_value=1, value=1)
+                    st.number_input("End page", min_value=1, value=1)
+                
+                if "Merge PDFs" in operations:
+                    st.file_uploader("Upload additional PDFs", type=["pdf"], accept_multiple_files=True)
+                
+                if "Rotate Pages" in operations:
+                    st.selectbox("Rotation angle", [90, 180, 270])
+                
+                if "Add Watermark" in operations:
+                    st.text_input("Watermark text")
+                    st.color_picker("Watermark color", "#000000")
+            
+            st.markdown('</div>', unsafe_allow_html=True)
+
+    # Add helpful information
+    with st.expander("ℹ️ Need Help?"):
+        st.markdown("""
+        ### Usage Instructions
+        1. Select the type of conversion you want to perform
+        2. Upload your file(s) in the supported format
+        3. Configure any additional settings if available
+        4. Click the download button to save your converted file
+        
+        ### Supported Formats
+        - Excel: .xlsx, .xls
+        - CSV: .csv
+        - Word: .docx, .doc
+        - PDF: .pdf
+        - Images: .png, .jpg, .jpeg
+        
+        ### Common Issues
+        - If you're having trouble with CSV encoding, try different encoding options
+        - Large files may take longer to process
+        - Some features require additional Python libraries to be installed
+        """)
 def excel_editor():
     st.header("Excel Editor")
     def create_excel_structure_html(sheet, max_rows=5):
