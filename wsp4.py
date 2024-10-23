@@ -96,13 +96,94 @@ from statsmodels.stats.stattools import omni_normtest
 def excel_editor_and_analyzer():
     
     st.title("🧩 Advanced Excel Editor and Analyzer")
-    tab1, tab2 = st.tabs(["Excel Editor", "Data Analyzer"])
+    tab1, tab2 = st.tabs(["Excel Editor","CSV to Excel", "Data Analyzer"])
     
     with tab1:
         excel_editor()
-    
+    with tab2:
+        CSV_to_Excel()
     with tab2:
         data_analyzer()
+def CSV_to_Excel():
+        st.markdown("### Convert CSV to Excel")
+        st.markdown("""
+            Upload your CSV file and convert it to Excel format. 
+            You can preview the data before downloading.
+        """)
+        
+        # CSV file uploader
+        csv_file = st.file_uploader("Choose a CSV file", type="csv", key="csv_uploader")
+        
+        if csv_file is not None:
+            try:
+                # Add options for CSV reading
+                st.markdown("#### CSV Import Options")
+                col1, col2 = st.columns(2)
+                with col1:
+                    separator = st.selectbox(
+                        "Select delimiter",
+                        options=[",", ";", "|", "\t"],
+                        index=0,
+                        help="Choose the character that separates values in your CSV file"
+                    )
+                with col2:
+                    encoding = st.selectbox(
+                        "Select encoding",
+                        options=["utf-8", "iso-8859-1", "cp1252"],
+                        index=0,
+                        help="Choose the file encoding"
+                    )
+
+                # Read CSV file
+                df = pd.read_csv(csv_file, sep=separator, encoding=encoding)
+                
+                # Display preview
+                st.markdown("#### Data Preview")
+                st.dataframe(df.head(), use_container_width=True)
+                
+                # Display summary
+                st.markdown("#### File Summary")
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("Rows", df.shape[0])
+                with col2:
+                    st.metric("Columns", df.shape[1])
+                with col3:
+                    st.metric("Size", f"{csv_file.size / 1024:.2f} KB")
+
+                # Download button
+                output = BytesIO()
+                with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                    df.to_excel(writer, index=False, sheet_name='Sheet1')
+                excel_data = output.getvalue()
+                b64 = base64.b64encode(excel_data).decode()
+                
+                download_filename = csv_file.name.replace('.csv', '.xlsx')
+                st.download_button(
+                    label="📥 Download Excel File",
+                    data=excel_data,
+                    file_name=download_filename,
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
+
+                # Option to upload to Home
+                if st.button("📤 Upload Converted File to Home"):
+                    st.session_state.edited_df = df
+                    st.session_state.edited_file_name = download_filename
+                    st.success("Converted file has been uploaded to Home. Please switch to the Home tab to see the uploaded file.")
+
+            except Exception as e:
+                st.error(f"Error processing the CSV file: {str(e)}")
+                st.markdown("""
+                    Common issues:
+                    - Incorrect delimiter selected
+                    - Wrong file encoding
+                    - Corrupted CSV file
+                    
+                    Please try adjusting the import options or check your file.
+                """)
+        else:
+            st.info("Please upload a CSV file to begin conversion.")
 
 def excel_editor():
     st.header("Excel Editor")
