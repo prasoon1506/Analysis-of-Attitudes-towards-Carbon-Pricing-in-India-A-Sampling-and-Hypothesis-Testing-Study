@@ -2343,6 +2343,42 @@ def load_lottie_url(url: str):
     if r.status_code != 200:
         return None
     return r.json()
+def generate_full_report(df, regions):
+    """
+    Generate a complete PDF report containing visualizations for all regions and their brands
+    """
+    from matplotlib.backends.backend_pdf import PdfPages
+    import matplotlib.pyplot as plt
+    from io import BytesIO
+    
+    # Create a BytesIO object to store the PDF
+    pdf_buffer = BytesIO()
+    
+    # Create PDF with multiple pages
+    with PdfPages(pdf_buffer) as pdf:
+        # Iterate through each region
+        for region in regions:
+            # Get unique brands for this region
+            region_brands = df[df['Zone'] == region]['Brand'].unique().tolist()
+            
+            # For each brand in the region
+            for brand in region_brands:
+                # Filter data for current region and brand
+                region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)]
+                months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']
+                
+                # Create visualization
+                fig = create_visualization(region_data, region, brand, months)
+                
+                # Add page to PDF
+                pdf.savefig(fig)
+                
+                # Close the figure to free memory
+                plt.close(fig)
+    
+    # Reset buffer position
+    pdf_buffer.seek(0)
+    return pdf_buffer
 
 def show_welcome_page():
     col1, col2 = st.columns([2, 1])
@@ -2402,9 +2438,6 @@ def show_report_generator():
     tab1, tab2 = st.tabs(["📑 Individual Report", "📚 Complete Report"])
     
     with tab1:
-        col1, col2 = st.columns([1, 1])
-        
-        with col1:
             st.markdown("""
             <div class='reportBlock'>
             <h3>Report Parameters</h3>
