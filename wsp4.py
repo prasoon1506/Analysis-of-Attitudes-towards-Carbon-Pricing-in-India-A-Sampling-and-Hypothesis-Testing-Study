@@ -2414,7 +2414,6 @@ def show_welcome_page():
                 st.session_state['brands'] = brands
                 
                 st.success("✅ File processed successfully!")
-                st.balloons()
 
 def show_report_generator():
     st.markdown("# 🎯 Report Generator")
@@ -2470,7 +2469,7 @@ def show_report_generator():
         if st.button("📊 Generate Complete Report", key='complete_report'):
             with st.spinner("Generating comprehensive report... This may take a few minutes."):
                 progress_bar = st.progress(0)
-                for i in range(100):
+                for i in range(1000):
                     time.sleep(0.02)
                     progress_bar.progress(i + 1)
                 
@@ -2508,9 +2507,7 @@ def show_about_page():
         
         <h3>📧 Support</h3>
         For technical support or feedback:
-        - Email: support@salesreviewapp.com
-        - Documentation: docs.salesreviewapp.com
-        - Training: learning.salesreviewapp.com
+        - Email: prasoon.bajpai@lc.jkmail.com
         </div>
         """, unsafe_allow_html=True)
 
