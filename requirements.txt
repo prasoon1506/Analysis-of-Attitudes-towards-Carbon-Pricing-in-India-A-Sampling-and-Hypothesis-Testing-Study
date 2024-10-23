@@ -26,3 +26,4 @@ docx
 pdf2docx
 docx2pdf
 img2pdf
+PyPDF2
