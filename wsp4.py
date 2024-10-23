@@ -109,6 +109,65 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from scipy.stats import jarque_bera, kurtosis, skew
 from statsmodels.stats.stattools import omni_normtest
+def compress_pdf_page(page, resolution=72):
+    """Compress a single PDF page by reducing image resolution and compressing content"""
+    from PyPDF2 import PageObject
+    from PIL import Image
+    from io import BytesIO
+    import re
+
+    # Get the page's contents
+    contents = page.get_contents()
+    if contents is None:
+        return page
+
+    # Convert contents to string
+    content_str = contents.get_data().decode('utf-8', errors='ignore')
+
+    # Process all images in the page
+    for image in page.images:
+        try:
+            # Read image data
+            img_data = BytesIO(image.data)
+            img = Image.open(img_data)
+
+            # Resize if larger than target resolution
+            original_size = img.size
+            new_size = tuple(int(dim * resolution / 72) for dim in original_size)
+            
+            if new_size[0] < original_size[0] or new_size[1] < original_size[1]:
+                img = img.resize(new_size, Image.Resampling.LANCZOS)
+
+            # Compress image
+            output = BytesIO()
+            if img.mode in ('RGBA', 'LA'):
+                background = Image.new('RGB', img.size, (255, 255, 255))
+                background.paste(img, mask=img.split()[-1])
+                img = background
+            
+            img.save(output, 'JPEG', quality=60, optimize=True)
+            image.data = output.getvalue()
+            
+        except Exception:
+            continue
+
+    return page
+
+def resize_pdf_pages(pdf_writer, scale_factor):
+    """Resize all pages in a PDF by a scale factor"""
+    for page in pdf_writer.pages:
+        page.scale(scale_factor, scale_factor)
+    return pdf_writer
+
+def crop_pdf_pages(pdf_writer, margins):
+    """Crop all pages in a PDF using specified margins"""
+    for page in pdf_writer.pages:
+        page.cropbox.lower_left = (margins['left'], margins['bottom'])
+        page.cropbox.upper_right = (
+            page.mediabox.right - margins['right'],
+            page.mediabox.top - margins['top']
+        )
+    return pdf_writer
 def add_watermark(pdf_writer, text, color, font_size=40, opacity=0.3):
     """Add watermark to PDF pages"""
     from reportlab.pdfgen.canvas import Canvas
@@ -479,20 +538,36 @@ def file_converter():
             if uploaded_file is not None:
                 operations = st.multiselect(
                     "Select operations to perform",
-                    ["Extract Pages", "Merge PDFs", "Rotate Pages", "Add Watermark"]
+                    ["Extract Pages", "Merge PDFs", "Rotate Pages", "Add Watermark", 
+                     "Compress PDF", "Resize Pages", "Crop Pages"]
                 )
                 
                 try:
                     pdf_reader = PdfReader(uploaded_file)
                     pdf_writer = PdfWriter()
                     
+                    # Show PDF information
+                    st.markdown("#### PDF Information")
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("Pages", len(pdf_reader.pages))
+                    with col2:
+                        st.metric("Size", f"{uploaded_file.size / 1024:.1f} KB")
+                    with col3:
+                        if pdf_reader.metadata:
+                            st.metric("Format", pdf_reader.metadata.get('/Creator', 'PDF'))
+                    
+                    # Extract Pages
                     if "Extract Pages" in operations:
-                        start_page = st.number_input("Start page", min_value=1, max_value=len(pdf_reader.pages), value=1)
-                        end_page = st.number_input("End page", min_value=start_page, max_value=len(pdf_reader.pages), value=start_page)
+                        start_page = st.number_input("Start page", min_value=1, 
+                                                   max_value=len(pdf_reader.pages), value=1)
+                        end_page = st.number_input("End page", min_value=start_page, 
+                                                 max_value=len(pdf_reader.pages), value=start_page)
                         
                         for page_num in range(start_page-1, end_page):
                             pdf_writer.add_page(pdf_reader.pages[page_num])
                     
+                    # Merge PDFs
                     if "Merge PDFs" in operations:
                         additional_pdfs = st.file_uploader(
                             "Upload PDFs to merge",
@@ -502,21 +577,108 @@ def file_converter():
                         )
                         
                         # Add pages from original PDF
-                        for page in pdf_reader.pages:
-                            pdf_writer.add_page(page)
+                        if not pdf_writer.pages:
+                            for page in pdf_reader.pages:
+                                pdf_writer.add_page(page)
                         
                         # Add pages from additional PDFs
                         for pdf_file in additional_pdfs:
-                            pdf_reader = PdfReader(pdf_file)
-                            for page in pdf_reader.pages:
+                            add_reader = PdfReader(pdf_file)
+                            for page in add_reader.pages:
                                 pdf_writer.add_page(page)
                     
+                    # Rotate Pages
                     if "Rotate Pages" in operations:
                         rotation = st.selectbox("Rotation angle", [90, 180, 270])
-                        for page in pdf_reader.pages:
-                            page.rotate(rotation)
-                            pdf_writer.add_page(page)
+                        if not pdf_writer.pages:
+                            for page in pdf_reader.pages:
+                                page.rotate(rotation)
+                                pdf_writer.add_page(page)
                     
+                    # Compress PDF
+                    if "Compress PDF" in operations:
+                        st.markdown("#### Compression Settings")
+                        col1, col2 = st.columns(2)
+                        
+                        with col1:
+                            resolution = st.slider("Image Resolution (DPI)", 
+                                                 min_value=72, max_value=300, value=150,
+                                                 help="Lower DPI = smaller file size but lower image quality")
+                        
+                        with col2:
+                            compression_mode = st.selectbox("Compression Mode",
+                                                          ["Basic", "Aggressive"],
+                                                          help="Aggressive mode applies maximum compression")
+                        
+                        # Add pages with compression
+                        if not pdf_writer.pages:
+                            for page in pdf_reader.pages:
+                                compressed_page = compress_pdf_page(
+                                    page,
+                                    resolution=resolution if compression_mode == "Basic" else 72
+                                )
+                                pdf_writer.add_page(compressed_page)
+                    
+                    # Resize Pages
+                    if "Resize Pages" in operations:
+                        st.markdown("#### Resize Settings")
+                        col1, col2 = st.columns(2)
+                        
+                        with col1:
+                            scale_method = st.radio("Resize Method",
+                                                  ["Scale Percentage", "Fixed Dimensions"])
+                        
+                        with col2:
+                            if scale_method == "Scale Percentage":
+                                scale_factor = st.slider("Scale Factor (%)", 
+                                                       min_value=10, max_value=200, value=100) / 100
+                            else:
+                                page_width = st.number_input("Width (points)", 
+                                                           min_value=100, value=612)
+                                page_height = st.number_input("Height (points)", 
+                                                            min_value=100, value=792)
+                        
+                        # Add pages with resizing
+                        if not pdf_writer.pages:
+                            for page in pdf_reader.pages:
+                                pdf_writer.add_page(page)
+                            
+                            if scale_method == "Scale Percentage":
+                                pdf_writer = resize_pdf_pages(pdf_writer, scale_factor)
+                            else:
+                                # Calculate scale factors
+                                orig_page = pdf_reader.pages[0]
+                                width_scale = page_width / orig_page.mediabox.width
+                                height_scale = page_height / orig_page.mediabox.height
+                                pdf_writer = resize_pdf_pages(pdf_writer, min(width_scale, height_scale))
+                    
+                    # Crop Pages
+                    if "Crop Pages" in operations:
+                        st.markdown("#### Crop Settings")
+                        col1, col2 = st.columns(2)
+                        
+                        with col1:
+                            left_margin = st.number_input("Left Margin", min_value=0, value=0)
+                            right_margin = st.number_input("Right Margin", min_value=0, value=0)
+                        
+                        with col2:
+                            top_margin = st.number_input("Top Margin", min_value=0, value=0)
+                            bottom_margin = st.number_input("Bottom Margin", min_value=0, value=0)
+                        
+                        # Add pages with cropping
+                        if not pdf_writer.pages:
+                            for page in pdf_reader.pages:
+                                pdf_writer.add_page(page)
+                            
+                            margins = {
+                                'left': left_margin,
+                                'right': right_margin,
+                                'top': top_margin,
+                                'bottom': bottom_margin
+                            }
+                            pdf_writer = crop_pdf_pages(pdf_writer, margins)
+                    
+                    # Add Watermark
                     if "Add Watermark" in operations:
                         watermark_text = st.text_input("Watermark text")
                         watermark_color = st.color_picker("Watermark color", "#000000")
@@ -524,17 +686,23 @@ def file_converter():
                         watermark_opacity = st.slider("Watermark opacity", 0.1, 1.0, 0.3)
                         
                         if watermark_text:
-                            # Add all pages first
                             if not pdf_writer.pages:
                                 for page in pdf_reader.pages:
                                     pdf_writer.add_page(page)
-                            # Apply watermark
                             pdf_writer = add_watermark(pdf_writer, watermark_text, watermark_color, 
                                                      watermark_size, watermark_opacity)
                     
+                    # Final PDF generation and download
                     if pdf_writer.pages:
                         output = BytesIO()
                         pdf_writer.write(output)
+                        
+                        # Calculate compression ratio
+                        final_size = len(output.getvalue())
+                        compression_ratio = (1 - (final_size / uploaded_file.size)) * 100
+                        
+                        if compression_ratio > 0:
+                            st.success(f"File size reduced by {compression_ratio:.1f}%")
                         
                         st.download_button(
                             label="📥 Download Modified PDF",
@@ -545,7 +713,6 @@ def file_converter():
                 
                 except Exception as e:
                     st.error(f"Error: {str(e)}")
-            
             st.markdown('</div>', unsafe_allow_html=True)
     
     # Add new Image Editor section
