@@ -4,7 +4,7 @@ import pandas as pd
 import openpyxl
 from io import BytesIO
 import base64
-import PdfReader
+from pypdf import PdfReader, PdfWriter
 from docx import Document
 from reportlab.pdfgen import canvas
 from pdf2docx import Converter
