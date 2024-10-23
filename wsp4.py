@@ -2381,9 +2381,6 @@ def generate_full_report(df, regions):
     return pdf_buffer
 
 def show_welcome_page():
-    col1, col2 = st.columns([2, 1])
-    
-    with col1:
         st.markdown("# 📈 Sales Review Report Generator")
         st.markdown("""
         ### Transform Your Sales Data into Actionable Insights
@@ -2418,11 +2415,6 @@ def show_welcome_page():
                 
                 st.success("✅ File processed successfully!")
                 st.balloons()
-
-    with col2:
-        lottie_url = "https://assets5.lottiefiles.com/packages/lf20_V9t630.json"
-        lottie_json = load_lottie_url(lottie_url)
-        st_lottie(lottie_json, height=300)
 
 def show_report_generator():
     st.markdown("# 🎯 Report Generator")
@@ -2494,11 +2486,7 @@ def show_report_generator():
                 )
 
 def show_about_page():
-    st.markdown("# ℹ️ About")
-    
-    col1, col2 = st.columns([2, 1])
-    
-    with col1:
+        st.markdown("# ℹ️ About")
         st.markdown("""
         <div class='reportBlock'>
         <h2>Sales Review Report Generator Pro</h2>
@@ -2525,11 +2513,6 @@ def show_about_page():
         - Training: learning.salesreviewapp.com
         </div>
         """, unsafe_allow_html=True)
-    
-    with col2:
-        lottie_url = "https://assets5.lottiefiles.com/packages/lf20_V9t630.json"
-        lottie_json = load_lottie_url(lottie_url)
-        st_lottie(lottie_json, height=300)
 
 def sales_review_report_generator():
     # Sidebar navigation
