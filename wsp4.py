@@ -2336,95 +2336,87 @@ def create_visualization(region_data, region, brand, months):
 
     plt.tight_layout()
     return fig
-def generate_full_report(df, regions):
-    """
-    Generate a complete PDF report containing visualizations for all regions and their brands
-    """
-    from matplotlib.backends.backend_pdf import PdfPages
-    import matplotlib.pyplot as plt
-    from io import BytesIO
-    
-    # Create a BytesIO object to store the PDF
-    pdf_buffer = BytesIO()
-    
-    # Create PDF with multiple pages
-    with PdfPages(pdf_buffer) as pdf:
-        # Iterate through each region
-        for region in regions:
-            # Get unique brands for this region
-            region_brands = df[df['Zone'] == region]['Brand'].unique().tolist()
-            
-            # For each brand in the region
-            for brand in region_brands:
-                # Filter data for current region and brand
-                region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)]
-                months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']
-                
-                # Create visualization
-                fig = create_visualization(region_data, region, brand, months)
-                
-                # Add page to PDF
-                pdf.savefig(fig)
-                
-                # Close the figure to free memory
-                plt.close(fig)
-    
-    # Reset buffer position
-    pdf_buffer.seek(0)
-    return pdf_buffer
 
-# Update the main app code with new button
-def sales_review_report_generator():
-    st.title("📊 Sales Review Report Generator")
+
+def load_lottie_url(url: str):
+    r = requests.get(url)
+    if r.status_code != 200:
+        return None
+    return r.json()
+
+def show_welcome_page():
+    col1, col2 = st.columns([2, 1])
     
-    # Load Lottie animation
-    lottie_url = "https://assets5.lottiefiles.com/packages/lf20_V9t630.json"
-    lottie_json = load_lottie_url(lottie_url)
-    
-    # Initialize session state variables if they don't exist
-    if 'df' not in st.session_state:
-        st.session_state['df'] = None
-    if 'regions' not in st.session_state:
-        st.session_state['regions'] = []
-    if 'brands' not in st.session_state:
-        st.session_state['brands'] = []
-    
-    # Sidebar
-    with st.sidebar:
-        st_lottie(lottie_json, height=200)
-        st.title("Navigation")
-        page = st.radio("Go to", ["Home", "Report Generator", "About"])
-    
-    if page == "Home":
-        st.write("This app helps you generate monthly sales review report for different regions and brands.")
-        st.write("Use the sidebar to navigate between pages and upload your data to get started!")
+    with col1:
+        st.markdown("# 📈 Sales Review Report Generator")
+        st.markdown("""
+        ### Transform Your Sales Data into Actionable Insights
         
-        uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx", key="Sales_Prediction_uploader")
-        if uploaded_file is not None:
-            with st.spinner("Loading data..."):
-                df, regions, brands = load_data(uploaded_file)
-            st.session_state['df'] = df
-            st.session_state['regions'] = regions
-            st.session_state['brands'] = brands
-            st.success("File uploaded and processed successfully!")
-    
-    elif page == "Report Generator":
-        st.subheader("🔮 Report Generator")
-        if st.session_state['df'] is None:
-            st.warning("Please upload a file on the Home page first.")
-        else:
-            df = st.session_state['df']
-            regions = st.session_state['regions']
-            
-            # Create two columns for the report generation options
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                region = st.selectbox("Select Region", regions)
-                region_brands = df[df['Zone'] == region]['Brand'].unique().tolist()
-                brand = st.selectbox("Select Brand", region_brands)
+        This advanced analytics platform helps you:
+        - 📊 Generate comprehensive sales review reports
+        - 🎯 Track performance across regions and brands
+        - 📈 Visualize key metrics and trends
+        - 🔄 Compare historical data
+        """)
+        
+        st.markdown("""
+        <div class='reportBlock'>
+        <h3>🚀 Getting Started</h3>
+        <p>Upload your Excel file to begin analyzing your sales data:</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        uploaded_file = st.file_uploader("Choose your Excel file", type="xlsx", key="Sales_Prediction_uploader")
+        
+        if uploaded_file:
+            with st.spinner("Processing your data..."):
+                progress_bar = st.progress(0)
+                for i in range(100):
+                    time.sleep(0.01)
+                    progress_bar.progress(i + 1)
                 
-                if st.button("Generate Individual Report"):
+                df, regions, brands = load_data(uploaded_file)
+                st.session_state['df'] = df
+                st.session_state['regions'] = regions
+                st.session_state['brands'] = brands
+                
+                st.success("✅ File processed successfully!")
+                st.balloons()
+
+    with col2:
+        lottie_url = "https://assets5.lottiefiles.com/packages/lf20_V9t630.json"
+        lottie_json = load_lottie_url(lottie_url)
+        st_lottie(lottie_json, height=300)
+
+def show_report_generator():
+    st.markdown("# 🎯 Report Generator")
+    
+    if st.session_state.get('df') is None:
+        st.warning("⚠️ Please upload your data file on the Home page first.")
+        return
+    
+    df = st.session_state['df']
+    regions = st.session_state['regions']
+    
+    # Create tabs for different report types
+    tab1, tab2 = st.tabs(["📑 Individual Report", "📚 Complete Report"])
+    
+    with tab1:
+        col1, col2 = st.columns([1, 1])
+        
+        with col1:
+            st.markdown("""
+            <div class='reportBlock'>
+            <h3>Report Parameters</h3>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            region = st.selectbox("Select Region", regions, key='region_select')
+            region_brands = df[df['Zone'] == region]['Brand'].unique().tolist()
+            brand = st.selectbox("Select Brand", region_brands, key='brand_select')
+            
+            if st.button("🔍 Generate Individual Report", key='individual_report'):
+                with st.spinner("Creating your report..."):
                     region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)]
                     months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']
                     fig = create_visualization(region_data, region, brand, months)
@@ -2434,46 +2426,103 @@ def sales_review_report_generator():
                     buf = BytesIO()
                     fig.savefig(buf, format="pdf")
                     buf.seek(0)
+                    
                     st.download_button(
-                        label="Download Individual PDF Report",
+                        label="📥 Download Individual Report (PDF)",
                         data=buf,
-                        file_name=f"prediction_report_{region}_{brand}.pdf",
+                        file_name=f"sales_report_{region}_{brand}_{datetime.now().strftime('%Y%m%d')}.pdf",
                         mime="application/pdf"
                     )
-            
-            with col2:
-                st.write("Generate Complete Report")
-                st.write("This will create a PDF containing reports for all regions and brands.")
-                
-                if st.button("Generate Complete Report"):
-                    with st.spinner("Generating complete report... This may take a few minutes."):
-                        # Generate the complete report
-                        pdf_buffer = generate_full_report(df, regions)
-                        
-                        # Offer the complete report for download
-                        st.download_button(
-                            label="Download Complete PDF Report",
-                            data=pdf_buffer,
-                            file_name="complete_sales_report.pdf",
-                            mime="application/pdf"
-                        )
-                        
-                        st.success("Complete report generated successfully!")
     
-    elif page == "About":
-        st.subheader("ℹ️ About the Sales Report Generator App")
-        st.write("""
-        This app is designed to help sales teams predict and visualize their performance across different regions and brands.
+    with tab2:
+        st.markdown("""
+        <div class='reportBlock'>
+        <h3>Complete Report Generation</h3>
+        <p>Generate a comprehensive report covering all regions and brands in your dataset.</p>
+        </div>
+        """, unsafe_allow_html=True)
         
-        Key features:
-        - Data upload and processing
-        - Individual predictions for each region and brand
-        - Combined report generation
-        - Interactive visualizations
-        
-        For any questions or support, please contact our team at support@salesreviewapp.com
-        """)
+        if st.button("📊 Generate Complete Report", key='complete_report'):
+            with st.spinner("Generating comprehensive report... This may take a few minutes."):
+                progress_bar = st.progress(0)
+                for i in range(100):
+                    time.sleep(0.02)
+                    progress_bar.progress(i + 1)
+                
+                pdf_buffer = generate_full_report(df, regions)
+                
+                st.success("✅ Report generated successfully!")
+                
+                st.download_button(
+                    label="📥 Download Complete Report (PDF)",
+                    data=pdf_buffer,
+                    file_name=f"complete_sales_report_{datetime.now().strftime('%Y%m%d')}.pdf",
+                    mime="application/pdf"
+                )
 
+def show_about_page():
+    st.markdown("# ℹ️ About")
+    
+    col1, col2 = st.columns([2, 1])
+    
+    with col1:
+        st.markdown("""
+        <div class='reportBlock'>
+        <h2>Sales Review Report Generator Pro</h2>
+        <p>Version 2.0 | Last Updated: October 2024</p>
+        
+        <h3>🎯 Purpose</h3>
+        Our advanced analytics platform empowers sales teams to:
+        - Generate detailed performance reports
+        - Track KPIs across regions and brands
+        - Identify trends and opportunities
+        - Make data-driven decisions
+        
+        <h3>🛠️ Features</h3>
+        - Automated report generation
+        - Interactive visualizations
+        - Multi-region analysis
+        - Historical comparisons
+        - PDF export capabilities
+        
+        <h3>📧 Support</h3>
+        For technical support or feedback:
+        - Email: support@salesreviewapp.com
+        - Documentation: docs.salesreviewapp.com
+        - Training: learning.salesreviewapp.com
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col2:
+        lottie_url = "https://assets5.lottiefiles.com/packages/lf20_V9t630.json"
+        lottie_json = load_lottie_url(lottie_url)
+        st_lottie(lottie_json, height=300)
+
+def sales_review_report_generator():
+    # Sidebar navigation
+    with st.sidebar:
+        st.markdown("# 📊 Navigation")
+        selected_page = st.radio(
+            "",
+            ["🏠 Home", "📈 Report Generator", "ℹ️ About"],
+            key="navigation"
+        )
+        
+        st.markdown("---")
+        st.markdown("### 📅 Current Session")
+        st.markdown(f"Date: {datetime.now().strftime('%B %d, %Y')}")
+        if 'df' in st.session_state and st.session_state['df'] is not None:
+            st.markdown("Status: ✅ Data Loaded")
+        else:
+            st.markdown("Status: ⚠️ Awaiting Data")
+    
+    # Main content
+    if selected_page == "🏠 Home":
+        show_welcome_page()
+    elif selected_page == "📈 Report Generator":
+        show_report_generator()
+    else:
+        show_about_page()
 def load_lottie_url(url: str):
     try:
         r = requests.get(url)
