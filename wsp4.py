@@ -243,7 +243,8 @@ def file_converter():
             "Excel ↔️ CSV Converter",
             "Word ↔️ PDF Converter",
             "Image to PDF Converter",
-            "PDF Editor"
+            "PDF Editor",
+            "Image Editor"
         ]
     )
 
