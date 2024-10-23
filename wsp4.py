@@ -529,7 +529,7 @@ def file_converter():
                 operations = st.multiselect(
                     "Select operations to perform",
                     ["Extract Pages", "Merge PDFs", "Rotate Pages", "Add Watermark", 
-                     "Resize", "Crop", "Compress"]
+                     "Resize", "Crop"]
                 )
                 
                 try:
