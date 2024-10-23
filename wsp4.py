@@ -4,7 +4,7 @@ import pandas as pd
 import openpyxl
 from io import BytesIO
 import base64
-#from docx import Document
+from docx import Document
 from reportlab.pdfgen import canvas
 from pdf2docx import Converter
 from docx2pdf import convert
