@@ -110,15 +110,15 @@ import matplotlib.pyplot as plt
 from scipy.stats import jarque_bera, kurtosis, skew
 from statsmodels.stats.stattools import omni_normtest
 def process_pdf(input_pdf, operations):
-    """Process PDF with various operations"""
+    """Process PDF with various operations in sequence"""
     from PyPDF2 import PdfReader, PdfWriter
     from io import BytesIO
     
-    # Initialize writer
+    # Initialize writer with all pages from input PDF
     writer = PdfWriter()
     reader = PdfReader(input_pdf)
     
-    # Handle page extraction if specified
+    # Step 1: Extract pages (if specified) or use all pages
     if "extract" in operations:
         start_page = operations["extract"]["start"] - 1  # Convert to 0-based index
         end_page = operations["extract"]["end"]  # Keep as is since we'll use range(start, end)
@@ -127,34 +127,34 @@ def process_pdf(input_pdf, operations):
             if page_num < len(reader.pages):
                 writer.add_page(reader.pages[page_num])
     else:
-        # Handle merging if specified
-        if "merge" in operations and operations["merge"]["files"]:
-            # Add pages from the main PDF
-            for page in reader.pages:
-                writer.add_page(page)
-            
-            # Add pages from additional PDFs
-            for additional_pdf in operations["merge"]["files"]:
-                merge_reader = PdfReader(additional_pdf)
-                for page in merge_reader.pages:
-                    writer.add_page(page)
-        else:
-            # If no merging or extraction, just read the input PDF
-            for page in reader.pages:
+        # Add all pages from input PDF
+        for page in reader.pages:
+            writer.add_page(page)
+    
+    # Step 2: Handle merging if specified
+    if "merge" in operations and operations["merge"]["files"]:
+        # Add pages from additional PDFs
+        for additional_pdf in operations["merge"]["files"]:
+            merge_reader = PdfReader(additional_pdf)
+            for page in merge_reader.pages:
                 writer.add_page(page)
     
     # If no pages were added (possibly due to invalid page range), return the original PDF
     if len(writer.pages) == 0:
         return BytesIO(input_pdf.read())
     
-    # Get PDF dimensions from first page
+    # Get PDF dimensions from first page for use in transformations
     pdf_width = float(writer.pages[0].mediabox.width)
     pdf_height = float(writer.pages[0].mediabox.height)
     
-    # Apply other operations
+    # Step 3: Apply page-level transformations
+    # Create a new writer for transformed pages
+    transformed_writer = PdfWriter()
+    
     for i in range(len(writer.pages)):
         page = writer.pages[i]
         
+        # Apply transformations in sequence
         if "resize" in operations:
             scale = operations["resize"]["scale"] / 100
             page.scale(scale, scale)
@@ -171,10 +171,13 @@ def process_pdf(input_pdf, operations):
         if "rotate" in operations:
             angle = operations["rotate"]["angle"]
             page.rotate(angle)
+        
+        # Add transformed page to new writer
+        transformed_writer.add_page(page)
     
-    # Write to output
+    # Write final PDF to output
     output = BytesIO()
-    writer.write(output)
+    transformed_writer.write(output)
     return output
 
 def add_watermark(pdf_writer, watermark_options):
