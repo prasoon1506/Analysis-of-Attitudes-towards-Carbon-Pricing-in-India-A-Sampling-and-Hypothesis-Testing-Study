@@ -787,11 +787,6 @@ def file_converter():
                         final_output = BytesIO()
                         pdf_writer.write(final_output)
                         output = final_output
-                with col2:
-                        st.markdown("#### Processed PDF")
-                        output.seek(0)
-                        processed_preview = get_pdf_preview(output, preview_page)
-                        st.image(processed_preview, use_column_width=True)
                st.download_button(
                         label="📥 Download Modified PDF",
                         data=output.getvalue(),
