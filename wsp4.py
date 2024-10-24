@@ -2163,7 +2163,7 @@ def wsp_analysis_dashboard():
                                            max_value=len(st.session_state.week_names_input) - 1, 
                                            value=st.session_state.diff_week, 
                                            key="diff_week_slider") 
-    download_pdf = st.checkbox("Download Plots as PDF",value=True)   
+    download_pdf = st.checkbox("Download Plots as PDF", value=True)   
     col1, col2 = st.columns(2)
     with col1:
         zone_names = st.session_state.df["Zone"].unique().tolist()
@@ -2181,22 +2181,22 @@ def wsp_analysis_dashboard():
         "Gujarat": {
             "districts": ["Ahmadabad", "Mahesana", "Rajkot", "Vadodara", "Surat"],
             "benchmarks": ["UTCL", "Wonder"],
-            "diffs": {"UTCL": -10, "Wonder": 0}
+            "diffs": {"UTCL": -10.0, "Wonder": 0.0}
         },
         "Chhattisgarh": {
             "districts": ["Durg", "Raipur", "Bilaspur", "Raigarh", "Rajnandgaon"],
             "benchmarks": ["UTCL"],
-            "diffs": {"UTCL": -10}
+            "diffs": {"UTCL": -10.0}
         },
         "Maharashtra(East)": {
             "districts": ["Nagpur", "Gondiya"],
             "benchmarks": ["UTCL"],
-            "diffs": {"UTCL": -10}
+            "diffs": {"UTCL": -10.0}
         },
         "Odisha": {
             "districts": ["Cuttack", "Sambalpur", "Khorda"],
             "benchmarks": ["UTCL"],
-            "diffs": {"UTCL": {"Sambalpur": -25, "Cuttack": -15, "Khorda": -15}}
+            "diffs": {"UTCL": {"Sambalpur": -25.0, "Cuttack": -15.0, "Khorda": -15.0}}
         },
         "Rajasthan": {
             "districts": ["Alwar", "Jodhpur", "Udaipur", "Jaipur", "Kota", "Bikaner"],
@@ -2280,34 +2280,34 @@ def wsp_analysis_dashboard():
                 
                 for i, brand in enumerate(selected_benchmarks):
                     with diff_cols[i % num_cols]:
-                        # Set default value based on recommendations if enabled
                         default_value = 0.0
                         if use_recommended_benchmarks:
                             if selected_region == "Odisha":
                                 # For Odisha, we need to handle district-specific differences
                                 for district in selected_districts:
                                     if brand in region_recommendations[selected_region]["diffs"]:
-                                        default_value = region_recommendations[selected_region]["diffs"][brand].get(district, 0.0)
+                                        default_value = float(region_recommendations[selected_region]["diffs"][brand].get(district, 0.0))
                             else:
-                                default_value = region_recommendations[selected_region]["diffs"].get(brand, 0.0)
+                                default_value = float(region_recommendations[selected_region]["diffs"].get(brand, 0.0))
                         
                         value = st.number_input(
                             f"{brand}",
-                            min_value=-100.00,
-                            value=default_value,
+                            min_value=-100.0,
+                            value=float(default_value),
                             step=0.1,
-                            format="%.2f",
+                            format="%.1f",
                             key=f"unified_{brand}"
                         )
                         
                         if selected_region == "Odisha" and use_recommended_benchmarks:
-                            # For Odisha, set district-specific differences
                             for district in selected_districts:
                                 if brand in region_recommendations[selected_region]["diffs"]:
-                                    desired_diff_dict[district][brand] = region_recommendations[selected_region]["diffs"][brand].get(district, value)
+                                    desired_diff_dict[district][brand] = float(
+                                        region_recommendations[selected_region]["diffs"][brand].get(district, value)
+                                    )
                         else:
                             for district in selected_districts:
-                                desired_diff_dict[district][brand] = value
+                                desired_diff_dict[district][brand] = float(value)
             else:
                 st.warning("Please select at least one benchmark brand.")
         else:
@@ -2339,16 +2339,16 @@ def wsp_analysis_dashboard():
                             default_value = 0.0
                             if use_recommended_benchmarks:
                                 if selected_region == "Odisha":
-                                    default_value = region_recommendations[selected_region]["diffs"][brand].get(district, 0.0)
+                                    default_value = float(region_recommendations[selected_region]["diffs"][brand].get(district, 0.0))
                                 else:
-                                    default_value = region_recommendations[selected_region]["diffs"].get(brand, 0.0)
+                                    default_value = float(region_recommendations[selected_region]["diffs"].get(brand, 0.0))
                             
                             desired_diff_dict[district][brand] = st.number_input(
                                 f"{brand}",
-                                min_value=-100.00,
-                                value=default_value,
+                                min_value=-100.0,
+                                value=float(default_value),
                                 step=0.1,
-                                format="%.2f",
+                                format="%.1f",
                                 key=f"{district}_{brand}"
                             )
                 else:
@@ -2364,7 +2364,6 @@ def wsp_analysis_dashboard():
                                 st.session_state.diff_week, 
                                 download_pdf)
             st.success('Plots generated successfully!')
-
     else:
         st.warning("Please upload a file in the Home section before using this dashboard.")
 def descriptive_statistics_and_prediction():
