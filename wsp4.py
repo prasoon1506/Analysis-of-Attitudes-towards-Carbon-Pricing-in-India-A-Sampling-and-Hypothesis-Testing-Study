@@ -109,48 +109,93 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from scipy.stats import jarque_bera, kurtosis, skew
 from statsmodels.stats.stattools import omni_normtest
-def compress_pdf(input_pdf, compression_options):
+def process_pdf(input_pdf, operations):
+    """Process PDF with various operations"""
+    from PyPDF2 import PdfReader, PdfWriter
+    from io import BytesIO
+    
+    # Initialize writer
+    writer = PdfWriter()
+    
+    # Handle merging first if it exists
+    if "merge" in operations and operations["merge"]["files"]:
+        # Add pages from the main PDF
+        reader = PdfReader(input_pdf)
+        for page in reader.pages:
+            writer.add_page(page)
+        
+        # Add pages from additional PDFs
+        for additional_pdf in operations["merge"]["files"]:
+            reader = PdfReader(additional_pdf)
+            for page in reader.pages:
+                writer.add_page(page)
+    else:
+        # If no merging, just read the input PDF
+        reader = PdfReader(input_pdf)
+        for page in reader.pages:
+            writer.add_page(page)
+    
+    # Get PDF dimensions from first page
+    pdf_width = float(writer.pages[0].mediabox.width)
+    pdf_height = float(writer.pages[0].mediabox.height)
+    
+    # Apply other operations
+    for i in range(len(writer.pages)):
+        page = writer.pages[i]
+        
+        if "resize" in operations:
+            scale = operations["resize"]["scale"] / 100
+            page.scale(scale, scale)
+        
+        if "crop" in operations:
+            # Convert percentages to points
+            left = operations["crop"]["left"] * pdf_width / 100
+            bottom = operations["crop"]["bottom"] * pdf_height / 100
+            right = operations["crop"]["right"] * pdf_width / 100
+            top = operations["crop"]["top"] * pdf_height / 100
+            page.cropbox.lower_left = (left, bottom)
+            page.cropbox.upper_right = (right, top)
+        
+        if "rotate" in operations:
+            angle = operations["rotate"]["angle"]
+            page.rotate(angle)
+    
+    # Handle compression if specified
+    if "compress" in operations:
+        compression_options = operations["compress"]
+        compressed_output = compress_pdf(writer, compression_options)
+        return compressed_output
+    
+    # Write to output if no compression
+    output = BytesIO()
+    writer.write(output)
+    return output
+
+def compress_pdf(pdf_writer, compression_options):
+    """Compress PDF with specified options"""
     from PyPDF2 import PdfReader, PdfWriter
     from PIL import Image
     from io import BytesIO
-    import fitz  # pymupdf
-    import zlib
+    import fitz
     import os
-
-    # Default compression settings if not specified
-    default_options = {
-        "image_quality": 60,
-        "image_dpi": 150,
-        "downsample_threshold": 300,
-        "image_format": "jpeg",
-        "color_mode": "rgb",
-        "text_compression": True,
-        "remove_metadata": True,
-        "optimize_images": True
-    }
     
-    # Update defaults with provided options
-    options = {**default_options, **compression_options}
+    output = BytesIO()
+    # First write the current state to a temporary buffer
+    pdf_writer.write(output)
+    output.seek(0)
     
-    # Create input streams
-    input_stream = BytesIO(input_pdf.read())
-    input_pdf.seek(0)
-    
-    # Initialize PDF reader and writer
-    reader = PdfReader(input_stream)
+    # Create new reader and writer for compression
+    reader = PdfReader(output)
     writer = PdfWriter()
     
-    # Remove metadata if requested
-    if options["remove_metadata"]:
-        writer.add_metadata({})
+    # Create temporary fitz document for image extraction
+    doc = fitz.open(stream=output.getvalue(), filetype="pdf")
     
-    # Create fitz document for image extraction
-    fitz_stream = BytesIO(input_stream.getvalue())
-    doc = fitz.open(stream=fitz_stream, filetype="pdf")
-    
-    def compress_image(img, force_jpeg=False):
+    def compress_image(image_bytes):
         """Helper function to compress a single image"""
         try:
+            img = Image.open(BytesIO(image_bytes))
+            
             # Convert RGBA to RGB if needed
             if img.mode == 'RGBA':
                 background = Image.new('RGB', img.size, (255, 255, 255))
@@ -158,59 +203,35 @@ def compress_pdf(input_pdf, compression_options):
                 img = background
             
             # Convert to grayscale if specified
-            if options["color_mode"] == "grayscale":
+            if compression_options["color_mode"] == "grayscale":
                 img = img.convert('L')
             
-            # Calculate new size based on DPI threshold
-            original_dpi = img.info.get('dpi', (300, 300))[0]
-            if original_dpi > options["downsample_threshold"]:
-                scale_factor = options["image_dpi"] / original_dpi
+            # Resize based on DPI settings
+            if compression_options["image_dpi"] < compression_options["downsample_threshold"]:
+                scale_factor = compression_options["image_dpi"] / compression_options["downsample_threshold"]
                 new_width = int(img.width * scale_factor)
                 new_height = int(img.height * scale_factor)
                 img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
             
-            # Optimize image
-            if options["optimize_images"]:
-                img = img.copy()  # Create a copy to ensure optimization works
-            
-            # Save with compression
             output = BytesIO()
-            if options["image_format"] == "jpeg2000" and not force_jpeg:
-                try:
-                    img.save(output, format='JPEG2000', quality_mode='dB', 
-                            quality_layers=[options["image_quality"]])
-                except Exception:
-                    # Fallback to JPEG if JPEG2000 fails
-                    return compress_image(img, force_jpeg=True)
+            if compression_options["image_format"] == "jpeg2000":
+                img.save(output, format='JPEG2000', quality_mode='dB', 
+                        quality_layers=[compression_options["image_quality"]])
             else:
-                img.save(output, format='JPEG', quality=options["image_quality"], 
-                        optimize=options["optimize_images"])
+                img.save(output, format='JPEG', 
+                        quality=compression_options["image_quality"], 
+                        optimize=compression_options["optimize_images"])
             
             return output.getvalue()
-            
         except Exception as e:
             print(f"Image compression error: {str(e)}")
-            return None
+            return image_bytes
     
     # Process each page
     for page_num in range(len(reader.pages)):
         page = reader.pages[page_num]
         
-        # Compress text if enabled
-        if options["text_compression"]:
-            if "/Contents" in page:
-                if isinstance(page["/Contents"], list):
-                    for obj in page["/Contents"]:
-                        if hasattr(obj, "get_data"):
-                            data = obj.get_data()
-                            compressed = zlib.compress(data)
-                            obj.set_data(compressed)
-                elif hasattr(page["/Contents"], "get_data"):
-                    data = page["/Contents"].get_data()
-                    compressed = zlib.compress(data)
-                    page["/Contents"].set_data(compressed)
-        
-        # Extract and compress images
+        # Process images on the page
         page_doc = doc[page_num]
         image_list = page_doc.get_images()
         
@@ -220,28 +241,30 @@ def compress_pdf(input_pdf, compression_options):
                 base_image = doc.extract_image(xref)
                 image_bytes = base_image["image"]
                 
-                # Process image
-                img = Image.open(BytesIO(image_bytes))
-                compressed_bytes = compress_image(img)
+                # Compress image
+                compressed_bytes = compress_image(image_bytes)
                 
-                if compressed_bytes:
-                    # Replace image in the PDF
-                    if hasattr(page, "_replace_image"):
-                        page._replace_image(img_index, compressed_bytes)
+                # Replace image in the PDF
+                if hasattr(page, "_replace_image"):
+                    page._replace_image(img_index, compressed_bytes)
             except Exception as e:
                 print(f"Error processing image {img_index} on page {page_num}: {str(e)}")
                 continue
         
         writer.add_page(page)
     
-    # Write compressed PDF to output stream
-    output = BytesIO()
-    writer.write(output)
+    # Remove metadata if requested
+    if compression_options["remove_metadata"]:
+        writer.add_metadata({})
+    
+    # Write final compressed PDF
+    final_output = BytesIO()
+    writer.write(final_output)
     
     # Clean up
     doc.close()
     
-    return output
+    return final_output
 
 def get_compression_presets():
     """Return predefined compression presets"""
@@ -416,42 +439,6 @@ def get_pdf_preview(pdf_file, page_num=0):
     img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
     
     return img
-def process_pdf(input_pdf, operations):
-    """Process PDF with various operations"""
-    from PyPDF2 import PdfReader, PdfWriter
-    from io import BytesIO
-    
-    reader = PdfReader(input_pdf)
-    writer = PdfWriter()
-    
-    # Get PDF dimensions from first page
-    first_page = reader.pages[0]
-    pdf_width = float(first_page.mediabox.width)
-    pdf_height = float(first_page.mediabox.height)
-    
-    for page in reader.pages:
-        if "resize" in operations:
-            scale = operations["resize"]["scale"] / 100
-            page.scale(scale, scale)
-        
-        if "crop" in operations:
-            # Convert percentages to points
-            left = operations["crop"]["left"] * pdf_width / 100
-            bottom = operations["crop"]["bottom"] * pdf_height / 100
-            right = operations["crop"]["right"] * pdf_width / 100
-            top = operations["crop"]["top"] * pdf_height / 100
-            page.cropbox.lower_left = (left, bottom)
-            page.cropbox.upper_right = (right, top)
-        
-        if "rotate" in operations:
-            angle = operations["rotate"]["angle"]
-            page.rotate(angle)
-        
-        writer.add_page(page)
-    
-    output = BytesIO()
-    writer.write(output)
-    return output
 def get_image_size_metrics(original_image_bytes, processed_image_bytes):
     """Calculate size metrics for original and processed images"""
     original_size = len(original_image_bytes) / 1024  # KB
