@@ -110,23 +110,6 @@ import matplotlib.pyplot as plt
 from scipy.stats import jarque_bera, kurtosis, skew
 from statsmodels.stats.stattools import omni_normtest
 def compress_pdf(input_pdf, compression_options):
-    """
-    Advanced PDF compression with multiple strategies and granular control
-    
-    Parameters:
-    input_pdf: File object containing the PDF
-    compression_options: dict with compression settings
-        {
-            "image_quality": int (1-100),
-            "image_dpi": int,
-            "downsample_threshold": int (in DPI),
-            "image_format": str ("jpeg", "jpeg2000"),
-            "color_mode": str ("rgb", "grayscale"),
-            "text_compression": bool,
-            "remove_metadata": bool,
-            "optimize_images": bool
-        }
-    """
     from PyPDF2 import PdfReader, PdfWriter
     from PIL import Image
     from io import BytesIO
@@ -194,8 +177,7 @@ def compress_pdf(input_pdf, compression_options):
             output = BytesIO()
             if options["image_format"] == "jpeg2000" and not force_jpeg:
                 try:
-                    img.save(output, format='JPEG2000', quality_mode='dB', 
-                            quality_layers=[options["image_quality"]])
+                    img.save(output, format='JPEG2000', quality_layers=[options["image_quality"]])
                 except Exception:
                     # Fallback to JPEG if JPEG2000 fails
                     return compress_image(img, force_jpeg=True)
