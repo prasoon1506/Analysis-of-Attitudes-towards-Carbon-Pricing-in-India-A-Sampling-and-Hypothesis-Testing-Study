@@ -18,31 +18,25 @@ def get_available_months(df):
     months = [col.split('_')[1] for col in share_cols]
     return sorted(list(set(months)))
 
-def create_share_plot(df, selected_months):
-    """Create stacked bar chart for selected months"""
-    # Process data for selected months
-    all_data = []
-    for month in selected_months:
-        month_data = df[['Company', f'Share_{month}', f'WSP_{month}']].copy()
-        month_data.columns = ['Company', 'Share', 'WSP']
-        month_data['Month'] = month.capitalize()
-        all_data.append(month_data)
-    
-    combined_df = pd.concat(all_data, ignore_index=True)
+def create_share_plot(df, month):
+    """Create stacked bar chart for a single month"""
+    # Process data for the month
+    month_data = df[['Company', f'Share_{month}', f'WSP_{month}']].copy()
+    month_data.columns = ['Company', 'Share', 'WSP']
     
     # Calculate price ranges
-    min_price = (combined_df['WSP'].min() // 5) * 5
-    max_price = (combined_df['WSP'].max() // 5 + 1) * 5
+    min_price = (month_data['WSP'].min() // 5) * 5
+    max_price = (month_data['WSP'].max() // 5 + 1) * 5
     price_ranges = pd.interval_range(start=min_price, end=max_price, freq=5)
     
     # Create price range column
-    combined_df['Price_Range'] = pd.cut(combined_df['WSP'], bins=price_ranges)
+    month_data['Price_Range'] = pd.cut(month_data['WSP'], bins=price_ranges)
     
     # Create pivot table
     pivot_df = pd.pivot_table(
-        combined_df,
+        month_data,
         values='Share',
-        index=['Month', 'Price_Range'],
+        index='Price_Range',
         columns='Company',
         aggfunc='sum',
         fill_value=0
@@ -55,7 +49,7 @@ def create_share_plot(df, selected_months):
     row_sums = pivot_df.sum(axis=1)
     
     # Create plot
-    fig, ax = plt.subplots(figsize=(15, 8))
+    fig, ax = plt.subplots(figsize=(12, 6))
     
     # Generate colors
     n_companies = len(pivot_df.columns)
@@ -70,16 +64,21 @@ def create_share_plot(df, selected_months):
         color=colors
     )
     
-    # Customize plot
-    plt.title('Company Shares Distribution by WSP Price Range',
-             fontsize=18,
+    # Create title with month
+    plt.title(f'Company Shares Distribution by WSP Price Range ({month.capitalize()})',
+             fontsize=16,
              pad=20,
              fontweight='bold')
-    plt.xlabel('WSP Price Range', fontsize=14)
-    plt.ylabel('Share (%)', fontsize=14)
     
-    # Rotate x-axis labels
-    plt.xticks(rotation=45, ha='right')
+    plt.xlabel('WSP Price Range', fontsize=12)
+    plt.ylabel('Share (%)', fontsize=12)
+    
+    # Format x-axis labels to show only the price ranges
+    def format_interval(interval):
+        return f'{interval.left:.0f}-{interval.right:.0f}'
+    
+    x_labels = [format_interval(interval) for interval in pivot_df.index]
+    ax.set_xticklabels(x_labels, rotation=0, ha='center')
     
     # Add percentage labels
     for c in ax.containers:
@@ -103,9 +102,9 @@ def create_share_plot(df, selected_months):
         loc='upper left',
         borderaxespad=0.,
         frameon=True,
-        fontsize=12,
+        fontsize=10,
         title='Companies',
-        title_fontsize=14
+        title_fontsize=12
     )
     
     # Add grid
@@ -153,12 +152,11 @@ def main():
         </style>
     """, unsafe_allow_html=True)
     
-    # Header
-    st.title("📊 Market Share Analysis Dashboard")
-    st.markdown("---")
+    # Create two columns - sidebar and main content
+    col1, col2 = st.columns([1, 4])
     
-    # Sidebar
-    with st.sidebar:
+    # Sidebar content in first column
+    with col1:
         st.header("📥 Data Upload")
         uploaded_file = st.file_uploader("Upload Excel File", type=['xlsx', 'xls'])
         
@@ -188,27 +186,37 @@ def main():
             if not selected_months:
                 st.warning("Please select at least one month.")
                 return
+    
+    # Main content in second column
+    with col2:
+        if uploaded_file and selected_months:
+            st.title("📊 Market Share Analysis Dashboard")
+            st.markdown(f"### State: {selected_state}")
+            st.markdown("---")
             
-            # Create and display plot
-            with st.spinner("Generating visualization..."):
-                fig = create_share_plot(state_dfs[selected_state], selected_months)
-                
-                # Main content area
-                st.markdown("### 📈 Market Share Distribution")
-                st.pyplot(fig)
-                
-                # Download button for the plot
-                buf = io.BytesIO()
-                fig.savefig(buf, format='png', dpi=300, bbox_inches='tight')
-                buf.seek(0)
-                st.download_button(
-                    label="Download Plot",
-                    data=buf,
-                    file_name=f'market_share_{selected_state}_{"-".join(selected_months)}.png',
-                    mime='image/png'
-                )
+            # Create separate plots for each selected month
+            for month in selected_months:
+                with st.spinner(f"Generating visualization for {month.capitalize()}..."):
+                    fig = create_share_plot(state_dfs[selected_state], month)
+                    st.pyplot(fig)
+                    
+                    # Download button for each plot
+                    buf = io.BytesIO()
+                    fig.savefig(buf, format='png', dpi=300, bbox_inches='tight')
+                    buf.seek(0)
+                    st.download_button(
+                        label=f"Download {month.capitalize()} Plot",
+                        data=buf,
+                        file_name=f'market_share_{selected_state}_{month}.png',
+                        mime='image/png',
+                        key=f"download_{month}"  # Unique key for each button
+                    )
+                st.markdown("---")
+        
+        elif uploaded_file:
+            st.info("👈 Select state and months from the sidebar to view analysis")
         else:
-            st.info("👆 Upload an Excel file to begin analysis")
+            st.info("👈 Upload an Excel file from the sidebar to begin analysis")
     
     # Footer
     st.markdown("---")
