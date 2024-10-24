@@ -160,111 +160,12 @@ def process_pdf(input_pdf, operations):
             angle = operations["rotate"]["angle"]
             page.rotate(angle)
     
-    # Handle compression if specified
-    if "compress" in operations:
-        compression_options = operations["compress"]
-        compressed_output = compress_pdf(writer, compression_options)
-        return compressed_output
-    
     # Write to output if no compression
     output = BytesIO()
     writer.write(output)
     return output
 
-def compress_pdf(pdf_writer, compression_options):
-    """Compress PDF with specified options"""
-    from PyPDF2 import PdfReader, PdfWriter
-    from PIL import Image
-    from io import BytesIO
-    import fitz
-    import os
-    
-    output = BytesIO()
-    # First write the current state to a temporary buffer
-    pdf_writer.write(output)
-    output.seek(0)
-    
-    # Create new reader and writer for compression
-    reader = PdfReader(output)
-    writer = PdfWriter()
-    
-    # Create temporary fitz document for image extraction
-    doc = fitz.open(stream=output.getvalue(), filetype="pdf")
-    
-    def compress_image(image_bytes):
-        """Helper function to compress a single image"""
-        try:
-            img = Image.open(BytesIO(image_bytes))
-            
-            # Convert RGBA to RGB if needed
-            if img.mode == 'RGBA':
-                background = Image.new('RGB', img.size, (255, 255, 255))
-                background.paste(img, mask=img.split()[3])
-                img = background
-            
-            # Convert to grayscale if specified
-            if compression_options["color_mode"] == "grayscale":
-                img = img.convert('L')
-            
-            # Resize based on DPI settings
-            if compression_options["image_dpi"] < compression_options["downsample_threshold"]:
-                scale_factor = compression_options["image_dpi"] / compression_options["downsample_threshold"]
-                new_width = int(img.width * scale_factor)
-                new_height = int(img.height * scale_factor)
-                img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
-            
-            output = BytesIO()
-            if compression_options["image_format"] == "jpeg2000":
-                img.save(output, format='JPEG2000', quality_mode='dB', 
-                        quality_layers=[compression_options["image_quality"]])
-            else:
-                img.save(output, format='JPEG', 
-                        quality=compression_options["image_quality"], 
-                        optimize=compression_options["optimize_images"])
-            
-            return output.getvalue()
-        except Exception as e:
-            print(f"Image compression error: {str(e)}")
-            return image_bytes
-    
-    # Process each page
-    for page_num in range(len(reader.pages)):
-        page = reader.pages[page_num]
-        
-        # Process images on the page
-        page_doc = doc[page_num]
-        image_list = page_doc.get_images()
-        
-        for img_index, image in enumerate(image_list):
-            try:
-                xref = image[0]
-                base_image = doc.extract_image(xref)
-                image_bytes = base_image["image"]
-                
-                # Compress image
-                compressed_bytes = compress_image(image_bytes)
-                
-                # Replace image in the PDF
-                if hasattr(page, "_replace_image"):
-                    page._replace_image(img_index, compressed_bytes)
-            except Exception as e:
-                print(f"Error processing image {img_index} on page {page_num}: {str(e)}")
-                continue
-        
-        writer.add_page(page)
-    
-    # Remove metadata if requested
-    if compression_options["remove_metadata"]:
-        writer.add_metadata({})
-    
-    # Write final compressed PDF
-    final_output = BytesIO()
-    writer.write(final_output)
-    
-    # Clean up
-    doc.close()
-    
-    return final_output
+
 
 def get_compression_presets():
     """Return predefined compression presets"""
@@ -789,7 +690,7 @@ def file_converter():
                 st.image(original_preview, use_column_width=True)
                 operations = st.multiselect(
                     "Select operations to perform",
-                    ["Extract Pages", "Merge PDFs", "Rotate Pages", "Add Watermark", "Compress", 
+                    ["Extract Pages", "Merge PDFs", "Rotate Pages", "Add Watermark", 
                      "Resize", "Crop"])
             try:
                 pdf_operations = {}
@@ -857,38 +758,6 @@ def file_converter():
                         
                     if (watermark_type == "Text" and watermark_options["text"]) or (watermark_type == "Image" and watermark_image):
                         pdf_operations["watermark"] = watermark_options
-                if "Compress" in operations:
-                   st.markdown("#### Compression Settings")
-                   compression_mode = st.radio("Compression Mode",["Preset", "Custom"],help="Choose between predefined presets or custom settings")
-                   if compression_mode == "Preset":
-                      preset = st.select_slider(
-                      "Compression Preset",
-                      options=["minimal", "low", "medium", "high", "maximum"],
-                      value="medium",
-                      help="Higher compression = smaller file size but lower quality")
-                      compression_options = get_compression_presets()[preset]
-                   else:
-                      st.markdown("##### Image Settings")
-                      col1, col2 = st.columns(2)
-                      with col1:
-                       image_quality = st.slider("Image Quality", 1, 100, 60,
-                                    help="Lower = smaller file but lower quality")
-                       image_dpi = st.slider("Image DPI", 72, 300, 150,
-                                help="Lower = smaller images")
-                      with col2:
-                       color_mode = st.selectbox("Color Mode", ["rgb", "grayscale"])
-                       image_format = st.selectbox("Image Format", ["jpeg", "jpeg2000"])
-                       st.markdown("##### Advanced Settings")
-                       col1, col2 = st.columns(2)
-                       with col1:
-                           downsample_threshold = st.slider("Downsample Threshold (DPI)",100, 400, 300)
-                           text_compression = st.checkbox("Compress Text", value=True)
-                       with col2:
-                           remove_metadata = st.checkbox("Remove Metadata", value=False)
-                           optimize_images = st.checkbox("Optimize Images", value=True)
-                           compression_options = {"image_quality": image_quality,"image_dpi": image_dpi,"downsample_threshold": downsample_threshold,"image_format": image_format,
-                                                 "color_mode": color_mode,"text_compression": text_compression,"remove_metadata": remove_metadata,"optimize_images": optimize_images}
-                   pdf_operations["compress"] = compression_options
                 if "Resize" in operations:
                     st.markdown("#### Resize PDF")
                     scale = st.slider("Scale percentage", 1, 200, 100,
