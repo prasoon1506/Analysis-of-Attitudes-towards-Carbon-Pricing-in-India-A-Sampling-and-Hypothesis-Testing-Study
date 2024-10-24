@@ -2098,7 +2098,6 @@ def process_uploaded_file(uploaded_file):
             st.session_state.file_processed = False
 import streamlit as st
 from streamlit_option_menu import option_menu
-
 def wsp_analysis_dashboard():
     st.markdown("""
     <style>
@@ -2176,38 +2175,59 @@ def wsp_analysis_dashboard():
         
     filtered_df = filtered_df[filtered_df["REGION"] == selected_region]
     district_names = filtered_df["Dist Name"].unique().tolist()
-    if selected_region in ["Rajasthan", "Madhya Pradesh(West)","Madhya Pradesh(East)","Chhattisgarh","Maharashtra(East)","Odisha","North-I","North-II","Gujarat"]:
-        suggested_districts = []
-        
-        if selected_region == "Rajasthan":
-            rajasthan_districts = ["Alwar", "Jodhpur", "Udaipur", "Jaipur", "Kota", "Bikaner"]
-            suggested_districts = [d for d in rajasthan_districts if d in district_names]
-        elif selected_region == "Madhya Pradesh(West)":
-            mp_west_districts = ["Indore", "Neemuch","Ratlam","Dhar"]
-            suggested_districts = [d for d in mp_west_districts if d in district_names]
-        elif selected_region == "Madhya Pradesh(East)":
-            mp_west_districts = ["Jabalpur","Balaghat","Chhindwara"]
-            suggested_districts = [d for d in mp_west_districts if d in district_names]
-        elif selected_region == "Chhattisgarh":
-            mp_west_districts = ["Durg","Raipur","Bilaspur","Raigarh","Rajnandgaon"]
-            suggested_districts = [d for d in mp_west_districts if d in district_names]
-        elif selected_region == "Maharashtra(East)":
-            mp_west_districts = ["Nagpur","Gondiya"]
-            suggested_districts = [d for d in mp_west_districts if d in district_names]
-        elif selected_region == "Odisha":
-            mp_west_districts = ["Cuttack","Sambalpur","Khorda"]
-            suggested_districts = [d for d in mp_west_districts if d in district_names]
-        elif selected_region == "North-I":
-            mp_west_districts = ["East","Gurugram","Sonipat","Hisar","Yamunanagar","Bathinda"]
-            suggested_districts = [d for d in mp_west_districts if d in district_names]
-        elif selected_region == "North-II":
-            mp_west_districts = ["Ghaziabad","Meerut"]
-            suggested_districts = [d for d in mp_west_districts if d in district_names]
-        elif selected_region == "Gujarat":
-            mp_west_districts = ["Ahmadabad","Mahesana","Rajkot","Vadodara","Surat"]
-            suggested_districts = [d for d in mp_west_districts if d in district_names]
-        
-        
+
+    # Define recommended settings for each region
+    region_recommendations = {
+        "Gujarat": {
+            "districts": ["Ahmadabad", "Mahesana", "Rajkot", "Vadodara", "Surat"],
+            "benchmarks": ["UTCL", "Wonder"],
+            "diffs": {"UTCL": -10, "Wonder": 0}
+        },
+        "Chhattisgarh": {
+            "districts": ["Durg", "Raipur", "Bilaspur", "Raigarh", "Rajnandgaon"],
+            "benchmarks": ["UTCL"],
+            "diffs": {"UTCL": -10}
+        },
+        "Maharashtra(East)": {
+            "districts": ["Nagpur", "Gondiya"],
+            "benchmarks": ["UTCL"],
+            "diffs": {"UTCL": -10}
+        },
+        "Odisha": {
+            "districts": ["Cuttack", "Sambalpur", "Khorda"],
+            "benchmarks": ["UTCL"],
+            "diffs": {"UTCL": {"Sambalpur": -25, "Cuttack": -15, "Khorda": -15}}
+        },
+        "Rajasthan": {
+            "districts": ["Alwar", "Jodhpur", "Udaipur", "Jaipur", "Kota", "Bikaner"],
+            "benchmarks": [],
+            "diffs": {}
+        },
+        "Madhya Pradesh(West)": {
+            "districts": ["Indore", "Neemuch", "Ratlam", "Dhar"],
+            "benchmarks": [],
+            "diffs": {}
+        },
+        "Madhya Pradesh(East)": {
+            "districts": ["Jabalpur", "Balaghat", "Chhindwara"],
+            "benchmarks": [],
+            "diffs": {}
+        },
+        "North-I": {
+            "districts": ["East", "Gurugram", "Sonipat", "Hisar", "Yamunanagar", "Bathinda"],
+            "benchmarks": [],
+            "diffs": {}
+        },
+        "North-II": {
+            "districts": ["Ghaziabad", "Meerut"],
+            "benchmarks": [],
+            "diffs": {}
+        }
+    }
+
+    if selected_region in region_recommendations:
+        recommended = region_recommendations[selected_region]
+        suggested_districts = [d for d in recommended["districts"] if d in district_names]
         
         if suggested_districts:
             st.markdown(f"### Suggested Districts for {selected_region}")
@@ -2217,11 +2237,8 @@ def wsp_analysis_dashboard():
                 selected_districts = st.multiselect("Select District(s)", district_names, default=suggested_districts, key="district_select")
             else:
                 selected_districts = st.multiselect("Select District(s)", district_names, key="district_select")
-        else:
-            selected_districts = st.multiselect("Select District(s)", district_names, key="district_select")
     else:
         selected_districts = st.multiselect("Select District(s)", district_names, key="district_select")
-    
 
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -2235,8 +2252,23 @@ def wsp_analysis_dashboard():
         st.markdown("### Benchmark Settings")
         use_same_benchmarks = st.checkbox("Use same benchmarks for all districts", value=True)
         
+        # Add recommended benchmarks checkbox
+        use_recommended_benchmarks = False
+        if selected_region in region_recommendations and region_recommendations[selected_region]["benchmarks"]:
+            use_recommended_benchmarks = st.checkbox("Use recommended benchmarks and differences", value=False)
+        
         if use_same_benchmarks:
-            selected_benchmarks = st.multiselect("Select Benchmark Brands for all districts", benchmark_brands, key="unified_benchmark_select")
+            if use_recommended_benchmarks:
+                recommended_benchmarks = region_recommendations[selected_region]["benchmarks"]
+                selected_benchmarks = st.multiselect("Select Benchmark Brands for all districts", 
+                                                   benchmark_brands, 
+                                                   default=recommended_benchmarks,
+                                                   key="unified_benchmark_select")
+            else:
+                selected_benchmarks = st.multiselect("Select Benchmark Brands for all districts", 
+                                                   benchmark_brands, 
+                                                   key="unified_benchmark_select")
+                
             for district in selected_districts:
                 benchmark_brands_dict[district] = selected_benchmarks
                 desired_diff_dict[district] = {}
@@ -2245,27 +2277,58 @@ def wsp_analysis_dashboard():
                 st.markdown("#### Desired Differences")
                 num_cols = min(len(selected_benchmarks), 3)
                 diff_cols = st.columns(num_cols)
+                
                 for i, brand in enumerate(selected_benchmarks):
                     with diff_cols[i % num_cols]:
+                        # Set default value based on recommendations if enabled
+                        default_value = 0.0
+                        if use_recommended_benchmarks:
+                            if selected_region == "Odisha":
+                                # For Odisha, we need to handle district-specific differences
+                                for district in selected_districts:
+                                    if brand in region_recommendations[selected_region]["diffs"]:
+                                        default_value = region_recommendations[selected_region]["diffs"][brand].get(district, 0.0)
+                            else:
+                                default_value = region_recommendations[selected_region]["diffs"].get(brand, 0.0)
+                        
                         value = st.number_input(
                             f"{brand}",
                             min_value=-100.00,
+                            value=default_value,
                             step=0.1,
                             format="%.2f",
                             key=f"unified_{brand}"
                         )
-                        for district in selected_districts:
-                            desired_diff_dict[district][brand] = value
+                        
+                        if selected_region == "Odisha" and use_recommended_benchmarks:
+                            # For Odisha, set district-specific differences
+                            for district in selected_districts:
+                                if brand in region_recommendations[selected_region]["diffs"]:
+                                    desired_diff_dict[district][brand] = region_recommendations[selected_region]["diffs"][brand].get(district, value)
+                        else:
+                            for district in selected_districts:
+                                desired_diff_dict[district][brand] = value
             else:
                 st.warning("Please select at least one benchmark brand.")
         else:
             for district in selected_districts:
                 st.subheader(f"Settings for {district}")
-                benchmark_brands_dict[district] = st.multiselect(
-                    f"Select Benchmark Brands for {district}",
-                    benchmark_brands,
-                    key=f"benchmark_select_{district}"
-                )
+                
+                if use_recommended_benchmarks:
+                    default_benchmarks = region_recommendations[selected_region]["benchmarks"]
+                    benchmark_brands_dict[district] = st.multiselect(
+                        f"Select Benchmark Brands for {district}",
+                        benchmark_brands,
+                        default=default_benchmarks,
+                        key=f"benchmark_select_{district}"
+                    )
+                else:
+                    benchmark_brands_dict[district] = st.multiselect(
+                        f"Select Benchmark Brands for {district}",
+                        benchmark_brands,
+                        key=f"benchmark_select_{district}"
+                    )
+                
                 desired_diff_dict[district] = {}
                 
                 if benchmark_brands_dict[district]:
@@ -2273,9 +2336,17 @@ def wsp_analysis_dashboard():
                     diff_cols = st.columns(num_cols)
                     for i, brand in enumerate(benchmark_brands_dict[district]):
                         with diff_cols[i % num_cols]:
+                            default_value = 0.0
+                            if use_recommended_benchmarks:
+                                if selected_region == "Odisha":
+                                    default_value = region_recommendations[selected_region]["diffs"][brand].get(district, 0.0)
+                                else:
+                                    default_value = region_recommendations[selected_region]["diffs"].get(brand, 0.0)
+                            
                             desired_diff_dict[district][brand] = st.number_input(
                                 f"{brand}",
                                 min_value=-100.00,
+                                value=default_value,
                                 step=0.1,
                                 format="%.2f",
                                 key=f"{district}_{brand}"
@@ -2296,8 +2367,6 @@ def wsp_analysis_dashboard():
 
     else:
         st.warning("Please upload a file in the Home section before using this dashboard.")
-
-# Make sure to import the required libraries and define the necessary functions (transform_data, plot_district_graph) elsewhere in your code.
 def descriptive_statistics_and_prediction():
     st.markdown("""
     <style>
