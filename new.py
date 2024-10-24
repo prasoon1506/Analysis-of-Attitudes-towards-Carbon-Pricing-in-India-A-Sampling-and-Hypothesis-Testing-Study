@@ -14,7 +14,7 @@ def load_and_process_data(uploaded_file):
 
 def get_available_months(df):
     """Extract available months from column names"""
-    share_cols = [col for col in df.columns if col.startswith('share_')]
+    share_cols = [col for col in df.columns if col.startswith('Share_')]
     months = [col.split('_')[1] for col in share_cols]
     return sorted(list(set(months)))
 
