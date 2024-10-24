@@ -676,12 +676,12 @@ def file_converter():
                  pdf_reader = PdfReader(uploaded_file)
                  first_page = pdf_reader.pages[0]
                 
-                operations = st.multiselect(
+                 operations = st.multiselect(
                     "Select operations to perform",
                     ["Extract Pages", "Merge PDFs", "Rotate Pages", "Add Watermark","Compress", 
                      "Resize", "Crop"])
                 
-                try:
+              try:
                     pdf_operations = {}
                     if "Compress" in operations:
                       st.markdown("#### Compression Settings")
@@ -793,24 +793,24 @@ def file_converter():
                         output.seek(0)
                         processed_preview = get_pdf_preview(output, preview_page)
                         st.image(processed_preview, use_column_width=True)
-                      st.download_button(
+               st.download_button(
                         label="📥 Download Modified PDF",
                         data=output.getvalue(),
                         file_name=f"modified_{uploaded_file.name}",
                         mime="application/pdf")
-                      original_size = len(uploaded_file.getvalue()) / 1024  # KB
-                      new_size = len(output.getvalue()) / 1024  # KB
-                      col1, col2, col3 = st.columns(3)
-                      with col1:
+               original_size = len(uploaded_file.getvalue()) / 1024  # KB
+               new_size = len(output.getvalue()) / 1024  # KB
+               col1, col2, col3 = st.columns(3)
+               with col1:
                         st.metric("Original Size", f"{original_size:.1f} KB")
-                      with col2:
+               with col2:
                         st.metric("New Size", f"{new_size:.1f} KB")
-                      with col3:
+               with col3:
                         reduction = ((original_size - new_size) / original_size) * 100
                         st.metric("Size Change", f"{reduction:.1f}%")
-                except Exception as e:
+              except Exception as e:
                     st.error(f"Error: {str(e)}")
-            st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
     
     # Add new Image Editor section
     elif converter_type == "Image Editor":
