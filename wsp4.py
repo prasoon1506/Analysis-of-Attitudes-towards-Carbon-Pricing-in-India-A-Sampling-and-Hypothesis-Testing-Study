@@ -109,78 +109,211 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from scipy.stats import jarque_bera, kurtosis, skew
 from statsmodels.stats.stattools import omni_normtest
-def compress_pdf(input_pdf, compression_level="medium"):
-    """Compress PDF using different strategies based on compression level"""
+def compress_pdf(input_pdf, compression_options):
+    """
+    Advanced PDF compression with multiple strategies and granular control
+    
+    Parameters:
+    input_pdf: File object containing the PDF
+    compression_options: dict with compression settings
+        {
+            "image_quality": int (1-100),
+            "image_dpi": int,
+            "downsample_threshold": int (in DPI),
+            "image_format": str ("jpeg", "jpeg2000"),
+            "color_mode": str ("rgb", "grayscale"),
+            "text_compression": bool,
+            "remove_metadata": bool,
+            "optimize_images": bool
+        }
+    """
     from PyPDF2 import PdfReader, PdfWriter
     from PIL import Image
     from io import BytesIO
     import fitz  # pymupdf
+    import zlib
+    import os
 
-    compression_params = {
-        "low": {"image_quality": 60, "dpi": 150},
-        "medium": {"image_quality": 40, "dpi": 120},
-        "high": {"image_quality": 20, "dpi": 96}
+    # Default compression settings if not specified
+    default_options = {
+        "image_quality": 60,
+        "image_dpi": 150,
+        "downsample_threshold": 300,
+        "image_format": "jpeg",
+        "color_mode": "rgb",
+        "text_compression": True,
+        "remove_metadata": True,
+        "optimize_images": True
     }
     
-    params = compression_params[compression_level]
+    # Update defaults with provided options
+    options = {**default_options, **compression_options}
     
-    # Create a copy of the input stream
+    # Create input streams
     input_stream = BytesIO(input_pdf.read())
-    input_pdf.seek(0)  # Reset the original stream position
+    input_pdf.seek(0)
     
+    # Initialize PDF reader and writer
     reader = PdfReader(input_stream)
     writer = PdfWriter()
     
-    # Create a new stream for fitz
+    # Remove metadata if requested
+    if options["remove_metadata"]:
+        writer.add_metadata({})
+    
+    # Create fitz document for image extraction
     fitz_stream = BytesIO(input_stream.getvalue())
     doc = fitz.open(stream=fitz_stream, filetype="pdf")
     
+    def compress_image(img, force_jpeg=False):
+        """Helper function to compress a single image"""
+        try:
+            # Convert RGBA to RGB if needed
+            if img.mode == 'RGBA':
+                background = Image.new('RGB', img.size, (255, 255, 255))
+                background.paste(img, mask=img.split()[3])
+                img = background
+            
+            # Convert to grayscale if specified
+            if options["color_mode"] == "grayscale":
+                img = img.convert('L')
+            
+            # Calculate new size based on DPI threshold
+            original_dpi = img.info.get('dpi', (300, 300))[0]
+            if original_dpi > options["downsample_threshold"]:
+                scale_factor = options["image_dpi"] / original_dpi
+                new_width = int(img.width * scale_factor)
+                new_height = int(img.height * scale_factor)
+                img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+            
+            # Optimize image
+            if options["optimize_images"]:
+                img = img.copy()  # Create a copy to ensure optimization works
+            
+            # Save with compression
+            output = BytesIO()
+            if options["image_format"] == "jpeg2000" and not force_jpeg:
+                try:
+                    img.save(output, format='JPEG2000', quality_mode='dB', 
+                            quality_layers=[options["image_quality"]])
+                except Exception:
+                    # Fallback to JPEG if JPEG2000 fails
+                    return compress_image(img, force_jpeg=True)
+            else:
+                img.save(output, format='JPEG', quality=options["image_quality"], 
+                        optimize=options["optimize_images"])
+            
+            return output.getvalue()
+            
+        except Exception as e:
+            print(f"Image compression error: {str(e)}")
+            return None
+    
+    # Process each page
     for page_num in range(len(reader.pages)):
-        # Get original page
         page = reader.pages[page_num]
         
-        # Extract images from the page
+        # Compress text if enabled
+        if options["text_compression"]:
+            if "/Contents" in page:
+                if isinstance(page["/Contents"], list):
+                    for obj in page["/Contents"]:
+                        if hasattr(obj, "get_data"):
+                            data = obj.get_data()
+                            compressed = zlib.compress(data)
+                            obj.set_data(compressed)
+                elif hasattr(page["/Contents"], "get_data"):
+                    data = page["/Contents"].get_data()
+                    compressed = zlib.compress(data)
+                    page["/Contents"].set_data(compressed)
+        
+        # Extract and compress images
         page_doc = doc[page_num]
-        images = page_doc.get_images()
+        image_list = page_doc.get_images()
         
-        # Create new PDF page
-        new_page = writer.add_page(page)
-        
-        # Compress images if present
-        for img_index, image in enumerate(images):
+        for img_index, image in enumerate(image_list):
             try:
                 xref = image[0]
                 base_image = doc.extract_image(xref)
                 image_bytes = base_image["image"]
                 
-                # Process image with PIL
+                # Process image
                 img = Image.open(BytesIO(image_bytes))
+                compressed_bytes = compress_image(img)
                 
-                # Convert to RGB if RGBA
-                if img.mode == 'RGBA':
-                    img = img.convert('RGB')
-                
-                # Calculate new size based on DPI
-                width = int(img.width * params["dpi"] / 72)
-                height = int(img.height * params["dpi"] / 72)
-                img = img.resize((width, height), Image.Resampling.LANCZOS)
-                
-                # Save compressed image
-                img_buffer = BytesIO()
-                img.save(img_buffer, format="JPEG", quality=params["image_quality"], optimize=True)
-                img_buffer.seek(0)
+                if compressed_bytes:
+                    # Replace image in the PDF
+                    if hasattr(page, "_replace_image"):
+                        page._replace_image(img_index, compressed_bytes)
             except Exception as e:
-                continue  # Skip problematic images
+                print(f"Error processing image {img_index} on page {page_num}: {str(e)}")
+                continue
+        
+        writer.add_page(page)
     
-    # Write the compressed PDF to a new BytesIO stream
+    # Write compressed PDF to output stream
     output = BytesIO()
     writer.write(output)
-    output.seek(0)
     
     # Clean up
     doc.close()
     
     return output
+# Helper function to get compression presets
+def get_compression_presets():
+    """Return predefined compression presets"""
+    return {
+        "maximum": {
+            "image_quality": 20,
+            "image_dpi": 96,
+            "downsample_threshold": 150,
+            "image_format": "jpeg",
+            "color_mode": "grayscale",
+            "text_compression": True,
+            "remove_metadata": True,
+            "optimize_images": True
+        },
+        "high": {
+            "image_quality": 30,
+            "image_dpi": 120,
+            "downsample_threshold": 200,
+            "image_format": "jpeg",
+            "color_mode": "rgb",
+            "text_compression": True,
+            "remove_metadata": True,
+            "optimize_images": True
+        },
+        "medium": {
+            "image_quality": 50,
+            "image_dpi": 150,
+            "downsample_threshold": 250,
+            "image_format": "jpeg",
+            "color_mode": "rgb",
+            "text_compression": True,
+            "remove_metadata": False,
+            "optimize_images": True
+        },
+        "low": {
+            "image_quality": 70,
+            "image_dpi": 200,
+            "downsample_threshold": 300,
+            "image_format": "jpeg",
+            "color_mode": "rgb",
+            "text_compression": True,
+            "remove_metadata": False,
+            "optimize_images": True
+        },
+        "minimal": {
+            "image_quality": 85,
+            "image_dpi": 250,
+            "downsample_threshold": 350,
+            "image_format": "jpeg",
+            "color_mode": "rgb",
+            "text_compression": True,
+            "remove_metadata": False,
+            "optimize_images": False
+        }
+    }
 def add_watermark(pdf_writer, watermark_options):
     """Enhanced watermark function supporting text and image watermarks with positioning"""
     from reportlab.pdfgen.canvas import Canvas
@@ -691,13 +824,38 @@ def file_converter():
             try:
                 pdf_operations = {}
                 if "Compress" in operations:
-                    st.markdown("#### Compression Settings")
-                    compression_level = st.select_slider(
-                        "Compression Level",
-                        options=["low", "medium", "high"],
-                        value="medium"
-                    )
-                    pdf_operations["compress"] = {"level": compression_level}
+                   st.markdown("#### Compression Settings")
+                   compression_mode = st.radio("Compression Mode",["Preset", "Custom"],help="Choose between predefined presets or custom settings")
+                   if compression_mode == "Preset":
+                      preset = st.select_slider(
+                      "Compression Preset",
+                      options=["minimal", "low", "medium", "high", "maximum"],
+                      value="medium",
+                      help="Higher compression = smaller file size but lower quality")
+                      compression_options = get_compression_presets()[preset]
+                   else:
+                      st.markdown("##### Image Settings")
+                      col1, col2 = st.columns(2)
+                      with col1:
+                       image_quality = st.slider("Image Quality", 1, 100, 60,
+                                    help="Lower = smaller file but lower quality")
+                       image_dpi = st.slider("Image DPI", 72, 300, 150,
+                                help="Lower = smaller images")
+                      with col2:
+                       color_mode = st.selectbox("Color Mode", ["rgb", "grayscale"])
+                       image_format = st.selectbox("Image Format", ["jpeg", "jpeg2000"])
+                       st.markdown("##### Advanced Settings")
+                       col1, col2 = st.columns(2)
+                       with col1:
+                           downsample_threshold = st.slider("Downsample Threshold (DPI)", 
+                                           100, 400, 300)
+                           text_compression = st.checkbox("Compress Text", value=True)
+                       with col2:
+                           remove_metadata = st.checkbox("Remove Metadata", value=False)
+                           optimize_images = st.checkbox("Optimize Images", value=True)
+                           compression_options = {"image_quality": image_quality,"image_dpi": image_dpi,"downsample_threshold": downsample_threshold,"image_format": image_format,
+                                                 "color_mode": color_mode,"text_compression": text_compression,"remove_metadata": remove_metadata,"optimize_images": optimize_images}
+                   pdf_operations["compress"] = compression_options
             
                 if "Extract Pages" in operations:
                     st.markdown("#### Extract Pages")
