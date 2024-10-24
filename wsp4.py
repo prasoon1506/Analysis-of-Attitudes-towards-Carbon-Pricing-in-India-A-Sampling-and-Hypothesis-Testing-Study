@@ -767,7 +767,7 @@ def file_converter():
                                 "image": watermark_image,
                                 "size": st.slider("Size (% of page width)", 10, 100, 30)
                             })
-                       if (watermark_type == "Text" and watermark_options["text"]) or \(watermark_type == "Image" and watermark_image):
+                       if (watermark_type == "Text" and watermark_options["text"]) or (watermark_type == "Image" and watermark_image):
                         pdf_operations["watermark"] = watermark_options
                     if pdf_operations:
                       output = BytesIO()
