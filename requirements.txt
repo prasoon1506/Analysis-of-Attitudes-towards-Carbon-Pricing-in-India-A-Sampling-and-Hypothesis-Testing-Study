@@ -30,3 +30,4 @@ PyPDF2
 pypdf
 PyMuPDF
 Pillow
+distinctipy
