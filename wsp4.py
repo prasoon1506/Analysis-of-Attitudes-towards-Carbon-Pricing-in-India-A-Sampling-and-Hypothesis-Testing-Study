@@ -892,7 +892,6 @@ def file_converter():
                          st.metric("Height", f"{processed_image.height}px")
                         with col3:
                          st.metric("Size", f"{len(processed_bytes)/1024:.1f} KB")
-                        st.image(processed_image, use_column_width=True)
                         st.markdown("#### Size Comparison")
                         metrics = get_image_size_metrics(original_bytes, processed_bytes)
                         col1, col2, col3 = st.columns(3)
