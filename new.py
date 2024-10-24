@@ -23,7 +23,7 @@ def create_share_plot(df, selected_months):
     # Process data for selected months
     all_data = []
     for month in selected_months:
-        month_data = df[['Company', f'share_{month}', f'wsp_{month}']].copy()
+        month_data = df[['Company', f'Share_{month}', f'WSP_{month}']].copy()
         month_data.columns = ['Company', 'Share', 'WSP']
         month_data['Month'] = month.capitalize()
         all_data.append(month_data)
