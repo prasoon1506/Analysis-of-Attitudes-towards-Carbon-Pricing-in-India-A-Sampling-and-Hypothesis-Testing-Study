@@ -109,7 +109,182 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from scipy.stats import jarque_bera, kurtosis, skew
 from statsmodels.stats.stattools import omni_normtest
+def compress_pdf(input_pdf, compression_level="medium"):
+    """Compress PDF using different strategies based on compression level"""
+    from PyPDF2 import PdfReader, PdfWriter
+    from PIL import Image
+    from io import BytesIO
+    import fitz  # pymupdf
 
+    compression_params = {
+        "low": {"image_quality": 60, "dpi": 150},
+        "medium": {"image_quality": 40, "dpi": 120},
+        "high": {"image_quality": 20, "dpi": 96}
+    }
+    
+    params = compression_params[compression_level]
+    reader = PdfReader(input_pdf)
+    writer = PdfWriter()
+    
+    doc = fitz.open(stream=input_pdf.read(), filetype="pdf")
+    
+    for page_num in range(len(reader.pages)):
+        # Get original page
+        page = reader.pages[page_num]
+        
+        # Extract images from the page
+        page_doc = doc[page_num]
+        images = page_doc.get_images()
+        
+        # Create new PDF page
+        new_page = writer.add_page(page)
+        
+        # Compress images if present
+        for img_index, image in enumerate(images):
+            xref = image[0]
+            base_image = doc.extract_image(xref)
+            image_bytes = base_image["image"]
+            
+            # Process image with PIL
+            img = Image.open(BytesIO(image_bytes))
+            
+            # Convert to RGB if RGBA
+            if img.mode == 'RGBA':
+                img = img.convert('RGB')
+            
+            # Calculate new size based on DPI
+            width = int(img.width * params["dpi"] / 72)
+            height = int(img.height * params["dpi"] / 72)
+            img = img.resize((width, height), Image.Resampling.LANCZOS)
+            
+            # Save compressed image
+            img_buffer = BytesIO()
+            img.save(img_buffer, format="JPEG", quality=params["image_quality"], optimize=True)
+            img_buffer.seek(0)
+    
+    output = BytesIO()
+    writer.write(output)
+    return output
+
+def add_watermark(pdf_writer, watermark_options):
+    """Enhanced watermark function supporting text and image watermarks with positioning"""
+    from reportlab.pdfgen.canvas import Canvas
+    from reportlab.lib.colors import Color
+    from pypdf import PdfReader
+    from PIL import Image
+    from io import BytesIO
+    
+    # Create watermark
+    watermark_buffer = BytesIO()
+    c = Canvas(watermark_buffer)
+    
+    # Get page dimensions from first page
+    first_page = pdf_writer.pages[0]
+    page_width = float(first_page.mediabox.width)
+    page_height = float(first_page.mediabox.height)
+    
+    if watermark_options["type"] == "text":
+        # Text watermark settings
+        text = watermark_options["text"]
+        color = watermark_options["color"]
+        font_size = watermark_options["size"]
+        opacity = watermark_options["opacity"]
+        angle = watermark_options["angle"]
+        position = watermark_options["position"]
+        
+        # Convert hex color to RGB
+        r = int(color[1:3], 16) / 255
+        g = int(color[3:5], 16) / 255
+        b = int(color[5:7], 16) / 255
+        
+        c.setFillColor(Color(r, g, b, alpha=opacity))
+        c.setFont("Helvetica", font_size)
+        
+        # Calculate position
+        if position == "center":
+            x, y = page_width/2, page_height/2
+        elif position == "top-left":
+            x, y = 50, page_height-50
+        elif position == "top-right":
+            x, y = page_width-50, page_height-50
+        elif position == "bottom-left":
+            x, y = 50, 50
+        elif position == "bottom-right":
+            x, y = page_width-50, 50
+        
+        # Add rotated watermark text
+        c.saveState()
+        c.translate(x, y)
+        c.rotate(angle)
+        c.drawString(-len(text)*font_size/4, 0, text)
+        c.restoreState()
+        
+    else:  # Image watermark
+        image = Image.open(watermark_options["image"])
+        opacity = watermark_options["opacity"]
+        angle = watermark_options["angle"]
+        position = watermark_options["position"]
+        size = watermark_options["size"]  # percentage of page width
+        
+        # Calculate image dimensions
+        img_width = page_width * size / 100
+        img_height = img_width * image.height / image.width
+        
+        # Calculate position
+        if position == "center":
+            x, y = (page_width-img_width)/2, (page_height-img_height)/2
+        elif position == "top-left":
+            x, y = 0, page_height-img_height
+        elif position == "top-right":
+            x, y = page_width-img_width, page_height-img_height
+        elif position == "bottom-left":
+            x, y = 0, 0
+        elif position == "bottom-right":
+            x, y = page_width-img_width, 0
+        
+        # Save image with transparency
+        img_buffer = BytesIO()
+        if image.mode != 'RGBA':
+            image = image.convert('RGBA')
+        image.putalpha(int(opacity * 255))
+        image.save(img_buffer, format='PNG')
+        img_buffer.seek(0)
+        
+        # Add rotated image watermark
+        c.saveState()
+        c.translate(x + img_width/2, y + img_height/2)
+        c.rotate(angle)
+        c.translate(-img_width/2, -img_height/2)
+        c.drawImage(ImageReader(img_buffer), 0, 0, width=img_width, height=img_height)
+        c.restoreState()
+    
+    c.save()
+    
+    # Create PDF from watermark
+    watermark_buffer.seek(0)
+    watermark_pdf = PdfReader(watermark_buffer)
+    
+    # Apply watermark to selected pages
+    selected_pages = watermark_options.get("pages", "all")
+    for i, page in enumerate(pdf_writer.pages):
+        if selected_pages == "all" or (i+1) in selected_pages:
+            page.merge_page(watermark_pdf.pages[0])
+    
+    return pdf_writer
+
+def get_pdf_preview(pdf_file, page_num=0):
+    """Generate preview image for a PDF page"""
+    import fitz
+    from PIL import Image
+    
+    doc = fitz.open(stream=pdf_file.read(), filetype="pdf")
+    page = doc[page_num]
+    
+    # Render page to image
+    pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))
+    img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+    
+    return img
 def process_pdf(input_pdf, operations):
     """Process PDF with various operations"""
     from PyPDF2 import PdfReader, PdfWriter
@@ -146,43 +321,17 @@ def process_pdf(input_pdf, operations):
     output = BytesIO()
     writer.write(output)
     return output
-def add_watermark(pdf_writer, text, color, font_size=40, opacity=0.3):
-    """Add watermark to PDF pages"""
-    from reportlab.pdfgen.canvas import Canvas
-    from reportlab.lib.colors import Color
-    from pypdf import PdfReader
-    from io import BytesIO
+def get_image_size_metrics(original_image_bytes, processed_image_bytes):
+    """Calculate size metrics for original and processed images"""
+    original_size = len(original_image_bytes) / 1024  # KB
+    processed_size = len(processed_image_bytes) / 1024  # KB
+    size_change = ((original_size - processed_size) / original_size) * 100
     
-    # Create watermark
-    watermark_buffer = BytesIO()
-    c = Canvas(watermark_buffer)
-    
-    # Convert hex color to RGB
-    r = int(color[1:3], 16) / 255
-    g = int(color[3:5], 16) / 255
-    b = int(color[5:7], 16) / 255
-    
-    c.setFillColor(Color(r, g, b, alpha=opacity))
-    c.setFont("Helvetica", font_size)
-    
-    # Add rotated watermark text
-    c.saveState()
-    c.translate(300, 400)
-    c.rotate(45)
-    c.drawString(0, 0, text)
-    c.restoreState()
-    
-    c.save()
-    
-    # Create PDF from watermark
-    watermark_buffer.seek(0)
-    watermark_pdf = PdfReader(watermark_buffer)
-    
-    # Merge watermark with each page
-    for page in pdf_writer.pages:
-        page.merge_page(watermark_pdf.pages[0])
-    
-    return pdf_writer
+    return {
+        'original_size': original_size,
+        'processed_size': processed_size,
+        'size_change': size_change
+    }
 
 def process_image(image, operations):
     """Process image with various operations"""
@@ -528,13 +677,17 @@ def file_converter():
                 
                 operations = st.multiselect(
                     "Select operations to perform",
-                    ["Extract Pages", "Merge PDFs", "Rotate Pages", "Add Watermark", 
+                    ["Extract Pages", "Merge PDFs", "Rotate Pages", "Add Watermark","Compress", 
                      "Resize", "Crop"]
                 )
                 
                 try:
                     pdf_operations = {}
-                    
+                    if "Compress" in operations:
+                      st.markdown("#### Compression Settings")
+                      compression_level = st.select_slider( "Compression Level",options=["low", "medium", "high"],value="medium")
+                      pdf_operations["compress"] = {"level": compression_level}
+                
                     if "Extract Pages" in operations:
                         st.markdown("#### Extract Pages")
                         start_page = st.number_input("Start page", min_value=1, 
@@ -583,70 +736,80 @@ def file_converter():
                         )
                         if additional_pdfs:
                             pdf_operations["merge"] = {"files": additional_pdfs}
-                    
                     if "Add Watermark" in operations:
-                        st.markdown("#### Add Watermark")
-                        watermark_text = st.text_input("Watermark text")
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            watermark_color = st.color_picker("Color", "#000000")
-                            watermark_size = st.slider("Size", 20, 100, 40)
-                        with col2:
-                            watermark_opacity = st.slider("Opacity", 0.1, 1.0, 0.3)
-                        if watermark_text:
-                            pdf_operations["watermark"] = {
-                                "text": watermark_text,
-                                "color": watermark_color,
-                                "size": watermark_size,
-                                "opacity": watermark_opacity
-                            }
-                    
+                       st.markdown("#### Add Watermark")
+                       watermark_type = st.radio("Watermark Type", ["Text", "Image"])
+                       watermark_options = {
+                        "type": watermark_type.lower(),
+                        "position": st.selectbox(
+                            "Position",
+                            ["center", "top-left", "top-right", "bottom-left", "bottom-right"]
+                        ),
+                        "angle": st.slider("Rotation Angle", -180, 180, 45),
+                        "opacity": st.slider("Opacity", 0.1, 1.0, 0.3)}
+                       page_selection = st.radio("Apply watermark to", ["All Pages", "Selected Pages"])
+                       if page_selection == "Selected Pages":
+                        selected_pages = st.multiselect("Select pages",range(1, total_pages + 1) )
+                        watermark_options["pages"] = selected_pages
+                       else:
+                        watermark_options["pages"] = "all"  
+                       if watermark_type == "Text":
+                        watermark_options.update({
+                            "text": st.text_input("Watermark text"),
+                            "color": st.color_picker("Color", "#000000"),
+                            "size": st.slider("Size", 20, 100, 40) })
+                       else:
+                        watermark_image = st.file_uploader(
+                            "Upload watermark image",
+                            type=["png", "jpg", "jpeg"])
+                        if watermark_image:
+                            watermark_options.update({
+                                "image": watermark_image,
+                                "size": st.slider("Size (% of page width)", 10, 100, 30)
+                            })
+                       if (watermark_type == "Text" and watermark_options["text"]) or \(watermark_type == "Image" and watermark_image):
+                        pdf_operations["watermark"] = watermark_options
                     if pdf_operations:
-                        # Process PDF with selected operations
-                        output = process_pdf(uploaded_file, pdf_operations)
-                        
-                        # If watermark was requested, apply it last
-                        if "watermark" in pdf_operations:
-                            output.seek(0)
-                            pdf_writer = PdfWriter()
-                            temp_reader = PdfReader(output)
-                            for page in temp_reader.pages:
-                                pdf_writer.add_page(page)
-                            pdf_writer = add_watermark(
-                                pdf_writer,
-                                pdf_operations["watermark"]["text"],
-                                pdf_operations["watermark"]["color"],
-                                pdf_operations["watermark"]["size"],
-                                pdf_operations["watermark"]["opacity"]
-                            )
-                            final_output = BytesIO()
-                            pdf_writer.write(final_output)
-                            output = final_output
-                        
-                        # Show download button
-                        st.download_button(
-                            label="📥 Download Modified PDF",
-                            data=output.getvalue(),
-                            file_name=f"modified_{uploaded_file.name}",
-                            mime="application/pdf"
-                        )
-                        
-                        # Show file size comparison
-                        original_size = len(uploaded_file.getvalue()) / 1024  # KB
-                        new_size = len(output.getvalue()) / 1024  # KB
-                        
-                        col1, col2, col3 = st.columns(3)
-                        with col1:
-                            st.metric("Original Size", f"{original_size:.1f} KB")
-                        with col2:
-                            st.metric("New Size", f"{new_size:.1f} KB")
-                        with col3:
-                            reduction = ((original_size - new_size) / original_size) * 100
-                            st.metric("Size Reduction", f"{reduction:.1f}%")
-                
+                      output = BytesIO()
+                      uploaded_file.seek(0)
+                      if "compress" in pdf_operations:
+                        output = compress_pdf(uploaded_file,pdf_operations["compress"]["level"])
+                        input_pdf = output
+                      else:
+                        input_pdf = uploaded_file
+                      output = process_pdf(input_pdf, pdf_operations)
+                      if "watermark" in pdf_operations:
+                        output.seek(0)
+                        pdf_writer = PdfWriter()
+                        temp_reader = PdfReader(output)
+                        for page in temp_reader.pages:
+                            pdf_writer.add_page(page)
+                        pdf_writer = add_watermark(pdf_writer, pdf_operations["watermark"])
+                        final_output = BytesIO()
+                        pdf_writer.write(final_output)
+                        output = final_output
+                      with col2:
+                        st.markdown("#### Processed PDF")
+                        output.seek(0)
+                        processed_preview = get_pdf_preview(output, preview_page)
+                        st.image(processed_preview, use_column_width=True)
+                      st.download_button(
+                        label="📥 Download Modified PDF",
+                        data=output.getvalue(),
+                        file_name=f"modified_{uploaded_file.name}",
+                        mime="application/pdf")
+                      original_size = len(uploaded_file.getvalue()) / 1024  # KB
+                      new_size = len(output.getvalue()) / 1024  # KB
+                      col1, col2, col3 = st.columns(3)
+                      with col1:
+                        st.metric("Original Size", f"{original_size:.1f} KB")
+                      with col2:
+                        st.metric("New Size", f"{new_size:.1f} KB")
+                      with col3:
+                        reduction = ((original_size - new_size) / original_size) * 100
+                        st.metric("Size Change", f"{reduction:.1f}%")
                 except Exception as e:
                     st.error(f"Error: {str(e)}")
-            
             st.markdown('</div>', unsafe_allow_html=True)
     
     # Add new Image Editor section
@@ -718,17 +881,35 @@ def file_converter():
                         # Save processed image
                         output = BytesIO()
                         if quality is not None:
-                            processed_image.save(output, format=image.format, quality=quality)
+                            processed_image.save(output, format=image.format, quality=quality, optimize=True)
                         else:
-                            processed_image.save(output, format=image.format)
-                        
+                            processed_image.save(output, format=image.format, optimize=True)
+                        processed_bytes = output.getvalue()
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                         st.metric("Width", f"{processed_image.width}px")
+                        with col2:
+                         st.metric("Height", f"{processed_image.height}px")
+                        with col3:
+                         st.metric("Size", f"{len(processed_bytes)/1024:.1f} KB")
+                        st.image(processed_image, use_column_width=True)
+                        st.markdown("#### Size Comparison")
+                        metrics = get_image_size_metrics(original_bytes, processed_bytes)
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                         st.metric("Original Size", f"{metrics['original_size']:.1f} KB")
+                        with col2:
+                         st.metric("New Size", f"{metrics['processed_size']:.1f} KB")
+                        with col3:
+                         st.metric(
+                            "Size Change", 
+                            f"{metrics['size_change']:.1f}%",
+                            delta_color="inverse"  # Green if size reduced, red if increased)
                         st.download_button(
-                            label="📥 Download Processed Image",
-                            data=output.getvalue(),
-                            file_name=f"processed_{uploaded_file.name}",
-                            mime=f"image/{image.format.lower()}"
-                        )
-                
+                        label="📥 Download Processed Image",
+                        data=processed_bytes,
+                        file_name=f"processed_{uploaded_file.name}",
+                        mime=f"image/{image.format.lower()}")
                 except Exception as e:
                     st.error(f"Error: {str(e)}")
             
