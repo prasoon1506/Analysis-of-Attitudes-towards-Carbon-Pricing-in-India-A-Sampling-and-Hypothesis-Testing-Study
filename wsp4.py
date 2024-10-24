@@ -684,7 +684,7 @@ def file_converter():
                         output.seek(0)
                         processed_preview = get_pdf_preview(output, preview_page)
                         st.image(processed_preview, use_column_width=True)
-             try:
+                try:
                     pdf_operations = {}
                     if "Compress" in operations:
                       st.markdown("#### Compression Settings")
@@ -806,7 +806,7 @@ def file_converter():
                         with col3:
                          reduction = ((original_size - new_size) / original_size) * 100
                          st.metric("Size Change", f"{reduction:.1f}%")
-             except Exception as e:
+                except Exception as e:
                     st.error(f"Error: {str(e)}")
                 
         st.markdown('</div>', unsafe_allow_html=True)
