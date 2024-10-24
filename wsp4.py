@@ -670,129 +670,143 @@ def file_converter():
             
             st.markdown('</div>', unsafe_allow_html=True)
     elif converter_type == "PDF Editor":
-        st.markdown("### PDF Editor")
-        
-        with st.container():
-            st.markdown('<div class="converter-card">', unsafe_allow_html=True)
-            
-            uploaded_file = st.file_uploader("Upload PDF file", type=["pdf"], key="pdf_editor")
-            
-            if uploaded_file is not None:
-                col1, col2 = st.columns(2)
-                pdf_reader = PdfReader(uploaded_file)
-                total_pages = len(pdf_reader.pages)
-            
-                with col1:
-                 st.markdown("#### Original PDF")
-                 preview_page = st.number_input("Preview page", 1, total_pages, 1) - 1
-                 uploaded_file.seek(0)
-                 original_preview = get_pdf_preview(uploaded_file, preview_page)
-                 st.image(original_preview, use_column_width=True)
-                 pdf_reader = PdfReader(uploaded_file)
-                 first_page = pdf_reader.pages[0]
-                 operations = st.multiselect(
+      st.markdown("### PDF Editor") 
+      with st.container():
+        st.markdown('<div class="converter-card">', unsafe_allow_html=True) 
+        uploaded_file = st.file_uploader("Upload PDF file", type=["pdf"], key="pdf_editor")
+        if uploaded_file is not None:
+            col1, col2 = st.columns(2)
+            pdf_reader = PdfReader(uploaded_file)
+            total_pages = len(pdf_reader.pages)
+            with col1:
+                st.markdown("#### Original PDF")
+                preview_page = st.number_input("Preview page", 1, total_pages, 1) - 1
+                uploaded_file.seek(0)
+                original_preview = get_pdf_preview(uploaded_file, preview_page)
+                st.image(original_preview, use_column_width=True)
+                operations = st.multiselect(
                     "Select operations to perform",
-                    ["Extract Pages", "Merge PDFs", "Rotate Pages", "Add Watermark","Compress", 
+                    ["Extract Pages", "Merge PDFs", "Rotate Pages", "Add Watermark", "Compress", 
                      "Resize", "Crop"])
+            try:
+                pdf_operations = {}
+                if "Compress" in operations:
+                    st.markdown("#### Compression Settings")
+                    compression_level = st.select_slider(
+                        "Compression Level",
+                        options=["low", "medium", "high"],
+                        value="medium"
+                    )
+                    pdf_operations["compress"] = {"level": compression_level}
+            
+                if "Extract Pages" in operations:
+                    st.markdown("#### Extract Pages")
+                    start_page = st.number_input("Start page", min_value=1, 
+                                               max_value=len(pdf_reader.pages), value=1)
+                    end_page = st.number_input("End page", min_value=start_page, 
+                                             max_value=len(pdf_reader.pages), value=start_page)
+                    pdf_operations["extract"] = {"start": start_page, "end": end_page}
                 
-                try:
-                    pdf_operations = {}
-                    if "Compress" in operations:
-                      st.markdown("#### Compression Settings")
-                      compression_level = st.select_slider( "Compression Level",options=["low", "medium", "high"],value="medium")
-                      pdf_operations["compress"] = {"level": compression_level}
+                if "Resize" in operations:
+                    st.markdown("#### Resize PDF")
+                    scale = st.slider("Scale percentage", 1, 200, 100,
+                                    help="100% is original size")
+                    pdf_operations["resize"] = {"scale": scale}
                 
-                    if "Extract Pages" in operations:
-                        st.markdown("#### Extract Pages")
-                        start_page = st.number_input("Start page", min_value=1, 
-                                                   max_value=len(pdf_reader.pages), value=1)
-                        end_page = st.number_input("End page", min_value=start_page, 
-                                                 max_value=len(pdf_reader.pages), value=start_page)
-                        
-                        # Handle page extraction in process_pdf
-                        pdf_operations["extract"] = {"start": start_page, "end": end_page}
-                    
-                    if "Resize" in operations:
-                        st.markdown("#### Resize PDF")
-                        scale = st.slider("Scale percentage", 1, 200, 100,
-                                        help="100% is original size")
-                        pdf_operations["resize"] = {"scale": scale}
-                    
-                    if "Crop" in operations:
-                        st.markdown("#### Crop PDF")
-                        st.info("Values are in percentage of original size")
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            left = st.number_input("Left", 0, 100, 0)
-                            right = st.number_input("Right", 0, 100, 100)
-                        with col2:
-                            top = st.number_input("Top", 0, 100, 100)
-                            bottom = st.number_input("Bottom", 0, 100, 0)
-                        pdf_operations["crop"] = {
-                            "left": left,
-                            "right": right,
-                            "top": top,
-                            "bottom": bottom
-                        }
-                    
-                    if "Rotate Pages" in operations:
-                        st.markdown("#### Rotate Pages")
-                        rotation = st.selectbox("Rotation angle", [90, 180, 270])
-                        pdf_operations["rotate"] = {"angle": rotation}
-                    
-                    if "Merge PDFs" in operations:
-                        st.markdown("#### Merge PDFs")
-                        additional_pdfs = st.file_uploader(
-                            "Upload PDFs to merge",
-                            type=["pdf"],
-                            accept_multiple_files=True,
-                            key="merge_pdfs"
-                        )
-                        if additional_pdfs:
-                            pdf_operations["merge"] = {"files": additional_pdfs}
-                    if "Add Watermark" in operations:
-                       st.markdown("#### Add Watermark")
-                       watermark_type = st.radio("Watermark Type", ["Text", "Image"])
-                       watermark_options = {
+                if "Crop" in operations:
+                    st.markdown("#### Crop PDF")
+                    st.info("Values are in percentage of original size")
+                    crop_col1, crop_col2 = st.columns(2)
+                    with crop_col1:
+                        left = st.number_input("Left", 0, 100, 0)
+                        right = st.number_input("Right", 0, 100, 100)
+                    with crop_col2:
+                        top = st.number_input("Top", 0, 100, 100)
+                        bottom = st.number_input("Bottom", 0, 100, 0)
+                    pdf_operations["crop"] = {
+                        "left": left,
+                        "right": right,
+                        "top": top,
+                        "bottom": bottom
+                    }
+                
+                if "Rotate Pages" in operations:
+                    st.markdown("#### Rotate Pages")
+                    rotation = st.selectbox("Rotation angle", [90, 180, 270])
+                    pdf_operations["rotate"] = {"angle": rotation}
+                
+                if "Merge PDFs" in operations:
+                    st.markdown("#### Merge PDFs")
+                    additional_pdfs = st.file_uploader(
+                        "Upload PDFs to merge",
+                        type=["pdf"],
+                        accept_multiple_files=True,
+                        key="merge_pdfs"
+                    )
+                    if additional_pdfs:
+                        pdf_operations["merge"] = {"files": additional_pdfs}
+                
+                if "Add Watermark" in operations:
+                    st.markdown("#### Add Watermark")
+                    watermark_type = st.radio("Watermark Type", ["Text", "Image"])
+                    watermark_options = {
                         "type": watermark_type.lower(),
                         "position": st.selectbox(
                             "Position",
                             ["center", "top-left", "top-right", "bottom-left", "bottom-right"]
                         ),
                         "angle": st.slider("Rotation Angle", -180, 180, 45),
-                        "opacity": st.slider("Opacity", 0.1, 1.0, 0.3)}
-                       page_selection = st.radio("Apply watermark to", ["All Pages", "Selected Pages"])
-                       if page_selection == "Selected Pages":
-                        selected_pages = st.multiselect("Select pages",range(1, total_pages + 1) )
+                        "opacity": st.slider("Opacity", 0.1, 1.0, 0.3)
+                    }
+                    
+                    page_selection = st.radio("Apply watermark to", ["All Pages", "Selected Pages"])
+                    if page_selection == "Selected Pages":
+                        selected_pages = st.multiselect(
+                            "Select pages",
+                            range(1, total_pages + 1)
+                        )
                         watermark_options["pages"] = selected_pages
-                       else:
-                        watermark_options["pages"] = "all"  
-                       if watermark_type == "Text":
+                    else:
+                        watermark_options["pages"] = "all"
+                    
+                    if watermark_type == "Text":
                         watermark_options.update({
                             "text": st.text_input("Watermark text"),
                             "color": st.color_picker("Color", "#000000"),
-                            "size": st.slider("Size", 20, 100, 40) })
-                       else:
+                            "size": st.slider("Size", 20, 100, 40)
+                        })
+                    else:
                         watermark_image = st.file_uploader(
                             "Upload watermark image",
-                            type=["png", "jpg", "jpeg"])
+                            type=["png", "jpg", "jpeg"]
+                        )
                         if watermark_image:
                             watermark_options.update({
                                 "image": watermark_image,
                                 "size": st.slider("Size (% of page width)", 10, 100, 30)
                             })
-                       if (watermark_type == "Text" and watermark_options["text"]) or (watermark_type == "Image" and watermark_image):
+                        
+                    if (watermark_type == "Text" and watermark_options["text"]) or \
+                       (watermark_type == "Image" and watermark_image):
                         pdf_operations["watermark"] = watermark_options
-                    if pdf_operations:
-                      output = BytesIO()
-                      uploaded_file.seek(0)
-                      if "compress" in pdf_operations:
-                        output = compress_pdf(uploaded_file,pdf_operations["compress"]["level"])
+
+                # Process PDF if any operations are selected
+                if pdf_operations:
+                    output = BytesIO()
+                    uploaded_file.seek(0)
+                    
+                    # Handle compression first if selected
+                    if "compress" in pdf_operations:
+                        output = compress_pdf(uploaded_file, pdf_operations["compress"]["level"])
                         input_pdf = output
-                      else:
+                    else:
                         input_pdf = uploaded_file
-                      output = process_pdf(input_pdf, pdf_operations)
-                      if "watermark" in pdf_operations:
+                    
+                    # Process other operations
+                    output = process_pdf(input_pdf, pdf_operations)
+                    
+                    # Handle watermark if selected
+                    if "watermark" in pdf_operations:
                         output.seek(0)
                         pdf_writer = PdfWriter()
                         temp_reader = PdfReader(output)
@@ -802,30 +816,40 @@ def file_converter():
                         final_output = BytesIO()
                         pdf_writer.write(final_output)
                         output = final_output
-                        with col2:
-                         st.markdown("#### Processed PDF")
-                         output.seek(0)
-                         processed_preview = get_pdf_preview(output, preview_page)
-                         st.image(processed_preview, use_column_width=True)
-                        st.download_button(
+                    
+                    # Show preview and metrics for all operations
+                    with col2:
+                        st.markdown("#### Processed PDF")
+                        output.seek(0)
+                        processed_preview = get_pdf_preview(output, preview_page)
+                        st.image(processed_preview, use_column_width=True)
+                    
+                    # Display metrics
+                    original_size = len(uploaded_file.getvalue()) / 1024  # KB
+                    output.seek(0)
+                    new_size = len(output.getvalue()) / 1024  # KB
+                    
+                    metric_col1, metric_col2, metric_col3 = st.columns(3)
+                    with metric_col1:
+                        st.metric("Original Size", f"{original_size:.1f} KB")
+                    with metric_col2:
+                        st.metric("New Size", f"{new_size:.1f} KB")
+                    with metric_col3:
+                        reduction = ((original_size - new_size) / original_size) * 100
+                        st.metric("Size Change", f"{reduction:.1f}%")
+                    
+                    # Download button
+                    st.download_button(
                         label="📥 Download Modified PDF",
                         data=output.getvalue(),
                         file_name=f"modified_{uploaded_file.name}",
-                        mime="application/pdf")
-                        original_size = len(uploaded_file.getvalue()) / 1024  # KB
-                        new_size = len(output.getvalue()) / 1024  # KB
-                        col1, col2, col3 = st.columns(3)
-                        with col1:
-                         st.metric("Original Size", f"{original_size:.1f} KB")
-                        with col2:
-                         st.metric("New Size", f"{new_size:.1f} KB")
-                        with col3:
-                         reduction = ((original_size - new_size) / original_size) * 100
-                         st.metric("Size Change", f"{reduction:.1f}%")
-                except Exception as e:
-                    st.error(f"Error: {str(e)}")
-                
-        st.markdown('</div>', unsafe_allow_html=True)
+                        mime="application/pdf"
+                    )
+                    
+            except Exception as e:
+                st.error(f"Error: {str(e)}")
+            
+      st.markdown('</div>', unsafe_allow_html=True)
     
     # Add new Image Editor section
     elif converter_type == "Image Editor":
