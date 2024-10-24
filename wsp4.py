@@ -123,10 +123,17 @@ def compress_pdf(input_pdf, compression_level="medium"):
     }
     
     params = compression_params[compression_level]
-    reader = PdfReader(input_pdf)
+    
+    # Create a copy of the input stream
+    input_stream = BytesIO(input_pdf.read())
+    input_pdf.seek(0)  # Reset the original stream position
+    
+    reader = PdfReader(input_stream)
     writer = PdfWriter()
     
-    doc = fitz.open(stream=input_pdf.read(), filetype="pdf")
+    # Create a new stream for fitz
+    fitz_stream = BytesIO(input_stream.getvalue())
+    doc = fitz.open(stream=fitz_stream, filetype="pdf")
     
     for page_num in range(len(reader.pages)):
         # Get original page
@@ -141,31 +148,39 @@ def compress_pdf(input_pdf, compression_level="medium"):
         
         # Compress images if present
         for img_index, image in enumerate(images):
-            xref = image[0]
-            base_image = doc.extract_image(xref)
-            image_bytes = base_image["image"]
-            
-            # Process image with PIL
-            img = Image.open(BytesIO(image_bytes))
-            
-            # Convert to RGB if RGBA
-            if img.mode == 'RGBA':
-                img = img.convert('RGB')
-            
-            # Calculate new size based on DPI
-            width = int(img.width * params["dpi"] / 72)
-            height = int(img.height * params["dpi"] / 72)
-            img = img.resize((width, height), Image.Resampling.LANCZOS)
-            
-            # Save compressed image
-            img_buffer = BytesIO()
-            img.save(img_buffer, format="JPEG", quality=params["image_quality"], optimize=True)
-            img_buffer.seek(0)
+            try:
+                xref = image[0]
+                base_image = doc.extract_image(xref)
+                image_bytes = base_image["image"]
+                
+                # Process image with PIL
+                img = Image.open(BytesIO(image_bytes))
+                
+                # Convert to RGB if RGBA
+                if img.mode == 'RGBA':
+                    img = img.convert('RGB')
+                
+                # Calculate new size based on DPI
+                width = int(img.width * params["dpi"] / 72)
+                height = int(img.height * params["dpi"] / 72)
+                img = img.resize((width, height), Image.Resampling.LANCZOS)
+                
+                # Save compressed image
+                img_buffer = BytesIO()
+                img.save(img_buffer, format="JPEG", quality=params["image_quality"], optimize=True)
+                img_buffer.seek(0)
+            except Exception as e:
+                continue  # Skip problematic images
     
+    # Write the compressed PDF to a new BytesIO stream
     output = BytesIO()
     writer.write(output)
+    output.seek(0)
+    
+    # Clean up
+    doc.close()
+    
     return output
-
 def add_watermark(pdf_writer, watermark_options):
     """Enhanced watermark function supporting text and image watermarks with positioning"""
     from reportlab.pdfgen.canvas import Canvas
