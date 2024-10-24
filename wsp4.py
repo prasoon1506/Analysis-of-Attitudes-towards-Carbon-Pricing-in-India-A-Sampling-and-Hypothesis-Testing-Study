@@ -804,6 +804,11 @@ def file_converter():
                          st.metric("Size Change", f"{reduction:.1f}%")
                  except Exception as e:
                     st.error(f"Error: {str(e)}")
+                with col2:
+                        st.markdown("#### Processed PDF")
+                        output.seek(0)
+                        processed_preview = get_pdf_preview(output, preview_page)
+                        st.image(processed_preview, use_column_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
     
     # Add new Image Editor section
