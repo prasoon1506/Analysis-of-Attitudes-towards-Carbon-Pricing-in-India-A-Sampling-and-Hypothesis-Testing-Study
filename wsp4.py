@@ -675,13 +675,12 @@ def file_converter():
                  st.image(original_preview, use_column_width=True)
                  pdf_reader = PdfReader(uploaded_file)
                  first_page = pdf_reader.pages[0]
-                
                  operations = st.multiselect(
                     "Select operations to perform",
                     ["Extract Pages", "Merge PDFs", "Rotate Pages", "Add Watermark","Compress", 
                      "Resize", "Crop"])
                 
-              try:
+                 try:
                     pdf_operations = {}
                     if "Compress" in operations:
                       st.markdown("#### Compression Settings")
