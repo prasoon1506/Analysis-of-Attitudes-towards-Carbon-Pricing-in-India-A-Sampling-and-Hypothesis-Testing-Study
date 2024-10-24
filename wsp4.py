@@ -679,8 +679,12 @@ def file_converter():
                     "Select operations to perform",
                     ["Extract Pages", "Merge PDFs", "Rotate Pages", "Add Watermark","Compress", 
                      "Resize", "Crop"])
-                
-                 try:
+                with col2:
+                        st.markdown("#### Processed PDF")
+                        output.seek(0)
+                        processed_preview = get_pdf_preview(output, preview_page)
+                        st.image(processed_preview, use_column_width=True)
+             try:
                     pdf_operations = {}
                     if "Compress" in operations:
                       st.markdown("#### Compression Settings")
@@ -802,13 +806,9 @@ def file_converter():
                         with col3:
                          reduction = ((original_size - new_size) / original_size) * 100
                          st.metric("Size Change", f"{reduction:.1f}%")
-                 except Exception as e:
+             except Exception as e:
                     st.error(f"Error: {str(e)}")
-                with col2:
-                        st.markdown("#### Processed PDF")
-                        output.seek(0)
-                        processed_preview = get_pdf_preview(output, preview_page)
-                        st.image(processed_preview, use_column_width=True)
+                
         st.markdown('</div>', unsafe_allow_html=True)
     
     # Add new Image Editor section
