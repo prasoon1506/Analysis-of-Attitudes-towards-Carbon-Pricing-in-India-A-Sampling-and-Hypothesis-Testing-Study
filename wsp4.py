@@ -1,7 +1,6 @@
 import os
 import streamlit as st
 import pandas as pd
-import original_bytes
 import openpyxl
 from io import BytesIO
 import base64
@@ -827,6 +826,7 @@ def file_converter():
             
             if uploaded_file is not None:
                 try:
+                    original_bytes = uploaded_file.getvalue()
                     image = Image.open(uploaded_file)
                     
                     # Show original image
