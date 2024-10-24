@@ -663,23 +663,23 @@ def file_converter():
             uploaded_file = st.file_uploader("Upload PDF file", type=["pdf"], key="pdf_editor")
             
             if uploaded_file is not None:
+                col1, col2 = st.columns(2)
                 pdf_reader = PdfReader(uploaded_file)
-                first_page = pdf_reader.pages[0]
-                
-                st.markdown("#### PDF Properties")
-                col1, col2, col3 = st.columns(3)
+                total_pages = len(pdf_reader.pages)
+            
                 with col1:
-                    st.metric("Pages", len(pdf_reader.pages))
-                with col2:
-                    st.metric("Width", f"{float(first_page.mediabox.width):.0f} pts")
-                with col3:
-                    st.metric("Height", f"{float(first_page.mediabox.height):.0f} pts")
+                 st.markdown("#### Original PDF")
+                 preview_page = st.number_input("Preview page", 1, total_pages, 1) - 1
+                 uploaded_file.seek(0)
+                 original_preview = get_pdf_preview(uploaded_file, preview_page)
+                 st.image(original_preview, use_column_width=True)
+                 pdf_reader = PdfReader(uploaded_file)
+                 first_page = pdf_reader.pages[0]
                 
                 operations = st.multiselect(
                     "Select operations to perform",
                     ["Extract Pages", "Merge PDFs", "Rotate Pages", "Add Watermark","Compress", 
-                     "Resize", "Crop"]
-                )
+                     "Resize", "Crop"])
                 
                 try:
                     pdf_operations = {}
@@ -788,7 +788,7 @@ def file_converter():
                         final_output = BytesIO()
                         pdf_writer.write(final_output)
                         output = final_output
-                      with col2:
+                with col2:
                         st.markdown("#### Processed PDF")
                         output.seek(0)
                         processed_preview = get_pdf_preview(output, preview_page)
