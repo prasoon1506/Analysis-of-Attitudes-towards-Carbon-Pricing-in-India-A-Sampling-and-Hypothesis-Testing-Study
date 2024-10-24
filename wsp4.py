@@ -929,13 +929,6 @@ def file_converter():
                     output = BytesIO()
                     uploaded_file.seek(0)
                     
-                    # Handle compression first if selected
-                    if "compress" in pdf_operations:
-                        output = compress_pdf(uploaded_file, pdf_operations["compress"]["level"])
-                        input_pdf = output
-                    else:
-                        input_pdf = uploaded_file
-                    
                     # Process other operations
                     output = process_pdf(input_pdf, pdf_operations)
                     
