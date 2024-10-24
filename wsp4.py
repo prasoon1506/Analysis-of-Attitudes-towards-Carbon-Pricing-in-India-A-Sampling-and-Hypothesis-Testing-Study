@@ -806,38 +806,6 @@ def file_converter():
                      "Resize", "Crop"])
             try:
                 pdf_operations = {}
-                if "Compress" in operations:
-                   st.markdown("#### Compression Settings")
-                   compression_mode = st.radio("Compression Mode",["Preset", "Custom"],help="Choose between predefined presets or custom settings")
-                   if compression_mode == "Preset":
-                      preset = st.select_slider(
-                      "Compression Preset",
-                      options=["minimal", "low", "medium", "high", "maximum"],
-                      value="medium",
-                      help="Higher compression = smaller file size but lower quality")
-                      compression_options = get_compression_presets()[preset]
-                   else:
-                      st.markdown("##### Image Settings")
-                      col1, col2 = st.columns(2)
-                      with col1:
-                       image_quality = st.slider("Image Quality", 1, 100, 60,
-                                    help="Lower = smaller file but lower quality")
-                       image_dpi = st.slider("Image DPI", 72, 300, 150,
-                                help="Lower = smaller images")
-                      with col2:
-                       color_mode = st.selectbox("Color Mode", ["rgb", "grayscale"])
-                       image_format = st.selectbox("Image Format", ["jpeg", "jpeg2000"])
-                       st.markdown("##### Advanced Settings")
-                       col1, col2 = st.columns(2)
-                       with col1:
-                           downsample_threshold = st.slider("Downsample Threshold (DPI)",100, 400, 300)
-                           text_compression = st.checkbox("Compress Text", value=True)
-                       with col2:
-                           remove_metadata = st.checkbox("Remove Metadata", value=False)
-                           optimize_images = st.checkbox("Optimize Images", value=True)
-                           compression_options = {"image_quality": image_quality,"image_dpi": image_dpi,"downsample_threshold": downsample_threshold,"image_format": image_format,
-                                                 "color_mode": color_mode,"text_compression": text_compression,"remove_metadata": remove_metadata,"optimize_images": optimize_images}
-                   pdf_operations["compress"] = compression_options
             
                 if "Extract Pages" in operations:
                     st.markdown("#### Extract Pages")
@@ -846,35 +814,6 @@ def file_converter():
                     end_page = st.number_input("End page", min_value=start_page, 
                                              max_value=len(pdf_reader.pages), value=start_page)
                     pdf_operations["extract"] = {"start": start_page, "end": end_page}
-                
-                if "Resize" in operations:
-                    st.markdown("#### Resize PDF")
-                    scale = st.slider("Scale percentage", 1, 200, 100,
-                                    help="100% is original size")
-                    pdf_operations["resize"] = {"scale": scale}
-                
-                if "Crop" in operations:
-                    st.markdown("#### Crop PDF")
-                    st.info("Values are in percentage of original size")
-                    crop_col1, crop_col2 = st.columns(2)
-                    with crop_col1:
-                        left = st.number_input("Left", 0, 100, 0)
-                        right = st.number_input("Right", 0, 100, 100)
-                    with crop_col2:
-                        top = st.number_input("Top", 0, 100, 100)
-                        bottom = st.number_input("Bottom", 0, 100, 0)
-                    pdf_operations["crop"] = {
-                        "left": left,
-                        "right": right,
-                        "top": top,
-                        "bottom": bottom
-                    }
-                
-                if "Rotate Pages" in operations:
-                    st.markdown("#### Rotate Pages")
-                    rotation = st.selectbox("Rotation angle", [90, 180, 270])
-                    pdf_operations["rotate"] = {"angle": rotation}
-                
                 if "Merge PDFs" in operations:
                     st.markdown("#### Merge PDFs")
                     additional_pdfs = st.file_uploader(
@@ -885,7 +824,10 @@ def file_converter():
                     )
                     if additional_pdfs:
                         pdf_operations["merge"] = {"files": additional_pdfs}
-                
+                if "Rotate Pages" in operations:
+                    st.markdown("#### Rotate Pages")
+                    rotation = st.selectbox("Rotation angle", [90, 180, 270])
+                    pdf_operations["rotate"] = {"angle": rotation}
                 if "Add Watermark" in operations:
                     st.markdown("#### Add Watermark")
                     watermark_type = st.radio("Watermark Type", ["Text", "Image"])
@@ -926,10 +868,62 @@ def file_converter():
                                 "size": st.slider("Size (% of page width)", 10, 100, 30)
                             })
                         
-                    if (watermark_type == "Text" and watermark_options["text"]) or \
-                       (watermark_type == "Image" and watermark_image):
+                    if (watermark_type == "Text" and watermark_options["text"]) or (watermark_type == "Image" and watermark_image):
                         pdf_operations["watermark"] = watermark_options
-
+                if "Compress" in operations:
+                   st.markdown("#### Compression Settings")
+                   compression_mode = st.radio("Compression Mode",["Preset", "Custom"],help="Choose between predefined presets or custom settings")
+                   if compression_mode == "Preset":
+                      preset = st.select_slider(
+                      "Compression Preset",
+                      options=["minimal", "low", "medium", "high", "maximum"],
+                      value="medium",
+                      help="Higher compression = smaller file size but lower quality")
+                      compression_options = get_compression_presets()[preset]
+                   else:
+                      st.markdown("##### Image Settings")
+                      col1, col2 = st.columns(2)
+                      with col1:
+                       image_quality = st.slider("Image Quality", 1, 100, 60,
+                                    help="Lower = smaller file but lower quality")
+                       image_dpi = st.slider("Image DPI", 72, 300, 150,
+                                help="Lower = smaller images")
+                      with col2:
+                       color_mode = st.selectbox("Color Mode", ["rgb", "grayscale"])
+                       image_format = st.selectbox("Image Format", ["jpeg", "jpeg2000"])
+                       st.markdown("##### Advanced Settings")
+                       col1, col2 = st.columns(2)
+                       with col1:
+                           downsample_threshold = st.slider("Downsample Threshold (DPI)",100, 400, 300)
+                           text_compression = st.checkbox("Compress Text", value=True)
+                       with col2:
+                           remove_metadata = st.checkbox("Remove Metadata", value=False)
+                           optimize_images = st.checkbox("Optimize Images", value=True)
+                           compression_options = {"image_quality": image_quality,"image_dpi": image_dpi,"downsample_threshold": downsample_threshold,"image_format": image_format,
+                                                 "color_mode": color_mode,"text_compression": text_compression,"remove_metadata": remove_metadata,"optimize_images": optimize_images}
+                   pdf_operations["compress"] = compression_options
+                if "Resize" in operations:
+                    st.markdown("#### Resize PDF")
+                    scale = st.slider("Scale percentage", 1, 200, 100,
+                                    help="100% is original size")
+                    pdf_operations["resize"] = {"scale": scale}
+                
+                if "Crop" in operations:
+                    st.markdown("#### Crop PDF")
+                    st.info("Values are in percentage of original size")
+                    crop_col1, crop_col2 = st.columns(2)
+                    with crop_col1:
+                        left = st.number_input("Left", 0, 100, 0)
+                        right = st.number_input("Right", 0, 100, 100)
+                    with crop_col2:
+                        top = st.number_input("Top", 0, 100, 100)
+                        bottom = st.number_input("Bottom", 0, 100, 0)
+                    pdf_operations["crop"] = {
+                        "left": left,
+                        "right": right,
+                        "top": top,
+                        "bottom": bottom
+                    }
                 # Process PDF if any operations are selected
                 if pdf_operations:
                     output = BytesIO()
