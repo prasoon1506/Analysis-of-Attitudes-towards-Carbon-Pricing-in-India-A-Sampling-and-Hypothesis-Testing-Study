@@ -679,11 +679,7 @@ def file_converter():
                     "Select operations to perform",
                     ["Extract Pages", "Merge PDFs", "Rotate Pages", "Add Watermark","Compress", 
                      "Resize", "Crop"])
-                with col2:
-                        st.markdown("#### Processed PDF")
-                        output.seek(0)
-                        processed_preview = get_pdf_preview(output, preview_page)
-                        st.image(processed_preview, use_column_width=True)
+                
                 try:
                     pdf_operations = {}
                     if "Compress" in operations:
@@ -791,6 +787,11 @@ def file_converter():
                         final_output = BytesIO()
                         pdf_writer.write(final_output)
                         output = final_output
+                        with col2:
+                         st.markdown("#### Processed PDF")
+                         output.seek(0)
+                         processed_preview = get_pdf_preview(output, preview_page)
+                         st.image(processed_preview, use_column_width=True)
                         st.download_button(
                         label="📥 Download Modified PDF",
                         data=output.getvalue(),
