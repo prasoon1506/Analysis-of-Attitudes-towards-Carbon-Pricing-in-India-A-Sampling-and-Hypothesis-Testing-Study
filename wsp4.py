@@ -930,7 +930,7 @@ def file_converter():
                     uploaded_file.seek(0)
                     
                     # Process other operations
-                    output = process_pdf(input_pdf, pdf_operations)
+                    output = process_pdf(uploaded_file, pdf_operations)
                     
                     # Handle watermark if selected
                     if "watermark" in pdf_operations:
