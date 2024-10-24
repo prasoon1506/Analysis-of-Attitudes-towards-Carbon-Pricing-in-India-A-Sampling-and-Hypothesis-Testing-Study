@@ -116,24 +116,36 @@ def process_pdf(input_pdf, operations):
     
     # Initialize writer
     writer = PdfWriter()
+    reader = PdfReader(input_pdf)
     
-    # Handle merging first if it exists
-    if "merge" in operations and operations["merge"]["files"]:
-        # Add pages from the main PDF
-        reader = PdfReader(input_pdf)
-        for page in reader.pages:
-            writer.add_page(page)
-        
-        # Add pages from additional PDFs
-        for additional_pdf in operations["merge"]["files"]:
-            reader = PdfReader(additional_pdf)
+    # Handle page extraction if specified
+    if "extract" in operations:
+        start_page = operations["extract"]["start"] - 1  # Convert to 0-based index
+        end_page = operations["extract"]["end"]  # Keep as is since we'll use range(start, end)
+        # Add only the specified range of pages
+        for page_num in range(start_page, end_page):
+            if page_num < len(reader.pages):
+                writer.add_page(reader.pages[page_num])
+    else:
+        # Handle merging if specified
+        if "merge" in operations and operations["merge"]["files"]:
+            # Add pages from the main PDF
             for page in reader.pages:
                 writer.add_page(page)
-    else:
-        # If no merging, just read the input PDF
-        reader = PdfReader(input_pdf)
-        for page in reader.pages:
-            writer.add_page(page)
+            
+            # Add pages from additional PDFs
+            for additional_pdf in operations["merge"]["files"]:
+                merge_reader = PdfReader(additional_pdf)
+                for page in merge_reader.pages:
+                    writer.add_page(page)
+        else:
+            # If no merging or extraction, just read the input PDF
+            for page in reader.pages:
+                writer.add_page(page)
+    
+    # If no pages were added (possibly due to invalid page range), return the original PDF
+    if len(writer.pages) == 0:
+        return BytesIO(input_pdf.read())
     
     # Get PDF dimensions from first page
     pdf_width = float(writer.pages[0].mediabox.width)
@@ -160,67 +172,11 @@ def process_pdf(input_pdf, operations):
             angle = operations["rotate"]["angle"]
             page.rotate(angle)
     
-    # Write to output if no compression
+    # Write to output
     output = BytesIO()
     writer.write(output)
     return output
 
-
-
-def get_compression_presets():
-    """Return predefined compression presets"""
-    return {
-        "maximum": {
-            "image_quality": 20,
-            "image_dpi": 96,
-            "downsample_threshold": 150,
-            "image_format": "jpeg",
-            "color_mode": "grayscale",
-            "text_compression": True,
-            "remove_metadata": True,
-            "optimize_images": True
-        },
-        "high": {
-            "image_quality": 30,
-            "image_dpi": 120,
-            "downsample_threshold": 200,
-            "image_format": "jpeg",
-            "color_mode": "rgb",
-            "text_compression": True,
-            "remove_metadata": True,
-            "optimize_images": True
-        },
-        "medium": {
-            "image_quality": 50,
-            "image_dpi": 150,
-            "downsample_threshold": 250,
-            "image_format": "jpeg",
-            "color_mode": "rgb",
-            "text_compression": True,
-            "remove_metadata": False,
-            "optimize_images": True
-        },
-        "low": {
-            "image_quality": 70,
-            "image_dpi": 200,
-            "downsample_threshold": 300,
-            "image_format": "jpeg",
-            "color_mode": "rgb",
-            "text_compression": True,
-            "remove_metadata": False,
-            "optimize_images": True
-        },
-        "minimal": {
-            "image_quality": 85,
-            "image_dpi": 250,
-            "downsample_threshold": 350,
-            "image_format": "jpeg",
-            "color_mode": "rgb",
-            "text_compression": True,
-            "remove_metadata": False,
-            "optimize_images": False
-        }
-    }
 def add_watermark(pdf_writer, watermark_options):
     """Enhanced watermark function supporting text and image watermarks with positioning"""
     from reportlab.pdfgen.canvas import Canvas
