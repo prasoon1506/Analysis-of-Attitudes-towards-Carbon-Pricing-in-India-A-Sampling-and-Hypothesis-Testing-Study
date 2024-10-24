@@ -830,8 +830,7 @@ def file_converter():
                        st.markdown("##### Advanced Settings")
                        col1, col2 = st.columns(2)
                        with col1:
-                           downsample_threshold = st.slider("Downsample Threshold (DPI)", 
-                                           100, 400, 300)
+                           downsample_threshold = st.slider("Downsample Threshold (DPI)",100, 400, 300)
                            text_compression = st.checkbox("Compress Text", value=True)
                        with col2:
                            remove_metadata = st.checkbox("Remove Metadata", value=False)
