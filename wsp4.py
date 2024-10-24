@@ -904,7 +904,7 @@ def file_converter():
                          st.metric(
                             "Size Change", 
                             f"{metrics['size_change']:.1f}%",
-                            delta_color="inverse"  # Green if size reduced, red if increased)
+                            delta_color="inverse")
                         st.download_button(
                         label="📥 Download Processed Image",
                         data=processed_bytes,
