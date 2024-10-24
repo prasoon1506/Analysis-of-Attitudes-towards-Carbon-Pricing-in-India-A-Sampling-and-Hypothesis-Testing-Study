@@ -177,6 +177,7 @@ def compress_pdf(input_pdf, compression_options):
             output = BytesIO()
             if options["image_format"] == "jpeg2000" and not force_jpeg:
                 try:
+                    # Fixed JPEG2000 compression to use quality_layers instead of level
                     img.save(output, format='JPEG2000', quality_layers=[options["image_quality"]])
                 except Exception:
                     # Fallback to JPEG if JPEG2000 fails
@@ -241,7 +242,6 @@ def compress_pdf(input_pdf, compression_options):
     doc.close()
     
     return output
-# Helper function to get compression presets
 def get_compression_presets():
     """Return predefined compression presets"""
     return {
