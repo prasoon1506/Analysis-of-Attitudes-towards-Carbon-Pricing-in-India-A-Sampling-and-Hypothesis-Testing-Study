@@ -122,7 +122,7 @@ def compress_pdf(input_pdf, compression_options):
         "image_quality": 60,
         "image_dpi": 150,
         "downsample_threshold": 300,
-        "image_format": "jpeg",
+        "image_format": "jpeg",  # Removed jpeg2000 as default
         "color_mode": "rgb",
         "text_compression": True,
         "remove_metadata": True,
@@ -132,116 +132,127 @@ def compress_pdf(input_pdf, compression_options):
     # Update defaults with provided options
     options = {**default_options, **compression_options}
     
-    # Create input streams
-    input_stream = BytesIO(input_pdf.read())
-    input_pdf.seek(0)
-    
-    # Initialize PDF reader and writer
-    reader = PdfReader(input_stream)
-    writer = PdfWriter()
-    
-    # Remove metadata if requested
-    if options["remove_metadata"]:
-        writer.add_metadata({})
-    
-    # Create fitz document for image extraction
-    fitz_stream = BytesIO(input_stream.getvalue())
-    doc = fitz.open(stream=fitz_stream, filetype="pdf")
-    
-    def compress_image(img, force_jpeg=False):
-        """Helper function to compress a single image"""
-        try:
-            # Convert RGBA to RGB if needed
-            if img.mode == 'RGBA':
-                background = Image.new('RGB', img.size, (255, 255, 255))
-                background.paste(img, mask=img.split()[3])
-                img = background
-            
-            # Convert to grayscale if specified
-            if options["color_mode"] == "grayscale":
-                img = img.convert('L')
-            
-            # Calculate new size based on DPI threshold
-            original_dpi = img.info.get('dpi', (300, 300))[0]
-            if original_dpi > options["downsample_threshold"]:
-                scale_factor = options["image_dpi"] / original_dpi
-                new_width = int(img.width * scale_factor)
-                new_height = int(img.height * scale_factor)
-                img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
-            
-            # Optimize image
-            if options["optimize_images"]:
-                img = img.copy()  # Create a copy to ensure optimization works
-            
-            # Save with compression
-            output = BytesIO()
-            if options["image_format"] == "jpeg2000" and not force_jpeg:
-                try:
-                    # Fixed JPEG2000 compression to use quality_layers instead of level
-                    img.save(output, format='JPEG2000', quality_layers=[options["image_quality"]])
-                except Exception:
-                    # Fallback to JPEG if JPEG2000 fails
-                    return compress_image(img, force_jpeg=True)
-            else:
-                img.save(output, format='JPEG', quality=options["image_quality"], 
-                        optimize=options["optimize_images"])
-            
-            return output.getvalue()
-            
-        except Exception as e:
-            print(f"Image compression error: {str(e)}")
-            return None
-    
-    # Process each page
-    for page_num in range(len(reader.pages)):
-        page = reader.pages[page_num]
+    try:
+        # Create input streams
+        input_stream = BytesIO(input_pdf.read())
+        input_pdf.seek(0)
         
-        # Compress text if enabled
-        if options["text_compression"]:
-            if "/Contents" in page:
-                if isinstance(page["/Contents"], list):
-                    for obj in page["/Contents"]:
-                        if hasattr(obj, "get_data"):
-                            data = obj.get_data()
-                            compressed = zlib.compress(data)
-                            obj.set_data(compressed)
-                elif hasattr(page["/Contents"], "get_data"):
-                    data = page["/Contents"].get_data()
-                    compressed = zlib.compress(data)
-                    page["/Contents"].set_data(compressed)
+        # Initialize PDF reader and writer
+        reader = PdfReader(input_stream)
+        writer = PdfWriter()
         
-        # Extract and compress images
-        page_doc = doc[page_num]
-        image_list = page_doc.get_images()
+        # Remove metadata if requested
+        if options["remove_metadata"]:
+            writer.add_metadata({})
         
-        for img_index, image in enumerate(image_list):
+        # Create fitz document for image extraction
+        fitz_stream = BytesIO(input_stream.getvalue())
+        doc = fitz.open(stream=fitz_stream, filetype="pdf")
+        
+        def compress_image(img):
+            """Helper function to compress a single image"""
             try:
-                xref = image[0]
-                base_image = doc.extract_image(xref)
-                image_bytes = base_image["image"]
+                # Convert RGBA to RGB if needed
+                if img.mode == 'RGBA':
+                    background = Image.new('RGB', img.size, (255, 255, 255))
+                    background.paste(img, mask=img.split()[3])
+                    img = background
                 
-                # Process image
-                img = Image.open(BytesIO(image_bytes))
-                compressed_bytes = compress_image(img)
+                # Convert to grayscale if specified
+                if options["color_mode"] == "grayscale":
+                    img = img.convert('L')
                 
-                if compressed_bytes:
-                    # Replace image in the PDF
-                    if hasattr(page, "_replace_image"):
-                        page._replace_image(img_index, compressed_bytes)
+                # Calculate new size based on DPI threshold
+                original_dpi = img.info.get('dpi', (300, 300))[0]
+                if original_dpi > options["downsample_threshold"]:
+                    scale_factor = options["image_dpi"] / original_dpi
+                    new_width = int(img.width * scale_factor)
+                    new_height = int(img.height * scale_factor)
+                    img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                
+                # Optimize image
+                if options["optimize_images"]:
+                    img = img.copy()  # Create a copy to ensure optimization works
+                
+                # Save with compression (always using JPEG)
+                output = BytesIO()
+                img.save(output, 
+                        format='JPEG', 
+                        quality=options["image_quality"], 
+                        optimize=options["optimize_images"])
+                
+                return output.getvalue()
+                
             except Exception as e:
-                print(f"Error processing image {img_index} on page {page_num}: {str(e)}")
-                continue
+                print(f"Image compression error: {str(e)}")
+                # Return original image data if compression fails
+                output = BytesIO()
+                img.save(output, format='JPEG')
+                return output.getvalue()
         
-        writer.add_page(page)
-    
-    # Write compressed PDF to output stream
-    output = BytesIO()
-    writer.write(output)
-    
-    # Clean up
-    doc.close()
-    
-    return output
+        # Process each page
+        for page_num in range(len(reader.pages)):
+            page = reader.pages[page_num]
+            
+            # Compress text if enabled
+            if options["text_compression"]:
+                try:
+                    if "/Contents" in page:
+                        if isinstance(page["/Contents"], list):
+                            for obj in page["/Contents"]:
+                                if hasattr(obj, "get_data"):
+                                    data = obj.get_data()
+                                    compressed = zlib.compress(data)
+                                    obj.set_data(compressed)
+                        elif hasattr(page["/Contents"], "get_data"):
+                            data = page["/Contents"].get_data()
+                            compressed = zlib.compress(data)
+                            page["/Contents"].set_data(compressed)
+                except Exception as e:
+                    print(f"Text compression error on page {page_num}: {str(e)}")
+            
+            try:
+                # Extract and compress images
+                page_doc = doc[page_num]
+                image_list = page_doc.get_images()
+                
+                for img_index, image in enumerate(image_list):
+                    try:
+                        xref = image[0]
+                        base_image = doc.extract_image(xref)
+                        image_bytes = base_image["image"]
+                        
+                        # Process image
+                        img = Image.open(BytesIO(image_bytes))
+                        compressed_bytes = compress_image(img)
+                        
+                        if compressed_bytes and hasattr(page, "_replace_image"):
+                            page._replace_image(img_index, compressed_bytes)
+                    except Exception as e:
+                        print(f"Error processing image {img_index} on page {page_num}: {str(e)}")
+                        continue
+            except Exception as e:
+                print(f"Error processing page {page_num}: {str(e)}")
+                continue
+            
+            writer.add_page(page)
+        
+        # Write compressed PDF to output stream
+        output = BytesIO()
+        writer.write(output)
+        output.seek(0)
+        
+        # Clean up
+        doc.close()
+        
+        return output
+        
+    except Exception as e:
+        print(f"PDF compression error: {str(e)}")
+        # Return original PDF if compression fails
+        input_pdf.seek(0)
+        return input_pdf
+
 def get_compression_presets():
     """Return predefined compression presets"""
     return {
