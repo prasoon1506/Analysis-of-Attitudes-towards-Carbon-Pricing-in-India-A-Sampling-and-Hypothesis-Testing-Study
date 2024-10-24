@@ -28,3 +28,5 @@ docx2pdf
 img2pdf
 PyPDF2
 pypdf
+PyMuPDF
+Pillow
