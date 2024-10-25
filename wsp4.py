@@ -6596,7 +6596,7 @@ def market_share():
             change = (shares[i] - shares[i-1])/shares[i-1]*100
             sequential_changes.append(change)
         
-        total_change = (shares[-1] - shares[0])/share[-1]*100
+        total_change = (shares[-1] - shares[0])/shares[-1]*100
         return sequential_changes, total_change
 
     def create_trend_line_plot(df, selected_companies):
