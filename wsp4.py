@@ -6332,133 +6332,196 @@ def market_share():
         share_cols = [col for col in df.columns if col.startswith('Share_')]
         months = [col.split('_')[1] for col in share_cols]
         return sorted(list(set(months)))
-
     def create_share_plot(df, month):
-        """Create enhanced stacked bar chart for a single month"""
-        # Process data for the month
-        month_data = df[['Company', f'Share_{month}', f'WSP_{month}']].copy()
-        month_data.columns = ['Company', 'Share', 'WSP']
+    """Create enhanced stacked bar chart for a single month"""
+    # Process data for the month
+    month_data = df[['Company', f'Share_{month}', f'WSP_{month}']].copy()
+    month_data.columns = ['Company', 'Share', 'WSP']
+    
+    # Improved price range calculation logic
+    def calculate_price_ranges(prices, target_bins=8):
+        """
+        Calculate appropriate price ranges based on data distribution
         
-        # Calculate price ranges
-        min_price = (month_data['WSP'].min() // 5) * 5
-        max_price = (month_data['WSP'].max() // 5 + 1) * 5
-        price_ranges = pd.interval_range(start=min_price, end=max_price, freq=5)
+        Args:
+            prices: Series of price values
+            target_bins: Target number of bins (default=8)
+            
+        Returns:
+            pd.IntervalIndex: Price range intervals
+        """
+        min_price = prices.min()
+        max_price = prices.max()
+        price_range = max_price - min_price
         
-        # Create price range column
-        month_data['Price_Range'] = pd.cut(month_data['WSP'], bins=price_ranges)
+        if price_range == 0:
+            # Handle case where all prices are the same
+            return pd.IntervalIndex.from_arrays(
+                [min_price - 0.5],
+                [min_price + 0.5],
+                closed='right'
+            )
         
-        # Create pivot table
-        pivot_df = pd.pivot_table(
-            month_data,
-            values='Share',
-            index='Price_Range',
-            columns='Company',
-            aggfunc='sum',
-            fill_value=0
-        )
+        # Calculate initial bin width (round to nearest 5)
+        initial_width = price_range / target_bins
+        bin_width = max(5, round(initial_width / 5) * 5)
         
-        # Remove zero columns
-        pivot_df = pivot_df.loc[:, (pivot_df != 0).any(axis=0)]
+        # Adjust start and end points
+        start_point = (min_price // bin_width) * bin_width
+        end_point = ((max_price // bin_width) + 1) * bin_width
         
-        # Calculate row sums
-        row_sums = pivot_df.sum(axis=1)
+        # Create range of bin edges
+        edges = np.arange(start_point, end_point + bin_width, bin_width)
         
-        # Create plot with improved styling
-        fig, ax = plt.subplots(figsize=(14, 8))
+        # Ensure we include all data points
+        if edges[0] > min_price:
+            edges = np.insert(edges, 0, edges[0] - bin_width)
+        if edges[-1] < max_price:
+            edges = np.append(edges, edges[-1] + bin_width)
         
-        # Get colors for companies
-        colors = [get_company_color(company) for company in pivot_df.columns]
-        
-        # Plot stacked bars with enhanced styling
-        pivot_df.plot(
-            kind='bar',
-            stacked=True,
-            ax=ax,
-            width=0.8,
-            color=colors
-        )
-        
-        # Enhanced title with month
-        plt.suptitle(f'Market Share Distribution by Price Range', 
-                    fontsize=20, 
-                    y=1.02, 
-                    fontweight='bold')
-        plt.title(f'{month.capitalize()}', 
-                 fontsize=16, 
-                 pad=20)
-        
-        plt.xlabel('WSP Price Range (₹)', fontsize=12, fontweight='bold')
-        plt.ylabel('Market Share (%)', fontsize=12, fontweight='bold')
-        
-        # Format x-axis labels
-        def format_interval(interval):
-            return f'₹{interval.left:.0f}-{interval.right:.0f}'
-        
-        x_labels = [format_interval(interval) for interval in pivot_df.index]
-        ax.set_xticklabels(x_labels, rotation=45, ha='right')
-        
-        # Add percentage labels with improved visibility
-        for c in ax.containers:
-            labels = [f'{v:.1f}%' if v > 1 else '' for v in c.datavalues]
-            ax.bar_label(c, labels=labels, label_type='center', fontsize=9)
-        
-        # Add total labels with enhanced styling
-        for i, (idx, total) in enumerate(row_sums.items()):
-            if total > 0:
-                ax.text(i, total + 1, f'Total: {total:.1f}%',
-                        ha='center',
-                        va='bottom',
-                        fontweight='bold',
-                        fontsize=10,
-                        bbox=dict(facecolor='white',
-                                 edgecolor='gray',
-                                 alpha=0.9,
-                                 pad=3,
-                                 boxstyle='round,pad=0.5'))
-        
-        # Get WSP for each company for the specific month
-        company_wsps = {}
-        for company in pivot_df.columns:
-            wsp = month_data[month_data['Company'] == company]['WSP'].iloc[0]
-            company_wsps[company] = wsp
-        
-        # Create enhanced legend with month-specific WSP information
-        legend_labels = [f'{company} (WSP: ₹{company_wsps[company]:.0f})' 
-                        for company in pivot_df.columns]
-        
-        plt.legend(
-            legend_labels,
-            bbox_to_anchor=(1.15, 1),
-            loc='upper left',
-            borderaxespad=0.,
-            frameon=True,
-            fontsize=10,
-            title=f'Companies with WSP ({month.capitalize()})',
-            title_fontsize=12,
-            edgecolor='gray'
-        )
-        
-        # Enhanced grid
-        plt.grid(axis='y', linestyle='--', alpha=0.3)
-        
-        # Improved background styling
-        ax.set_facecolor('#f8f9fa')
-        fig.patch.set_facecolor('#ffffff')
-        
-        # Add subtle box around plot
-        ax.spines['top'].set_visible(False)
-        ax.spines['right'].set_visible(False)
-        ax.spines['left'].set_linewidth(0.5)
-        ax.spines['bottom'].set_linewidth(0.5)
-        
-        # Adjust layout
-        current_ymax = ax.get_ylim()[1]
-        ax.set_ylim(0, current_ymax * 1.15)
-        plt.margins(y=0.1)
-        plt.tight_layout()
-        
-        return fig
-
+        # Create intervals
+        return pd.IntervalIndex.from_breaks(edges, closed='right')
+    
+    # Calculate price ranges using the improved function
+    price_ranges = calculate_price_ranges(month_data['WSP'])
+    
+    # Create price range column
+    month_data['Price_Range'] = pd.cut(month_data['WSP'], bins=price_ranges)
+    
+    # Remove empty price ranges and sort them
+    month_data['Price_Range'] = month_data['Price_Range'].astype(str)  # Convert to string for proper sorting
+    non_empty_ranges = month_data.groupby('Price_Range')['Share'].sum()
+    non_empty_ranges = non_empty_ranges[non_empty_ranges > 0]
+    valid_ranges = sorted(non_empty_ranges.index)
+    
+    # Create pivot table with only valid ranges
+    pivot_df = pd.pivot_table(
+        month_data[month_data['Price_Range'].isin(valid_ranges)],
+        values='Share',
+        index='Price_Range',
+        columns='Company',
+        aggfunc='sum',
+        fill_value=0
+    )
+    
+    # Sort index by price ranges
+    pivot_df = pivot_df.reindex(valid_ranges)
+    
+    # Remove zero columns
+    pivot_df = pivot_df.loc[:, (pivot_df != 0).any(axis=0)]
+    
+    # Calculate row sums
+    row_sums = pivot_df.sum(axis=1)
+    
+    # Create plot with improved styling
+    fig, ax = plt.subplots(figsize=(14, 8))
+    
+    # Get WSP for each company and sort companies by WSP
+    company_wsps = {}
+    for company in pivot_df.columns:
+        wsp = month_data[month_data['Company'] == company]['WSP'].iloc[0]
+        company_wsps[company] = wsp
+    
+    # Sort companies by WSP
+    sorted_companies = sorted(company_wsps.keys(), key=lambda x: company_wsps[x])
+    
+    # Reorder columns in pivot_df based on sorted companies
+    pivot_df = pivot_df[sorted_companies]
+    
+    # Get colors for companies in sorted order
+    colors = [get_company_color(company) for company in sorted_companies]
+    
+    # Plot stacked bars with enhanced styling
+    pivot_df.plot(
+        kind='bar',
+        stacked=True,
+        ax=ax,
+        width=0.8,
+        color=colors
+    )
+    
+    # Enhanced title with month
+    plt.suptitle(f'Market Share Distribution by Price Range', 
+                fontsize=20, 
+                y=1.02, 
+                fontweight='bold')
+    plt.title(f'{month.capitalize()}', 
+             fontsize=16, 
+             pad=20)
+    
+    plt.xlabel('WSP Price Range (₹)', fontsize=12, fontweight='bold')
+    plt.ylabel('Market Share (%)', fontsize=12, fontweight='bold')
+    
+    # Format x-axis labels
+    def format_interval(interval_str):
+        """Convert interval string to readable format"""
+        # Remove brackets and split
+        nums = interval_str.strip('()[]').split(',')
+        try:
+            left = float(nums[0])
+            right = float(nums[1])
+            return f'₹{left:.0f}-{right:.0f}'
+        except:
+            return interval_str
+    
+    x_labels = [format_interval(str(interval)) for interval in pivot_df.index]
+    ax.set_xticklabels(x_labels, rotation=45, ha='right')
+    
+    # Add percentage labels with improved visibility
+    for c in ax.containers:
+        labels = [f'{v:.1f}%' if v > 1 else '' for v in c.datavalues]
+        ax.bar_label(c, labels=labels, label_type='center', fontsize=9)
+    
+    # Add total labels with enhanced styling
+    for i, (idx, total) in enumerate(row_sums.items()):
+        if total > 0:
+            ax.text(i, total + 1, f'Total: {total:.1f}%',
+                    ha='center',
+                    va='bottom',
+                    fontweight='bold',
+                    fontsize=10,
+                    bbox=dict(facecolor='white',
+                             edgecolor='gray',
+                             alpha=0.9,
+                             pad=3,
+                             boxstyle='round,pad=0.5'))
+    
+    # Create legend labels in WSP order
+    legend_labels = [f'{company} (WSP: ₹{company_wsps[company]:.0f})' 
+                    for company in sorted_companies]
+    
+    plt.legend(
+        legend_labels,
+        bbox_to_anchor=(1.15, 1),
+        loc='upper left',
+        borderaxespad=0.,
+        frameon=True,
+        fontsize=10,
+        title=f'Companies with WSP ({month.capitalize()})',
+        title_fontsize=12,
+        edgecolor='gray'
+    )
+    
+    # Enhanced grid
+    plt.grid(axis='y', linestyle='--', alpha=0.3)
+    
+    # Improved background styling
+    ax.set_facecolor('#f8f9fa')
+    fig.patch.set_facecolor('#ffffff')
+    
+    # Add subtle box around plot
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['left'].set_linewidth(0.5)
+    ax.spines['bottom'].set_linewidth(0.5)
+    
+    # Adjust layout
+    current_ymax = ax.get_ylim()[1]
+    ax.set_ylim(0, current_ymax * 1.15)
+    plt.margins(y=0.1)
+    plt.tight_layout()
+    
+    return fig
     def create_trend_line_plot(df, selected_companies):
         """Create line plot showing share trends over months for selected companies"""
         # Get all share columns
