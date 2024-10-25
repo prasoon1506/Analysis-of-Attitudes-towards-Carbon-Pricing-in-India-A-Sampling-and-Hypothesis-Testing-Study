@@ -6539,7 +6539,6 @@ def market_share():
             for fig in figs:
                 pdf.savefig(fig, bbox_inches='tight')
                 plt.close(fig)
-
     def main():
         # Enhanced CSS styling
         st.markdown("""
@@ -6659,13 +6658,15 @@ def market_share():
                     st.markdown("---")
                 
                 # Create separate plots for each selected month
+                month_figures = {}  # Store figures by month for individual PDF downloads
                 for month in selected_months:
                     with st.spinner(f"📊 Generating visualization for {month.capitalize()}..."):
                         fig = create_share_plot(state_dfs[selected_state], month)
                         st.pyplot(fig)
                         all_figures.append(fig)
+                        month_figures[month] = fig
                         
-                        # Enhanced download buttons
+                        # Enhanced download buttons with three columns
                         col1, col2, col3 = st.columns([1, 1, 2])
                         with col1:
                             # PNG download
@@ -6680,7 +6681,42 @@ def market_share():
                                 key=f"download_png_{month}"
                             )
                         
+                        with col2:
+                            # Individual PDF download for this month
+                            pdf_buf = io.BytesIO()
+                            with PdfPages(pdf_buf) as pdf:
+                                pdf.savefig(fig, bbox_inches='tight')
+                            pdf_buf.seek(0)
+                            st.download_button(
+                                label=f"📄 Download PDF",
+                                data=pdf_buf,
+                                file_name=f'market_share_{selected_state}_{month}.pdf',
+                                mime='application/pdf',
+                                key=f"download_pdf_{month}"
+                            )
+                        
                     st.markdown("---")
+                
+                # Add a button to download all plots in a single PDF
+                if all_figures:
+                    st.markdown("### 📑 Download Complete Report")
+                    all_pdf_buf = io.BytesIO()
+                    with PdfPages(all_pdf_buf) as pdf:
+                        # Add trend plot if it exists
+                        if selected_companies:
+                            pdf.savefig(trend_fig, bbox_inches='tight')
+                        # Add all monthly plots
+                        for fig in month_figures.values():
+                            pdf.savefig(fig, bbox_inches='tight')
+                    
+                    all_pdf_buf.seek(0)
+                    st.download_button(
+                        label="📥 Download Complete Report (PDF)",
+                        data=all_pdf_buf,
+                        file_name=f'market_share_{selected_state}_complete_report.pdf',
+                        mime='application/pdf',
+                        key="download_complete_pdf"
+                    )
             
             elif uploaded_file:
                 st.info("👈 Select state and months from the sidebar to view analysis")
@@ -6697,11 +6733,11 @@ def market_share():
                     - Market share distribution by price range
                     - Company-wise breakdown with average WSP
                     - Comparative analysis across months
+                    
+                    You can download individual graphs in PNG or PDF format, or get a complete report with all visualizations in a single PDF.
                 """)
-
     if __name__ == "__main__":
         main()
-
 def load_visit_data():
     try:
         with open('visit_data.json', 'r') as f:
