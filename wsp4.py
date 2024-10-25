@@ -6275,6 +6275,7 @@ from collections import defaultdict
 from matplotlib.backends.backend_pdf import PdfPages
 import seaborn as sns
 from datetime import datetime
+
 def market_share():
     # Enhanced styling configuration
     THEME = {
@@ -6424,9 +6425,6 @@ def market_share():
         }
         </style>
     """, unsafe_allow_html=True)
-
-    
-def market_share():
     # Global color mapping to maintain consistency across states and months
     COMPANY_COLORS = {}
     
