@@ -6651,7 +6651,13 @@ def market_share():
                                     f"Avg WSP: ₹{avg_wsp:.0f}")
                 
                 st.markdown("---")
-                
+                if selected_companies:
+                    st.markdown("### Market Share Trends")
+                    trend_fig = create_trend_line_plot(state_dfs[selected_state], 
+                                                     selected_companies)
+                    st.pyplot(trend_fig)
+                    all_figures.append(trend_fig)
+                    st.markdown("---")
                 # Store figures for PDF export
                 figures = []
                 
