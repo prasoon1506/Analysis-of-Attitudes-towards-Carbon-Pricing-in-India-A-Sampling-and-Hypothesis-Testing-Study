@@ -6748,6 +6748,10 @@ def market_share():
                 st.markdown("### 📊 Key Metrics")
                 metric_cols = st.columns(len(selected_months))
                 for idx, month in enumerate(selected_months):
+                    df = state_dfs[selected_state]
+                    total_share = df[f'Share_{month}'].sum()
+                    avg_wsp = df[f'WSP_{month}'].mean()
+                    num_companies = len(df[df[f'Share_{month}'] > 0])
                     with metric_cols[idx]:
                         create_metric_card(
                             f"{month.capitalize()}",
