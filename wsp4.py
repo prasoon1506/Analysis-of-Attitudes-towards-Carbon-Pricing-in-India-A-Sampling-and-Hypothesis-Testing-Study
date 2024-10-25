@@ -6834,7 +6834,6 @@ def market_share():
                 st.markdown("""
                     <div style='text-align: center; padding: 3rem; background-color: white; 
                               border-radius: 1rem; box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);'>
-                        <img src="https://your-icon-url.com/analysis.svg" style='width: 150px; margin-bottom: 2rem;'>
                         <h2 style='margin-bottom: 1rem;'>Welcome to Market Share Analysis</h2>
                         <p style='color: #64748b; margin-bottom: 2rem;'>
                             Upload your data file to get started with comprehensive market analysis
