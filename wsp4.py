@@ -6780,6 +6780,13 @@ def market_share():
         # Enhanced main content
         with col2:
             all_figures = []
+            if uploaded_file and selected_companies:
+                    st.markdown("### Market Share Trends")
+                    trend_fig = create_trend_line_plot(state_dfs[selected_state], 
+                                                     selected_companies)
+                    st.pyplot(trend_fig)
+                    all_figures.append(trend_fig)
+                    st.markdown("---")
             if uploaded_file and selected_months:
                 # Create summary statistics cards
                 st.markdown("### 📊 Key Metrics")
@@ -6798,15 +6805,6 @@ def market_share():
                         )
                 
                 st.markdown("---")
-                
-                # Trend Line Plot Section
-            if uploaded_file and selected_companies:
-                    st.markdown("### Market Share Trends")
-                    trend_fig = create_trend_line_plot(state_dfs[selected_state], 
-                                                     selected_companies)
-                    st.pyplot(trend_fig)
-                    all_figures.append(trend_fig)
-                    st.markdown("---")
                 
                 # Create separate plots for each selected month
                 month_figures = {}  # Store figures by month for individual PDF downloads
