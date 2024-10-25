@@ -6271,28 +6271,161 @@ import matplotlib.pyplot as plt
 import distinctipy
 from pathlib import Path
 import io
-import streamlit as st
-import pandas as pd
-import matplotlib.pyplot as plt
-import distinctipy
-from pathlib import Path
-import io
-import numpy as np
 from collections import defaultdict
 from matplotlib.backends.backend_pdf import PdfPages
 import seaborn as sns
 from datetime import datetime
-import streamlit as st
-import pandas as pd
-import matplotlib.pyplot as plt
-import distinctipy
-from pathlib import Path
-import io
-import numpy as np
-from matplotlib.backends.backend_pdf import PdfPages
-import seaborn as sns
-from datetime import datetime
+def market_share():
+    # Enhanced styling configuration
+    THEME = {
+        'PRIMARY': '#2563eb',
+        'SECONDARY': '#64748b',
+        'SUCCESS': '#10b981',
+        'WARNING': '#f59e0b',
+        'DANGER': '#ef4444',
+        'BACKGROUND': '#ffffff',
+        'SIDEBAR': '#f8fafc',
+        'TEXT': '#1e293b',
+        'HEADER': '#0f172a'
+    }
 
+    # Custom CSS with modern styling
+    st.markdown("""
+        <style>
+        /* Global Styles */
+        .stApp {
+            background-color: #ffffff;
+        }
+        
+        /* Main Content Area */
+        .main {
+            background-color: #f8fafc;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        
+        /* Headers */
+        h1 {
+            color: #0f172a;
+            font-size: 2.25rem !important;
+            font-weight: 700 !important;
+            margin-bottom: 1.5rem !important;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        h2 {
+            color: #1e293b;
+            font-size: 1.875rem !important;
+            font-weight: 600 !important;
+            margin-top: 2rem !important;
+        }
+        
+        h3 {
+            color: #334155;
+            font-size: 1.5rem !important;
+            font-weight: 600 !important;
+        }
+        
+        /* Sidebar */
+        .css-1d391kg {
+            background-color: #f8fafc;
+            padding: 2rem 1.5rem;
+            border-right: 1px solid #e2e8f0;
+        }
+        
+        /* Cards */
+        .stMetric {
+            background-color: white;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+            transition: transform 0.2s;
+        }
+        
+        .stMetric:hover {
+            transform: translateY(-2px);
+        }
+        
+        /* Buttons */
+        .stButton>button {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 0.5rem 1.25rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+        }
+        
+        .stButton>button:hover {
+            background-color: #1d4ed8;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);
+        }
+        
+        /* Select Boxes */
+        .stSelectbox>div>div {
+            background-color: white;
+            border-radius: 0.5rem;
+            border: 1px solid #e2e8f0;
+        }
+        
+        /* Expander */
+        .streamlit-expanderHeader {
+            background-color: white;
+            border-radius: 0.5rem;
+            border: 1px solid #e2e8f0;
+            padding: 0.75rem 1rem;
+        }
+        
+        /* Plots */
+        .stPlot {
+            background-color: white;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+        }
+        
+        /* Loading Animation */
+        .stSpinner {
+            text-align: center;
+            color: #2563eb;
+        }
+        
+        /* Tooltips */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            border-bottom: 1px dotted #64748b;
+        }
+        
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            background-color: #1e293b;
+            color: white;
+            text-align: center;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    
 def market_share():
     # Global color mapping to maintain consistency across states and months
     COMPANY_COLORS = {}
@@ -6333,6 +6466,15 @@ def market_share():
         months = [col.split('_')[1] for col in share_cols]
         return sorted(list(set(months)))
     def create_share_plot(df, month):
+      sns.set_style("whitegrid")
+      plt.rcParams.update({
+            'font.family': 'sans-serif',
+            'font.sans-serif': ['Arial', 'Helvetica'],
+            'axes.labelweight': 'bold',
+            'axes.titleweight': 'bold',
+            'figure.facecolor': 'white',
+            'axes.facecolor': 'white',
+            'grid.alpha': 0.3})
       month_data = df[['Company', f'Share_{month}', f'WSP_{month}']].copy()
       month_data.columns = ['Company', 'Share', 'WSP']
     
@@ -6522,7 +6664,28 @@ def market_share():
         plt.tight_layout()
         
         return fig
+    def create_dashboard_header():
+        """Create an attractive dashboard header"""
+        st.markdown("""
+            <div style='padding: 1.5rem; background: linear-gradient(90deg, #2563eb 0%, #3b82f6 100%); 
+                        border-radius: 1rem; margin-bottom: 2rem; color: white;'>
+                <h1 style='color: white; margin: 0; border: none;'>Market Share Analysis Dashboard</h1>
+                <p style='margin: 0.5rem 0 0 0; opacity: 0.9;'>
+                    Comprehensive market analysis and visualization tool
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
 
+    def create_metric_card(title, value, delta=None, help_text=None):
+        """Create a styled metric card"""
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            st.metric(
+                label=title,
+                value=value,
+                delta=delta,
+                help=help_text
+            )
     def export_to_pdf(figs, filename):
         """Export multiple figures to a single PDF file"""
         with PdfPages(filename) as pdf:
@@ -6530,53 +6693,18 @@ def market_share():
                 pdf.savefig(fig, bbox_inches='tight')
                 plt.close(fig)
     def main():
-        # Enhanced CSS styling
-        st.markdown("""
-            <style>
-            .main {
-                background-color: #f8f9fa;
-            }
-            .stApp {
-                background-color: #ffffff;
-            }
-            .css-1d391kg {
-                padding: 2.5rem 1rem;
-            }
-            .stSelectbox, .stMultiSelect {
-                background-color: white;
-            }
-            .st-emotion-cache-1wmy9hl e1f1d6gn0 {
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-                border-radius: 0.5rem;
-            }
-            h1, h2, h3 {
-                color: #1f2937;
-            }
-            .stButton>button {
-                background-color: #3b82f6;
-                color: white;
-                border-radius: 0.5rem;
-                padding: 0.5rem 1rem;
-                border: none;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            }
-            .stButton>button:hover {
-                background-color: #2563eb;
-            }
-            </style>
-        """, unsafe_allow_html=True)
+        create_dashboard_header()
         
         # Create two columns with improved ratio
         col1, col2 = st.columns([1, 4])
-        
-        # Enhanced sidebar
         with col1:
-            st.markdown("## 📊 Controls")
-            st.markdown("---")
+            st.markdown("### 🎯 Analysis Controls")
             
-            st.markdown("### 📥 Data Upload")
-            uploaded_file = st.file_uploader("Upload Excel File", type=['xlsx', 'xls'])
-            
+            uploaded_file = st.file_uploader(
+                "Upload Excel File",
+                type=['xlsx', 'xls'],
+                help="Upload your market share data file"
+            )
             if uploaded_file:
                 state_dfs, states = load_and_process_data(uploaded_file)
                 
@@ -6616,25 +6744,17 @@ def market_share():
         # Enhanced main content
         with col2:
             if uploaded_file and selected_months:
-                st.markdown("# Market Share Analysis")
-                st.markdown(f"### State: {selected_state}")
-                
-                # Store all figures for PDF export
-                all_figures = []
-                
-                # Add summary metrics
-                with st.expander("📈 Summary Statistics", expanded=True):
-                    metrics_cols = st.columns(len(selected_months))
-                    for idx, month in enumerate(selected_months):
-                        df = state_dfs[selected_state]
-                        total_share = df[f'Share_{month}'].sum()
-                        avg_wsp = df[f'WSP_{month}'].mean()
-                        num_companies = len(df[df[f'Share_{month}'] > 0])
-                        
-                        with metrics_cols[idx]:
-                            st.metric(f"{month.capitalize()}", 
-                                    f"{num_companies} Companies",
-                                    f"Avg WSP: ₹{avg_wsp:.0f}")
+                # Create summary statistics cards
+                st.markdown("### 📊 Key Metrics")
+                metric_cols = st.columns(len(selected_months))
+                for idx, month in enumerate(selected_months):
+                    with metric_cols[idx]:
+                        create_metric_card(
+                            f"{month.capitalize()}",
+                            f"{num_companies} Companies",
+                            f"Avg WSP: ₹{avg_wsp:.0f}",
+                            "Number of active companies and average wholesale price"
+                        )
                 
                 st.markdown("---")
                 
@@ -6712,20 +6832,20 @@ def market_share():
                 st.info("👈 Select state and months from the sidebar to view analysis")
             else:
                 st.markdown("""
-                    ### 👋 Welcome to Market Share Analysis Dashboard
-                    
-                    To get started:
-                    1. Upload your Excel file using the sidebar
-                    2. Select a state for analysis
-                    3. Choose the months you want to compare
-                    
-                    The dashboard will generate interactive visualizations showing:
-                    - Market share distribution by price range
-                    - Company-wise breakdown with average WSP
-                    - Comparative analysis across months
-                    
-                    You can download individual graphs in PNG or PDF format, or get a complete report with all visualizations in a single PDF.
-                """)
+                    <div style='text-align: center; padding: 3rem; background-color: white; 
+                              border-radius: 1rem; box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);'>
+                        <img src="https://your-icon-url.com/analysis.svg" style='width: 150px; margin-bottom: 2rem;'>
+                        <h2 style='margin-bottom: 1rem;'>Welcome to Market Share Analysis</h2>
+                        <p style='color: #64748b; margin-bottom: 2rem;'>
+                            Upload your data file to get started with comprehensive market analysis
+                        </p>
+                        <div style='color: #64748b;'>
+                            <p>✨ Interactive visualizations</p>
+                            <p>📊 Detailed market insights</p>
+                            <p>📥 Export reports in multiple formats</p>
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
     if __name__ == "__main__":
         main()
 def load_visit_data():
