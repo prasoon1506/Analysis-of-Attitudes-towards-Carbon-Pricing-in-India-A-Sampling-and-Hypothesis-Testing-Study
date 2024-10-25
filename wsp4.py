@@ -6495,6 +6495,8 @@ def market_share():
         """,
         unsafe_allow_html=True
     )
+ if __name__ == "__main__":
+    main()
 def load_visit_data():
     try:
         with open('visit_data.json', 'r') as f:
