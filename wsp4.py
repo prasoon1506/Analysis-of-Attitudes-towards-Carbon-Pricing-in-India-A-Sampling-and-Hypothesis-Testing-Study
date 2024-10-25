@@ -6722,16 +6722,25 @@ def market_share():
                     default=[available_months[0]],
                     help="Choose months for comparison"
                 )
-                
-                # Company selection for trend line plot
                 all_companies = state_dfs[selected_state]['Company'].unique()
+                default_companies = [
+                    'JK Lakshmi',
+                    'Ultratech',
+                    'Ambuja',
+                    'Wonder',
+                    'Shree',
+                    'JK Cement (N)'
+                ]
+                
+                # Filter default companies to only include those that exist in the data
+                available_defaults = [company for company in default_companies if company in all_companies]
+                
                 selected_companies = st.multiselect(
                     "Select Companies for Trend Analysis",
                     all_companies,
-                    default=list(all_companies)[:3],
+                    default=available_defaults,
                     help="Choose companies to show in the trend line graph"
                 )
-                
                 if not selected_months:
                     st.warning("📌 Please select at least one month.")
                     return
