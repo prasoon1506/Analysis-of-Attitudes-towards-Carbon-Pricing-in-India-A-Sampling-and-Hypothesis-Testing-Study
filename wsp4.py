@@ -6589,45 +6589,78 @@ def market_share():
       plt.margins(y=0.1)
       plt.tight_layout()
       return fig
+    def calculate_share_changes(shares, months):
+        """Calculate sequential and total changes in share percentage"""
+        sequential_changes = []
+        for i in range(1, len(shares)):
+            change = shares[i] - shares[i-1]
+            sequential_changes.append(change)
+        
+        total_change = shares[-1] - shares[0]
+        return sequential_changes, total_change
+
     def create_trend_line_plot(df, selected_companies):
-        """Create line plot showing share trends over months for selected companies"""
-        # Get all share columns
+        """Create enhanced line plot showing share trends with detailed annotations"""
         share_cols = [col for col in df.columns if col.startswith('Share_')]
         months = [col.split('_')[1] for col in share_cols]
         
-        # Create data for plotting
-        trend_data = []
-        for company in selected_companies:
-            company_shares = df[df['Company'] == company][share_cols].iloc[0]
-            avg_share = company_shares.mean()
-            
-            trend_data.append({
-                'Company': company,
-                'Months': months,
-                'Shares': company_shares.values,
-                'Average': avg_share
-            })
-        
-        # Create plot
         fig, ax = plt.subplots(figsize=(14, 8))
         
-        # Plot lines for each company
-        for company_data in trend_data:
-            color = get_company_color(company_data['Company'])
+        # Create a summary of total changes for the legend
+        legend_labels = []
+        
+        for company in selected_companies:
+            color = get_company_color(company)
+            company_shares = df[df['Company'] == company][share_cols].iloc[0].values
+            avg_share = company_shares.mean()
             
             # Plot the main line
-            plt.plot(company_data['Months'], 
-                    company_data['Shares'], 
-                    marker='o', 
-                    linewidth=2,
-                    color=color,
-                    label=f"{company_data['Company']} (Avg: {company_data['Average']:.1f}%)")
+            line = plt.plot(range(len(months)), company_shares, 
+                          marker='o', linewidth=2, color=color)[0]
+            
+            # Add share percentage labels at each point
+            for i, share in enumerate(company_shares):
+                ax.annotate(f'{share:.1f}%', 
+                          (i, share),
+                          xytext=(0, 10),
+                          textcoords='offset points',
+                          ha='center',
+                          va='bottom',
+                          fontsize=8)
+            
+            # Calculate and add sequential change labels
+            sequential_changes, total_change = calculate_share_changes(company_shares, months)
+            for i, change in enumerate(sequential_changes):
+                mid_x = (i + 0.5)
+                mid_y = (company_shares[i] + company_shares[i + 1]) / 2
+                
+                # Determine arrow direction and color
+                arrow_color = 'green' if change > 0 else 'red'
+                arrow_symbol = '↑' if change > 0 else '↓'
+                
+                # Add change label with arrow
+                ax.annotate(f'{arrow_symbol}{abs(change):.1f}%',
+                          (mid_x, mid_y),
+                          xytext=(0, 15 if i % 2 == 0 else -15),  # Alternate above/below
+                          textcoords='offset points',
+                          ha='center',
+                          va='center',
+                          color=arrow_color,
+                          fontsize=8,
+                          bbox=dict(facecolor='white', 
+                                  edgecolor='none',
+                                  alpha=0.7,
+                                  pad=0.5))
+            
+            # Add to legend labels with total change
+            change_color = 'green' if total_change > 0 else 'red'
+            change_symbol = '↑' if total_change > 0 else '↓'
+            legend_labels.append(
+                f"{company} (Avg: {avg_share:.1f}% | Total Change: {change_symbol}{abs(total_change):.1f}%)"
+            )
             
             # Plot average line
-            plt.axhline(y=company_data['Average'], 
-                       color=color, 
-                       linestyle='--', 
-                       alpha=0.5)
+            plt.axhline(y=avg_share, color=color, linestyle='--', alpha=0.3)
         
         # Enhance the plot
         plt.title('Market Share Trends Over Time', 
@@ -6638,23 +6671,22 @@ def market_share():
         plt.xlabel('Months', fontsize=12, fontweight='bold')
         plt.ylabel('Market Share (%)', fontsize=12, fontweight='bold')
         
-        # Rotate x-axis labels for better readability
-        plt.xticks(rotation=45)
+        # Set x-axis labels
+        plt.xticks(range(len(months)), months, rotation=45)
         
         # Add grid
         plt.grid(True, linestyle='--', alpha=0.3)
         
         # Enhance legend
-        plt.legend(
-            bbox_to_anchor=(1.15, 1),
-            loc='upper left',
-            borderaxespad=0.,
-            frameon=True,
-            fontsize=10,
-            title='Companies with Average Share',
-            title_fontsize=12,
-            edgecolor='gray'
-        )
+        plt.legend(legend_labels,
+                  bbox_to_anchor=(1.15, 1),
+                  loc='upper left',
+                  borderaxespad=0.,
+                  frameon=True,
+                  fontsize=10,
+                  title='Companies with Average Share & Total Change',
+                  title_fontsize=12,
+                  edgecolor='gray')
         
         # Style improvements
         ax.set_facecolor('#f8f9fa')
@@ -6768,7 +6800,7 @@ def market_share():
                 st.markdown("---")
                 
                 # Trend Line Plot Section
-                if selected_companies:
+            if uploaded_file and selected_companies:
                     st.markdown("### Market Share Trends")
                     trend_fig = create_trend_line_plot(state_dfs[selected_state], 
                                                      selected_companies)
