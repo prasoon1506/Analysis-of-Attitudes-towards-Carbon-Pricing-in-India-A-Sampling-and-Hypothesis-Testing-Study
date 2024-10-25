@@ -6271,225 +6271,432 @@ import matplotlib.pyplot as plt
 import distinctipy
 from pathlib import Path
 import io
+import streamlit as st
+import pandas as pd
+import matplotlib.pyplot as plt
+import distinctipy
+from pathlib import Path
+import io
+import numpy as np
+from collections import defaultdict
+from matplotlib.backends.backend_pdf import PdfPages
+import seaborn as sns
+from datetime import datetime
+
 def market_share():
- def load_and_process_data(uploaded_file):
-    """Load Excel file and return dict of dataframes and sheet names"""
-    xl = pd.ExcelFile(uploaded_file)
-    states = xl.sheet_names
-    state_dfs = {state: pd.read_excel(uploaded_file, sheet_name=state) for state in states}
-    return state_dfs, states
+    # Global color mapping to maintain consistency across states and months
+    COMPANY_COLORS = {}
+    
+    def generate_distinct_color(existing_colors):
+        """Generate a new distinct color that's visually different from existing ones"""
+        if existing_colors:
+            return distinctipy.get_colors(1, existing_colors)[0]
+        return distinctipy.get_colors(1)[0]
+    
+    def get_company_color(company):
+        """Get or create a consistent color for a company"""
+        if company not in COMPANY_COLORS:
+            existing_colors = list(COMPANY_COLORS.values())
+            COMPANY_COLORS[company] = generate_distinct_color(existing_colors)
+        return COMPANY_COLORS[company]
 
- def get_available_months(df):
-    """Extract available months from column names"""
-    share_cols = [col for col in df.columns if col.startswith('Share_')]
-    months = [col.split('_')[1] for col in share_cols]
-    return sorted(list(set(months)))
-
- def create_share_plot(df, month):
-    """Create stacked bar chart for a single month"""
-    # Process data for the month
-    month_data = df[['Company', f'Share_{month}', f'WSP_{month}']].copy()
-    month_data.columns = ['Company', 'Share', 'WSP']
-    
-    # Calculate price ranges
-    min_price = (month_data['WSP'].min() // 5) * 5
-    max_price = (month_data['WSP'].max() // 5 + 1) * 5
-    price_ranges = pd.interval_range(start=min_price, end=max_price, freq=5)
-    
-    # Create price range column
-    month_data['Price_Range'] = pd.cut(month_data['WSP'], bins=price_ranges)
-    
-    # Create pivot table
-    pivot_df = pd.pivot_table(
-        month_data,
-        values='Share',
-        index='Price_Range',
-        columns='Company',
-        aggfunc='sum',
-        fill_value=0
-    )
-    
-    # Remove zero columns
-    pivot_df = pivot_df.loc[:, (pivot_df != 0).any(axis=0)]
-    
-    # Calculate row sums
-    row_sums = pivot_df.sum(axis=1)
-    
-    # Create plot
-    fig, ax = plt.subplots(figsize=(12, 6))
-    
-    # Generate colors
-    n_companies = len(pivot_df.columns)
-    colors = distinctipy.get_colors(n_companies)
-    
-    # Plot stacked bars
-    pivot_df.plot(
-        kind='bar',
-        stacked=True,
-        ax=ax,
-        width=0.8,
-        color=colors
-    )
-    
-    # Create title with month
-    plt.title(f'Company Shares Distribution by WSP Price Range ({month.capitalize()})',
-             fontsize=16,
-             pad=20,
-             fontweight='bold')
-    
-    plt.xlabel('WSP Price Range', fontsize=12)
-    plt.ylabel('Share (%)', fontsize=12)
-    
-    # Format x-axis labels to show only the price ranges
-    def format_interval(interval):
-        return f'{interval.left:.0f}-{interval.right:.0f}'
-    
-    x_labels = [format_interval(interval) for interval in pivot_df.index]
-    ax.set_xticklabels(x_labels, rotation=0, ha='center')
-    
-    # Add percentage labels
-    for c in ax.containers:
-        labels = [f'{v:.1f}%' if v > 0 else '' for v in c.datavalues]
-        ax.bar_label(c, labels=labels, label_type='center')
-    
-    # Add total labels
-    for i, (idx, total) in enumerate(row_sums.items()):
-        ax.text(i, total + 0.5, f'Total: {total:.1f}%',
-                ha='center',
-                va='bottom',
-                fontweight='bold',
-                bbox=dict(facecolor='white',
-                         edgecolor='none',
-                         alpha=0.7,
-                         pad=3))
-    
-    # Customize legend
-    plt.legend(
-        bbox_to_anchor=(1.05, 1),
-        loc='upper left',
-        borderaxespad=0.,
-        frameon=True,
-        fontsize=10,
-        title='Companies',
-        title_fontsize=12
-    )
-    
-    # Add grid
-    plt.grid(axis='y', linestyle='--', alpha=0.7)
-    
-    # Customize background
-    ax.set_facecolor('#f8f9fa')
-    fig.patch.set_facecolor('#ffffff')
-    
-    # Adjust layout
-    current_ymax = ax.get_ylim()[1]
-    ax.set_ylim(0, current_ymax * 1.1)
-    plt.margins(y=0.1)
-    plt.tight_layout()
-    
-    return fig
-
- def main():
-    
-    # Custom CSS
-    st.markdown("""
-        <style>
-        .main {
-            background-color: #f8f9fa;
-        }
-        .stApp {
-            background-color: #ffffff;
-        }
-        .css-1d391kg {
-            padding: 2rem 1rem;
-        }
-        .stSelectbox {
-            background-color: white;
-        }
-        .stMultiSelect {
-            background-color: white;
-        }
-        </style>
-    """, unsafe_allow_html=True)
-    
-    # Create two columns - sidebar and main content
-    col1, col2 = st.columns([1, 4])
-    
-    # Sidebar content in first column
-    with col1:
-        st.header("📥 Data Upload")
-        uploaded_file = st.file_uploader("Upload Excel File", type=['xlsx', 'xls'])
+    def load_and_process_data(uploaded_file):
+        """Load Excel file and return dict of dataframes and sheet names"""
+        xl = pd.ExcelFile(uploaded_file)
+        states = xl.sheet_names
+        state_dfs = {state: pd.read_excel(uploaded_file, sheet_name=state) for state in states}
         
-        if uploaded_file:
-            state_dfs, states = load_and_process_data(uploaded_file)
+        # Initialize colors for all unique companies across all states
+        all_companies = set()
+        for df in state_dfs.values():
+            all_companies.update(df['Company'].unique())
+        
+        # Assign consistent colors to all companies
+        for company in all_companies:
+            get_company_color(company)
             
-            st.header("🎯 Analysis Settings")
-            # State selection
-            selected_state = st.selectbox(
-                "Select State",
-                states,
-                index=0,
-                help="Choose the state for analysis"
-            )
+        return state_dfs, states
+
+    def get_available_months(df):
+        """Extract available months from column names"""
+        share_cols = [col for col in df.columns if col.startswith('Share_')]
+        months = [col.split('_')[1] for col in share_cols]
+        return sorted(list(set(months)))
+
+    def create_share_plot(df, month):
+        """Create enhanced stacked bar chart for a single month"""
+        # Process data for the month
+        month_data = df[['Company', f'Share_{month}', f'WSP_{month}']].copy()
+        month_data.columns = ['Company', 'Share', 'WSP']
+        
+        # Calculate price ranges
+        min_price = (month_data['WSP'].min() // 5) * 5
+        max_price = (month_data['WSP'].max() // 5 + 1) * 5
+        price_ranges = pd.interval_range(start=min_price, end=max_price, freq=5)
+        
+        # Create price range column
+        month_data['Price_Range'] = pd.cut(month_data['WSP'], bins=price_ranges)
+        
+        # Create pivot table
+        pivot_df = pd.pivot_table(
+            month_data,
+            values='Share',
+            index='Price_Range',
+            columns='Company',
+            aggfunc='sum',
+            fill_value=0
+        )
+        
+        # Remove zero columns
+        pivot_df = pivot_df.loc[:, (pivot_df != 0).any(axis=0)]
+        
+        # Calculate row sums
+        row_sums = pivot_df.sum(axis=1)
+        
+        # Create plot with improved styling
+        fig, ax = plt.subplots(figsize=(14, 8))
+        
+        # Get colors for companies
+        colors = [get_company_color(company) for company in pivot_df.columns]
+        
+        # Plot stacked bars with enhanced styling
+        pivot_df.plot(
+            kind='bar',
+            stacked=True,
+            ax=ax,
+            width=0.8,
+            color=colors
+        )
+        
+        # Enhanced title with month
+        plt.suptitle(f'Market Share Distribution by Price Range', 
+                    fontsize=20, 
+                    y=1.02, 
+                    fontweight='bold')
+        plt.title(f'{month.capitalize()}', 
+                 fontsize=16, 
+                 pad=20)
+        
+        plt.xlabel('WSP Price Range (₹)', fontsize=12, fontweight='bold')
+        plt.ylabel('Market Share (%)', fontsize=12, fontweight='bold')
+        
+        # Format x-axis labels
+        def format_interval(interval):
+            return f'₹{interval.left:.0f}-{interval.right:.0f}'
+        
+        x_labels = [format_interval(interval) for interval in pivot_df.index]
+        ax.set_xticklabels(x_labels, rotation=45, ha='right')
+        
+        # Add percentage labels with improved visibility
+        for c in ax.containers:
+            labels = [f'{v:.1f}%' if v > 1 else '' for v in c.datavalues]
+            ax.bar_label(c, labels=labels, label_type='center', fontsize=9)
+        
+        # Add total labels with enhanced styling
+        for i, (idx, total) in enumerate(row_sums.items()):
+            if total > 0:
+                ax.text(i, total + 1, f'Total: {total:.1f}%',
+                        ha='center',
+                        va='bottom',
+                        fontweight='bold',
+                        fontsize=10,
+                        bbox=dict(facecolor='white',
+                                 edgecolor='gray',
+                                 alpha=0.9,
+                                 pad=3,
+                                 boxstyle='round,pad=0.5'))
+        
+        # Get WSP for each company for the specific month
+        company_wsps = {}
+        for company in pivot_df.columns:
+            wsp = month_data[month_data['Company'] == company]['WSP'].iloc[0]
+            company_wsps[company] = wsp
+        
+        # Create enhanced legend with month-specific WSP information
+        legend_labels = [f'{company} (WSP: ₹{company_wsps[company]:.0f})' 
+                        for company in pivot_df.columns]
+        
+        plt.legend(
+            legend_labels,
+            bbox_to_anchor=(1.15, 1),
+            loc='upper left',
+            borderaxespad=0.,
+            frameon=True,
+            fontsize=10,
+            title=f'Companies with WSP ({month.capitalize()})',
+            title_fontsize=12,
+            edgecolor='gray'
+        )
+        
+        # Enhanced grid
+        plt.grid(axis='y', linestyle='--', alpha=0.3)
+        
+        # Improved background styling
+        ax.set_facecolor('#f8f9fa')
+        fig.patch.set_facecolor('#ffffff')
+        
+        # Add subtle box around plot
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['left'].set_linewidth(0.5)
+        ax.spines['bottom'].set_linewidth(0.5)
+        
+        # Adjust layout
+        current_ymax = ax.get_ylim()[1]
+        ax.set_ylim(0, current_ymax * 1.15)
+        plt.margins(y=0.1)
+        plt.tight_layout()
+        
+        return fig
+
+    def create_trend_line_plot(df, selected_companies):
+        """Create line plot showing share trends over months for selected companies"""
+        # Get all share columns
+        share_cols = [col for col in df.columns if col.startswith('Share_')]
+        months = [col.split('_')[1] for col in share_cols]
+        
+        # Create data for plotting
+        plot_data = []
+        avg_shares = {}
+        
+        for company in selected_companies:
+            shares = []
+            for col in share_cols:
+                share = df[df['Company'] == company][col].iloc[0]
+                shares.append(share)
             
-            # Get available months for selected state
-            available_months = get_available_months(state_dfs[selected_state])
+            # Calculate average share for the company
+            avg_share = np.mean(shares)
+            avg_shares[company] = avg_share
             
-            # Month selection
-            selected_months = st.multiselect(
-                "Select Months",
-                available_months,
-                default=[available_months[0]],
-                help="Choose one or more months for comparison"
-            )
+            plot_data.append({
+                'company': company,
+                'months': months,
+                'shares': shares,
+                'color': get_company_color(company)
+            })
+        
+        # Create plot
+        fig, ax = plt.subplots(figsize=(14, 8))
+        
+        # Plot lines for each company
+        for data in plot_data:
+            ax.plot(data['months'], data['shares'], 
+                   color=data['color'], 
+                   marker='o', 
+                   linewidth=2, 
+                   markersize=8,
+                   label=f"{data['company']} (Avg: {avg_shares[data['company']]:.1f}%)")
             
-            if not selected_months:
-                st.warning("Please select at least one month.")
-                return
-    
-    # Main content in second column
-    with col2:
-        if uploaded_file and selected_months:
-            st.title("📊 Market Share Analysis Dashboard")
-            st.markdown(f"### State: {selected_state}")
+            # Add share values on points
+            for x, y in zip(data['months'], data['shares']):
+                ax.annotate(f'{y:.1f}%', 
+                          (x, y),
+                          xytext=(0, 10),
+                          textcoords='offset points',
+                          ha='center',
+                          va='bottom',
+                          fontsize=8)
+        
+        # Enhance plot styling
+        plt.title('Market Share Trends Over Time', 
+                 fontsize=20, 
+                 pad=20, 
+                 fontweight='bold')
+        
+        plt.xlabel('Month', fontsize=12, fontweight='bold')
+        plt.ylabel('Market Share (%)', fontsize=12, fontweight='bold')
+        
+        # Rotate x-axis labels
+        plt.xticks(rotation=45)
+        
+        # Add grid
+        plt.grid(True, linestyle='--', alpha=0.3)
+        
+        # Enhanced legend
+        plt.legend(
+            bbox_to_anchor=(1.15, 1),
+            loc='upper left',
+            borderaxespad=0.,
+            frameon=True,
+            fontsize=10,
+            title='Companies with Average Share',
+            title_fontsize=12
+        )
+        
+        # Style improvements
+        ax.set_facecolor('#f8f9fa')
+        fig.patch.set_facecolor('#ffffff')
+        
+        # Remove top and right spines
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        
+        plt.tight_layout()
+        
+        return fig
+
+    def export_to_pdf(figs, filename):
+        """Export multiple figures to a single PDF file"""
+        with PdfPages(filename) as pdf:
+            for fig in figs:
+                pdf.savefig(fig, bbox_inches='tight')
+                plt.close(fig)
+
+    def main():
+        # Enhanced CSS styling
+        st.markdown("""
+            <style>
+            .main {
+                background-color: #f8f9fa;
+            }
+            .stApp {
+                background-color: #ffffff;
+            }
+            .css-1d391kg {
+                padding: 2.5rem 1rem;
+            }
+            .stSelectbox {
+                background-color: white;
+            }
+            .stMultiSelect {
+                background-color: white;
+            }
+            .st-emotion-cache-1wmy9hl e1f1d6gn0 {
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                border-radius: 0.5rem;
+            }
+            h1, h2, h3 {
+                color: #1f2937;
+            }
+            .stButton>button {
+                background-color: #3b82f6;
+                color: white;
+                border-radius: 0.5rem;
+                padding: 0.5rem 1rem;
+                border: none;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+            .stButton>button:hover {
+                background-color: #2563eb;
+            }
+            </style>
+        """, unsafe_allow_html=True)
+        
+        # Create two columns with improved ratio
+        col1, col2 = st.columns([1, 5])
+        
+        # Enhanced sidebar
+        with col1:
+            st.markdown("## 📊 Controls")
             st.markdown("---")
             
-            # Create separate plots for each selected month
-            for month in selected_months:
-                with st.spinner(f"Generating visualization for {month.capitalize()}..."):
-                    fig = create_share_plot(state_dfs[selected_state], month)
-                    st.pyplot(fig)
-                    
-                    # Download button for each plot
-                    buf = io.BytesIO()
-                    fig.savefig(buf, format='png', dpi=300, bbox_inches='tight')
-                    buf.seek(0)
-                    st.download_button(
-                        label=f"Download {month.capitalize()} Plot",
-                        data=buf,
-                        file_name=f'market_share_{selected_state}_{month}.png',
-                        mime='image/png',
-                        key=f"download_{month}"  # Unique key for each button
-                    )
-                st.markdown("---")
+            st.markdown("### 📥 Data Upload")
+            uploaded_file = st.file_uploader("Upload Excel File", type=['xlsx', 'xls'])
+            
+            if uploaded_file:
+                state_dfs, states = load_and_process_data(uploaded_file)
+                
+                st.markdown("### 🎯 Settings")
+                # Enhanced state selection
+                selected_state = st.selectbox(
+                    "Select State",
+                    states,
+                    index=0,
+                    help="Choose the state for analysis"
+                )
+                
+                # Get available months for selected state
+                available_months = get_available_months(state_dfs[selected_state])
+                
+                # Enhanced month selection
+                selected_months = st.multiselect(
+                    "Select Months",
+                    available_months,
+                    default=[available_months[0]],
+                    help="Choose months for comparison"
+                )
+                
+                if not selected_months:
+                    st.warning("📌 Please select at least one month.")
+                    return
+                
+                # Company selection for trend line plot
+                all_companies = state_dfs[selected_state]['Company'].unique()
+                selected_companies = st.multiselect(
+                    "Select Companies for Trend Analysis",
+                    all_companies,
+                    default=list(all_companies)[:3],
+                    help="Choose companies to show in the trend line graph"
+                )
         
-        elif uploaded_file:
-            st.info("👈 Select state and months from the sidebar to view analysis")
-        else:
-            st.info("👈 Upload an Excel file from the sidebar to begin analysis")
-    
-    # Footer
-    st.markdown("---")
-    st.markdown(
-        """
-        <div style='text-align: center'>
-            <p>Built with ❤️ using Streamlit</p>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
- if __name__ == "__main__":
-    main()
+        # Enhanced main content
+        with col2:
+            if uploaded_file and selected_months:
+                st.markdown("# Market Share Analysis")
+                st.markdown(f"### State: {selected_state}")
+                
+                # Add summary metrics
+                with st.expander("📈 Summary Statistics", expanded=True):
+                    metrics_cols = st.columns(len(selected_months))
+                    for idx, month in enumerate(selected_months):
+                        df = state_dfs[selected_state]
+                        total_share = df[f'Share_{month}'].sum()
+                        avg_wsp = df[f'WSP_{month}'].mean()
+                        num_companies = len(df[df[f'Share_{month}'] > 0])
+                        
+                        with metrics_cols[idx]:
+                            st.metric(f"{month.capitalize()}", 
+                                    f"{num_companies} Companies",
+                                    f"Avg WSP: ₹{avg_wsp:.0f}")
+                
+                st.markdown("---")
+                
+                # Store figures for PDF export
+                figures = []
+                
+                # Create separate plots for each selected month
+                for month in selected_months:
+                    with st.spinner(f"📊 Generating visualization for {month.capitalize()}..."):
+                        fig = create_share_plot(state_dfs[selected_state], month)
+                        figures.append(fig)
+                        st.pyplot(fig)
+                        
+                        # Enhanced download button
+                        buf = io.BytesIO()
+                        fig.savefig(buf, format='png', dpi=300, bbox_inches='tight')
+                        buf.seek(0)
+                        col1, col2, col3 = st.columns([1, 1, 2])
+                        with col1:
+                            st.download_button(
+                                label=f"📥 Download {month.capitalize()}",
+                                data=buf,
+                                file_name=f'market_share_{selected_state}_{month}.png',
+                                mime='image/png',
+                                key=f"download_{month}"
+                            )
+                    st.markdown("---")
+            
+            elif uploaded_file:
+                st.info("👈 Select state and months from the sidebar to view analysis")
+            else:
+                st.markdown("""
+                    ### 👋 Welcome to Market Share Analysis Dashboard
+                    
+                    To get started:
+                    1. Upload your Excel file using the sidebar
+                    2. Select a state for analysis
+                    3. Choose the months you want to compare
+                    
+                    The dashboard will generate interactive visualizations showing:
+                    - Market share distribution by price range
+                    - Company-wise breakdown with average WSP
+                    - Comparative analysis across months
+                """)
+
+    if __name__ == "__main__":
+        main()
+
 def load_visit_data():
     try:
         with open('visit_data.json', 'r') as f:
