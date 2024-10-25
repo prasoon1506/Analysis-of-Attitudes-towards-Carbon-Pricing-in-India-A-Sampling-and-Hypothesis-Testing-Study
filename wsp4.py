@@ -6635,7 +6635,7 @@ def market_share():
             if uploaded_file and selected_months:
                 st.markdown("# Market Share Analysis")
                 st.markdown(f"### State: {selected_state}")
-                
+                all_figures = []
                 # Add summary metrics
                 with st.expander("📈 Summary Statistics", expanded=True):
                     metrics_cols = st.columns(len(selected_months))
@@ -6658,8 +6658,6 @@ def market_share():
                     st.pyplot(trend_fig)
                     all_figures.append(trend_fig)
                     st.markdown("---")
-                # Store figures for PDF export
-                figures = []
                 
                 # Create separate plots for each selected month
                 for month in selected_months:
