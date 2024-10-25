@@ -6667,7 +6667,7 @@ def market_share():
         st.markdown("""
             <div style='padding: 1.5rem; background: linear-gradient(90deg, #2563eb 0%, #3b82f6 100%); 
                         border-radius: 1rem; margin-bottom: 2rem; color: white;'>
-                <h1 style='color: white; margin: 0; border: none;'>Market Share Analysis Dashboard</h1>
+                <h1 style='color: brown; margin: 0; border: none;'>Market Share Analysis Dashboard</h1>
                 <p style='margin: 0.5rem 0 0 0; opacity: 0.9;'>
                     Comprehensive market analysis and visualization tool
                 </p>
