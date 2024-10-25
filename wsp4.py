@@ -6282,6 +6282,16 @@ from collections import defaultdict
 from matplotlib.backends.backend_pdf import PdfPages
 import seaborn as sns
 from datetime import datetime
+import streamlit as st
+import pandas as pd
+import matplotlib.pyplot as plt
+import distinctipy
+from pathlib import Path
+import io
+import numpy as np
+from matplotlib.backends.backend_pdf import PdfPages
+import seaborn as sns
+from datetime import datetime
 
 def market_share():
     # Global color mapping to maintain consistency across states and months
@@ -6456,64 +6466,55 @@ def market_share():
         months = [col.split('_')[1] for col in share_cols]
         
         # Create data for plotting
-        plot_data = []
-        avg_shares = {}
-        
+        trend_data = []
         for company in selected_companies:
-            shares = []
-            for col in share_cols:
-                share = df[df['Company'] == company][col].iloc[0]
-                shares.append(share)
+            company_shares = df[df['Company'] == company][share_cols].iloc[0]
+            avg_share = company_shares.mean()
             
-            # Calculate average share for the company
-            avg_share = np.mean(shares)
-            avg_shares[company] = avg_share
-            
-            plot_data.append({
-                'company': company,
-                'months': months,
-                'shares': shares,
-                'color': get_company_color(company)
+            trend_data.append({
+                'Company': company,
+                'Months': months,
+                'Shares': company_shares.values,
+                'Average': avg_share
             })
         
         # Create plot
         fig, ax = plt.subplots(figsize=(14, 8))
         
         # Plot lines for each company
-        for data in plot_data:
-            ax.plot(data['months'], data['shares'], 
-                   color=data['color'], 
-                   marker='o', 
-                   linewidth=2, 
-                   markersize=8,
-                   label=f"{data['company']} (Avg: {avg_shares[data['company']]:.1f}%)")
+        for company_data in trend_data:
+            color = get_company_color(company_data['Company'])
             
-            # Add share values on points
-            for x, y in zip(data['months'], data['shares']):
-                ax.annotate(f'{y:.1f}%', 
-                          (x, y),
-                          xytext=(0, 10),
-                          textcoords='offset points',
-                          ha='center',
-                          va='bottom',
-                          fontsize=8)
+            # Plot the main line
+            plt.plot(company_data['Months'], 
+                    company_data['Shares'], 
+                    marker='o', 
+                    linewidth=2,
+                    color=color,
+                    label=f"{company_data['Company']} (Avg: {company_data['Average']:.1f}%)")
+            
+            # Plot average line
+            plt.axhline(y=company_data['Average'], 
+                       color=color, 
+                       linestyle='--', 
+                       alpha=0.5)
         
-        # Enhance plot styling
+        # Enhance the plot
         plt.title('Market Share Trends Over Time', 
                  fontsize=20, 
                  pad=20, 
                  fontweight='bold')
         
-        plt.xlabel('Month', fontsize=12, fontweight='bold')
+        plt.xlabel('Months', fontsize=12, fontweight='bold')
         plt.ylabel('Market Share (%)', fontsize=12, fontweight='bold')
         
-        # Rotate x-axis labels
+        # Rotate x-axis labels for better readability
         plt.xticks(rotation=45)
         
         # Add grid
         plt.grid(True, linestyle='--', alpha=0.3)
         
-        # Enhanced legend
+        # Enhance legend
         plt.legend(
             bbox_to_anchor=(1.15, 1),
             loc='upper left',
@@ -6521,17 +6522,13 @@ def market_share():
             frameon=True,
             fontsize=10,
             title='Companies with Average Share',
-            title_fontsize=12
+            title_fontsize=12,
+            edgecolor='gray'
         )
         
         # Style improvements
         ax.set_facecolor('#f8f9fa')
         fig.patch.set_facecolor('#ffffff')
-        
-        # Remove top and right spines
-        ax.spines['top'].set_visible(False)
-        ax.spines['right'].set_visible(False)
-        
         plt.tight_layout()
         
         return fig
@@ -6556,10 +6553,7 @@ def market_share():
             .css-1d391kg {
                 padding: 2.5rem 1rem;
             }
-            .stSelectbox {
-                background-color: white;
-            }
-            .stMultiSelect {
+            .stSelectbox, .stMultiSelect {
                 background-color: white;
             }
             .st-emotion-cache-1wmy9hl e1f1d6gn0 {
@@ -6617,10 +6611,6 @@ def market_share():
                     help="Choose months for comparison"
                 )
                 
-                if not selected_months:
-                    st.warning("📌 Please select at least one month.")
-                    return
-                
                 # Company selection for trend line plot
                 all_companies = state_dfs[selected_state]['Company'].unique()
                 selected_companies = st.multiselect(
@@ -6629,13 +6619,20 @@ def market_share():
                     default=list(all_companies)[:3],
                     help="Choose companies to show in the trend line graph"
                 )
+                
+                if not selected_months:
+                    st.warning("📌 Please select at least one month.")
+                    return
         
         # Enhanced main content
         with col2:
             if uploaded_file and selected_months:
                 st.markdown("# Market Share Analysis")
                 st.markdown(f"### State: {selected_state}")
+                
+                # Store all figures for PDF export
                 all_figures = []
+                
                 # Add summary metrics
                 with st.expander("📈 Summary Statistics", expanded=True):
                     metrics_cols = st.columns(len(selected_months))
@@ -6651,6 +6648,8 @@ def market_share():
                                     f"Avg WSP: ₹{avg_wsp:.0f}")
                 
                 st.markdown("---")
+                
+                # Trend Line Plot Section
                 if selected_companies:
                     st.markdown("### Market Share Trends")
                     trend_fig = create_trend_line_plot(state_dfs[selected_state], 
@@ -6663,22 +6662,24 @@ def market_share():
                 for month in selected_months:
                     with st.spinner(f"📊 Generating visualization for {month.capitalize()}..."):
                         fig = create_share_plot(state_dfs[selected_state], month)
-                        figures.append(fig)
                         st.pyplot(fig)
+                        all_figures.append(fig)
                         
-                        # Enhanced download button
-                        buf = io.BytesIO()
-                        fig.savefig(buf, format='png', dpi=300, bbox_inches='tight')
-                        buf.seek(0)
+                        # Enhanced download buttons
                         col1, col2, col3 = st.columns([1, 1, 2])
                         with col1:
+                            # PNG download
+                            buf = io.BytesIO()
+                            fig.savefig(buf, format='png', dpi=300, bbox_inches='tight')
+                            buf.seek(0)
                             st.download_button(
-                                label=f"📥 Download {month.capitalize()}",
+                                label=f"📥 Download PNG",
                                 data=buf,
                                 file_name=f'market_share_{selected_state}_{month}.png',
                                 mime='image/png',
-                                key=f"download_{month}"
+                                key=f"download_png_{month}"
                             )
+                        
                     st.markdown("---")
             
             elif uploaded_file:
