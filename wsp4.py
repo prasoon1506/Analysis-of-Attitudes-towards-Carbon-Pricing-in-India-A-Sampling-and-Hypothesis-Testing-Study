@@ -6740,6 +6740,7 @@ def market_share():
         
         # Enhanced main content
         with col2:
+            all_figures = []
             if uploaded_file and selected_months:
                 # Create summary statistics cards
                 st.markdown("### 📊 Key Metrics")
