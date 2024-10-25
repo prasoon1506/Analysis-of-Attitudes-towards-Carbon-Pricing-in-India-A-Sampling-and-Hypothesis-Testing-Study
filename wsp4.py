@@ -6578,7 +6578,7 @@ def market_share():
         """, unsafe_allow_html=True)
         
         # Create two columns with improved ratio
-        col1, col2 = st.columns([1, 5])
+        col1, col2 = st.columns([1, 4])
         
         # Enhanced sidebar
         with col1:
