@@ -6677,9 +6677,6 @@ def market_share():
         """, unsafe_allow_html=True)
 
     def create_metric_card(title, value, delta=None, help_text=None):
-        """Create a styled metric card"""
-        col1, col2 = st.columns([3, 1])
-        with col1:
             st.metric(
                 label=title,
                 value=value,
