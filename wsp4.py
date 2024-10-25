@@ -6333,23 +6333,9 @@ def market_share():
         months = [col.split('_')[1] for col in share_cols]
         return sorted(list(set(months)))
     def create_share_plot(df, month):
-    """Create enhanced stacked bar chart for a single month"""
-    # Process data for the month
-    month_data = df[['Company', f'Share_{month}', f'WSP_{month}']].copy()
-    month_data.columns = ['Company', 'Share', 'WSP']
-    
-    # Improved price range calculation logic
-    def calculate_price_ranges(prices, target_bins=8):
-        """
-        Calculate appropriate price ranges based on data distribution
-        
-        Args:
-            prices: Series of price values
-            target_bins: Target number of bins (default=8)
-            
-        Returns:
-            pd.IntervalIndex: Price range intervals
-        """
+      month_data = df[['Company', f'Share_{month}', f'WSP_{month}']].copy()
+      month_data.columns = ['Company', 'Share', 'WSP']
+      def calculate_price_ranges(prices, target_bins=8):
         min_price = prices.min()
         max_price = prices.max()
         price_range = max_price - min_price
