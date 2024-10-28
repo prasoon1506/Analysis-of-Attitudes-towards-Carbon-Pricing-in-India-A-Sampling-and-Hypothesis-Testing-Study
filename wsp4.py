@@ -7299,10 +7299,10 @@ def market_share():
         """Calculate sequential and total changes in share percentage"""
         sequential_changes = []
         for i in range(1, len(shares)):
-            change = (shares[i] - shares[i-1])/shares[i-1]*100
+            change = (shares[i] - shares[i-1])/shares[i]*100
             sequential_changes.append(change)
         
-        total_change = (shares[-1] - shares[0])/shares[-1]*100
+        total_change = (shares[-1] - shares[0])/shares[0]*100
         return sequential_changes, total_change
     def create_trend_line_plot(df, selected_companies):
      share_cols = [col for col in df.columns if col.startswith('Share_')]
