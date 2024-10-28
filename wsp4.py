@@ -7167,7 +7167,7 @@ def market_share():
         'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6,
         'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12
     }
-     sorted_months = sorted(months, key=lambda x: month_order[x.lower()])
+     sorted_months = sorted(months, key=lambda x: month_order[x])
      return sorted_months
     def create_share_plot(df, month):
       sns.set_style("whitegrid")
@@ -7310,7 +7310,7 @@ def market_share():
      month_order = {
         'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6,
         'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12}
-     month_col_pairs = [(col, month_order[month.lower()]) 
+     month_col_pairs = [(col, month_order[month]) 
                       for col, month in zip(share_cols, months)]
      sorted_pairs = sorted(month_col_pairs, key=lambda x: x[1])
      sorted_share_cols = [pair[0] for pair in sorted_pairs]
