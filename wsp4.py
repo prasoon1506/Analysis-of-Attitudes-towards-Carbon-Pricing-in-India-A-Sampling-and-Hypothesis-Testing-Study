@@ -898,15 +898,15 @@ def front_page_creator():
             num_blocks = st.number_input("Number of Additional Text Blocks", 0, 5, 0)
             text_blocks = []
             for i in range(num_blocks):
-            st.markdown(f"#### Text Block {i+1}")
-            col13, col14 = st.columns(2)
-            with col13:
+             st.markdown(f"#### Text Block {i+1}")
+             col13, col14 = st.columns(2)
+             with col13:
                 block_text = st.text_input(f"Text for Block {i+1}")
                 block_font = st.selectbox(f"Font for Block {i+1}", ["Helvetica", "Times-Roman", "Courier"])
-            with col14:
+             with col14:
                 block_size = st.slider(f"Size for Block {i+1}", 8, 36, 12)
                 block_color = st.color_picker(f"Color for Block {i+1}", "#000000")
-            text_blocks.append({
+             text_blocks.append({
                 "text": block_text,
                 "font": block_font,
                 "size": block_size,
