@@ -358,43 +358,23 @@ from PIL import Image
 import io
 import streamlit as st
 from datetime import datetime
-import colorsys
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import A4, letter, legal
-from reportlab.lib import colors
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.lib.units import inch, cm
-from reportlab.platypus import Image as ReportLabImage
-from PIL import Image
-import io
-import streamlit as st
-from datetime import datetime
-import base64
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import A4, letter, legal
-from reportlab.lib import colors
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.lib.units import inch, cm
-from reportlab.platypus import Image as ReportLabImage
-from PIL import Image
-import io
-import streamlit as st
-from datetime import datetime
-import base64
+import tempfile
+import os
 
 def convert_uploadedfile_to_image(uploaded_file):
-    """Convert Streamlit UploadedFile to a format suitable for ReportLab"""
+    """Convert Streamlit UploadedFile to a temporary file path"""
     if uploaded_file is None:
         return None
     
-    # Read the file into a bytes buffer
-    bytes_data = uploaded_file.getvalue()
+    # Create a temporary file
+    temp_dir = tempfile.mkdtemp()
+    temp_file_path = os.path.join(temp_dir, uploaded_file.name)
     
-    # Create a BytesIO object
-    image_buffer = io.BytesIO(bytes_data)
-    return image_buffer
+    # Save the uploaded file to the temporary path
+    with open(temp_file_path, 'wb') as f:
+        f.write(uploaded_file.getvalue())
+    
+    return temp_file_path
 
 def create_front_page(options):
     """Create a professional front page with given options"""
@@ -457,9 +437,9 @@ def create_front_page(options):
     # Add logo/image if provided
     if options.get("logo"):
         try:
-            logo_buffer = convert_uploadedfile_to_image(options["logo"])
-            if logo_buffer:
-                logo_img = Image.open(logo_buffer)
+            logo_path = convert_uploadedfile_to_image(options["logo"])
+            if logo_path:
+                logo_img = Image.open(logo_path)
                 # Resize image while maintaining aspect ratio
                 aspect = logo_img.height / logo_img.width
                 logo_width = options["logo_width"]
@@ -476,7 +456,11 @@ def create_front_page(options):
                     x = width - logo_width - 2*cm
                     y = height - logo_height - 2*cm
                 
-                c.drawImage(logo_buffer, x, y, width=logo_width, height=logo_height)
+                c.drawImage(logo_path, x, y, width=logo_width, height=logo_height)
+                
+                # Clean up the temporary file
+                os.unlink(logo_path)
+                os.rmdir(os.path.dirname(logo_path))
         except Exception as e:
             st.error(f"Error processing logo: {str(e)}")
 
@@ -529,12 +513,6 @@ def create_front_page(options):
     c.save()
     buffer.seek(0)
     return buffer
-
-def display_pdf(pdf_bytes):
-    """Display PDF in Streamlit app"""
-    base64_pdf = base64.b64encode(pdf_bytes).decode('utf-8')
-    pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="600" type="application/pdf"></iframe>'
-    st.markdown(pdf_display, unsafe_allow_html=True)
 
 def front_page_creator():
     st.header("📄 Professional Front Page Creator")
@@ -665,12 +643,12 @@ def front_page_creator():
                     mime="application/pdf"
                 )
                 
-                # Display preview
-                st.subheader("Preview")
-                display_pdf(pdf_buffer.getvalue())
+                # Display PDF generation success message
+                st.success("PDF generated successfully! Click the download button above to save your front page.")
                 
             except Exception as e:
                 st.error(f"Error generating front page: {str(e)}")
+
 def excel_editor_and_analyzer():
     st.title("🧩 Advanced Excel Editor, File Converter and Data Analyzer")
     tab1, tab2, tab3, tab4 = st.tabs([
