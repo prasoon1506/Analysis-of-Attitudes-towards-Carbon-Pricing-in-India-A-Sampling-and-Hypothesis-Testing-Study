@@ -1016,6 +1016,7 @@ def front_page_creator():
                         "watermark_opacity": watermark_opacity if add_watermark else None,
                         "show_date": show_date,
                         "date_format": date_format if show_date else "%B %d, %Y",
+                        "text_blocks": text_blocks,
                         "footer_text": footer_text,
                         "footer_alignment": footer_alignment,
                     }
