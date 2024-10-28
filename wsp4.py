@@ -371,6 +371,30 @@ import io
 import streamlit as st
 from datetime import datetime
 import base64
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4, letter, legal
+from reportlab.lib import colors
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.lib.units import inch, cm
+from reportlab.platypus import Image as ReportLabImage
+from PIL import Image
+import io
+import streamlit as st
+from datetime import datetime
+import base64
+
+def convert_uploadedfile_to_image(uploaded_file):
+    """Convert Streamlit UploadedFile to a format suitable for ReportLab"""
+    if uploaded_file is None:
+        return None
+    
+    # Read the file into a bytes buffer
+    bytes_data = uploaded_file.getvalue()
+    
+    # Create a BytesIO object
+    image_buffer = io.BytesIO(bytes_data)
+    return image_buffer
 
 def create_front_page(options):
     """Create a professional front page with given options"""
@@ -407,17 +431,16 @@ def create_front_page(options):
 
     # Add decorative elements
     if options["design_elements"]:
+        margin = cm
         if "Border" in options["design_elements"]:
             c.setStrokeColor(options["border_color"])
             c.setLineWidth(options["border_width"])
-            margin = cm
             c.rect(margin, margin, width - 2*margin, height - 2*margin)
         
         if "Corner Lines" in options["design_elements"]:
             c.setStrokeColor(options["accent_color"])
             c.setLineWidth(2)
             corner_size = 2*cm
-            margin = cm
             # Top left
             c.line(margin, height-margin, margin+corner_size, height-margin)
             c.line(margin, height-margin, margin, height-margin-corner_size)
@@ -432,26 +455,30 @@ def create_front_page(options):
             c.line(width-margin, margin, width-margin, margin+corner_size)
 
     # Add logo/image if provided
-    if options.get("logo_data"):
-        logo_data = io.BytesIO(options["logo_data"])
-        logo_img = Image.open(logo_data)
-        # Resize image while maintaining aspect ratio
-        aspect = logo_img.height / logo_img.width
-        logo_width = options["logo_width"]
-        logo_height = logo_width * aspect
-        
-        # Calculate position based on alignment
-        if options["logo_position"] == "Top Center":
-            x = (width - logo_width) / 2
-            y = height - logo_height - 2*cm
-        elif options["logo_position"] == "Top Left":
-            x = 2*cm
-            y = height - logo_height - 2*cm
-        else:  # Top Right
-            x = width - logo_width - 2*cm
-            y = height - logo_height - 2*cm
-            
-        c.drawImage(logo_data, x, y, width=logo_width, height=logo_height)
+    if options.get("logo"):
+        try:
+            logo_buffer = convert_uploadedfile_to_image(options["logo"])
+            if logo_buffer:
+                logo_img = Image.open(logo_buffer)
+                # Resize image while maintaining aspect ratio
+                aspect = logo_img.height / logo_img.width
+                logo_width = options["logo_width"]
+                logo_height = logo_width * aspect
+                
+                # Calculate position based on alignment
+                if options["logo_position"] == "Top Center":
+                    x = (width - logo_width) / 2
+                    y = height - logo_height - 2*cm
+                elif options["logo_position"] == "Top Left":
+                    x = 2*cm
+                    y = height - logo_height - 2*cm
+                else:  # Top Right
+                    x = width - logo_width - 2*cm
+                    y = height - logo_height - 2*cm
+                
+                c.drawImage(logo_buffer, x, y, width=logo_width, height=logo_height)
+        except Exception as e:
+            st.error(f"Error processing logo: {str(e)}")
 
     # Add title
     c.setFont(options["title_font"], options["title_size"])
@@ -476,7 +503,7 @@ def create_front_page(options):
     # Add additional text blocks
     y_position = title_height - 4*cm
     for text_block in options["text_blocks"]:
-        if text_block["text"]:  # Only add if text is not empty
+        if text_block["text"]:  # Only add if there's actual text
             c.setFont(text_block["font"], text_block["size"])
             c.setFillColor(text_block["color"])
             text_width = c.stringWidth(text_block["text"], text_block["font"], text_block["size"])
@@ -496,16 +523,17 @@ def create_front_page(options):
             
         footer_text = " | ".join(footer_elements)
         footer_width = c.stringWidth(footer_text, "Helvetica", 10)
-        c.drawString((width - footer_width) / 2, cm + 0.5*cm, footer_text)
+        c.drawString((width - footer_width) / 2, margin + cm, footer_text)
 
+    # Save and return
     c.save()
     buffer.seek(0)
     return buffer
 
 def display_pdf(pdf_bytes):
-    """Display PDF in Streamlit"""
+    """Display PDF in Streamlit app"""
     base64_pdf = base64.b64encode(pdf_bytes).decode('utf-8')
-    pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="800" type="application/pdf"></iframe>'
+    pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="600" type="application/pdf"></iframe>'
     st.markdown(pdf_display, unsafe_allow_html=True)
 
 def front_page_creator():
@@ -541,9 +569,7 @@ def front_page_creator():
         # Logo/Image Settings
         st.subheader("Logo/Image Settings")
         logo = st.file_uploader("Upload Logo/Image", type=["png", "jpg", "jpeg"])
-        logo_data = None
-        if logo is not None:
-            logo_data = logo.getvalue()
+        if logo:
             col1, col2 = st.columns(2)
             with col1:
                 logo_width = st.slider("Logo Width", 50, 400, 200)
@@ -553,7 +579,7 @@ def front_page_creator():
         # Design Elements
         st.subheader("Design Elements")
         design_elements = st.multiselect("Add Design Elements", 
-            ["Border", "Corner Lines", "Watermark"],
+            ["Border", "Corner Lines"],
             default=["Border"])
         
         if "Border" in design_elements:
@@ -585,7 +611,7 @@ def front_page_creator():
                 "text": block_text,
                 "font": block_font,
                 "size": block_size,
-                "color": colors.HexColor(block_color)
+                "color": block_color
             })
         
         # Footer Options
@@ -599,7 +625,7 @@ def front_page_creator():
         # Generate Button
         if st.button("Generate Front Page"):
             if not title:
-                st.error("Please enter a title for the front page.")
+                st.error("Please enter a title for your front page.")
                 return
                 
             try:
@@ -617,9 +643,9 @@ def front_page_creator():
                     "background_color": colors.HexColor(background_color) if background_type == "Color" else None,
                     "gradient_start": colors.HexColor(gradient_start) if background_type == "Gradient" else None,
                     "gradient_end": colors.HexColor(gradient_end) if background_type == "Gradient" else None,
-                    "logo_data": logo_data,
-                    "logo_width": logo_width if logo_data else None,
-                    "logo_position": logo_position if logo_data else None,
+                    "logo": logo,
+                    "logo_width": logo_width if logo else None,
+                    "logo_position": logo_position if logo else None,
                     "design_elements": design_elements,
                     "border_color": colors.HexColor(border_color) if "Border" in design_elements else None,
                     "border_width": border_width if "Border" in design_elements else None,
@@ -631,7 +657,7 @@ def front_page_creator():
                 
                 pdf_buffer = create_front_page(options)
                 
-                # Download button
+                # Add download button
                 st.download_button(
                     label="📥 Download Front Page",
                     data=pdf_buffer,
@@ -645,7 +671,6 @@ def front_page_creator():
                 
             except Exception as e:
                 st.error(f"Error generating front page: {str(e)}")
-# Update the main tabs to include the front page creator
 def excel_editor_and_analyzer():
     st.title("🧩 Advanced Excel Editor, File Converter and Data Analyzer")
     tab1, tab2, tab3, tab4 = st.tabs([
