@@ -894,7 +894,24 @@ def front_page_creator():
                             0.5,
                             help="Adjust the thickness of the border"
                         )
-            
+            st.subheader("Additional Text Blocks")
+            num_blocks = st.number_input("Number of Additional Text Blocks", 0, 5, 0)
+            text_blocks = []
+            for i in range(num_blocks):
+            st.markdown(f"#### Text Block {i+1}")
+            col13, col14 = st.columns(2)
+            with col13:
+                block_text = st.text_input(f"Text for Block {i+1}")
+                block_font = st.selectbox(f"Font for Block {i+1}", ["Helvetica", "Times-Roman", "Courier"])
+            with col14:
+                block_size = st.slider(f"Size for Block {i+1}", 8, 36, 12)
+                block_color = st.color_picker(f"Color for Block {i+1}", "#000000")
+            text_blocks.append({
+                "text": block_text,
+                "font": block_font,
+                "size": block_size,
+                "color": block_color
+            })
             # Watermark Settings
             st.subheader("Watermark Settings")
             add_watermark = st.checkbox(
@@ -903,8 +920,8 @@ def front_page_creator():
             )
             
             if add_watermark:
-                col13, col14 = st.columns(2)
-                with col13:
+                col15, col16 = st.columns(2)
+                with col15:
                     watermark_text = st.text_input(
                         "Watermark Text",
                         placeholder="Enter watermark text",
@@ -915,7 +932,7 @@ def front_page_creator():
                         ["Helvetica", "Times-Roman", "Courier"],
                         help="Choose the font for your watermark"
                     )
-                with col14:
+                with col16:
                     watermark_size = st.slider(
                         "Watermark Size",
                         20, 100, 60,
