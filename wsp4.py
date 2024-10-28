@@ -7305,28 +7305,45 @@ def market_share():
         total_change = (shares[-1] - shares[0])/shares[-1]*100
         return sequential_changes, total_change
     def create_trend_line_plot(df, selected_companies):
-     share_cols = [col for col in df.columns if col.startswith('Share_')]
-     months = [col.split('_')[1] for col in share_cols]
-     month_order = {
-        'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6,
-        'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12}
-     month_col_pairs = [(col, month_order[month]) 
-                      for col, month in zip(share_cols, months)]
-     sorted_pairs = sorted(month_col_pairs, key=lambda x: x[1])
-     sorted_share_cols = [pair[0] for pair in sorted_pairs]
-     sorted_months = [col.split('_')[1] for col in sorted_share_cols]
-     fig, ax = plt.subplots(figsize=(14, 8))
-     legend_labels = []
+    """Create enhanced line plot showing share trends with detailed annotations"""
+    share_cols = [col for col in df.columns if col.startswith('Share_')]
+    months = [col.split('_')[1] for col in share_cols]
     
-     for company in selected_companies:
+    # Sort months chronologically with capitalized month names
+    month_order = {
+        'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6,
+        'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12
+    }
+    
+    # Create a list of (month, col_name) pairs and sort them
+    month_col_pairs = [(col, month_order[month]) 
+                      for col, month in zip(share_cols, months)]
+    sorted_pairs = sorted(month_col_pairs, key=lambda x: x[1])
+    
+    # Get sorted column names and months
+    sorted_share_cols = [pair[0] for pair in sorted_pairs]
+    sorted_months = [col.split('_')[1] for col in sorted_share_cols]
+    
+    fig, ax = plt.subplots(figsize=(14, 8))
+    
+    # Create lists to store lines and labels for legend
+    lines = []
+    legend_labels = []
+    
+    for company in selected_companies:
         color = get_company_color(company)
         # Use sorted column names to get data in correct order
         company_shares = df[df['Company'] == company][sorted_share_cols].iloc[0].values
         avg_share = company_shares.mean()
         
-        # Plot the main line
-        line = plt.plot(range(len(sorted_months)), company_shares, 
-                      marker='o', linewidth=2, color=color)[0]
+        # Plot the main line and store it
+        line = ax.plot(range(len(sorted_months)), company_shares, 
+                      marker='o', linewidth=2, color=color,
+                      label=company)[0]
+        lines.append(line)
+        
+        # Plot average line without adding to legend
+        ax.axhline(y=avg_share, color=color, linestyle='--', alpha=0.3)
         
         # Add share percentage labels at each point
         for i, share in enumerate(company_shares):
@@ -7362,48 +7379,44 @@ def market_share():
                               alpha=0.7,
                               pad=0.5))
         
-        # Add to legend labels with total change
-        change_color = 'green' if total_change > 0 else 'red'
+        # Create legend label with total change
         change_symbol = '↑' if total_change > 0 else '↓'
         legend_labels.append(
             f"{company} (Avg: {avg_share:.1f}% | Total Change: {change_symbol}{abs(total_change):.1f}%)"
         )
-        
-        # Plot average line
-        plt.axhline(y=avg_share, color=color, linestyle='--', alpha=0.3)
     
     # Enhance the plot
-     plt.title('Market Share Trends Over Time', 
+    plt.title('Market Share Trends Over Time', 
              fontsize=20, 
              pad=20, 
              fontweight='bold')
     
-     plt.xlabel('Months', fontsize=12, fontweight='bold')
-     plt.ylabel('Market Share (%)', fontsize=12, fontweight='bold')
+    plt.xlabel('Months', fontsize=12, fontweight='bold')
+    plt.ylabel('Market Share (%)', fontsize=12, fontweight='bold')
     
     # Set x-axis labels with sorted months
-     plt.xticks(range(len(sorted_months)), sorted_months, rotation=45)
+    plt.xticks(range(len(sorted_months)), sorted_months, rotation=45)
     
     # Add grid
-     plt.grid(True, linestyle='--', alpha=0.3)
+    plt.grid(True, linestyle='--', alpha=0.3)
     
-    # Enhance legend
-     plt.legend(legend_labels,
-              bbox_to_anchor=(1.15, 1),
-              loc='upper left',
-              borderaxespad=0.,
-              frameon=True,
-              fontsize=10,
-              title='Companies with Average Share & Total Change',
-              title_fontsize=12,
-              edgecolor='gray')
+    # Create custom legend with only the main lines
+    ax.legend(lines, legend_labels,
+             bbox_to_anchor=(1.15, 1),
+             loc='upper left',
+             borderaxespad=0.,
+             frameon=True,
+             fontsize=10,
+             title='Companies with Average Share & Total Change',
+             title_fontsize=12,
+             edgecolor='gray')
     
     # Style improvements
-     ax.set_facecolor('#f8f9fa')
-     fig.patch.set_facecolor('#ffffff')
-     plt.tight_layout()
+    ax.set_facecolor('#f8f9fa')
+    fig.patch.set_facecolor('#ffffff')
+    plt.tight_layout()
     
-     return fig
+    return fig
     def create_dashboard_header():
         """Create an attractive dashboard header"""
         st.markdown("""
