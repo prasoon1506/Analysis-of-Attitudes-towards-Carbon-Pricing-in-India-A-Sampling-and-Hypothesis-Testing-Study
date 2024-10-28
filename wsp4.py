@@ -360,6 +360,17 @@ import streamlit as st
 from datetime import datetime
 import colorsys
 
+def process_uploaded_image(uploaded_file):
+    """Process uploaded file and return a PIL Image object"""
+    if uploaded_file is not None:
+        # Read the file into memory
+        image_bytes = uploaded_file.read()
+        # Create a BytesIO object
+        image_buffer = io.BytesIO(image_bytes)
+        # Open the image using PIL
+        return image_buffer
+    return None
+
 def create_front_page(options):
     """Create a professional front page with given options"""
     # Create PDF buffer
@@ -396,16 +407,17 @@ def create_front_page(options):
 
     # Add decorative elements
     if options["design_elements"]:
-        if "border" in options["design_elements"]:
+        if "Border" in options["design_elements"]:
             c.setStrokeColor(options["border_color"])
             c.setLineWidth(options["border_width"])
             margin = cm
             c.rect(margin, margin, width - 2*margin, height - 2*margin)
         
-        if "corner_lines" in options["design_elements"]:
+        if "Corner Lines" in options["design_elements"]:
             c.setStrokeColor(options["accent_color"])
             c.setLineWidth(2)
             corner_size = 2*cm
+            margin = cm
             # Top left
             c.line(margin, height-margin, margin+corner_size, height-margin)
             c.line(margin, height-margin, margin, height-margin-corner_size)
@@ -420,14 +432,11 @@ def create_front_page(options):
             c.line(width-margin, margin, width-margin, margin+corner_size)
 
     # Add logo/image if provided
-    if options.get("logo"):
-        logo_img = Image.open(options["logo"])
-        # Resize image while maintaining aspect ratio
-        aspect = logo_img.height / logo_img.width
-        logo_width = options["logo_width"]
-        logo_height = logo_width * aspect
-        
+    if options.get("logo_data"):
         # Calculate position based on alignment
+        logo_width = options["logo_width"]
+        logo_height = logo_width * 0.75  # Approximate aspect ratio if not available
+        
         if options["logo_position"] == "Top Center":
             x = (width - logo_width) / 2
             y = height - logo_height - 2*cm
@@ -438,7 +447,7 @@ def create_front_page(options):
             x = width - logo_width - 2*cm
             y = height - logo_height - 2*cm
             
-        c.drawImage(options["logo"], x, y, width=logo_width, height=logo_height)
+        c.drawImage(options["logo_data"], x, y, width=logo_width, height=logo_height)
 
     # Add title
     c.setFont(options["title_font"], options["title_size"])
@@ -463,11 +472,12 @@ def create_front_page(options):
     # Add additional text blocks
     y_position = title_height - 4*cm
     for text_block in options["text_blocks"]:
-        c.setFont(text_block["font"], text_block["size"])
-        c.setFillColor(text_block["color"])
-        text_width = c.stringWidth(text_block["text"], text_block["font"], text_block["size"])
-        c.drawString((width - text_width) / 2, y_position, text_block["text"])
-        y_position -= text_block["size"] * 1.5
+        if text_block.get("text"):  # Only add if text is not empty
+            c.setFont(text_block["font"], text_block["size"])
+            c.setFillColor(text_block["color"])
+            text_width = c.stringWidth(text_block["text"], text_block["font"], text_block["size"])
+            c.drawString((width - text_width) / 2, y_position, text_block["text"])
+            y_position -= text_block["size"] * 1.5
 
     # Add footer
     if options["show_date"] or options["footer_text"]:
@@ -482,70 +492,240 @@ def create_front_page(options):
             
         footer_text = " | ".join(footer_elements)
         footer_width = c.stringWidth(footer_text, "Helvetica", 10)
-        c.drawString((width - footer_width) / 2, margin + cm, footer_text)
+        c.drawString((width - footer_width) / 2, cm + 0.5*cm, footer_text)
 
     # Save and return
     c.save()
     buffer.seek(0)
     return buffer
+import streamlit as st
+from reportlab.lib.pagesizes import A4, letter, legal
+from reportlab.lib import colors
+from reportlab.lib.units import inch, cm
+import io
+from datetime import datetime
+from PIL import Image
+import base64
+
+def create_svg_preview(options):
+    """Create an SVG preview of the front page"""
+    # Get page dimensions based on selected size
+    page_size = {
+        "A4": A4,
+        "Letter": letter,
+        "Legal": legal
+    }[options["page_size"]]
+    width, height = page_size
+    
+    # Scale down for preview (maintaining aspect ratio)
+    scale = 0.5
+    preview_width = width * scale
+    preview_height = height * scale
+    
+    svg = f"""
+    <svg width="{preview_width}" height="{preview_height}" viewBox="0 0 {width} {height}" 
+         style="border: 1px solid #ccc;">
+    """
+    
+    # Background
+    if options["background_type"] == "Color":
+        svg += f'<rect width="{width}" height="{height}" fill="{options["background_color"]}" />'
+    elif options["background_type"] == "Gradient":
+        svg += f"""
+        <defs>
+            <linearGradient id="grad1" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" style="stop-color:{options["gradient_start"]};stop-opacity:1" />
+                <stop offset="100%" style="stop-color:{options["gradient_end"]};stop-opacity:1" />
+            </linearGradient>
+        </defs>
+        <rect width="{width}" height="{height}" fill="url(#grad1)" />
+        """
+    
+    # Design Elements
+    if options["design_elements"]:
+        margin = cm
+        if "Border" in options["design_elements"]:
+            svg += f"""
+            <rect x="{margin}" y="{margin}" 
+                  width="{width - 2*margin}" height="{height - 2*margin}"
+                  stroke="{options["border_color"]}" 
+                  stroke-width="{options["border_width"]}"
+                  fill="none" />
+            """
+        
+        if "Corner Lines" in options["design_elements"]:
+            corner_size = 2*cm
+            # Top left
+            svg += f"""
+            <path d="M {margin} {height-margin} L {margin+corner_size} {height-margin} 
+                     M {margin} {height-margin} L {margin} {height-margin-corner_size}"
+                  stroke="{options["accent_color"]}" stroke-width="2" fill="none" />
+            """
+            # Top right
+            svg += f"""
+            <path d="M {width-margin-corner_size} {height-margin} L {width-margin} {height-margin}
+                     M {width-margin} {height-margin} L {width-margin} {height-margin-corner_size}"
+                  stroke="{options["accent_color"]}" stroke-width="2" fill="none" />
+            """
+            # Bottom left
+            svg += f"""
+            <path d="M {margin} {margin} L {margin+corner_size} {margin}
+                     M {margin} {margin} L {margin} {margin+corner_size}"
+                  stroke="{options["accent_color"]}" stroke-width="2" fill="none" />
+            """
+            # Bottom right
+            svg += f"""
+            <path d="M {width-margin-corner_size} {margin} L {width-margin} {margin}
+                     M {width-margin} {margin} L {width-margin} {margin+corner_size}"
+                  stroke="{options["accent_color"]}" stroke-width="2" fill="none" />
+            """
+    
+    # Logo
+    if options.get("logo"):
+        try:
+            logo_width = options["logo_width"]
+            logo_height = logo_width * 0.75
+            
+            # Convert uploaded image to base64
+            logo_bytes = options["logo"].read()
+            encoded_logo = base64.b64encode(logo_bytes).decode()
+            
+            # Position logo based on selection
+            if options["logo_position"] == "Top Center":
+                x = (width - logo_width) / 2
+            elif options["logo_position"] == "Top Left":
+                x = 2*cm
+            else:  # Top Right
+                x = width - logo_width - 2*cm
+            
+            y = height - logo_height - 2*cm
+            
+            svg += f"""
+            <image x="{x}" y="{y}" width="{logo_width}" height="{logo_height}"
+                   href="data:image/png;base64,{encoded_logo}" />
+            """
+            
+            # Reset file pointer for PDF generation
+            options["logo"].seek(0)
+        except Exception as e:
+            st.warning(f"Preview: Could not display logo ({str(e)})")
+    
+    # Title
+    title_y = height/2 + 50
+    for line in options["title"].split('\n'):
+        svg += f"""
+        <text x="{width/2}" y="{title_y}" 
+              font-family="{options["title_font"]}"
+              font-size="{options["title_size"]}"
+              fill="{options["title_color"]}"
+              text-anchor="middle">{line}</text>
+        """
+        title_y += options["title_size"] * 1.2
+    
+    # Subtitle
+    if options["subtitle"]:
+        svg += f"""
+        <text x="{width/2}" y="{title_y + 30}"
+              font-family="{options["subtitle_font"]}"
+              font-size="{options["subtitle_size"]}"
+              fill="{options["subtitle_color"]}"
+              text-anchor="middle">{options["subtitle"]}</text>
+        """
+    
+    # Text Blocks
+    y_position = title_y + 100
+    for block in options["text_blocks"]:
+        if block.get("text"):
+            svg += f"""
+            <text x="{width/2}" y="{y_position}"
+                  font-family="{block["font"]}"
+                  font-size="{block["size"]}"
+                  fill="{block["color"]}"
+                  text-anchor="middle">{block["text"]}</text>
+            """
+            y_position += block["size"] * 1.5
+    
+    # Footer
+    if options["show_date"] or options["footer_text"]:
+        footer_elements = []
+        if options["show_date"]:
+            footer_elements.append(datetime.now().strftime("%B %d, %Y"))
+        if options["footer_text"]:
+            footer_elements.append(options["footer_text"])
+        
+        footer_text = " | ".join(footer_elements)
+        svg += f"""
+        <text x="{width/2}" y="{height - 20}"
+              font-family="Helvetica"
+              font-size="10"
+              fill="black"
+              text-anchor="middle">{footer_text}</text>
+        """
+    
+    svg += "</svg>"
+    return svg
 
 def front_page_creator():
     st.header("📄 Professional Front Page Creator")
     
-    with st.container():
-        st.markdown('<div class="converter-card">', unsafe_allow_html=True)
-        
+    # Create two columns for the layout
+    col1, col2 = st.columns([3, 2])
+    
+    with col1:
         # Basic Settings
         st.subheader("Basic Settings")
-        col1, col2 = st.columns(2)
-        with col1:
-            page_size = st.selectbox("Page Size", ["A4", "Letter", "Legal"])
-            title = st.text_area("Title", placeholder="Enter title (can be multiple lines)")
-            subtitle = st.text_input("Subtitle", placeholder="Enter subtitle (optional)")
+        page_size = st.selectbox("Page Size", ["A4", "Letter", "Legal"])
+        title = st.text_area("Title", placeholder="Enter title (can be multiple lines)")
+        subtitle = st.text_input("Subtitle", placeholder="Enter subtitle (optional)")
         
-        with col2:
-            title_font = st.selectbox("Title Font", ["Helvetica", "Times-Roman", "Courier"])
-            title_size = st.slider("Title Size", 20, 72, 48)
-            title_color = st.color_picker("Title Color", "#000000")
+        title_font = st.selectbox("Title Font", ["Helvetica", "Times-Roman", "Courier"])
+        title_size = st.slider("Title Size", 20, 72, 48)
+        title_color = st.color_picker("Title Color", "#000000")
         
         # Background Settings
         st.subheader("Background Settings")
         background_type = st.radio("Background Type", ["Color", "Gradient", "None"])
         
+        background_color = "#FFFFFF"
+        gradient_start = "#FFFFFF"
+        gradient_end = "#E0E0E0"
+        
         if background_type == "Color":
             background_color = st.color_picker("Background Color", "#FFFFFF")
         elif background_type == "Gradient":
-            col1, col2 = st.columns(2)
-            with col1:
+            col1a, col1b = st.columns(2)
+            with col1a:
                 gradient_start = st.color_picker("Gradient Start Color", "#FFFFFF")
-            with col2:
+            with col1b:
                 gradient_end = st.color_picker("Gradient End Color", "#E0E0E0")
         
-        # Logo/Image Settings
-        st.subheader("Logo/Image Settings")
-        logo = st.file_uploader("Upload Logo/Image", type=["png", "jpg", "jpeg", "svg"])
+        # Logo Settings
+        st.subheader("Logo Settings")
+        logo = st.file_uploader("Upload Logo", type=["png", "jpg", "jpeg"])
         if logo:
-            col1, col2 = st.columns(2)
-            with col1:
-                logo_width = st.slider("Logo Width", 50, 400, 200)
-            with col2:
-                logo_position = st.selectbox("Logo Position", ["Top Center", "Top Left", "Top Right"])
+            logo_width = st.slider("Logo Width", 50, 400, 200)
+            logo_position = st.selectbox("Logo Position", ["Top Center", "Top Left", "Top Right"])
+        else:
+            logo_width = 200
+            logo_position = "Top Center"
         
         # Design Elements
         st.subheader("Design Elements")
         design_elements = st.multiselect("Add Design Elements", 
-            ["Border", "Corner Lines", "Watermark"],
+            ["Border", "Corner Lines"],
             default=["Border"])
         
         if "Border" in design_elements:
-            col1, col2 = st.columns(2)
-            with col1:
-                border_color = st.color_picker("Border Color", "#000000")
-            with col2:
-                border_width = st.slider("Border Width", 1, 5, 2)
+            border_color = st.color_picker("Border Color", "#000000")
+            border_width = st.slider("Border Width", 1, 5, 2)
+        else:
+            border_color = "#000000"
+            border_width = 2
         
-        if any(design_elements):
+        if design_elements:
             accent_color = st.color_picker("Accent Color", "#000000")
+        else:
+            accent_color = "#000000"
         
         # Additional Text Blocks
         st.subheader("Additional Text Blocks")
@@ -554,13 +734,10 @@ def front_page_creator():
         
         for i in range(num_blocks):
             st.markdown(f"#### Text Block {i+1}")
-            col1, col2 = st.columns(2)
-            with col1:
-                block_text = st.text_input(f"Text for Block {i+1}")
-                block_font = st.selectbox(f"Font for Block {i+1}", ["Helvetica", "Times-Roman", "Courier"])
-            with col2:
-                block_size = st.slider(f"Size for Block {i+1}", 8, 36, 12)
-                block_color = st.color_picker(f"Color for Block {i+1}", "#000000")
+            block_text = st.text_input(f"Text for Block {i+1}")
+            block_font = st.selectbox(f"Font for Block {i+1}", ["Helvetica", "Times-Roman", "Courier"])
+            block_size = st.slider(f"Size for Block {i+1}", 8, 36, 12)
+            block_color = st.color_picker(f"Color for Block {i+1}", "#000000")
             
             text_blocks.append({
                 "text": block_text,
@@ -571,41 +748,48 @@ def front_page_creator():
         
         # Footer Options
         st.subheader("Footer Options")
-        col1, col2 = st.columns(2)
-        with col1:
-            show_date = st.checkbox("Show Date")
-        with col2:
-            footer_text = st.text_input("Custom Footer Text")
+        show_date = st.checkbox("Show Date")
+        footer_text = st.text_input("Custom Footer Text")
+    
+    # Preview column
+    with col2:
+        st.subheader("Live Preview")
         
-        # Preview and Download
-        if st.button("Generate Front Page"):
+        # Collect all options
+        options = {
+            "page_size": page_size,
+            "title": title,
+            "subtitle": subtitle,
+            "title_font": title_font,
+            "title_size": title_size,
+            "title_color": title_color,
+            "subtitle_font": "Helvetica",
+            "subtitle_size": int(title_size * 0.6),
+            "subtitle_color": title_color,
+            "background_type": background_type,
+            "background_color": background_color,
+            "gradient_start": gradient_start,
+            "gradient_end": gradient_end,
+            "logo": logo,
+            "logo_width": logo_width,
+            "logo_position": logo_position,
+            "design_elements": design_elements,
+            "border_color": border_color,
+            "border_width": border_width,
+            "accent_color": accent_color,
+            "text_blocks": text_blocks,
+            "show_date": show_date,
+            "footer_text": footer_text
+        }
+        
+        # Generate and display preview
+        preview_svg = create_svg_preview(options)
+        st.markdown(preview_svg, unsafe_allow_html=True)
+        
+        # Generate PDF button
+        if st.button("Generate PDF"):
             try:
-                options = {
-                    "page_size": page_size,
-                    "title": title,
-                    "subtitle": subtitle,
-                    "title_font": title_font,
-                    "title_size": title_size,
-                    "title_color": colors.HexColor(title_color),
-                    "subtitle_font": "Helvetica",
-                    "subtitle_size": title_size * 0.6,
-                    "subtitle_color": colors.HexColor(title_color),
-                    "background_type": background_type,
-                    "background_color": colors.HexColor(background_color) if background_type == "Color" else None,
-                    "gradient_start": colors.HexColor(gradient_start) if background_type == "Gradient" else None,
-                    "gradient_end": colors.HexColor(gradient_end) if background_type == "Gradient" else None,
-                    "logo": logo,
-                    "logo_width": logo_width if logo else None,
-                    "logo_position": logo_position if logo else None,
-                    "design_elements": design_elements,
-                    "border_color": colors.HexColor(border_color) if "Border" in design_elements else None,
-                    "border_width": border_width if "Border" in design_elements else None,
-                    "accent_color": colors.HexColor(accent_color) if any(design_elements) else None,
-                    "text_blocks": text_blocks,
-                    "show_date": show_date,
-                    "footer_text": footer_text
-                }
-                
+                # Create PDF using the existing create_front_page function
                 pdf_buffer = create_front_page(options)
                 
                 st.download_button(
@@ -615,14 +799,11 @@ def front_page_creator():
                     mime="application/pdf"
                 )
                 
-                # Display preview
-                st.markdown("### Preview")
-                st.warning("Preview is a rough representation. Download the PDF to see the final result.")
+                st.success("PDF generated successfully!")
                 
             except Exception as e:
-                st.error(f"Error generating front page: {str(e)}")
-        
-        st.markdown('</div>', unsafe_allow_html=True)
+                st.error(f"Error generating PDF: {str(e)}")
+                st.error("Please make sure all required fields are filled correctly.")
 
 # Update the main tabs to include the front page creator
 def excel_editor_and_analyzer():
