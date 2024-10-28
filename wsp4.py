@@ -363,7 +363,20 @@ from datetime import datetime
 import tempfile
 import os
 import math
-
+def convert_uploadedfile_to_image(uploaded_file):
+    """Convert Streamlit UploadedFile to a temporary file path"""
+    if uploaded_file is None:
+        return None
+    
+    # Create a temporary file
+    temp_dir = tempfile.mkdtemp()
+    temp_file_path = os.path.join(temp_dir, uploaded_file.name)
+    
+    # Save the uploaded file to the temporary path
+    with open(temp_file_path, 'wb') as f:
+        f.write(uploaded_file.getvalue())
+    
+    return temp_file_path
 # Professional Templates Dictionary
 TEMPLATES = {
     "Classic Professional": {
