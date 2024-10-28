@@ -113,8 +113,6 @@ def process_pdf(input_pdf, operations):
     """Process PDF with various operations in sequence"""
     from PyPDF2 import PdfReader, PdfWriter
     from io import BytesIO
-    
-    # Initialize writer with all pages from input PDF
     writer = PdfWriter()
     reader = PdfReader(input_pdf)
     
