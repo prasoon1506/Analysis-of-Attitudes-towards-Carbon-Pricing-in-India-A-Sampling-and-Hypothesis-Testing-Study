@@ -520,7 +520,6 @@ def draw_watermark(c, options, width, height):
         c.setFillColor(colors.Color(0, 0, 0, alpha=0.1))
         c.drawCentredString(0, 0, options["watermark_text"])
         c.restoreState()
-
 def create_front_page(options):
     """Enhanced create_front_page function with more professional features"""
     buffer = io.BytesIO()
