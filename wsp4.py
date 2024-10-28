@@ -120,17 +120,17 @@ def process_pdf(input_pdf, operations):
     
     # Step 1: Extract pages (if specified) or use all pages
     if "extract" in operations:
-        start_page = operations["extract"]["start"] - 1  # Convert to 0-based index
-        end_page = operations["extract"]["end"]  # Keep as is since we'll use range(start, end)
-        # Add only the specified range of pages
-        for page_num in range(start_page, end_page):
-            if page_num < len(reader.pages):
-                writer.add_page(reader.pages[page_num])
+        selected_pages = operations["extract"]["pages"]  # List of selected page numbers
+        # Add only the selected pages
+        for page_num in selected_pages:
+            if 0 <= page_num - 1 < len(reader.pages):  # Convert to 0-based index and check bounds
+                writer.add_page(reader.pages[page_num - 1])
     else:
         # Add all pages from input PDF
         for page in reader.pages:
             writer.add_page(page)
     
+    # Rest of the function remains the same...
     # Step 2: Handle merging if specified
     if "merge" in operations and operations["merge"]["files"]:
         # Add pages from additional PDFs
@@ -656,11 +656,13 @@ def file_converter():
             
                 if "Extract Pages" in operations:
                     st.markdown("#### Extract Pages")
-                    start_page = st.number_input("Start page", min_value=1, 
-                                               max_value=len(pdf_reader.pages), value=1)
-                    end_page = st.number_input("End page", min_value=start_page, 
-                                             max_value=len(pdf_reader.pages), value=start_page)
-                    pdf_operations["extract"] = {"start": start_page, "end": end_page}
+                    total_pages = len(pdf_reader.pages)
+                    all_pages = list(range(1, total_pages + 1))
+                    selected_pages = st.multiselect("Select pages to extract",options=all_pages,default=[1],help="You can select multiple non-consecutive pages")
+                    if selected_pages:
+                          selected_pages.sort()
+                          pdf_operations["extract"] = {"pages": selected_pages}
+                          st.info(f"Selected pages: {', '.join(map(str, selected_pages))}")
                 if "Merge PDFs" in operations:
                     st.markdown("#### Merge PDFs")
                     additional_pdfs = st.file_uploader(
