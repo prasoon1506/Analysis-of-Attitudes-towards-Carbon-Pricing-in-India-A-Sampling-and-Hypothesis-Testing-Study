@@ -7160,12 +7160,20 @@ def market_share():
             get_company_color(company)
             
         return state_dfs, states
-
     def get_available_months(df):
-        """Extract available months from column names"""
-        share_cols = [col for col in df.columns if col.startswith('Share_')]
-        months = [col.split('_')[1] for col in share_cols]
-        return sorted(list(set(months)))
+    """Extract and sort available months chronologically"""
+    share_cols = [col for col in df.columns if col.startswith('Share_')]
+    months = [col.split('_')[1] for col in share_cols]
+    
+    # Define month order
+    month_order = {
+        'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6,
+        'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12
+    }
+    
+    # Sort months based on their numerical order
+    sorted_months = sorted(months, key=lambda x: month_order[x.lower()])
+    return sorted_months
     def create_share_plot(df, month):
       sns.set_style("whitegrid")
       plt.rcParams.update({
@@ -7301,102 +7309,132 @@ def market_share():
         
         total_change = (shares[-1] - shares[0])/shares[-1]*100
         return sequential_changes, total_change
+    def get_available_months(df):
+    """Extract and sort available months chronologically"""
+    share_cols = [col for col in df.columns if col.startswith('Share_')]
+    months = [col.split('_')[1] for col in share_cols]
+    
+    # Define month order
+    month_order = {
+        'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
+        'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12
+    }
+    
+    # Sort months based on their numerical order
+    sorted_months = sorted(months, key=lambda x: month_order[x.lower()])
+    return sorted_months
 
-    def create_trend_line_plot(df, selected_companies):
-        """Create enhanced line plot showing share trends with detailed annotations"""
-        share_cols = [col for col in df.columns if col.startswith('Share_')]
-        months = [col.split('_')[1] for col in share_cols]
+def create_trend_line_plot(df, selected_companies):
+    """Create enhanced line plot showing share trends with detailed annotations"""
+    share_cols = [col for col in df.columns if col.startswith('Share_')]
+    months = [col.split('_')[1] for col in share_cols]
+    
+    # Sort months chronologically
+    month_order = {
+        'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6,
+        'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12
+    }
+    
+    # Create a list of (month, col_name) pairs and sort them
+    month_col_pairs = [(col, month_order[month.lower()]) 
+                      for col, month in zip(share_cols, months)]
+    sorted_pairs = sorted(month_col_pairs, key=lambda x: x[1])
+    
+    # Get sorted column names and months
+    sorted_share_cols = [pair[0] for pair in sorted_pairs]
+    sorted_months = [col.split('_')[1] for col in sorted_share_cols]
+    
+    fig, ax = plt.subplots(figsize=(14, 8))
+    
+    # Create a summary of total changes for the legend
+    legend_labels = []
+    
+    for company in selected_companies:
+        color = get_company_color(company)
+        # Use sorted column names to get data in correct order
+        company_shares = df[df['Company'] == company][sorted_share_cols].iloc[0].values
+        avg_share = company_shares.mean()
         
-        fig, ax = plt.subplots(figsize=(14, 8))
+        # Plot the main line
+        line = plt.plot(range(len(sorted_months)), company_shares, 
+                      marker='o', linewidth=2, color=color)[0]
         
-        # Create a summary of total changes for the legend
-        legend_labels = []
+        # Add share percentage labels at each point
+        for i, share in enumerate(company_shares):
+            ax.annotate(f'{share:.1f}%', 
+                      (i, share),
+                      xytext=(0, 10),
+                      textcoords='offset points',
+                      ha='center',
+                      va='bottom',
+                      fontsize=8)
         
-        for company in selected_companies:
-            color = get_company_color(company)
-            company_shares = df[df['Company'] == company][share_cols].iloc[0].values
-            avg_share = company_shares.mean()
+        # Calculate and add sequential change labels
+        sequential_changes, total_change = calculate_share_changes(company_shares, sorted_months)
+        for i, change in enumerate(sequential_changes):
+            mid_x = (i + 0.5)
+            mid_y = (company_shares[i] + company_shares[i + 1]) / 2
             
-            # Plot the main line
-            line = plt.plot(range(len(months)), company_shares, 
-                          marker='o', linewidth=2, color=color)[0]
+            # Determine arrow direction and color
+            arrow_color = 'green' if change > 0 else 'red'
+            arrow_symbol = '↑' if change > 0 else '↓'
             
-            # Add share percentage labels at each point
-            for i, share in enumerate(company_shares):
-                ax.annotate(f'{share:.1f}%', 
-                          (i, share),
-                          xytext=(0, 10),
-                          textcoords='offset points',
-                          ha='center',
-                          va='bottom',
-                          fontsize=8)
-            
-            # Calculate and add sequential change labels
-            sequential_changes, total_change = calculate_share_changes(company_shares, months)
-            for i, change in enumerate(sequential_changes):
-                mid_x = (i + 0.5)
-                mid_y = (company_shares[i] + company_shares[i + 1]) / 2
-                
-                # Determine arrow direction and color
-                arrow_color = 'green' if change > 0 else 'red'
-                arrow_symbol = '↑' if change > 0 else '↓'
-                
-                # Add change label with arrow
-                ax.annotate(f'{arrow_symbol}{abs(change):.1f}%',
-                          (mid_x, mid_y),
-                          xytext=(0, 15 if i % 2 == 0 else -15),  # Alternate above/below
-                          textcoords='offset points',
-                          ha='center',
-                          va='center',
-                          color=arrow_color,
-                          fontsize=8,
-                          bbox=dict(facecolor='white', 
-                                  edgecolor='none',
-                                  alpha=0.7,
-                                  pad=0.5))
-            
-            # Add to legend labels with total change
-            change_color = 'green' if total_change > 0 else 'red'
-            change_symbol = '↑' if total_change > 0 else '↓'
-            legend_labels.append(
-                f"{company} (Avg: {avg_share:.1f}% | Total Change: {change_symbol}{abs(total_change):.1f}%)"
-            )
-            
-            # Plot average line
-            plt.axhline(y=avg_share, color=color, linestyle='--', alpha=0.3)
+            # Add change label with arrow
+            ax.annotate(f'{arrow_symbol}{abs(change):.1f}%',
+                      (mid_x, mid_y),
+                      xytext=(0, 15 if i % 2 == 0 else -15),  # Alternate above/below
+                      textcoords='offset points',
+                      ha='center',
+                      va='center',
+                      color=arrow_color,
+                      fontsize=8,
+                      bbox=dict(facecolor='white', 
+                              edgecolor='none',
+                              alpha=0.7,
+                              pad=0.5))
         
-        # Enhance the plot
-        plt.title('Market Share Trends Over Time', 
-                 fontsize=20, 
-                 pad=20, 
-                 fontweight='bold')
+        # Add to legend labels with total change
+        change_color = 'green' if total_change > 0 else 'red'
+        change_symbol = '↑' if total_change > 0 else '↓'
+        legend_labels.append(
+            f"{company} (Avg: {avg_share:.1f}% | Total Change: {change_symbol}{abs(total_change):.1f}%)"
+        )
         
-        plt.xlabel('Months', fontsize=12, fontweight='bold')
-        plt.ylabel('Market Share (%)', fontsize=12, fontweight='bold')
-        
-        # Set x-axis labels
-        plt.xticks(range(len(months)), months, rotation=45)
-        
-        # Add grid
-        plt.grid(True, linestyle='--', alpha=0.3)
-        
-        # Enhance legend
-        plt.legend(legend_labels,
-                  bbox_to_anchor=(1.15, 1),
-                  loc='upper left',
-                  borderaxespad=0.,
-                  frameon=True,
-                  fontsize=10,
-                  title='Companies with Average Share & Total Change',
-                  title_fontsize=12,
-                  edgecolor='gray')
-        
-        # Style improvements
-        ax.set_facecolor('#f8f9fa')
-        fig.patch.set_facecolor('#ffffff')
-        plt.tight_layout()
-        
-        return fig
+        # Plot average line
+        plt.axhline(y=avg_share, color=color, linestyle='--', alpha=0.3)
+    
+    # Enhance the plot
+    plt.title('Market Share Trends Over Time', 
+             fontsize=20, 
+             pad=20, 
+             fontweight='bold')
+    
+    plt.xlabel('Months', fontsize=12, fontweight='bold')
+    plt.ylabel('Market Share (%)', fontsize=12, fontweight='bold')
+    
+    # Set x-axis labels with sorted months
+    plt.xticks(range(len(sorted_months)), sorted_months, rotation=45)
+    
+    # Add grid
+    plt.grid(True, linestyle='--', alpha=0.3)
+    
+    # Enhance legend
+    plt.legend(legend_labels,
+              bbox_to_anchor=(1.15, 1),
+              loc='upper left',
+              borderaxespad=0.,
+              frameon=True,
+              fontsize=10,
+              title='Companies with Average Share & Total Change',
+              title_fontsize=12,
+              edgecolor='gray')
+    
+    # Style improvements
+    ax.set_facecolor('#f8f9fa')
+    fig.patch.set_facecolor('#ffffff')
+    plt.tight_layout()
+    
+    return fig
     def create_dashboard_header():
         """Create an attractive dashboard header"""
         st.markdown("""
