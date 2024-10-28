@@ -7162,18 +7162,18 @@ def market_share():
         return state_dfs, states
     def get_available_months(df):
     """Extract and sort available months chronologically"""
-    share_cols = [col for col in df.columns if col.startswith('Share_')]
-    months = [col.split('_')[1] for col in share_cols]
+     share_cols = [col for col in df.columns if col.startswith('Share_')]
+     months = [col.split('_')[1] for col in share_cols]
     
     # Define month order
-    month_order = {
+     month_order = {
         'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6,
         'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12
     }
     
     # Sort months based on their numerical order
-    sorted_months = sorted(months, key=lambda x: month_order[x.lower()])
-    return sorted_months
+     sorted_months = sorted(months, key=lambda x: month_order[x.lower()])
+     return sorted_months
     def create_share_plot(df, month):
       sns.set_style("whitegrid")
       plt.rcParams.update({
