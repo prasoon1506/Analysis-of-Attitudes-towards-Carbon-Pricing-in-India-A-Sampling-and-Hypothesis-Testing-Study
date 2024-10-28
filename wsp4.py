@@ -7320,7 +7320,6 @@ def market_share():
     return sorted_months
 
 def create_trend_line_plot(df, selected_companies):
-    """Create enhanced line plot showing share trends with detailed annotations"""
     share_cols = [col for col in df.columns if col.startswith('Share_')]
     months = [col.split('_')[1] for col in share_cols]
     
