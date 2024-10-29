@@ -7789,15 +7789,10 @@ def main():
     if selected == "Home":
         Home()
     elif selected == "Data Management":
-        data_management_menu = option_menu(
-            menu_title="Data Management",
-            options=["Editor", "File Manager"],
-            icons=["pencil-square", "folder"],
-            orientation="horizontal",
-        )
-        if data_management_menu == "Editor":
+        data_management_menu = st.tabs(["Editor", "File Manager"])
+        with data_management_menu[0]:
             excel_editor_and_analyzer()
-        elif data_management_menu == "File Manager":
+        with data_management_menu[1]:
             folder_menu()
     elif selected == "Analysis Dashboards":
         analysis_menu = option_menu(
