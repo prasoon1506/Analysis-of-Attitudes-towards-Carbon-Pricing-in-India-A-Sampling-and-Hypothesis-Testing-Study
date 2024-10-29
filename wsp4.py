@@ -6564,47 +6564,8 @@ def projection():
   @st.cache_resource
   def train_model(X, y):
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    
-    # Define feature importance order (most important to least important)
-    feature_order = [
-        'Monthly Achievement(Sep)',  # Most recent month gets highest importance
-        'Total Oct 2023',           # Last year's October data
-        'Month Tgt (Oct)',          # Current target
-        'Monthly Achievement(Aug)', 
-        'Monthly Achievement(July)',
-        'Monthly Achievement(June)',
-        'Monthly Achievement(May)',
-        'Monthly Achievement(Apr)',
-        'Total Sep 2023'
-    ]
-    
-    # Create sample weights based on feature importance order
-    sample_weights = np.ones(len(X_train))
-    
-    # Adjust weights based on feature values and their desired importance
-    for idx, feature in enumerate(feature_order):
-        # Higher weight multiplier for more important features
-        weight_multiplier = 1 + (len(feature_order) - idx) * 0.5
-        feature_values = X_train[feature].values
-        # Normalize feature values
-        feature_values = (feature_values - feature_values.min()) / (feature_values.max() - feature_values.min() + 1e-8)
-        sample_weights *= (1 + feature_values * weight_multiplier)
-    
-    # Normalize weights
-    sample_weights /= sample_weights.mean()
-    
-    # Create and train the model with sample weights
-    model = RandomForestRegressor(
-        n_estimators=100,
-        random_state=42,
-        max_features='sqrt',  # Restrict features per tree to increase diversity
-        bootstrap=True,       # Enable bootstrapping for weight sampling
-        max_samples=0.8      # Use 80% of samples per tree to prevent overfitting
-    )
-    
-    # Fit the model with sample weights
-    model.fit(X_train, y_train, sample_weight=sample_weights)
-    
+    model = RandomForestRegressor(n_estimators=100, random_state=42)
+    model.fit(X_train, y_train)
     return model, X_test, y_test
   def create_monthly_performance_graph(data):
     months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']
