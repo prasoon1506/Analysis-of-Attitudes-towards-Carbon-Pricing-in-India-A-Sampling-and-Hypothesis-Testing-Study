@@ -6561,66 +6561,12 @@ def projection():
   def load_data(file):
     data = pd.read_excel(file)
     return data
-  from sklearn.compose import TransformedTargetRegressor
-  from sklearn.preprocessing import StandardScaler
-  import numpy as np
-  def create_feature_weights(X, feature_order):
-    weights = {}
-    n_features = len(feature_order)
-    for i, feature in enumerate(feature_order):
-        # Exponentially decrease weights based on position
-        weights[feature] = 1.0 / (1.2 ** i)  # Using 1.2 as base for exponential decay
-    return weights
-
   @st.cache_resource
   def train_model(X, y):
-    feature_order = [
-        'Month Tgt (Oct)',              # Most important
-        'Monthly Achievement(Sep)',      # Second most important
-        'Total Sep 2023',               # Third most important
-        'Total Oct 2023',               # Fourth most important
-        'Monthly Achievement(Aug)',      # Fifth most important
-        'Monthly Achievement(July)',     # Sixth most important
-        'Monthly Achievement(June)',     # Seventh most important
-        'Monthly Achievement(May)',      # Eighth most important
-        'Monthly Achievement(Apr)'       # Least important
-    ]
-    
-    # Create feature weights
-    feature_weights = create_feature_weights(X, feature_order)
-    
-    # Create sample weights based on feature importance
-    sample_weights = np.ones(len(X))
-    for feature, weight in feature_weights.items():
-        # Increase sample weights for samples where important features have higher values
-        normalized_values = (X[feature] - X[feature].min()) / (X[feature].max() - X[feature].min())
-        sample_weights *= (1 + normalized_values * weight)
-    
-    # Normalize sample weights
-    sample_weights = sample_weights / sample_weights.mean()
-    
-    # Split the data
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    train_weights = sample_weights[:len(X_train)]
-    
-    # Create and train the model with sample weights
-    model = RandomForestRegressor(
-        n_estimators=100,
-        random_state=42,
-        max_depth=10,          # Limit tree depth to prevent overfitting
-        min_samples_split=5,   # Minimum samples required to split a node
-        min_samples_leaf=3     # Minimum samples required at leaf node
-    )
-    
-    # Scale the features
-    scaler = StandardScaler()
-    X_train_scaled = scaler.fit_transform(X_train)
-    X_test_scaled = scaler.transform(X_test)
-    
-    # Train the model with sample weights
-    model.fit(X_train_scaled, y_train, sample_weight=train_weights)
-    
-    return model, X_test_scaled, y_test
+    model = RandomForestRegressor(n_estimators=100, random_state=42)
+    model.fit(X_train, y_train)
+    return model, X_test, y_test
   def create_monthly_performance_graph(data):
     months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']
     colors = px.colors.qualitative.Pastel
@@ -6921,8 +6867,7 @@ def projection():
             st.markdown("<h3>Sales Forecast Visualization</h3>", unsafe_allow_html=True)
             X_2024 = filtered_data[features].copy()
             X_2024['Total Oct 2023'] = filtered_data['Total Oct 2023']
-            X_2024_scaled = scaler.transform(X_2024)  # Scale the features
-            predictions_2024 = model.predict(X_2024_scaled)
+            predictions_2024 = model.predict(X_2024)
             filtered_data['Predicted Oct 2024'] = predictions_2024
             filtered_data['YoY Growth'] = (filtered_data['Predicted Oct 2024'] - filtered_data['Total Oct 2023']) / filtered_data['Total Oct 2023'] * 100
 
