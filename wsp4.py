@@ -6561,38 +6561,43 @@ def projection():
   def load_data(file):
     data = pd.read_excel(file)
     return data
-  @st.cache_resource
   def train_model(X, y):
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     
-    # Create sample weights to give more importance to specific features
-    feature_weights = np.ones(X_train.shape[0])
+    # Create feature weights
+    feature_weights = np.ones(X_train.shape[1])
     
-    # Find indices of the important features
+    # Get indices of the features we want to give more importance to
     oct_2023_idx = X_train.columns.get_loc('Total Oct 2023')
-    tgt_oct_idx = X_train.columns.get_loc('Month Tgt (Oct)')
+    target_idx = X_train.columns.get_loc('Month Tgt (Oct)')
     
-    # Increase weights for samples where these features have higher values
-    feature_weights *= (1 + np.abs(X_train.iloc[:, oct_2023_idx]) / np.abs(X_train.iloc[:, oct_2023_idx]).mean()) * 2.0  # Stronger weight for Oct 2023
-    feature_weights *= (1 + np.abs(X_train.iloc[:, tgt_oct_idx]) / np.abs(X_train.iloc[:, tgt_oct_idx]).mean()) * 1.5   # Strong weight for Oct Target
+    # Set higher weights for these features
+    feature_weights[oct_2023_idx] = 5.0  # Highest importance
+    feature_weights[target_idx] = 3.0    # Second highest importance
     
-    # Normalize weights
-    feature_weights = feature_weights / feature_weights.mean()
+    # Create sample weights based on feature weights
+    sample_weights = np.ones(len(X_train))
+    for i, weight in enumerate(feature_weights):
+        sample_weights *= (1 + abs(X_train.iloc[:, i] * weight))
     
-    # Create and train the model with custom parameters
+    # Normalize sample weights
+    sample_weights = sample_weights / sample_weights.mean()
+    
+    # Create and train the model with modified parameters
     model = RandomForestRegressor(
-        n_estimators=150,  # Increased number of trees
-        max_depth=None,    # Allow deep trees
-        min_samples_split=2,
-        min_samples_leaf=1,
-        max_features='sqrt',
+        n_estimators=200,           # Increased number of trees
+        max_depth=10,               # Control tree depth
+        min_samples_split=5,        # Minimum samples required to split
+        min_samples_leaf=2,         # Minimum samples required at leaf node
+        max_features='sqrt',        # Number of features to consider for best split
         random_state=42,
-        bootstrap=True,
-        n_jobs=-1
+        bootstrap=True,             # Enable bootstrapping
+        oob_score=True,             # Use out-of-bag samples to estimate score
+        n_jobs=-1                   # Use all available processors
     )
     
     # Fit the model with sample weights
-    model.fit(X_train, y_train, sample_weight=feature_weights)
+    model.fit(X_train, y_train, sample_weight=sample_weights)
     
     return model, X_test, y_test
   def create_monthly_performance_graph(data):
