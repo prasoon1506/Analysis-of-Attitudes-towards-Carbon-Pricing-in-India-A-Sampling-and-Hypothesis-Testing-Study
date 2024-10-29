@@ -7620,202 +7620,333 @@ def update_visit_count():
     visit_data['daily_visits'][today] = visit_data['daily_visits'].get(today, 0) + 1
     save_visit_data(visit_data)
     return visit_data['total_visits'], visit_data['daily_visits'][today]
+import streamlit as st
+from datetime import datetime
+import pandas as pd
+from streamlit_option_menu import option_menu
+
 def main():
-    # Custom CSS for the sidebar and main content
+    # Custom CSS for bottom navigation and main content
     st.markdown("""
     <style>
-    .sidebar .sidebar-content {
-        background-image: linear-gradient(180deg, #2e7bcf 25%, #4527A0 100%);
-        color: white;
+    /* Hide default sidebar */
+    [data-testid="stSidebar"] {
+        display: none;
     }
-    .sidebar-text {
-        color: white !important;
+    
+    /* Main content adjustments */
+    .main .block-container {
+        padding-bottom: 80px;
+        max-width: 1200px;
     }
-    .stButton>button {
-        width: 100%;
-        border-radius: 20px;
-        background-color: #4CAF50;
+    
+    /* Bottom Navigation Bar */
+    .bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        padding: 10px 0;
+        z-index: 1000;
+    }
+    
+    .nav-container {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-decoration: none;
+        color: #666;
+        transition: all 0.3s ease;
+        padding: 8px 12px;
+        border-radius: 12px;
+        cursor: pointer;
+    }
+    
+    .nav-item:hover, .nav-item.active {
+        color: #2e7bcf;
+        background: rgba(46, 123, 207, 0.1);
+    }
+    
+    .nav-icon {
+        font-size: 24px;
+        margin-bottom: 4px;
+    }
+    
+    .nav-label {
+        font-size: 12px;
+        font-weight: 500;
+    }
+    
+    /* User info card */
+    .user-info-card {
+        background: white;
+        border-radius: 15px;
+        padding: 15px;
+        margin: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #2e7bcf;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         color: white;
-        border: none;
-        padding: 10px;
         font-weight: bold;
+    }
+    
+    /* Card styles */
+    .dashboard-card {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        margin: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Settings styles */
+    .settings-container {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        margin: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Button styles */
+    .stButton>button {
+        background: #2e7bcf;
+        color: white;
+        border-radius: 10px;
+        padding: 10px 20px;
+        border: none;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         transition: all 0.3s ease;
     }
+    
     .stButton>button:hover {
-        background-color: #45a049;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
-    .stProgress .st-bo {
-        background-color: #4CAF50;
-    }
-    .stProgress .st-bp {
-        background-color: #E0E0E0;
-    }
-    .settings-container {
-        background-color: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        padding: 20px;
-        border-radius: 10px;
-        margin-top: 20px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    .visit-counter {
-        background-color: rgba(255, 228, 225, 0.7);
-        border-radius: 10px;
-        padding: 15px;
-        margin-top: 20px;
-        text-align: center;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-    .visit-counter h3 {
-        color: #FFD700;
-        font-size: 18px;
-        margin-bottom: 10px;
-    }
-    .visit-counter p {
-        color: #8B4513;
-        font-size: 14px;
-        margin: 5px 0;
-    }
-    .user-info {
-        background-color: rgba(255, 255, 255, 0.1);
-        border-radius: 10px;
+
+    /* Tab styling */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+        background: white;
+        border-radius: 15px;
         padding: 10px;
-        margin-bottom: 20px;
+        margin: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .stTabs [data-baseweb="tab"] {
+        border-radius: 10px;
+        padding: 8px 16px;
+        background: transparent;
+    }
+
+    .stTabs [data-baseweb="tab"].active {
+        background: rgba(46, 123, 207, 0.1);
+        color: #2e7bcf;
     }
     </style>
     """, unsafe_allow_html=True)
-    st.sidebar.title("Analytics Dashboard")
+
+    # Initialize session state for navigation
+    if 'current_page' not in st.session_state:
+        st.session_state.current_page = 'Home'
     if 'username' not in st.session_state:
         st.session_state.username = "Guest"
-    st.sidebar.markdown(f"""
-    <div class="user-info">
-        <i class="fas fa-user"></i> Logged in as: {st.session_state.username}
-        <br>
-        <small>Last login: {datetime.now().strftime('%Y-%m-%d %H:%M')}</small>
+
+    # User info at the top
+    st.markdown(f"""
+    <div class="user-info-card">
+        <div class="user-avatar">{st.session_state.username[0].upper()}</div>
+        <div>
+            <div style="font-weight: 500;">{st.session_state.username}</div>
+            <div style="font-size: 12px; color: #666;">
+                Last login: {datetime.now().strftime('%Y-%m-%d %H:%M')}
+            </div>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # Main menu with icons and hover effects
-    with st.sidebar:
-        selected = option_menu(
-            menu_title="Main Menu",
-            options=[
-                "Home", 
-                "Data Management", 
-                "Analysis Dashboards", 
-                "Predictions", 
-                "Settings"
-            ],
-            icons=[
-                "house-fill", 
-                "database-fill-gear", 
-                "graph-up-arrow", 
-                "lightbulb-fill", 
-                "gear-fill"
-            ],
-            menu_icon="cast",
-            default_index=0,
-            styles={
-                "container": {"padding": "0!important", "background-color": "transparent"},
-                "icon": {"color": "orange", "font-size": "20px"}, 
-                "nav-link": {"font-size": "16px", "text-align": "left", "margin":"0px", "--hover-color": "#eee"},
-                "nav-link-selected": {"background-color": "rgba(255, 255, 255, 0.2)"},
-            }
-        )
-    # Submenu based on main selection
-    if selected == "Home":
-        Home()
-    elif selected == "Data Management":
-        data_management_menu = option_menu(
-            menu_title="Data Management",
-            options=["Editor", "File Manager"],
-            icons=["pencil-square", "folder"],
-            orientation="horizontal",
-        )
-        if data_management_menu == "Editor":
-            excel_editor_and_analyzer()
-        elif data_management_menu == "File Manager":
-            folder_menu()
-    elif selected == "Analysis Dashboards":
-        analysis_menu = option_menu(
-            menu_title="Analysis Dashboards",
-            options=["WSP Analysis", "Sales Dashboard","Sales Review Report","Market Share Analysis", "Product-Mix", "Segment-Mix","Geo-Mix"],
-            icons=["clipboard-data", "cash","bar-chart", "arrow-up-right", "shuffle", "globe"],
-            orientation="horizontal",
-        )
-        if analysis_menu == "WSP Analysis":
-            wsp_analysis_dashboard()
-        elif analysis_menu == "Sales Dashboard":
-            sales_dashboard()
-        elif analysis_menu == "Sales Review Report":
-            sales_review_report_generator()
-        elif analysis_menu == "Product-Mix":
-            normal()
-        elif analysis_menu == "Segment-Mix":
-            trade()
-        elif analysis_menu == "Market Share Analysis":
-            market_share()
-        elif analysis_menu == "Geo-Mix":
-            green()
-    elif selected == "Predictions":
-        prediction_menu = option_menu(
-            menu_title="Predictions",
-            options=["WSP Projection","Sales Projection"],
-            icons=["bar-chart", "graph-up-arrow"],
-            orientation="horizontal",
-        )
-        if prediction_menu == "WSP Projection":
-            descriptive_statistics_and_prediction()
-        elif prediction_menu == "Sales Projection":
-            projection()
-    elif selected == "Settings":
-        st.title("Settings")
-        st.markdown('<div class="settings-container">', unsafe_allow_html=True)
-        st.subheader("User Settings")
-        username = st.text_input("Username", value=st.session_state.username)
-        email = st.text_input("Email", value="johndoe@example.com")
-        if st.button("Update Profile"):
-            st.session_state.username = username
-            st.success("Profile updated successfully!")
-        st.subheader("Appearance")
-        theme = st.selectbox("Theme", ["Light", "Dark", "System Default"])
-        chart_color = st.color_picker("Default Chart Color", "#2e7bcf")
-        st.subheader("Notifications")
-        email_notifications = st.checkbox("Receive Email Notifications", value=True)
-        notification_frequency = st.select_slider("Notification Frequency", options=["Daily", "Weekly", "Monthly"])
-        # Save Settings Button
-        if st.button("Save Settings"):
-            st.success("Settings saved successfully!")
-        st.markdown('</div>', unsafe_allow_html=True)
-    st.sidebar.markdown("---")
-    st.sidebar.subheader("📢 Feedback")
-    feedback = st.sidebar.text_area("Share your thoughts:")
-    if st.sidebar.button("Submit Feedback", key="submit_feedback"):
-        # Here you would typically send this feedback to a database or email
-        st.sidebar.success("Thank you for your valuable feedback!")
-    # Display visit counter with animations
-    total_visits, daily_visits = update_visit_count()
-    st.sidebar.markdown(f"""
-    <div class="visit-counter">
-        <h3>📊 Visit Statistics</h3>
-        <p>Total Visits: <span class="count">{total_visits}</span></p>
-        <p>Visits Today: <span class="count">{daily_visits}</span></p>
+    # Bottom Navigation
+    st.markdown("""
+    <div class="bottom-nav">
+        <div class="nav-container" id="navigation">
+            <div class="nav-item" onclick='handleNavClick("Home")'>
+                <i class="nav-icon fas fa-home"></i>
+                <span class="nav-label">Home</span>
+            </div>
+            <div class="nav-item" onclick='handleNavClick("Data")'>
+                <i class="nav-icon fas fa-database"></i>
+                <span class="nav-label">Data</span>
+            </div>
+            <div class="nav-item" onclick='handleNavClick("Analysis")'>
+                <i class="nav-icon fas fa-chart-bar"></i>
+                <span class="nav-label">Analysis</span>
+            </div>
+            <div class="nav-item" onclick='handleNavClick("Predictions")'>
+                <i class="nav-icon fas fa-lightbulb"></i>
+                <span class="nav-label">Predict</span>
+            </div>
+            <div class="nav-item" onclick='handleNavClick("Settings")'>
+                <i class="nav-icon fas fa-cog"></i>
+                <span class="nav-label">Settings</span>
+            </div>
+        </div>
     </div>
+    
     <script>
-        const countElements = document.querySelectorAll('.count');
-        countElements.forEach(element => {{
-            const target = parseInt(element.innerText);
-            let count = 0;
-            const timer = setInterval(() => {{
-                element.innerText = count;
-                if (count === target) {{
-                    clearInterval(timer);
-                }}
-                count++;
-            }}, 20);
-        }});
+    function handleNavClick(page) {
+        // Use Streamlit's setComponentValue to update the session state
+        window.Streamlit.setComponentValue(page);
+    }
+    
+    // Highlight active nav item based on current page
+    function updateActiveNav() {
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.classList.remove('active');
+            if (item.querySelector('.nav-label').textContent === currentPage) {
+                item.classList.add('active');
+            }
+        });
+    }
+    
+    updateActiveNav();
     </script>
     """, unsafe_allow_html=True)
+
+    # Page Handlers
+    def render_home():
+        st.title("Welcome to Analytics Dashboard")
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown("""
+            <div class="dashboard-card">
+                <h3>Quick Stats</h3>
+                <p>Total Sales: $1,234,567</p>
+                <p>Active Users: 1,234</p>
+                <p>Products: 567</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            st.markdown("""
+            <div class="dashboard-card">
+                <h3>Recent Activity</h3>
+                <p>Last Update: 2 hours ago</p>
+                <p>New Orders: 45</p>
+                <p>Pending Reviews: 12</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+    def render_data_management():
+        tabs = st.tabs(["Editor", "File Manager"])
+        
+        with tabs[0]:
+            st.header("Data Editor")
+            uploaded_file = st.file_uploader("Upload Excel File", type=['xlsx', 'csv'])
+            if uploaded_file:
+                df = pd.read_csv(uploaded_file) if uploaded_file.name.endswith('.csv') else pd.read_excel(uploaded_file)
+                edited_df = st.data_editor(df)
+                if st.button("Save Changes"):
+                    st.success("Changes saved successfully!")
+        
+        with tabs[1]:
+            st.header("File Manager")
+            st.markdown("""
+            <div class="dashboard-card">
+                <h3>Recent Files</h3>
+                <ul>
+                    <li>sales_data.xlsx</li>
+                    <li>customer_analytics.csv</li>
+                    <li>inventory_report.xlsx</li>
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
+
+    def render_analysis():
+        tabs = st.tabs(["WSP Analysis", "Sales Dashboard", "Market Share"])
+        
+        with tabs[0]:
+            st.header("WSP Analysis")
+            # Add your WSP analysis content here
+        
+        with tabs[1]:
+            st.header("Sales Dashboard")
+            # Add your sales dashboard content here
+        
+        with tabs[2]:
+            st.header("Market Share Analysis")
+            # Add your market share analysis content here
+
+    def render_predictions():
+        tabs = st.tabs(["WSP Projection", "Sales Projection"])
+        
+        with tabs[0]:
+            st.header("WSP Projection")
+            # Add your WSP projection content here
+        
+        with tabs[1]:
+            st.header("Sales Projection")
+            # Add your sales projection content here
+
+    def render_settings():
+        st.title("Settings")
+        st.markdown("""
+        <div class="settings-container">
+            <h3>User Settings</h3>
+            <div style="margin: 20px 0;">
+                <label>Username</label>
+                <input type="text" value="Guest" style="width: 100%; padding: 8px; margin: 8px 0; border-radius: 5px; border: 1px solid #ddd;">
+                
+                <label>Email</label>
+                <input type="email" value="guest@example.com" style="width: 100%; padding: 8px; margin: 8px 0; border-radius: 5px; border: 1px solid #ddd;">
+                
+                <label>Theme</label>
+                <select style="width: 100%; padding: 8px; margin: 8px 0; border-radius: 5px; border: 1px solid #ddd;">
+                    <option>Light</option>
+                    <option>Dark</option>
+                    <option>System Default</option>
+                </select>
+            </div>
+            <button style="background: #2e7bcf; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
+                Save Changes
+            </button>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # Page Router
+    pages = {
+        'Home': render_home,
+        'Data': render_data_management,
+        'Analysis': render_analysis,
+        'Predictions': render_predictions,
+        'Settings': render_settings
+    }
+
+    # Get current page from session state and render it
+    current_page = st.session_state.get('current_page', 'Home')
+    pages[current_page]()
+
 if __name__ == "__main__":
     main()
