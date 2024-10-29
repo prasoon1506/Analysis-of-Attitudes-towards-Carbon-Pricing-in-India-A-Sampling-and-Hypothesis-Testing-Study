@@ -7621,109 +7621,171 @@ def update_visit_count():
     save_visit_data(visit_data)
     return visit_data['total_visits'], visit_data['daily_visits'][today]
 def main():
-    # Custom CSS for the sidebar and main content
+    # Custom CSS for bottom navigation and main content
     st.markdown("""
     <style>
-    .sidebar .sidebar-content {
-        background-image: linear-gradient(180deg, #2e7bcf 25%, #4527A0 100%);
-        color: white;
+    /* Hide default sidebar */
+    [data-testid="stSidebar"] {
+        display: none;
     }
-    .sidebar-text {
-        color: white !important;
+    
+    /* Main content adjustments */
+    .main .block-container {
+        padding-bottom: 80px;  /* Space for bottom nav */
+        max-width: 1200px;
     }
-    .stButton>button {
-        width: 100%;
-        border-radius: 20px;
-        background-color: #4CAF50;
+    
+    /* Bottom Navigation Bar */
+    .bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        padding: 10px 0;
+        z-index: 1000;
+    }
+    
+    .nav-container {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-decoration: none;
+        color: #666;
+        transition: all 0.3s ease;
+        padding: 8px 12px;
+        border-radius: 12px;
+    }
+    
+    .nav-item:hover, .nav-item.active {
+        color: #2e7bcf;
+        background: rgba(46, 123, 207, 0.1);
+    }
+    
+    .nav-icon {
+        font-size: 24px;
+        margin-bottom: 4px;
+    }
+    
+    .nav-label {
+        font-size: 12px;
+        font-weight: 500;
+    }
+    
+    /* User info card */
+    .user-info-card {
+        background: white;
+        border-radius: 15px;
+        padding: 15px;
+        margin: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #2e7bcf;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         color: white;
-        border: none;
-        padding: 10px;
         font-weight: bold;
+    }
+    
+    /* Settings styles */
+    .settings-container {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        margin: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Button styles */
+    .stButton>button {
+        background: #2e7bcf;
+        color: white;
+        border-radius: 10px;
+        padding: 10px 20px;
+        border: none;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         transition: all 0.3s ease;
     }
+    
     .stButton>button:hover {
-        background-color: #45a049;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-    .stProgress .st-bo {
-        background-color: #4CAF50;
-    }
-    .stProgress .st-bp {
-        background-color: #E0E0E0;
-    }
-    .settings-container {
-        background-color: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        padding: 20px;
-        border-radius: 10px;
-        margin-top: 20px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    .visit-counter {
-        background-color: rgba(255, 228, 225, 0.7);
-        border-radius: 10px;
-        padding: 15px;
-        margin-top: 20px;
-        text-align: center;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-    .visit-counter h3 {
-        color: #FFD700;
-        font-size: 18px;
-        margin-bottom: 10px;
-    }
-    .visit-counter p {
-        color: #8B4513;
-        font-size: 14px;
-        margin: 5px 0;
-    }
-    .user-info {
-        background-color: rgba(255, 255, 255, 0.1);
-        border-radius: 10px;
-        padding: 10px;
-        margin-bottom: 20px;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
     </style>
     """, unsafe_allow_html=True)
-    st.sidebar.title("Analytics Dashboard")
+
+    # User info at the top
     if 'username' not in st.session_state:
         st.session_state.username = "Guest"
-    st.sidebar.markdown(f"""
-    <div class="user-info">
-        <i class="fas fa-user"></i> Logged in as: {st.session_state.username}
-        <br>
-        <small>Last login: {datetime.now().strftime('%Y-%m-%d %H:%M')}</small>
+    
+    st.markdown(f"""
+    <div class="user-info-card">
+        <div class="user-avatar">{st.session_state.username[0].upper()}</div>
+        <div>
+            <div style="font-weight: 500;">{st.session_state.username}</div>
+            <div style="font-size: 12px; color: #666;">
+                Last login: {datetime.now().strftime('%Y-%m-%d %H:%M')}
+            </div>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # Main menu with icons and hover effects
-    with st.sidebar:
-        selected = option_menu(
-            menu_title="Main Menu",
-            options=[
-                "Home", 
-                "Data Management", 
-                "Analysis Dashboards", 
-                "Predictions", 
-                "Settings"
-            ],
-            icons=[
-                "house-fill", 
-                "database-fill-gear", 
-                "graph-up-arrow", 
-                "lightbulb-fill", 
-                "gear-fill"
-            ],
-            menu_icon="cast",
-            default_index=0,
-            styles={
-                "container": {"padding": "0!important", "background-color": "transparent"},
-                "icon": {"color": "orange", "font-size": "20px"}, 
-                "nav-link": {"font-size": "16px", "text-align": "left", "margin":"0px", "--hover-color": "#eee"},
-                "nav-link-selected": {"background-color": "rgba(255, 255, 255, 0.2)"},
-            }
-        )
-    # Submenu based on main selection
+    # Bottom Navigation
+    selected = st.markdown("""
+    <div class="bottom-nav">
+        <div class="nav-container">
+            <a href="#" class="nav-item active" onclick="handleNavClick('Home')">
+                <i class="nav-icon fas fa-home"></i>
+                <span class="nav-label">Home</span>
+            </a>
+            <a href="#" class="nav-item" onclick="handleNavClick('Data')">
+                <i class="nav-icon fas fa-database"></i>
+                <span class="nav-label">Data</span>
+            </a>
+            <a href="#" class="nav-item" onclick="handleNavClick('Analysis')">
+                <i class="nav-icon fas fa-chart-bar"></i>
+                <span class="nav-label">Analysis</span>
+            </a>
+            <a href="#" class="nav-item" onclick="handleNavClick('Predictions')">
+                <i class="nav-icon fas fa-lightbulb"></i>
+                <span class="nav-label">Predict</span>
+            </a>
+            <a href="#" class="nav-item" onclick="handleNavClick('Settings')">
+                <i class="nav-icon fas fa-cog"></i>
+                <span class="nav-label">Settings</span>
+            </a>
+        </div>
+    </div>
+    <script>
+    function handleNavClick(page) {
+        // Remove active class from all items
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        
+        // Add active class to clicked item
+        event.currentTarget.classList.add('active');
+    }
+    </script>
+    """, unsafe_allow_html=True)
     if selected == "Home":
         Home()
     elif selected == "Data Management":
