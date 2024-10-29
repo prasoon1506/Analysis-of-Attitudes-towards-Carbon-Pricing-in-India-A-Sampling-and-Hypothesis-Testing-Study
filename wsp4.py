@@ -6922,10 +6922,10 @@ def projection():
         with col2:
             
             st.markdown("<h3>Sales Forecast Visualization</h3>", unsafe_allow_html=True)
-
             X_2024 = filtered_data[features].copy()
             X_2024['Total Oct 2023'] = filtered_data['Total Oct 2023']
-            predictions_2024 = model.predict(X_2024)
+            X_2024_scaled = scaler.transform(X_2024)  # Scale the features
+            predictions_2024 = model.predict(X_2024_scaled)
             filtered_data['Predicted Oct 2024'] = predictions_2024
             filtered_data['YoY Growth'] = (filtered_data['Predicted Oct 2024'] - filtered_data['Total Oct 2023']) / filtered_data['Total Oct 2023'] * 100
 
