@@ -6561,9 +6561,6 @@ def projection():
   def load_data(file):
     data = pd.read_excel(file)
     return data
-  from sklearn.compose import TransformedTargetRegressor
-  from sklearn.preprocessing import StandardScaler
-  import numpy as np
   def create_feature_weights(X, feature_order):
     """
     Create weights for features based on specified order of importance
@@ -6574,14 +6571,15 @@ def projection():
         # Exponentially decrease weights based on position
         weights[feature] = 1.0 / (1.2 ** i)  # Using 1.2 as base for exponential decay
     return weights
+
   @st.cache_resource
   def train_model(X, y):
     # Define the order of feature importance (most important to least important)
     feature_order = [
-        'Total Oct 2023',              # Most important
+        'Month Tgt (Oct)',              # Most important
         'Monthly Achievement(Sep)',      # Second most important
-        'Month Tgt (Oct)',               # Third most important
-        'Total Sep 2023',               # Fourth most important
+        'Total Sep 2023',               # Third most important
+        'Total Oct 2023',               # Fourth most important
         'Monthly Achievement(Aug)',      # Fifth most important
         'Monthly Achievement(July)',     # Sixth most important
         'Monthly Achievement(June)',     # Seventh most important
@@ -6624,12 +6622,7 @@ def projection():
     model.fit(X_train_scaled, y_train, sample_weight=train_weights)
     
     return model, X_test_scaled, y_test, scaler
-  @st.cache_resource
-  def train_model(X, y):
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    model = RandomForestRegressor(n_estimators=100, random_state=42)
-    model.fit(X_train, y_train)
-    return model, X_test, y_test
+  
   def create_monthly_performance_graph(data):
     months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']
     colors = px.colors.qualitative.Pastel
