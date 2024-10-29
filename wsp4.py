@@ -247,17 +247,13 @@ def add_watermark(pdf_writer, watermark_options):
         image.putalpha(int(opacity * 255))
         image.save(img_buffer, format='PNG')
         img_buffer.seek(0)
-        
-        # Add rotated image watermark
         c.saveState()
         c.translate(x + img_width/2, y + img_height/2)
         c.rotate(angle)
         c.translate(-img_width/2, -img_height/2)
         c.drawImage(ImageReader(img_buffer), 0, 0, width=img_width, height=img_height)
         c.restoreState()
-    
     c.save()
-    
     # Create PDF from watermark
     watermark_buffer.seek(0)
     watermark_pdf = PdfReader(watermark_buffer)
@@ -267,24 +263,16 @@ def add_watermark(pdf_writer, watermark_options):
     for i, page in enumerate(pdf_writer.pages):
         if selected_pages == "all" or (i+1) in selected_pages:
             page.merge_page(watermark_pdf.pages[0])
-    
     return pdf_writer
-
 def get_pdf_preview(pdf_file, page_num=0):
-    """Generate preview image for a PDF page"""
     import fitz
     from PIL import Image
-    
     doc = fitz.open(stream=pdf_file.read(), filetype="pdf")
     page = doc[page_num]
-    
-    # Render page to image
     pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))
     img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-    
     return img
 def get_image_size_metrics(original_image_bytes, processed_image_bytes):
-    """Calculate size metrics for original and processed images"""
     original_size = len(original_image_bytes) / 1024  # KB
     processed_size = len(processed_image_bytes) / 1024  # KB
     size_change = ((original_size - processed_size) / original_size) * 100
