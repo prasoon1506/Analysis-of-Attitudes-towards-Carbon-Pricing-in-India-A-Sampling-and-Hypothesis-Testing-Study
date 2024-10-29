@@ -179,40 +179,28 @@ def process_pdf(input_pdf, operations):
     return output
 
 def add_watermark(pdf_writer, watermark_options):
-    """Enhanced watermark function supporting text and image watermarks with positioning"""
     from reportlab.pdfgen.canvas import Canvas
     from reportlab.lib.colors import Color
     from pypdf import PdfReader
     from PIL import Image
     from io import BytesIO
-    
-    # Create watermark
     watermark_buffer = BytesIO()
     c = Canvas(watermark_buffer)
-    
-    # Get page dimensions from first page
     first_page = pdf_writer.pages[0]
     page_width = float(first_page.mediabox.width)
-    page_height = float(first_page.mediabox.height)
-    
+    page_height = float(first_page.mediabox.height)  
     if watermark_options["type"] == "text":
-        # Text watermark settings
         text = watermark_options["text"]
         color = watermark_options["color"]
         font_size = watermark_options["size"]
         opacity = watermark_options["opacity"]
         angle = watermark_options["angle"]
         position = watermark_options["position"]
-        
-        # Convert hex color to RGB
         r = int(color[1:3], 16) / 255
         g = int(color[3:5], 16) / 255
         b = int(color[5:7], 16) / 255
-        
         c.setFillColor(Color(r, g, b, alpha=opacity))
         c.setFont("Helvetica", font_size)
-        
-        # Calculate position
         if position == "center":
             x, y = page_width/2, page_height/2
         elif position == "top-left":
@@ -223,8 +211,6 @@ def add_watermark(pdf_writer, watermark_options):
             x, y = 50, 50
         elif position == "bottom-right":
             x, y = page_width-50, 50
-        
-        # Add rotated watermark text
         c.saveState()
         c.translate(x, y)
         c.rotate(angle)
@@ -7635,201 +7621,315 @@ def update_visit_count():
     save_visit_data(visit_data)
     return visit_data['total_visits'], visit_data['daily_visits'][today]
 def main():
-    # Custom CSS for the sidebar and main content
+    # Add Font Awesome
+    st.markdown('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">', unsafe_allow_html=True)
+    
+    # Custom CSS
     st.markdown("""
     <style>
-    .sidebar .sidebar-content {
-        background-image: linear-gradient(180deg, #2e7bcf 25%, #4527A0 100%);
-        color: white;
+    /* Hide default Streamlit sidebar */
+    [data-testid="stSidebar"] {
+        display: none;
     }
-    .sidebar-text {
-        color: white !important;
+    
+    /* Main content adjustments */
+    .main .block-container {
+        padding-bottom: 80px;
+        max-width: 1200px;
     }
-    .stButton>button {
-        width: 100%;
-        border-radius: 20px;
-        background-color: #4CAF50;
-        color: white;
-        border: none;
+    
+    /* Bottom Navigation Bar */
+    .bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        padding: 10px 0;
+        z-index: 1000;
+        backdrop-filter: blur(10px);
+        background-color: rgba(255, 255, 255, 0.95);
+    }
+    
+    .nav-container {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-decoration: none;
+        color: #666;
+        transition: all 0.3s ease;
+        padding: 5px 15px;
+        border-radius: 10px;
+        cursor: pointer;
+    }
+    
+    .nav-item:hover, .nav-item.active {
+        color: #2e7bcf;
+        background-color: rgba(46, 123, 207, 0.1);
+    }
+    
+    .nav-item i {
+        font-size: 20px;
+        margin-bottom: 4px;
+    }
+    
+    .nav-item span {
+        font-size: 12px;
+        font-weight: 500;
+    }
+    
+    /* Secondary Navigation */
+    .secondary-nav {
+        display: flex;
+        overflow-x: auto;
+        background: white;
         padding: 10px;
-        font-weight: bold;
+        margin: 10px 0;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .secondary-nav::-webkit-scrollbar {
+        height: 4px;
+    }
+    
+    .secondary-nav::-webkit-scrollbar-thumb {
+        background: #2e7bcf;
+        border-radius: 4px;
+    }
+    
+    .secondary-nav-item {
+        white-space: nowrap;
+        padding: 8px 16px;
+        margin: 0 4px;
+        border-radius: 20px;
+        cursor: pointer;
         transition: all 0.3s ease;
     }
-    .stButton>button:hover {
-        background-color: #45a049;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    
+    .secondary-nav-item:hover, .secondary-nav-item.active {
+        background: #2e7bcf;
+        color: white;
     }
-    .stProgress .st-bo {
-        background-color: #4CAF50;
-    }
-    .stProgress .st-bp {
-        background-color: #E0E0E0;
-    }
-    .settings-container {
-        background-color: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        padding: 20px;
-        border-radius: 10px;
-        margin-top: 20px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    .visit-counter {
-        background-color: rgba(255, 228, 225, 0.7);
-        border-radius: 10px;
+    
+    /* User Profile Section */
+    .user-profile {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: white;
         padding: 15px;
-        margin-top: 20px;
-        text-align: center;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        z-index: 999;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
     }
-    .visit-counter h3 {
-        color: #FFD700;
-        font-size: 18px;
-        margin-bottom: 10px;
-    }
-    .visit-counter p {
-        color: #8B4513;
-        font-size: 14px;
-        margin: 5px 0;
-    }
+    
     .user-info {
-        background-color: rgba(255, 255, 255, 0.1);
-        border-radius: 10px;
-        padding: 10px;
-        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #2e7bcf;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+    }
+    
+    /* Visit Counter */
+    .visit-counter {
+        background: linear-gradient(135deg, #2e7bcf, #4527A0);
+        color: white;
+        border-radius: 15px;
+        padding: 15px;
+        margin: 20px 0;
+        text-align: center;
+    }
+    
+    .settings-container {
+        background-color: white;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin: 20px 0;
     }
     </style>
     """, unsafe_allow_html=True)
-    st.sidebar.title("Analytics Dashboard")
+
+    # Initialize session states
+    if 'page' not in st.session_state:
+        st.session_state.page = 'Home'
+    if 'subpage' not in st.session_state:
+        st.session_state.subpage = None
     if 'username' not in st.session_state:
         st.session_state.username = "Guest"
-    st.sidebar.markdown(f"""
-    <div class="user-info">
-        <i class="fas fa-user"></i> Logged in as: {st.session_state.username}
-        <br>
-        <small>Last login: {datetime.now().strftime('%Y-%m-%d %H:%M')}</small>
+
+    # User profile header
+    st.markdown(f"""
+    <div class="user-profile">
+        <div class="user-info">
+            <div class="user-avatar">
+                {st.session_state.username[0].upper()}
+            </div>
+            <div>
+                <div style="font-weight: 500;">{st.session_state.username}</div>
+                <div style="font-size: 12px; color: #666;">
+                    {datetime.now().strftime('%Y-%m-%d %H:%M')}
+                </div>
+            </div>
+        </div>
+        <i class="fas fa-bell" style="font-size: 20px; color: #666;"></i>
     </div>
     """, unsafe_allow_html=True)
 
-    # Main menu with icons and hover effects
-    with st.sidebar:
-        selected = option_menu(
-            menu_title="Main Menu",
-            options=[
-                "Home", 
-                "Data Management", 
-                "Analysis Dashboards", 
-                "Predictions", 
-                "Settings"
-            ],
-            icons=[
-                "house-fill", 
-                "database-fill-gear", 
-                "graph-up-arrow", 
-                "lightbulb-fill", 
-                "gear-fill"
-            ],
-            menu_icon="cast",
-            default_index=0,
-            styles={
-                "container": {"padding": "0!important", "background-color": "transparent"},
-                "icon": {"color": "orange", "font-size": "20px"}, 
-                "nav-link": {"font-size": "16px", "text-align": "left", "margin":"0px", "--hover-color": "#eee"},
-                "nav-link-selected": {"background-color": "rgba(255, 255, 255, 0.2)"},
-            }
-        )
-    # Submenu based on main selection
-    if selected == "Home":
-        Home()
-    elif selected == "Data Management":
-        data_management_menu = option_menu(
-            menu_title="Data Management",
-            options=["Editor", "File Manager"],
-            icons=["pencil-square", "folder"],
-            orientation="horizontal",
-        )
-        if data_management_menu == "Editor":
-            excel_editor_and_analyzer()
-        elif data_management_menu == "File Manager":
-            folder_menu()
-    elif selected == "Analysis Dashboards":
-        analysis_menu = option_menu(
-            menu_title="Analysis Dashboards",
-            options=["WSP Analysis", "Sales Dashboard","Sales Review Report","Market Share Analysis", "Product-Mix", "Segment-Mix","Geo-Mix"],
-            icons=["clipboard-data", "cash","bar-chart", "arrow-up-right", "shuffle", "globe"],
-            orientation="horizontal",
-        )
-        if analysis_menu == "WSP Analysis":
-            wsp_analysis_dashboard()
-        elif analysis_menu == "Sales Dashboard":
-            sales_dashboard()
-        elif analysis_menu == "Sales Review Report":
-            sales_review_report_generator()
-        elif analysis_menu == "Product-Mix":
-            normal()
-        elif analysis_menu == "Segment-Mix":
-            trade()
-        elif analysis_menu == "Market Share Analysis":
-            market_share()
-        elif analysis_menu == "Geo-Mix":
-            green()
-    elif selected == "Predictions":
-        prediction_menu = option_menu(
-            menu_title="Predictions",
-            options=["WSP Projection","Sales Projection"],
-            icons=["bar-chart", "graph-up-arrow"],
-            orientation="horizontal",
-        )
-        if prediction_menu == "WSP Projection":
-            descriptive_statistics_and_prediction()
-        elif prediction_menu == "Sales Projection":
-            projection()
-    elif selected == "Settings":
-        st.title("Settings")
-        st.markdown('<div class="settings-container">', unsafe_allow_html=True)
-        st.subheader("User Settings")
-        username = st.text_input("Username", value=st.session_state.username)
-        email = st.text_input("Email", value="johndoe@example.com")
-        if st.button("Update Profile"):
-            st.session_state.username = username
-            st.success("Profile updated successfully!")
-        st.subheader("Appearance")
-        theme = st.selectbox("Theme", ["Light", "Dark", "System Default"])
-        chart_color = st.color_picker("Default Chart Color", "#2e7bcf")
-        st.subheader("Notifications")
-        email_notifications = st.checkbox("Receive Email Notifications", value=True)
-        notification_frequency = st.select_slider("Notification Frequency", options=["Daily", "Weekly", "Monthly"])
-        # Save Settings Button
-        if st.button("Save Settings"):
-            st.success("Settings saved successfully!")
-        st.markdown('</div>', unsafe_allow_html=True)
-    st.sidebar.markdown("---")
-    st.sidebar.subheader("📢 Feedback")
-    feedback = st.sidebar.text_area("Share your thoughts:")
-    if st.sidebar.button("Submit Feedback", key="submit_feedback"):
-        # Here you would typically send this feedback to a database or email
-        st.sidebar.success("Thank you for your valuable feedback!")
-    # Display visit counter with animations
-    total_visits, daily_visits = update_visit_count()
-    st.sidebar.markdown(f"""
-    <div class="visit-counter">
-        <h3>📊 Visit Statistics</h3>
-        <p>Total Visits: <span class="count">{total_visits}</span></p>
-        <p>Visits Today: <span class="count">{daily_visits}</span></p>
+    # Main navigation
+    main_nav = {
+        'Home': {'icon': 'home', 'subpages': []},
+        'Data': {'icon': 'database', 'subpages': ['Editor', 'File Manager']},
+        'Analysis': {'icon': 'chart-bar', 'subpages': ['WSP Analysis', 'Sales Dashboard', 'Sales Review Report', 
+                                                      'Market Share Analysis', 'Product-Mix', 'Segment-Mix', 'Geo-Mix']},
+        'Predict': {'icon': 'lightbulb', 'subpages': ['WSP Projection', 'Sales Projection']},
+        'Settings': {'icon': 'cog', 'subpages': []}
+    }
+
+    nav_html = """
+    <div class="bottom-nav">
+        <div class="nav-container">
+    """
+    
+    for page, details in main_nav.items():
+        active = 'active' if st.session_state.page == page else ''
+        nav_html += f"""
+            <div class="nav-item {active}" onclick="handleNav('{page}')">
+                <i class="fas fa-{details['icon']}"></i>
+                <span>{page}</span>
+            </div>
+        """
+    
+    nav_html += """
+        </div>
     </div>
     <script>
-        const countElements = document.querySelectorAll('.count');
-        countElements.forEach(element => {{
-            const target = parseInt(element.innerText);
-            let count = 0;
-            const timer = setInterval(() => {{
-                element.innerText = count;
-                if (count === target) {{
-                    clearInterval(timer);
-                }}
-                count++;
-            }}, 20);
-        }});
+    function handleNav(page) {
+        window.parent.postMessage({
+            type: 'streamlit:setComponentValue',
+            value: page
+        }, '*');
+    }
     </script>
+    """
+    
+    st.markdown(nav_html, unsafe_allow_html=True)
+
+    # Secondary navigation for subpages
+    current_subpages = main_nav[st.session_state.page]['subpages']
+    if current_subpages:
+        st.markdown("""
+        <div class="secondary-nav">
+        """ + "".join([
+            f"""
+            <div class="secondary-nav-item {'active' if st.session_state.subpage == subpage else ''}"
+                 onclick="handleSubNav('{subpage}')">{subpage}</div>
+            """
+            for subpage in current_subpages
+        ]) + """
+        </div>
+        <script>
+        function handleSubNav(subpage) {
+            window.parent.postMessage({
+                type: 'streamlit:setComponentValue',
+                value: subpage
+            }, '*');
+        }
+        </script>
+        """, unsafe_allow_html=True)
+
+    # Content based on navigation
+    if st.session_state.page == "Data":
+        if st.session_state.subpage == "Editor":
+            excel_editor_and_analyzer()
+        elif st.session_state.subpage == "File Manager":
+            folder_menu()
+    
+    elif st.session_state.page == "Analysis":
+        if st.session_state.subpage == "WSP Analysis":
+            wsp_analysis_dashboard()
+        elif st.session_state.subpage == "Sales Dashboard":
+            sales_dashboard()
+        elif st.session_state.subpage == "Sales Review Report":
+            sales_review_report_generator()
+        elif st.session_state.subpage == "Market Share Analysis":
+            market_share()
+        elif st.session_state.subpage == "Product-Mix":
+            normal()
+        elif st.session_state.subpage == "Segment-Mix":
+            trade()
+        elif st.session_state.subpage == "Geo-Mix":
+            green()
+    
+    elif st.session_state.page == "Predict":
+        if st.session_state.subpage == "WSP Projection":
+            descriptive_statistics_and_prediction()
+        elif st.session_state.subpage == "Sales Projection":
+            projection()
+    
+    elif st.session_state.page == "Settings":
+        st.title("Settings")
+        with st.container():
+            st.markdown('<div class="settings-container">', unsafe_allow_html=True)
+            st.subheader("User Settings")
+            username = st.text_input("Username", value=st.session_state.username)
+            email = st.text_input("Email", value="johndoe@example.com")
+            if st.button("Update Profile"):
+                st.session_state.username = username
+                st.success("Profile updated successfully!")
+            
+            st.subheader("Appearance")
+            theme = st.selectbox("Theme", ["Light", "Dark", "System Default"])
+            chart_color = st.color_picker("Default Chart Color", "#2e7bcf")
+            
+            st.subheader("Notifications")
+            email_notifications = st.checkbox("Receive Email Notifications", value=True)
+            notification_frequency = st.select_slider("Notification Frequency", 
+                                                    options=["Daily", "Weekly", "Monthly"])
+            if st.button("Save Settings"):
+                st.success("Settings saved successfully!")
+            st.markdown('</div>', unsafe_allow_html=True)
+
+    # Visit counter at the bottom
+    total_visits, daily_visits = update_visit_count()
+    st.markdown(f"""
+    <div class="visit-counter">
+        <h3 style="margin-bottom: 15px;">Analytics Overview</h3>
+        <div style="display: flex; justify-content: space-around;">
+            <div>
+                <div class="count">{total_visits}</div>
+                <div>Total Visits</div>
+            </div>
+            <div>
+                <div class="count">{daily_visits}</div>
+                <div>Today's Visits</div>
+            </div>
+        </div>
+    </div>
     """, unsafe_allow_html=True)
+
 if __name__ == "__main__":
     main()
