@@ -6561,10 +6561,10 @@ def projection():
   def load_data(file):
     data = pd.read_excel(file)
     return data
+  from sklearn.compose import TransformedTargetRegressor
+  from sklearn.preprocessing import StandardScaler
+  import numpy as np
   def create_feature_weights(X, feature_order):
-    """
-    Create weights for features based on specified order of importance
-    """
     weights = {}
     n_features = len(feature_order)
     for i, feature in enumerate(feature_order):
@@ -6574,7 +6574,6 @@ def projection():
 
   @st.cache_resource
   def train_model(X, y):
-    # Define the order of feature importance (most important to least important)
     feature_order = [
         'Month Tgt (Oct)',              # Most important
         'Monthly Achievement(Sep)',      # Second most important
@@ -6621,8 +6620,7 @@ def projection():
     # Train the model with sample weights
     model.fit(X_train_scaled, y_train, sample_weight=train_weights)
     
-    return model, X_test_scaled, y_test, scaler
-  
+    return model, X_test_scaled, y_test
   def create_monthly_performance_graph(data):
     months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']
     colors = px.colors.qualitative.Pastel
@@ -6920,7 +6918,6 @@ def projection():
             st.plotly_chart(fig_predictions1, use_container_width=True)
 
         with col2:
-            
             st.markdown("<h3>Sales Forecast Visualization</h3>", unsafe_allow_html=True)
             X_2024 = filtered_data[features].copy()
             X_2024['Total Oct 2023'] = filtered_data['Total Oct 2023']
