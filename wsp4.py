@@ -14,24 +14,12 @@ from PIL import Image
 import PyPDF2
 import fitz  # PyMuPDF
 import tempfile
-import os
 import shutil
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
 from datetime import datetime
 from streamlit_option_menu import option_menu
-import shutil
-import streamlit as st
-import openpyxl
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-from io import BytesIO
-import base64
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
 from matplotlib.patches import Rectangle
 import matplotlib.backends.backend_pdf
 from scipy import stats
@@ -41,10 +29,8 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from streamlit_lottie import st_lottie
 import time
-import datetime
 import hashlib
 import secrets
-import os
 from streamlit_cookies_manager import EncryptedCookieManager
 import json
 import requests
@@ -56,7 +42,6 @@ from sklearn.metrics import mean_squared_error
 import math
 import seaborn as sns
 import xgboost as xgb
-from io import BytesIO
 import plotly.graph_objs as go
 import time
 from collections import OrderedDict
@@ -69,27 +54,6 @@ def load_lottie_url(url: str):
     if r.status_code != 200:
         return None
     return r.json()
-import streamlit as st
-import pandas as pd
-import openpyxl
-from collections import OrderedDict
-import base64
-from io import BytesIO
-import numpy as np
-import plotly.express as px
-from statsmodels.tsa.arima.model import ARIMA
-from scipy import stats
-import streamlit as st
-import pandas as pd
-import numpy as np
-import openpyxl
-from collections import OrderedDict
-import plotly.express as px
-import plotly.graph_objects as go
-from statsmodels.tsa.arima.model import ARIMA
-from scipy import stats
-import base64
-from io import BytesIO
 import statsmodels.api as sm
 from statsmodels.stats.diagnostic import het_breuschpagan, acorr_ljungbox
 from statsmodels.stats.stattools import durbin_watson
@@ -330,11 +294,7 @@ from reportlab.graphics.shapes import Line, Drawing
 from reportlab.lib.colors import Color, HexColor
 from PIL import Image
 import io
-import streamlit as st
-from datetime import datetime
 import tempfile
-import os
-import math
 def convert_uploadedfile_to_image(uploaded_file):
     """Convert Streamlit UploadedFile to a temporary file path"""
     if uploaded_file is None:
@@ -2435,12 +2395,8 @@ def transform_data(df, week_names_input):
         # Use a unique suffix for each merge operation
         suffix = f'_{i}'
         transformed_df = pd.merge(transformed_df, week_data, left_index=True, right_index=True, suffixes=('', suffix))
-    
-    # Remove any columns with suffixes (duplicates)
     transformed_df = transformed_df.loc[:, ~transformed_df.columns.str.contains('_\d+$')]
-    
     return transformed_df
-
 def plot_district_graph(df, district_names, benchmark_brands_dict, desired_diff_dict, week_names, diff_week, download_pdf=False):
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
     num_weeks = len(df.columns[4:]) // len(brands)
@@ -3288,7 +3244,6 @@ def descriptive_statistics_and_prediction():
                     mime="application/pdf"
                 )
         st.markdown('</div>', unsafe_allow_html=True)
-
 def create_stats_table(stats_data):
     data = [['Brand', 'Mean', 'Median', 'Std Dev', 'Min', 'Max', 'Skewness', 'Kurtosis', 'Range', 'IQR']]
     for brand, stats in stats_data.items():
@@ -3360,15 +3315,9 @@ def load_lottie_url(url: str):
     if r.status_code != 200:
         return None
     return r.json()
-import plotly.graph_objects as go
 import plotly.subplots as sp
 from scipy import stats
 import matplotlib.image as mpimg
-import plotly.graph_objects as go
-import plotly.subplots as sp
-from scipy import stats
-import requests
-from io import BytesIO
 from PIL import Image
 def create_visualization(region_data, region, brand, months):
     fig = plt.figure(figsize=(20, 34))
@@ -3891,42 +3840,24 @@ def load_lottie_url(url: str):
         return None
     return r.json()
 def generate_full_report(df, regions):
-    """
-    Generate a complete PDF report containing visualizations for all regions and their brands
-    """
     from matplotlib.backends.backend_pdf import PdfPages
     import matplotlib.pyplot as plt
     from io import BytesIO
-    
-    # Create a BytesIO object to store the PDF
     pdf_buffer = BytesIO()
-    
-    # Create PDF with multiple pages
     with PdfPages(pdf_buffer) as pdf:
         # Iterate through each region
         for region in regions:
             # Get unique brands for this region
             region_brands = df[df['Zone'] == region]['Brand'].unique().tolist()
-            
-            # For each brand in the region
             for brand in region_brands:
                 # Filter data for current region and brand
                 region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)]
                 months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']
-                
-                # Create visualization
                 fig = create_visualization(region_data, region, brand, months)
-                
-                # Add page to PDF
                 pdf.savefig(fig)
-                
-                # Close the figure to free memory
                 plt.close(fig)
-    
-    # Reset buffer position
     pdf_buffer.seek(0)
     return pdf_buffer
-
 def show_welcome_page():
         st.markdown("# 📈 Sales Review Report Generator")
         st.markdown("""
@@ -4091,11 +4022,6 @@ def load_lottie_url(url: str):
         return r.json()
     except:
         return None
-def generate_shareable_link(file_path):
-    file_name = os.path.basename(file_path)
-    encoded_file_name = quote(file_name)
-    return f"https://your-file-sharing-service.com/files/{encoded_file_name}"
-
 def get_online_editor_url(file_extension):
     extension_mapping = {
         '.xlsx': 'https://www.office.com/launch/excel?auth=2',
@@ -4107,7 +4033,6 @@ def get_online_editor_url(file_extension):
         '.pdf': 'https://documentcloud.adobe.com/link/home/'
     }
     return extension_mapping.get(file_extension.lower(), 'https://www.google.com/drive/')
-
 def folder_menu():
     st.markdown("""
     <style>
@@ -4171,24 +4096,18 @@ def folder_menu():
     }
     </style>
     """, unsafe_allow_html=True)
-
     st.markdown('<div class="title"><span>📓 Advanced File Manager</span></div>', unsafe_allow_html=True)
-
-    # Load Lottie animation
     lottie_urls = [
         "https://assets9.lottiefiles.com/packages/lf20_3vbOcw.json",  # File manager animation
         "https://assets9.lottiefiles.com/packages/lf20_5lAtR7.json",  # Folder animation
         "https://assets1.lottiefiles.com/packages/lf20_4djadwfo.json",  # Document management
         "https://assets6.lottiefiles.com/packages/lf20_2a5yxpci.json"   # File transfer
     ]
-
-    # Try loading Lottie animations
     lottie_json = None
     for url in lottie_urls:
         lottie_json = load_lottie_url(url)
         if lottie_json:
             break
-    
     col1, col2 = st.columns([1, 2])
     with col1:
         if lottie_json:
@@ -4201,12 +4120,8 @@ def folder_menu():
         Here you can upload, download, and manage your files with ease. 
         Enjoy the smooth animations, user-friendly interface, and new features like file search and sorting.
         """)
-
-    # Create a folder to store uploaded files if it doesn't exist
     if not os.path.exists("uploaded_files"):
         os.makedirs("uploaded_files")
-
-    # File uploader
     st.markdown('<div class="upload-section">', unsafe_allow_html=True)
     uploaded_file = st.file_uploader("Upload a file", type=["xlsx", "xls", "doc", "docx", "pdf", "ppt", "pptx", "txt", "csv"])
     if uploaded_file is not None:
@@ -4217,21 +4132,12 @@ def folder_menu():
             f.write(uploaded_file.getbuffer())
         st.success(f"File {uploaded_file.name} saved successfully!")
     st.markdown('</div>', unsafe_allow_html=True)
-
-    # Display uploaded files
     st.subheader("Your Files")
-    
-    # File search and sorting
     search_query = st.text_input("Search files", "")
     sort_option = st.selectbox("Sort by", ["Name", "Size", "Date Modified"])
-
-    # Use session state to track file deletion
     if 'files_to_delete' not in st.session_state:
         st.session_state.files_to_delete = set()
-
     files = os.listdir("uploaded_files")
-    
-    # Apply search filter
     if search_query:
         files = [f for f in files if search_query.lower() in f.lower()]
     
@@ -4248,7 +4154,7 @@ def folder_menu():
         file_stats = os.stat(file_path)
         
         st.markdown(f'<div class="file-box">', unsafe_allow_html=True)
-        col1, col2, col3, col4, col5 = st.columns([3, 1, 1, 1, 1])
+        col1, col2, col3, col4= st.columns([3, 1, 1, 1, 1])
         with col1:
             st.markdown(f"<h3>{filename}</h3>", unsafe_allow_html=True)
             st.text(f"Size: {file_stats.st_size / 1024:.2f} KB")
@@ -4267,9 +4173,6 @@ def folder_menu():
             file_extension = os.path.splitext(filename)[1]
             editor_url = get_online_editor_url(file_extension)
             st.markdown(f"[🌐 Open Online]({editor_url})")
-        with col5:
-            shareable_link = generate_shareable_link(file_path)
-            st.markdown(f"[🔗 Share]({shareable_link})")
         st.markdown('</div>', unsafe_allow_html=True)
 
     # Process file deletion
@@ -5688,11 +5591,7 @@ def trade():
     - Customizable Trade share adjustments
     """)
 from plotly.subplots import make_subplots
-import matplotlib.pyplot as plt
-import plotly.graph_objects as go
 import plotly.express as px
-import io
-import requests
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 from reportlab.lib.units import inch
@@ -5702,27 +5601,14 @@ from reportlab.graphics.charts.legends import Legend
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import Paragraph
 from reportlab.lib.enums import TA_CENTER
-from io import BytesIO
-from datetime import datetime
 from reportlab.graphics import renderPDF
 import random
-from reportlab.lib.units import inch
-from datetime import datetime
 from streamlit_lottie import st_lottie
 from streamlit_option_menu import option_menu
-from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
-from streamlit_lottie import st_lottie
 from streamlit_option_menu import option_menu
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-from reportlab.lib.utils import ImageReader
-from reportlab.lib import colors
 from reportlab.platypus import Table, TableStyle
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import Paragraph
-# Sidebar navigation
 def load_lottieurl(url: str):
     try:
         r = requests.get(url)
@@ -6314,12 +6200,6 @@ def green():
     - Descriptive statistics and share analysis
     - Customizable Green and Yellow share adjustments
     """)
-import streamlit as st
-import io
-import matplotlib.pyplot as plt
-import base64
-import pandas as pd
-import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error, r2_score
@@ -6328,8 +6208,6 @@ from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Frame, Indenter
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch
-import plotly.express as px
-import plotly.graph_objects as go
 import time
 # Set page config
 def projection():
@@ -6936,17 +6814,10 @@ def projection():
     main()
  else:
     st.stop()
-import streamlit as st
-import pandas as pd
-import matplotlib.pyplot as plt
 import distinctipy
 from pathlib import Path
-import io
 from collections import defaultdict
 from matplotlib.backends.backend_pdf import PdfPages
-import seaborn as sns
-from datetime import datetime
-
 def market_share():
     # Enhanced styling configuration
     THEME = {
@@ -7200,8 +7071,6 @@ def market_share():
         width=0.8,
         color=colors
     )
-    
-    # Enhanced title with month
       plt.suptitle(f'Market Share Distribution by Price Range', 
                 fontsize=20, 
                 y=1.02, 
@@ -7209,23 +7078,15 @@ def market_share():
       plt.title(f'{month.capitalize()}', 
              fontsize=16, 
              pad=20)
-    
       plt.xlabel('WSP Price Range (₹)', fontsize=12, fontweight='bold')
       plt.ylabel('Market Share (%)', fontsize=12, fontweight='bold')
-    
-    # Format x-axis labels
       def format_interval(interval):
-        return f'₹{interval.left:.0f}-{interval.right:.0f}'
-    
+        return f'₹{interval.left:.0f}-{interval.right:.0f}' 
       x_labels = [format_interval(interval) for interval in pivot_df.index]
       ax.set_xticklabels(x_labels, rotation=45, ha='right')
-    
-    # Add percentage labels with improved visibility
       for c in ax.containers:
         labels = [f'{v:.1f}%' if v > 1 else '' for v in c.datavalues]
         ax.bar_label(c, labels=labels, label_type='center', fontsize=9)
-    
-    # Add total labels with enhanced styling
       for i, (idx, total) in enumerate(row_sums.items()):
         if total > 0:
             ax.text(i, total + 1, f'Total: {total:.1f}%',
@@ -7275,14 +7136,10 @@ def market_share():
     def create_trend_line_plot(df, selected_companies):
      share_cols = [col for col in df.columns if col.startswith('Share_')]
      months = [col.split('_')[1] for col in share_cols]
-    
-    # Sort months chronologically with capitalized month names
      month_order = {
         'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6,
         'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12
     }
-    
-    # Create a list of (month, col_name) pairs and sort them
      month_col_pairs = [(col, month_order[month]) 
                       for col, month in zip(share_cols, months)]
      sorted_pairs = sorted(month_col_pairs, key=lambda x: x[1])
@@ -7321,18 +7178,12 @@ def market_share():
                       ha='center',
                       va='bottom',
                       fontsize=8)
-        
-        # Calculate and add sequential change labels
         sequential_changes, total_change = calculate_share_changes(company_shares, sorted_months)
         for i, change in enumerate(sequential_changes):
             mid_x = (i + 0.5)
             mid_y = (company_shares[i] + company_shares[i + 1]) / 2
-            
-            # Determine arrow direction and color
             arrow_color = 'green' if change > 0 else 'red'
             arrow_symbol = '↑' if change > 0 else '↓'
-            
-            # Add change label with arrow
             ax.annotate(f'{arrow_symbol}{abs(change):.1f}%',
                       (mid_x, mid_y),
                       xytext=(0, 15 if i % 2 == 0 else -15),  # Alternate above/below
@@ -7345,29 +7196,18 @@ def market_share():
                               edgecolor='none',
                               alpha=0.7,
                               pad=0.5))
-        
-        # Create legend label with total change
         change_symbol = '↑' if total_change > 0 else '↓'
         legend_labels.append(
             f"{company} (Avg: {avg_share:.1f}% | Total Change: {change_symbol}{abs(total_change):.1f}%)"
         )
-    
-    # Enhance the plot
      plt.title('Market Share Trends Over Time', 
              fontsize=20, 
              pad=20, 
              fontweight='bold')
-    
      plt.xlabel('Months', fontsize=12, fontweight='bold')
      plt.ylabel('Market Share (%)', fontsize=12, fontweight='bold')
-    
-    # Set x-axis labels with sorted months
      plt.xticks(range(len(sorted_months)), sorted_months, rotation=45)
-    
-    # Add grid
      plt.grid(True, linestyle='--', alpha=0.3)
-    
-    # Create custom legend with only the main lines
      ax.legend(lines, legend_labels,
              bbox_to_anchor=(1.15, 1),
              loc='upper left',
@@ -7377,12 +7217,9 @@ def market_share():
              title='Companies with Average Share & Total Change',
              title_fontsize=12,
              edgecolor='gray')
-    
-    # Style improvements
      ax.set_facecolor('#f8f9fa')
      fig.patch.set_facecolor('#ffffff')
      plt.tight_layout()
-    
      return fig
     def create_dashboard_header():
         """Create an attractive dashboard header"""
