@@ -202,7 +202,7 @@ class DiscountAnalytics:
                         )
                 
                 # Combine all information
-                full_text = f"{state_text} | {month_text} | {' | '.join(discount_items)}"
+                full_text = f"{state_text} | {month_text} | {'  '.join(discount_items)}"
                 ticker_items.append(f"<span class='ticker-item'>{full_text}</span>")
         
         # Repeat items fewer times for slower animation
