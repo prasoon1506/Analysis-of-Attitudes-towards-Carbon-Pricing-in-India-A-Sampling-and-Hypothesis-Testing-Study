@@ -491,7 +491,6 @@ class DiscountAnalytics:
                 combined_data['actual'] = filtered_df.iloc[:, month_cols['actual']].sum()
         
         return combined_data
-
 def main():
     # Initialize the processor
     processor = DiscountAnalytics()
@@ -524,7 +523,7 @@ def main():
         
         if selected_state:
             with col2:
-                discount_types = processor.get_discount_types(data[selected_state])
+                discount_types = processor.get_discount_types(data[selected_state], selected_state)
                 selected_discount = st.selectbox("Select Discount Type", discount_types)
             processor.create_monthly_metrics(data, selected_state, selected_discount)
             processor.create_trend_chart(data, selected_state, selected_discount)
