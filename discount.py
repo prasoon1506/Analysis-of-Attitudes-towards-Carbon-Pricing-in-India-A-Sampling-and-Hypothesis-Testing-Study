@@ -170,47 +170,52 @@ class DiscountAnalytics:
             }
         }
     def create_ticker(self, data):
-     ticker_items = []
-    
-    # Get the last month (June in this case)
-     last_month = "June"
-     month_cols = self.month_columns[last_month]
-    
-     for state in data.keys():
-        df = data[state]
-        if not df.empty:
-            state_text = f"<span class='state-name'>📍 {state}</span>"
-            month_text = f"<span class='month-name'>📅 {last_month}</span>"
-            
-            discount_types = self.get_discount_types(df)
-            discount_items = []
-            
-            for discount in discount_types:
-                mask = df.iloc[:, 0].fillna('').astype(str).str.strip() == discount.strip()
-                filtered_df = df[mask]
+        """Create moving ticker with comprehensive discount information"""
+        ticker_items = []
+        
+        # Get the last month (June in this case)
+        last_month = "June"
+        month_cols = self.month_columns[last_month]
+        
+        for state in data.keys():
+            df = data[state]
+            if not df.empty:
+                # Add state name
+                state_text = f"<span class='state-name'>📍 {state}</span>"
                 
-                if len(filtered_df) > 0:
-                    approved = filtered_df.iloc[0, month_cols['approved']]
-                    actual = filtered_df.iloc[0, month_cols['actual']]
-                    discount_items.append(
-                        f"{discount}: <span class='discount-value'>₹{actual:,.2f}</span>"
-                    )
-            
-            full_text = f"{state_text} | {month_text} | {' '.join(discount_items)}"
-            ticker_items.append(f"<span class='ticker-item'>{full_text}</span>")
-    
-    # Join items with proper spacing
-     ticker_content = ' '.join(ticker_items)
-    
-    # Create the ticker HTML with data-content attribute
-     ticker_html = f"""
-     <div class="ticker-container">
-        <div class="ticker-content" data-content="{ticker_content}">
-            {ticker_content}
+                # Add month information
+                month_text = f"<span class='month-name'>📅 {last_month}</span>"
+                
+                # Get all discount types for this state
+                discount_types = self.get_discount_types(df)
+                discount_items = []
+                
+                for discount in discount_types:
+                    mask = df.iloc[:, 0].fillna('').astype(str).str.strip() == discount.strip()
+                    filtered_df = df[mask]
+                    
+                    if len(filtered_df) > 0:
+                        approved = filtered_df.iloc[0, month_cols['approved']]
+                        actual = filtered_df.iloc[0, month_cols['actual']]
+                        discount_items.append(
+                            f"{discount}: <span class='discount-value'>₹{actual:,.2f}</span>"
+                        )
+                
+                # Combine all information
+                full_text = f"{state_text} | {month_text} | {' | '.join(discount_items)}"
+                ticker_items.append(f"<span class='ticker-item'>{full_text}</span>")
+        
+        # Repeat items fewer times for slower animation
+        ticker_items = ticker_items * 3
+        
+        ticker_html = f"""
+        <div class="ticker-container">
+            <div class="ticker-content">
+                {' '.join(ticker_items)}
+            </div>
         </div>
-     </div>
-     """
-     st.markdown(ticker_html, unsafe_allow_html=True)
+        """
+        st.markdown(ticker_html, unsafe_allow_html=True)
     def create_summary_metrics(self, data):
         """Create summary metrics cards"""
         total_states = len(data)
