@@ -241,12 +241,12 @@ class DiscountAnalytics:
      ticker_items = ticker_items * 3
     
      ticker_html = f"""
-    <div class="ticker-container">
+     <div class="ticker-container">
         <div class="ticker-content">
             {' '.join(ticker_items)}
         </div>
-    </div>
-    """
+     </div>
+     """
      st.markdown(ticker_html, unsafe_allow_html=True)
     def create_summary_metrics(self, data):
         """Create summary metrics cards"""
