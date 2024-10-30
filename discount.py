@@ -17,7 +17,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for styling
+# Custom CSS styling remains the same as before
 st.markdown("""
 <style>
     /* Main container */
@@ -80,6 +80,45 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
+
+# Cache the Excel processing function independently
+@st.cache_data
+def process_excel_file(file_content, excluded_sheets):
+    """Process Excel file and return processed data"""
+    excel_data = io.BytesIO(file_content)
+    excel_file = pd.ExcelFile(excel_data)
+    processed_data = {}
+    
+    for sheet in excel_file.sheet_names:
+        if not any(excluded_sheet in sheet for excluded_sheet in excluded_sheets):
+            df = pd.read_excel(excel_data, sheet_name=sheet, usecols=range(22))
+            
+            # Find start index
+            cash_discount_patterns = ['CASH DISCOUNT', 'Cash Discount', 'CD']
+            start_idx = None
+            
+            for idx, value in enumerate(df.iloc[:, 0]):
+                if isinstance(value, str):
+                    if any(pattern.lower() in value.lower() for pattern in cash_discount_patterns):
+                        start_idx = idx
+                        break
+            
+            if start_idx is not None:
+                df = df.iloc[start_idx:].reset_index(drop=True)
+            
+            # Trim at G. Total
+            g_total_idx = None
+            for idx, value in enumerate(df.iloc[:, 0]):
+                if isinstance(value, str) and 'G. TOTAL' in value:
+                    g_total_idx = idx
+                    break
+            
+            if g_total_idx is not None:
+                df = df.iloc[:g_total_idx].copy()
+            
+            processed_data[sheet] = df
+            
+    return processed_data
 
 class DiscountAnalytics:
     def __init__(self):
@@ -206,54 +245,9 @@ class DiscountAnalytics:
         
         st.plotly_chart(fig, use_container_width=True)
 
-    @st.cache_data
     def process_excel(self, uploaded_file):
-        """Process uploaded Excel file"""
-        excel_data = io.BytesIO(uploaded_file.getvalue())
-        excel_file = pd.ExcelFile(excel_data)
-        processed_data = {}
-        
-        for sheet in excel_file.sheet_names:
-            if not self.should_process_sheet(sheet):
-                continue
-                
-            df = pd.read_excel(excel_data, sheet_name=sheet, usecols=range(22))
-            df = self.preprocess_dataframe(df)
-            processed_data[sheet] = df
-            
-        return processed_data
-
-    def should_process_sheet(self, sheet_name):
-        """Check if sheet should be processed"""
-        excluded_sheets = ['MP (U)', 'MP (JK)']
-        return not any(excluded_sheet in sheet_name for excluded_sheet in excluded_sheets)
-
-    def preprocess_dataframe(self, df):
-        """Preprocess the dataframe"""
-        # Find start index
-        cash_discount_patterns = ['CASH DISCOUNT', 'Cash Discount', 'CD']
-        start_idx = None
-        
-        for idx, value in enumerate(df.iloc[:, 0]):
-            if isinstance(value, str):
-                if any(pattern.lower() in value.lower() for pattern in cash_discount_patterns):
-                    start_idx = idx
-                    break
-        
-        if start_idx is not None:
-            df = df.iloc[start_idx:].reset_index(drop=True)
-        
-        # Trim at G. Total
-        g_total_idx = None
-        for idx, value in enumerate(df.iloc[:, 0]):
-            if isinstance(value, str) and 'G. TOTAL' in value:
-                g_total_idx = idx
-                break
-        
-        if g_total_idx is not None:
-            df = df.iloc[:g_total_idx].copy()
-        
-        return df
+        """Process uploaded Excel file using cached function"""
+        return process_excel_file(uploaded_file.getvalue(), ['MP (U)', 'MP (JK)'])
 
     def get_discount_types(self, df):
         """Get unique discount types"""
