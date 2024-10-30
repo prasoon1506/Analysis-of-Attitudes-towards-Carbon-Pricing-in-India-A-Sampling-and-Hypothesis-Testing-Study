@@ -264,7 +264,7 @@ class DiscountAnalytics:
             with col2:
                 approved = data.get('approved', 0)
                 st.metric(
-                    "Approved Rate",
+                    "Approved Payout",
                     f"₹{approved:,.2f}",
                     delta=None,
                     help=f"Approved discount rate for {month}"
@@ -275,7 +275,7 @@ class DiscountAnalytics:
                 difference = approved - actual
                 delta_color = "normal" if difference >= 0 else "inverse"
                 st.metric(
-                    "Actual Rate",
+                    "Actual Payout",
                     f"₹{actual:,.2f}",
                     delta=f"₹{abs(difference):,.2f}" + (" under approved" if difference >= 0 else " over approved"),
                     delta_color=delta_color,
