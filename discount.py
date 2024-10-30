@@ -17,164 +17,82 @@ st.set_page_config(
 )
 st.markdown("""
 <style>
-    /* Global Styles */
-    .stApp {
-        background-color: #0a0f1c;
-        color: #e2e8f0;
-    }
-    
-    /* Header Styles */
-    h1, h2, h3 {
-        color: #e2e8f0 !important;
-        font-family: 'Inter', sans-serif;
-    }
-    
-    /* Sidebar Styling */
-    .css-1d391kg {
-        background-color: #1a1f2e;
-    }
-    
-    /* Card Styles */
-    .metric-card {
-        background: linear-gradient(145deg, #1a1f2e 0%, #131722 100%);
-        border-radius: 10px;
-        padding: 1.5rem;
-        border: 1px solid #2d3748;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        margin-bottom: 1rem;
-        transition: transform 0.2s;
-    }
-    
-    .metric-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
-    }
-    
-    /* Enhanced Ticker Animation */
     @keyframes ticker {
         0% { transform: translateX(100%); }
         100% { transform: translateX(-100%); }
     }
     
     .ticker-container {
-        background: linear-gradient(90deg, #131722 0%, #1a1f2e 50%, #131722 100%);
-        border: 1px solid #2d3748;
+        background-color: #0f172a;
         color: white;
-        padding: 15px;
+        padding: 12px;
         overflow: hidden;
         white-space: nowrap;
         position: relative;
         margin-bottom: 20px;
-        border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
     }
-    
     .ticker-content {
         display: inline-block;
-        animation: ticker 60s linear infinite;
+        animation: ticker 2500s linear infinite;  /* Set to 60 seconds */
+        animation-delay: -1250s;  /* Start halfway through to avoid initial wait */
         padding-right: 100%;
+        will-change: transform;
+        transform: translateZ(0);
+    }
+    
+    .ticker-content:hover {
+        animation-play-state: paused;
     }
     
     .ticker-item {
         display: inline-block;
         margin-right: 80px;
         font-size: 16px;
-        padding: 8px 15px;
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 6px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 5px 10px;
+        opacity: 1;
+        transition: opacity 0.3s;
     }
     
-    /* Value Indicators */
-    .value-up {
+    .state-name {
         color: #10B981;
-    }
-    
-    .value-down {
-        color: #EF4444;
-    }
-    
-    /* Chart Container */
-    .chart-container {
-        background: linear-gradient(145deg, #1a1f2e 0%, #131722 100%);
-        border-radius: 10px;
-        padding: 1rem;
-        border: 1px solid #2d3748;
-        margin-bottom: 1.5rem;
-    }
-    
-    /* Status Indicators */
-    .status-indicator {
-        display: inline-block;
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        margin-right: 8px;
-    }
-    
-    .status-active {
-        background-color: #10B981;
-        box-shadow: 0 0 8px #10B981;
-    }
-    
-    .status-warning {
-        background-color: #F59E0B;
-        box-shadow: 0 0 8px #F59E0B;
-    }
-    
-    /* Custom Selectbox */
-    .stSelectbox {
-        background-color: #1a1f2e !important;
-        border: 1px solid #2d3748 !important;
-        color: #e2e8f0 !important;
-        border-radius: 8px !important;
-    }
-    
-    /* Custom Metrics */
-    .custom-metric {
-        background: linear-gradient(145deg, #1a1f2e 0%, #131722 100%);
-        padding: 1.5rem;
-        border-radius: 10px;
-        border: 1px solid #2d3748;
-        text-align: center;
-    }
-    
-    .metric-value {
-        font-size: 24px;
         font-weight: bold;
-        margin: 10px 0;
     }
     
-    .metric-label {
-        font-size: 14px;
-        color: #94A3B8;
+    .month-name {
+        color: #3B82F6;
+        font-weight: bold;
     }
     
-    /* Loading Animation */
-    .loading-spinner {
-        border: 4px solid #1a1f2e;
-        border-top: 4px solid #10B981;
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        animation: spin 1s linear infinite;
+    .discount-value {
+        color: #F59E0B;
     }
-    
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
     }
-    
-    /* Time Display */
-    .time-display {
-        font-family: 'Monaco', monospace;
-        font-size: 14px;
-        color: #94A3B8;
-        text-align: right;
-        padding: 8px;
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 6px;
+
+    .ticker-container {
+        animation: fadeIn 0.5s ease-in;
+    }
+
+    .custom-card {
+        background-color: white;
+        padding: 1rem;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         margin-bottom: 1rem;
+    }
+
+    .custom-card h3 {
+        color: #1e293b;
+        margin-bottom: 0.5rem;
+    }
+
+    .custom-card p {
+        margin: 0.5rem 0;
+        color: #475569;
     }
 </style>
 """, unsafe_allow_html=True)
