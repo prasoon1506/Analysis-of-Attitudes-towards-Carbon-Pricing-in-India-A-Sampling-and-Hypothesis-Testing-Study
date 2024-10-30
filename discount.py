@@ -472,7 +472,6 @@ class DiscountAnalytics:
     
      return sorted(valid_discounts)
     def get_combined_data(self, df, month_cols, state):
-    """Get combined discount data including quantities"""
      combined_data = {
         'actual': np.nan, 
         'approved': np.nan,
