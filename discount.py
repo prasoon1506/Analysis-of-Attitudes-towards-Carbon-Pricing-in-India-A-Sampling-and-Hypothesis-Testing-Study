@@ -289,6 +289,60 @@ class DiscountAnalytics:
         )
         
         st.plotly_chart(fig, use_container_width=True)
+        
+        # Create and display the difference chart
+        self.create_difference_chart(months, approved_values, actual_values, selected_state)
+
+    def create_difference_chart(self, months, approved_values, actual_values, selected_state):
+        """Create chart showing difference between approved and actual rates"""
+        differences = [approved - actual for approved, actual in zip(approved_values, actual_values)]
+        
+        fig = go.Figure()
+        
+        # Add separate traces for positive and negative differences
+        for i in range(len(months)):
+            color = '#10B981' if differences[i] >= 0 else '#EF4444'  # Green for positive, red for negative
+            fig.add_trace(go.Scatter(
+                x=[months[i], months[i]],
+                y=[0, differences[i]],
+                mode='lines',
+                line=dict(color=color, width=3),
+                showlegend=False
+            ))
+        
+        # Add markers at the difference points
+        fig.add_trace(go.Scatter(
+            x=months,
+            y=differences,
+            mode='markers',
+            marker=dict(
+                size=8,
+                color=['#10B981' if d >= 0 else '#EF4444' for d in differences],
+                line=dict(width=2, color='white')
+            ),
+            name='Difference'
+        ))
+        
+        # Add a horizontal line at y=0
+        fig.add_shape(
+            type='line',
+            x0=months[0],
+            x1=months[-1],
+            y0=0,
+            y1=0,
+            line=dict(color='gray', width=1, dash='dash')
+        )
+        
+        fig.update_layout(
+            title=f'Approved vs Actual Difference - {selected_state}',
+            xaxis_title='Month',
+            yaxis_title='Difference in Discount Rate (₹/Bag)',
+            template='plotly_white',
+            height=300,
+            margin=dict(t=50, b=50, l=50, r=50)
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
 
     def get_discount_types(self, df):
         """Get unique discount types"""
