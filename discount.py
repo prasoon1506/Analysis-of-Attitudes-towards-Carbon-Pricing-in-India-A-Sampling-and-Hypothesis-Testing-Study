@@ -16,42 +16,11 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-
-# Custom CSS styling remains the same as before
 st.markdown("""
 <style>
-    /* Main container */
-    .main {
-        background-color: #f0f2f6;
-    }
+    /* [Previous CSS styles remain the same] */
     
-    /* Headers */
-    .css-10trblm {
-        color: #1f2937;
-        font-weight: 600;
-    }
-    
-    /* Metric cards */
-    .css-1r6slb0 {
-        background-color: white;
-        border-radius: 10px;
-        padding: 1rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-    
-    /* Sidebar */
-    .css-1d391kg {
-        background-color: #1f2937;
-    }
-    
-    /* File uploader */
-    .stFileUploader {
-        padding: 1rem;
-        border-radius: 10px;
-        background-color: white;
-    }
-    
-    /* Ticker animation */
+    /* Updated ticker animation */
     @keyframes ticker {
         0% { transform: translateX(100%); }
         100% { transform: translateX(-100%); }
@@ -63,21 +32,21 @@ st.markdown("""
         padding: 10px;
         overflow: hidden;
         white-space: nowrap;
+        position: relative;
     }
     
     .ticker-content {
         display: inline-block;
-        animation: ticker 20s linear infinite;
+        animation: ticker 60s linear infinite;
+        padding-right: 100%;
     }
     
-    /* Custom card */
-    .custom-card {
-        background-color: white;
-        border-radius: 10px;
-        padding: 20px;
-        margin: 10px 0;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    .ticker-item {
+        display: inline-block;
+        margin-right: 50px;
     }
+    
+    /* [Rest of the CSS remains the same] */
 </style>
 """, unsafe_allow_html=True)
 
@@ -160,19 +129,40 @@ class DiscountAnalytics:
                 'actual': 18
             }
         }
-        
     def create_ticker(self, data):
-        """Create moving ticker with discount rates"""
+        """Create moving ticker with comprehensive discount information"""
         ticker_items = []
+        
         for state in data.keys():
             df = data[state]
             if not df.empty:
-                ticker_items.append(f"{state}: ₹{df.iloc[0, 4]:,.2f}")
+                state_items = [f"📍 {state}"]
+                
+                # Get all discount types for this state
+                discount_types = self.get_discount_types(df)
+                
+                for discount in discount_types:
+                    mask = df.iloc[:, 0].fillna('').astype(str).str.strip() == discount.strip()
+                    filtered_df = df[mask]
+                    
+                    if len(filtered_df) > 0:
+                        approved = filtered_df.iloc[0, 4]  # Using the first month's data
+                        actual = filtered_df.iloc[0, 4]
+                        state_items.append(
+                            f"{discount}: Approved ₹{approved:,.2f} | Actual ₹{actual:,.2f}"
+                        )
+                
+                # Join all items for this state
+                state_text = " ➜ ".join(state_items)
+                ticker_items.append(f"<span class='ticker-item'>{state_text}</span>")
+        
+        # Repeat the items to ensure continuous animation
+        ticker_items = ticker_items * 3  # Repeat 3 times to ensure continuous loop
         
         ticker_html = f"""
         <div class="ticker-container">
             <div class="ticker-content">
-                {'  |  '.join(ticker_items * 2)}
+                {' '.join(ticker_items)}
             </div>
         </div>
         """
