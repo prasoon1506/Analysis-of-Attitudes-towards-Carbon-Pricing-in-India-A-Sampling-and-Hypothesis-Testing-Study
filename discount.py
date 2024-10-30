@@ -17,28 +17,50 @@ st.set_page_config(
 )
 st.markdown("""
 <style>
+    /* Global Styles */
+    [data-testid="stSidebar"] {
+        background-color: #f8fafc;
+        border-right: 1px solid #e2e8f0;
+    }
+    
+    .stButton button {
+        background-color: #3b82f6;
+        color: white;
+        border-radius: 6px;
+        padding: 0.5rem 1rem;
+        border: none;
+        transition: all 0.2s;
+    }
+    
+    .stButton button:hover {
+        background-color: #2563eb;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Ticker Animation */
     @keyframes ticker {
         0% { transform: translateX(100%); }
         100% { transform: translateX(-100%); }
     }
     
     .ticker-container {
-        background-color: #0f172a;
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
         color: white;
-        padding: 12px;
+        padding: 16px;
         overflow: hidden;
         white-space: nowrap;
         position: relative;
-        margin-bottom: 20px;
-        border-radius: 8px;
+        margin-bottom: 24px;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
+    
     .ticker-content {
         display: inline-block;
-        animation: ticker 2500s linear infinite;  /* Set to 60 seconds */
-        animation-delay: -1250s;  /* Start halfway through to avoid initial wait */
+        animation: ticker 2500s linear infinite;
+        animation-delay: -1250s;
         padding-right: 100%;
         will-change: transform;
-        transform: translateZ(0);
     }
     
     .ticker-content:hover {
@@ -49,54 +71,95 @@ st.markdown("""
         display: inline-block;
         margin-right: 80px;
         font-size: 16px;
-        padding: 5px 10px;
+        padding: 8px 16px;
         opacity: 1;
         transition: opacity 0.3s;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
     }
     
+    /* Enhanced Metrics */
     .state-name {
         color: #10B981;
-        font-weight: bold;
+        font-weight: 600;
     }
     
     .month-name {
-        color: #3B82F6;
-        font-weight: bold;
+        color: #60A5FA;
+        font-weight: 600;
     }
     
     .discount-value {
-        color: #F59E0B;
+        color: #FBBF24;
+        font-weight: 600;
     }
-
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
+    
+    /* Card Styles */
+    .metric-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s;
+        border: 1px solid #e2e8f0;
     }
-
-    .ticker-container {
-        animation: fadeIn 0.5s ease-in;
+    
+    .metric-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     }
-
-    .custom-card {
-        background-color: white;
-        padding: 1rem;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        margin-bottom: 1rem;
-    }
-
-    .custom-card h3 {
+    
+    .metric-value {
+        font-size: 2rem;
+        font-weight: 600;
         color: #1e293b;
+    }
+    
+    .metric-label {
+        color: #64748b;
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+    }
+    
+    /* Chart Container */
+    .chart-container {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        margin: 1rem 0;
+        border: 1px solid #e2e8f0;
+    }
+    
+    /* Selectbox Styling */
+    .stSelectbox {
+        background: white;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+    }
+    
+    /* Custom Header */
+    .dashboard-header {
+        padding: 1.5rem;
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        color: white;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .dashboard-title {
+        font-size: 2rem;
+        font-weight: 600;
         margin-bottom: 0.5rem;
     }
-
-    .custom-card p {
-        margin: 0.5rem 0;
-        color: #475569;
+    
+    .dashboard-subtitle {
+        color: #94a3b8;
+        font-size: 1rem;
     }
 </style>
 """, unsafe_allow_html=True)
-
 @st.cache_data(ttl=3600)
 def process_excel_file(file_content, excluded_sheets):
     """Process Excel file and return processed data"""
@@ -498,31 +561,46 @@ class DiscountAnalytics:
     
      return combined_data
 def main():
-    # Initialize the processor
     processor = DiscountAnalytics()
     
-    # Sidebar
+    # Enhanced Sidebar
     with st.sidebar:
-        st.title("Dashboard Controls")
+        st.markdown("""
+        <div style='text-align: center; padding: 1rem;'>
+            <h2 style='color: #1e293b;'>Dashboard Controls</h2>
+        </div>
+        """, unsafe_allow_html=True)
         uploaded_file = st.file_uploader("Upload Excel File", type=['xlsx', 'xls'])
     
-    # Main content
-    st.title("Discount Analytics Dashboard")
-    st.markdown("---")
+    # Enhanced Header
+    st.markdown("""
+    <div class='dashboard-header'>
+        <div class='dashboard-title'>Discount Analytics Dashboard</div>
+        <div class='dashboard-subtitle'>Monitor and analyze discount performance across states</div>
+    </div>
+    """, unsafe_allow_html=True)
     
     if uploaded_file is not None:
-        # Use spinner to show loading state
         with st.spinner('Processing data...'):
-            # Process data
             data = processor.process_excel(uploaded_file)
-            
-            # Create ticker immediately after data processing
             processor.create_ticker(data)
         
-        # Rest of the dashboard components
+        # Enhanced Metrics Layout
+        st.markdown("""
+        <div style='margin: 2rem 0;'>
+            <h3 style='color: #1e293b; margin-bottom: 1rem;'>Key Performance Indicators</h3>
+        </div>
+        """, unsafe_allow_html=True)
+        
         processor.create_summary_metrics(data)
         
-        # State and discount selection
+        # Enhanced Selection Controls
+        st.markdown("""
+        <div style='margin: 2rem 0;'>
+            <h3 style='color: #1e293b; margin-bottom: 1rem;'>Detailed Analysis</h3>
+        </div>
+        """, unsafe_allow_html=True)
+        
         col1, col2 = st.columns(2)
         with col1:
             selected_state = st.selectbox("Select State", list(data.keys()))
@@ -531,13 +609,27 @@ def main():
             with col2:
                 discount_types = processor.get_discount_types(data[selected_state], selected_state)
                 selected_discount = st.selectbox("Select Discount Type", discount_types)
+            
+            # Wrap charts in custom containers
+            st.markdown("<div class='chart-container'>", unsafe_allow_html=True)
             processor.create_monthly_metrics(data, selected_state, selected_discount)
+            st.markdown("</div>", unsafe_allow_html=True)
+            
+            st.markdown("<div class='chart-container'>", unsafe_allow_html=True)
             processor.create_trend_chart(data, selected_state, selected_discount)
+            st.markdown("</div>", unsafe_allow_html=True)
     
     else:
-        st.info("Please upload an Excel file to begin analysis.")
+        st.markdown("""
+        <div style='text-align: center; padding: 3rem; background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);'>
+            <img src="https://via.placeholder.com/100x100" style="margin-bottom: 1rem;">
+            <h2 style='color: #1e293b; margin-bottom: 1rem;'>Welcome to Discount Analytics</h2>
+            <p style='color: #64748b; margin-bottom: 2rem;'>Please upload an Excel file to begin your analysis.</p>
+        </div>
+        """, unsafe_allow_html=True)
         
-        # Placeholder metrics for demo
+        # Enhanced placeholder metrics
+        st.markdown("<div style='margin-top: 2rem;'>", unsafe_allow_html=True)
         col1, col2, col3 = st.columns(3)
         with col1:
             st.metric("Total States", "0", "Waiting")
@@ -545,6 +637,7 @@ def main():
             st.metric("Total Discount Types", "0", "Waiting")
         with col3:
             st.metric("Average Discount Rate", "₹0.00", "Waiting")
+        st.markdown("</div>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
