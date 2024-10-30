@@ -8,6 +8,7 @@ import streamlit.components.v1 as components
 import io
 import warnings
 warnings.filterwarnings('ignore')
+
 st.set_page_config(
     page_title="Discount Analytics Dashboard",
     page_icon="💰",
@@ -15,7 +16,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Updated CSS with slower animation and smoother transition
+# Updated CSS with optimized animation
 st.markdown("""
 <style>
     @keyframes ticker {
@@ -36,9 +37,11 @@ st.markdown("""
     
     .ticker-content {
         display: inline-block;
-        animation: ticker 300000s linear infinite;
+        animation: ticker 30s linear infinite;
         animation-play-state: running;
         padding-right: 100%;
+        will-change: transform;
+        transform: translateZ(0);
     }
     
     .ticker-content:hover {
@@ -50,6 +53,8 @@ st.markdown("""
         margin-right: 80px;
         font-size: 16px;
         padding: 5px 10px;
+        opacity: 1;
+        transition: opacity 0.3s;
     }
     
     .state-name {
@@ -65,9 +70,37 @@ st.markdown("""
     .discount-value {
         color: #F59E0B;
     }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    .ticker-container {
+        animation: fadeIn 0.5s ease-in;
+    }
+
+    .custom-card {
+        background-color: white;
+        padding: 1rem;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        margin-bottom: 1rem;
+    }
+
+    .custom-card h3 {
+        color: #1e293b;
+        margin-bottom: 0.5rem;
+    }
+
+    .custom-card p {
+        margin: 0.5rem 0;
+        color: #475569;
+    }
 </style>
 """, unsafe_allow_html=True)
-@st.cache_data
+
+@st.cache_data(ttl=3600)
 def process_excel_file(file_content, excluded_sheets):
     """Process Excel file and return processed data"""
     excel_data = io.BytesIO(file_content)
@@ -145,6 +178,7 @@ class DiscountAnalytics:
                 'actual': 18
             }
         }
+
     def create_ticker(self, data):
         """Create moving ticker with comprehensive discount information"""
         ticker_items = []
@@ -156,13 +190,9 @@ class DiscountAnalytics:
         for state in data.keys():
             df = data[state]
             if not df.empty:
-                # Add state name
                 state_text = f"<span class='state-name'>📍 {state}</span>"
-                
-                # Add month information
                 month_text = f"<span class='month-name'>📅 {last_month}</span>"
                 
-                # Get all discount types for this state
                 discount_types = self.get_discount_types(df)
                 discount_items = []
                 
@@ -177,12 +207,11 @@ class DiscountAnalytics:
                             f"{discount}: <span class='discount-value'>₹{actual:,.2f}</span>"
                         )
                 
-                # Combine all information
-                full_text = f"{state_text} | {month_text} | {' | '.join(discount_items)}"
+                full_text = f"{state_text} | {month_text} | {' '.join(discount_items)}"
                 ticker_items.append(f"<span class='ticker-item'>{full_text}</span>")
         
-        # Repeat items fewer times for slower animation
-        ticker_items = ticker_items * 100
+        # Repeat items 3 times for continuous flow
+        ticker_items = ticker_items * 3
         
         ticker_html = f"""
         <div class="ticker-container">
@@ -192,6 +221,7 @@ class DiscountAnalytics:
         </div>
         """
         st.markdown(ticker_html, unsafe_allow_html=True)
+
     def create_summary_metrics(self, data):
         """Create summary metrics cards"""
         total_states = len(data)
@@ -259,10 +289,6 @@ class DiscountAnalytics:
         
         st.plotly_chart(fig, use_container_width=True)
 
-    def process_excel(self, uploaded_file):
-        """Process uploaded Excel file using cached function"""
-        return process_excel_file(uploaded_file.getvalue(), ['MP (U)', 'MP (JK)'])
-
     def get_discount_types(self, df):
         """Get unique discount types"""
         first_col = df.iloc[:, 0]
@@ -305,14 +331,16 @@ def main():
     st.title("Discount Analytics Dashboard")
     st.markdown("---")
     
-    if uploaded_file:
-        # Process data
-        data = processor.process_excel(uploaded_file)
+    if uploaded_file is not None:
+        # Use spinner to show loading state
+        with st.spinner('Processing data...'):
+            # Process data
+            data = processor.process_excel(uploaded_file)
+            
+            # Create ticker immediately after data processing
+            processor.create_ticker(data)
         
-        # Create ticker
-        processor.create_ticker(data)
-        
-        # Summary metrics
+        # Rest of the dashboard components
         processor.create_summary_metrics(data)
         
         # State and discount selection
@@ -325,10 +353,8 @@ def main():
                 discount_types = processor.get_discount_types(data[selected_state])
                 selected_discount = st.selectbox("Select Discount Type", discount_types)
         
-            # Create trend chart
             processor.create_trend_chart(data, selected_state, selected_discount)
             
-            # Display monthly details
             st.subheader("Monthly Details")
             cols = st.columns(3)
             
