@@ -298,7 +298,6 @@ def main():
     
     # Sidebar
     with st.sidebar:
-        st.image("https://via.placeholder.com/150x50.png?text=Logo", use_column_width=True)
         st.title("Dashboard Controls")
         uploaded_file = st.file_uploader("Upload Excel File", type=['xlsx', 'xls'])
     
