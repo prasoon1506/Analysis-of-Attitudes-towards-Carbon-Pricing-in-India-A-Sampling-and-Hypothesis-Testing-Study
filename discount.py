@@ -471,26 +471,32 @@ class DiscountAnalytics:
         ]
     
      return sorted(valid_discounts)
-    def get_combined_data(self, df, month_cols, state):
-        """Get combined discount data"""
-        combined_data = {'actual': np.nan, 'approved': np.nan}
+     def get_combined_data(self, df, month_cols, state):
+    """Get combined discount data including quantities"""
+     combined_data = {
+        'actual': np.nan, 
+        'approved': np.nan,
+        'quantity': np.nan  # Added quantity field
+    }
+    
+     state_group = next(
+        (group for group, config in self.discount_mappings.items()
+         if state in config['states']),
+        None
+    )
+    
+     if state_group:
+        relevant_discounts = self.discount_mappings[state_group]['discounts']
+        mask = df.iloc[:, 0].fillna('').astype(str).str.strip().isin(relevant_discounts)
+        filtered_df = df[mask]
         
-        state_group = next(
-            (group for group, config in self.discount_mappings.items()
-             if state in config['states']),
-            None
-        )
-        
-        if state_group:
-            relevant_discounts = self.discount_mappings[state_group]['discounts']
-            mask = df.iloc[:, 0].fillna('').astype(str).str.strip().isin(relevant_discounts)
-            filtered_df = df[mask]
-            
-            if len(filtered_df) > 0:
-                combined_data['approved'] = filtered_df.iloc[:, month_cols['approved']].sum()
-                combined_data['actual'] = filtered_df.iloc[:, month_cols['actual']].sum()
-        
-        return combined_data
+        if len(filtered_df) > 0:
+            # Sum up the values for all relevant discounts
+            combined_data['approved'] = filtered_df.iloc[:, month_cols['approved']].sum()
+            combined_data['actual'] = filtered_df.iloc[:, month_cols['actual']].sum()
+            combined_data['quantity'] = filtered_df.iloc[:, month_cols['quantity']].sum()  # Add quantity sum
+    
+     return combined_data
 def main():
     # Initialize the processor
     processor = DiscountAnalytics()
