@@ -469,7 +469,7 @@ def main():
             with col2:
                 discount_types = processor.get_discount_types(data[selected_state])
                 selected_discount = st.selectbox("Select Discount Type", discount_types)
-        
+            processor.create_monthly_metrics(data, selected_state, selected_discount)
             processor.create_trend_chart(data, selected_state, selected_discount)
             
             st.subheader("Monthly Details")
