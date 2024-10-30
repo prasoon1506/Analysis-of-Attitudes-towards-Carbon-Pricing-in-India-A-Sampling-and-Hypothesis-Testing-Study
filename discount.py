@@ -192,7 +192,6 @@ class DiscountAnalytics:
         </div>
         """
         st.markdown(ticker_html, unsafe_allow_html=True)
-
     def create_summary_metrics(self, data):
         """Create summary metrics cards"""
         total_states = len(data)
