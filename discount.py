@@ -15,6 +15,8 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# Updated CSS with optimized animation
 st.markdown("""
 <style>
     @keyframes ticker {
@@ -31,24 +33,15 @@ st.markdown("""
         position: relative;
         margin-bottom: 20px;
         border-radius: 8px;
-        animation: fadeIn 0.5s ease-in;
     }
     
     .ticker-content {
         display: inline-block;
-        animation: ticker 1000s linear infinite;  /* Set to 60 seconds */
-        animation-delay: -990s;  /* Start halfway through to avoid initial wait */
+        animation: ticker 30s linear infinite;
+        animation-play-state: running;
         padding-right: 100%;
         will-change: transform;
         transform: translateZ(0);
-    }
-
-    /* Create a second ticker content for seamless loop */
-    .ticker-content::after {
-        content: attr(data-content);
-        display: inline-block;
-        white-space: nowrap;
-        padding-left: 50px;
     }
     
     .ticker-content:hover {
@@ -83,14 +76,30 @@ st.markdown("""
         to { opacity: 1; }
     }
 
-    /* Add smooth scroll effect */
-    @media (prefers-reduced-motion: no-preference) {
-        .ticker-content {
-            scroll-behavior: smooth;
-        }
+    .ticker-container {
+        animation: fadeIn 0.5s ease-in;
+    }
+
+    .custom-card {
+        background-color: white;
+        padding: 1rem;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        margin-bottom: 1rem;
+    }
+
+    .custom-card h3 {
+        color: #1e293b;
+        margin-bottom: 0.5rem;
+    }
+
+    .custom-card p {
+        margin: 0.5rem 0;
+        color: #475569;
     }
 </style>
 """, unsafe_allow_html=True)
+
 @st.cache_data(ttl=3600)
 def process_excel_file(file_content, excluded_sheets):
     """Process Excel file and return processed data"""
@@ -169,6 +178,7 @@ class DiscountAnalytics:
                 'actual': 18
             }
         }
+
     def create_ticker(self, data):
         """Create moving ticker with comprehensive discount information"""
         ticker_items = []
@@ -180,13 +190,9 @@ class DiscountAnalytics:
         for state in data.keys():
             df = data[state]
             if not df.empty:
-                # Add state name
                 state_text = f"<span class='state-name'>📍 {state}</span>"
-                
-                # Add month information
                 month_text = f"<span class='month-name'>📅 {last_month}</span>"
                 
-                # Get all discount types for this state
                 discount_types = self.get_discount_types(df)
                 discount_items = []
                 
@@ -201,11 +207,10 @@ class DiscountAnalytics:
                             f"{discount}: <span class='discount-value'>₹{actual:,.2f}</span>"
                         )
                 
-                # Combine all information
-                full_text = f"{state_text} | {month_text} | {'  '.join(discount_items)}"
+                full_text = f"{state_text} | {month_text} | {' '.join(discount_items)}"
                 ticker_items.append(f"<span class='ticker-item'>{full_text}</span>")
         
-        # Repeat items fewer times for slower animation
+        # Repeat items 3 times for continuous flow
         ticker_items = ticker_items * 3
         
         ticker_html = f"""
@@ -216,6 +221,7 @@ class DiscountAnalytics:
         </div>
         """
         st.markdown(ticker_html, unsafe_allow_html=True)
+
     def create_summary_metrics(self, data):
         """Create summary metrics cards"""
         total_states = len(data)
@@ -230,7 +236,9 @@ class DiscountAnalytics:
             st.metric("Total Discount Types", total_discounts, "Available")
         with col3:
             st.metric("Average Discount Rate", f"₹{avg_discount:,.2f}", "Per Bag")
-
+    def process_excel(self, uploaded_file):
+        """Process uploaded Excel file using cached function"""
+        return process_excel_file(uploaded_file.getvalue(), ['MP (U)', 'MP (JK)'])
     def create_trend_chart(self, data, selected_state, selected_discount):
         """Create trend chart using Plotly"""
         df = data[selected_state]
@@ -282,9 +290,7 @@ class DiscountAnalytics:
         )
         
         st.plotly_chart(fig, use_container_width=True)
-    def process_excel(self, uploaded_file):
-        """Process uploaded Excel file using cached function"""
-        return process_excel_file(uploaded_file.getvalue(), ['MP (U)', 'MP (JK)'])
+
     def get_discount_types(self, df):
         """Get unique discount types"""
         first_col = df.iloc[:, 0]
