@@ -37,7 +37,7 @@ st.markdown("""
     
     .ticker-content {
         display: inline-block;
-        animation: ticker 5s linear infinite;
+        animation: ticker 1s linear infinite;
         padding-right: 100%;
     }
     
