@@ -288,7 +288,9 @@ class DiscountAnalytics:
         )
         
         st.plotly_chart(fig, use_container_width=True)
-
+    def process_excel(self, uploaded_file):
+        """Process uploaded Excel file using cached function"""
+        return process_excel_file(uploaded_file.getvalue(), ['MP (U)', 'MP (JK)'])
     def get_discount_types(self, df):
         """Get unique discount types"""
         first_col = df.iloc[:, 0]
