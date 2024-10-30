@@ -472,10 +472,11 @@ class DiscountAnalytics:
     
      return sorted(valid_discounts)
     def get_combined_data(self, df, month_cols, state):
+    """Get combined discount data including quantities"""
      combined_data = {
         'actual': np.nan, 
         'approved': np.nan,
-        'quantity': np.nan  # Added quantity field
+        'quantity': np.nan
     }
     
      state_group = next(
@@ -493,7 +494,10 @@ class DiscountAnalytics:
             # Sum up the values for all relevant discounts
             combined_data['approved'] = filtered_df.iloc[:, month_cols['approved']].sum()
             combined_data['actual'] = filtered_df.iloc[:, month_cols['actual']].sum()
-            combined_data['quantity'] = filtered_df.iloc[:, month_cols['quantity']].sum()  # Add quantity sum
+            
+            # Calculate total quantity and divide by 2 for CD and Advance CD
+            total_quantity = filtered_df.iloc[:, month_cols['quantity']].sum()
+            combined_data['quantity'] = total_quantity / 2  # Divide summed quantity by 2
     
      return combined_data
 def main():
