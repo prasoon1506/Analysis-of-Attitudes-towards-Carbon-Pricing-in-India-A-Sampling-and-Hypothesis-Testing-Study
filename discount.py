@@ -471,20 +471,6 @@ def main():
                 selected_discount = st.selectbox("Select Discount Type", discount_types)
             processor.create_monthly_metrics(data, selected_state, selected_discount)
             processor.create_trend_chart(data, selected_state, selected_discount)
-            
-            st.subheader("Monthly Details")
-            cols = st.columns(3)
-            
-            for idx, (month, month_cols) in enumerate(processor.month_columns.items()):
-                with cols[idx]:
-                    st.markdown(f"""
-                    <div class="custom-card">
-                        <h3>{month}</h3>
-                        <p><strong>Quantity Sold:</strong> {data[selected_state].iloc[0, month_cols['quantity']]:,.2f}</p>
-                        <p><strong>Approved Rate:</strong> ₹{data[selected_state].iloc[0, month_cols['approved']]:,.2f}</p>
-                        <p><strong>Actual Rate:</strong> ₹{data[selected_state].iloc[0, month_cols['actual']]:,.2f}</p>
-                    </div>
-                    """, unsafe_allow_html=True)
     
     else:
         st.info("Please upload an Excel file to begin analysis.")
