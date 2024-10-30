@@ -4154,7 +4154,7 @@ def folder_menu():
         file_stats = os.stat(file_path)
         
         st.markdown(f'<div class="file-box">', unsafe_allow_html=True)
-        col1, col2, col3, col4= st.columns([3, 1, 1, 1, 1])
+        col1, col2, col3, col4= st.columns([3, 1, 1, 1])
         with col1:
             st.markdown(f"<h3>{filename}</h3>", unsafe_allow_html=True)
             st.text(f"Size: {file_stats.st_size / 1024:.2f} KB")
