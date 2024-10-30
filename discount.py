@@ -220,7 +220,69 @@ class DiscountAnalytics:
         </div>
         """
         st.markdown(ticker_html, unsafe_allow_html=True)
-
+    def create_monthly_metrics(self, data, selected_state, selected_discount):
+        """Create monthly metrics based on selected discount type"""
+        df = data[selected_state]
+        
+        if selected_discount == self.combined_discount_name:
+            monthly_data = {
+                month: self.get_combined_data(df, cols, selected_state)
+                for month, cols in self.month_columns.items()
+            }
+        else:
+            mask = df.iloc[:, 0].fillna('').astype(str).str.strip() == selected_discount.strip()
+            filtered_df = df[mask]
+            if len(filtered_df) > 0:
+                monthly_data = {
+                    month: {
+                        'actual': filtered_df.iloc[0, cols['actual']],
+                        'approved': filtered_df.iloc[0, cols['approved']],
+                        'quantity': filtered_df.iloc[0, cols['quantity']]
+                    }
+                    for month, cols in self.month_columns.items()
+                }
+        
+        # Create three columns for each month
+        for month, data in monthly_data.items():
+            st.markdown(f"""
+            <div style='text-align: center; margin-bottom: 10px;'>
+                <h3 style='color: #1e293b; margin-bottom: 15px;'>{month}</h3>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                quantity = data.get('quantity', 0)
+                st.metric(
+                    "Quantity Sold",
+                    f"{quantity:,.2f}",
+                    delta=None,
+                    help=f"Total quantity sold in {month}"
+                )
+            
+            with col2:
+                approved = data.get('approved', 0)
+                st.metric(
+                    "Approved Rate",
+                    f"₹{approved:,.2f}",
+                    delta=None,
+                    help=f"Approved discount rate for {month}"
+                )
+            
+            with col3:
+                actual = data.get('actual', 0)
+                difference = approved - actual
+                delta_color = "normal" if difference >= 0 else "inverse"
+                st.metric(
+                    "Actual Rate",
+                    f"₹{actual:,.2f}",
+                    delta=f"₹{abs(difference):,.2f}" + (" under approved" if difference >= 0 else " over approved"),
+                    delta_color=delta_color,
+                    help=f"Actual discount rate for {month}"
+                )
+            
+            st.markdown("---")
     def create_summary_metrics(self, data):
         """Create summary metrics cards"""
         total_states = len(data)
