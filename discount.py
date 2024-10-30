@@ -220,6 +220,101 @@ class DiscountAnalytics:
         </div>
         """
         st.markdown(ticker_html, unsafe_allow_html=True)
+    def find_total_row(self, df):
+        """Find the total row index based on patterns or return last row"""
+        # First try to find matching pattern
+        for pattern in self.total_patterns:
+            total_mask = df.iloc[:, 0].fillna('').astype(str).str.contains(pattern, case=False, regex=False)
+            if total_mask.any():
+                return df[total_mask].index[0]
+        
+        # If no pattern found, return last row index
+        return df.index[-1]
+
+    def get_state_total_values(self, df):
+        """Get the total values for a state dataframe"""
+        total_idx = self.find_total_row(df)
+        total_values = {}
+        
+        for month, cols in self.month_columns.items():
+            try:
+                total_values[month] = {
+                    'quantity': df.iloc[total_idx, cols['quantity']],
+                    'approved': df.iloc[total_idx, cols['approved']],
+                    'actual': df.iloc[total_idx, cols['actual']]
+                }
+            except (IndexError, KeyError):
+                # Handle missing data
+                total_values[month] = {
+                    'quantity': 0,
+                    'approved': 0,
+                    'actual': 0
+                }
+        
+        return total_values
+
+    def create_summary_metrics(self, data):
+        """Create summary metrics cards using G. Total or last row values"""
+        total_states = len(data)
+        
+        # Calculate averages across all states
+        all_state_totals = []
+        total_quantities = []
+        
+        for state, df in data.items():
+            if not df.empty:
+                state_totals = self.get_state_total_values(df)
+                all_state_totals.append(state_totals)
+                
+                # Sum up quantities across months for this state
+                state_quantity = sum(month_data['quantity'] 
+                                   for month_data in state_totals.values())
+                total_quantities.append(state_quantity)
+
+        # Calculate overall metrics
+        if all_state_totals:
+            # Calculate average approved and actual rates
+            avg_approved = np.mean([
+                sum(month_data['approved'] for month_data in state_total.values()) / len(self.month_columns)
+                for state_total in all_state_totals
+            ])
+            
+            avg_actual = np.mean([
+                sum(month_data['actual'] for month_data in state_total.values()) / len(self.month_columns)
+                for state_total in all_state_totals
+            ])
+            
+            total_quantity = sum(total_quantities)
+            
+            # Display metrics
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric(
+                    "Total States", 
+                    total_states, 
+                    "Active"
+                )
+            with col2:
+                st.metric(
+                    "Average Approved Rate", 
+                    f"₹{avg_approved:,.2f}",
+                    "Per Bag"
+                )
+            with col3:
+                st.metric(
+                    "Average Actual Rate", 
+                    f"₹{avg_actual:,.2f}",
+                    f"Total Quantity: {total_quantity:,.0f} bags"
+                )
+        else:
+            # Display placeholder metrics if no data
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("Total States", "0", "Waiting")
+            with col2:
+                st.metric("Average Approved Rate", "₹0.00", "Waiting")
+            with col3:
+                st.metric("Average Actual Rate", "₹0.00", "Waiting")
     def create_monthly_metrics(self, data, selected_state, selected_discount):
         """Create monthly metrics based on selected discount type"""
         df = data[selected_state]
@@ -283,20 +378,6 @@ class DiscountAnalytics:
                 )
             
             st.markdown("---")
-    def create_summary_metrics(self, data):
-        """Create summary metrics cards"""
-        total_states = len(data)
-        total_discounts = sum(len(self.get_discount_types(df)) for df in data.values())
-        avg_discount = np.mean([df.iloc[0, 4] for df in data.values() if not df.empty])
-        
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            st.metric("Total States", total_states, "Active")
-        with col2:
-            st.metric("Total Discount Types", total_discounts, "Available")
-        with col3:
-            st.metric("Average Discount Rate", f"₹{avg_discount:,.2f}", "Per Bag")
     def process_excel(self, uploaded_file):
         """Process uploaded Excel file using cached function"""
         return process_excel_file(uploaded_file.getvalue(), ['MP (U)', 'MP (JK)'])
