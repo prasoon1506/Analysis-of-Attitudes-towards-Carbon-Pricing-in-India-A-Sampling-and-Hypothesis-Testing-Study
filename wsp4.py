@@ -49,6 +49,17 @@ import re
 import plotly.graph_objects as go
 import plotly.express as px
 from concurrent.futures import ThreadPoolExecutor
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4, letter, legal, landscape
+from reportlab.lib import colors
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.lib.units import inch, cm
+from reportlab.platypus import Image as ReportLabImage
+from reportlab.graphics.shapes import Line, Drawing
+from reportlab.lib.colors import Color, HexColor
+import io
+import tempfile
 def load_lottie_url(url: str):
     r = requests.get(url)
     if r.status_code != 200:
@@ -74,13 +85,10 @@ import matplotlib.pyplot as plt
 from scipy.stats import jarque_bera, kurtosis, skew
 from statsmodels.stats.stattools import omni_normtest
 def process_pdf(input_pdf, operations):
-    """Process PDF with various operations in sequence"""
     from PyPDF2 import PdfReader, PdfWriter
     from io import BytesIO
     writer = PdfWriter()
     reader = PdfReader(input_pdf)
-    
-    # Step 1: Extract pages (if specified) or use all pages
     if "extract" in operations:
         selected_pages = operations["extract"]["pages"]  # List of selected page numbers
         # Add only the selected pages
@@ -91,57 +99,36 @@ def process_pdf(input_pdf, operations):
         # Add all pages from input PDF
         for page in reader.pages:
             writer.add_page(page)
-    
-    # Rest of the function remains the same...
-    # Step 2: Handle merging if specified
     if "merge" in operations and operations["merge"]["files"]:
         # Add pages from additional PDFs
         for additional_pdf in operations["merge"]["files"]:
             merge_reader = PdfReader(additional_pdf)
             for page in merge_reader.pages:
                 writer.add_page(page)
-    
-    # If no pages were added (possibly due to invalid page range), return the original PDF
     if len(writer.pages) == 0:
         return BytesIO(input_pdf.read())
-    
-    # Get PDF dimensions from first page for use in transformations
     pdf_width = float(writer.pages[0].mediabox.width)
     pdf_height = float(writer.pages[0].mediabox.height)
-    
-    # Step 3: Apply page-level transformations
-    # Create a new writer for transformed pages
     transformed_writer = PdfWriter()
-    
     for i in range(len(writer.pages)):
         page = writer.pages[i]
-        
-        # Apply transformations in sequence
         if "resize" in operations:
             scale = operations["resize"]["scale"] / 100
             page.scale(scale, scale)
-        
         if "crop" in operations:
-            # Convert percentages to points
             left = operations["crop"]["left"] * pdf_width / 100
             bottom = operations["crop"]["bottom"] * pdf_height / 100
             right = operations["crop"]["right"] * pdf_width / 100
             top = operations["crop"]["top"] * pdf_height / 100
             page.cropbox.lower_left = (left, bottom)
-            page.cropbox.upper_right = (right, top)
-        
+            page.cropbox.upper_right = (right, top)  
         if "rotate" in operations:
             angle = operations["rotate"]["angle"]
             page.rotate(angle)
-        
-        # Add transformed page to new writer
         transformed_writer.add_page(page)
-    
-    # Write final PDF to output
     output = BytesIO()
     transformed_writer.write(output)
     return output
-
 def add_watermark(pdf_writer, watermark_options):
     from reportlab.pdfgen.canvas import Canvas
     from reportlab.lib.colors import Color
@@ -179,20 +166,15 @@ def add_watermark(pdf_writer, watermark_options):
         c.translate(x, y)
         c.rotate(angle)
         c.drawString(-len(text)*font_size/4, 0, text)
-        c.restoreState()
-        
-    else:  # Image watermark
+        c.restoreState()  
+    else:
         image = Image.open(watermark_options["image"])
         opacity = watermark_options["opacity"]
         angle = watermark_options["angle"]
         position = watermark_options["position"]
         size = watermark_options["size"]  # percentage of page width
-        
-        # Calculate image dimensions
         img_width = page_width * size / 100
         img_height = img_width * image.height / image.width
-        
-        # Calculate position
         if position == "center":
             x, y = (page_width-img_width)/2, (page_height-img_height)/2
         elif position == "top-left":
@@ -203,8 +185,6 @@ def add_watermark(pdf_writer, watermark_options):
             x, y = 0, 0
         elif position == "bottom-right":
             x, y = page_width-img_width, 0
-        
-        # Save image with transparency
         img_buffer = BytesIO()
         if image.mode != 'RGBA':
             image = image.convert('RGBA')
@@ -218,11 +198,8 @@ def add_watermark(pdf_writer, watermark_options):
         c.drawImage(ImageReader(img_buffer), 0, 0, width=img_width, height=img_height)
         c.restoreState()
     c.save()
-    # Create PDF from watermark
     watermark_buffer.seek(0)
     watermark_pdf = PdfReader(watermark_buffer)
-    
-    # Apply watermark to selected pages
     selected_pages = watermark_options.get("pages", "all")
     for i, page in enumerate(pdf_writer.pages):
         if selected_pages == "all" or (i+1) in selected_pages:
@@ -239,62 +216,40 @@ def get_pdf_preview(pdf_file, page_num=0):
 def get_image_size_metrics(original_image_bytes, processed_image_bytes):
     original_size = len(original_image_bytes) / 1024  # KB
     processed_size = len(processed_image_bytes) / 1024  # KB
-    size_change = ((original_size - processed_size) / original_size) * 100
-    
+    size_change = ((original_size - processed_size) / original_size) * 100  
     return {
         'original_size': original_size,
         'processed_size': processed_size,
         'size_change': size_change
     }
-
 def process_image(image, operations):
-    """Process image with various operations"""
     from PIL import Image, ImageEnhance
-    
     if "resize" in operations:
         width = operations["resize"]["width"]
         height = operations["resize"]["height"]
         image = image.resize((width, height), Image.Resampling.LANCZOS)
-    
     if "compress" in operations:
         quality = operations["compress"]["quality"]
         # Return image for JPEG saving with quality
         return image, quality
-    
     if "crop" in operations:
         left = operations["crop"]["left"]
         top = operations["crop"]["top"]
         right = operations["crop"]["right"]
         bottom = operations["crop"]["bottom"]
         image = image.crop((left, top, right, bottom))
-    
     if "rotate" in operations:
         angle = operations["rotate"]["angle"]
         image = image.rotate(angle, expand=True)
-    
     if "brightness" in operations:
         factor = operations["brightness"]["factor"]
         enhancer = ImageEnhance.Brightness(image)
         image = enhancer.enhance(factor)
-    
     if "contrast" in operations:
         factor = operations["contrast"]["factor"]
         enhancer = ImageEnhance.Contrast(image)
         image = enhancer.enhance(factor)
-    
     return image, None
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import A4, letter, legal, landscape
-from reportlab.lib import colors
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.lib.units import inch, cm
-from reportlab.platypus import Image as ReportLabImage
-from reportlab.graphics.shapes import Line, Drawing
-from reportlab.lib.colors import Color, HexColor
-from PIL import Image
-import io
-import tempfile
 def convert_uploadedfile_to_image(uploaded_file):
     """Convert Streamlit UploadedFile to a temporary file path"""
     if uploaded_file is None:
@@ -361,7 +316,6 @@ TEMPLATES = {
         "layout": "centered"
     }
 }
-
 def register_custom_fonts():
     """Register additional fonts for use in the PDF"""
     try:
@@ -378,16 +332,12 @@ def register_custom_fonts():
                     pdfmetrics.registerFont(TTFont(font_name, font_path))
     except Exception as e:
         st.warning(f"Some custom fonts couldn't be loaded: {str(e)}")
-
 def draw_design_elements(c, options, width, height):
-    """Draw advanced design elements based on selected options"""
     margin = cm
-    
     if "Border" in options["design_elements"]:
         c.setStrokeColor(options["border_color"])
         c.setLineWidth(options["border_width"])
         c.rect(margin, margin, width - 2*margin, height - 2*margin)
-    
     if "Double Border" in options["design_elements"]:
         c.setStrokeColor(options["border_color"])
         c.setLineWidth(options["border_width"])
@@ -396,7 +346,6 @@ def draw_design_elements(c, options, width, height):
         # Inner border
         inner_margin = margin + 0.5*cm
         c.rect(inner_margin, inner_margin, width - 2*inner_margin, height - 2*inner_margin)
-    
     if "Corner Lines" in options["design_elements"]:
         c.setStrokeColor(options["accent_color"])
         c.setLineWidth(2)
@@ -410,7 +359,6 @@ def draw_design_elements(c, options, width, height):
                 c.rotate(180)
             c.lines([(0, 0, corner_size, 0), (0, 0, 0, -corner_size)])
             c.restoreState()
-    
     if "Diagonal Lines" in options["design_elements"]:
         c.setStrokeColor(options["accent_color"])
         c.setLineWidth(1)
@@ -418,32 +366,25 @@ def draw_design_elements(c, options, width, height):
         for i in range(int(height/(2*spacing))):
             y = i * 2*spacing
             c.line(0, y, 2*cm, y + 2*cm)
-    
     if "Side Bar" in options["design_elements"]:
         c.setFillColor(options["accent_color"])
         c.rect(0, 0, 2*cm, height, fill=1)
-    
     if "Header Bar" in options["design_elements"]:
         c.setFillColor(options["accent_color"])
         c.rect(0, height-3*cm, width, 3*cm, fill=1)
-    
     if "Accent Bar" in options["design_elements"]:
         c.setFillColor(options["accent_color"])
         bar_width = 0.5*cm
         c.rect(margin, height/2, width - 2*margin, bar_width, fill=1)
-    
     if "Gold Accents" in options["design_elements"]:
         c.setStrokeColor(options["accent_color"])
         c.setLineWidth(1)
-        # Draw decorative swooshes or patterns
         pattern_size = 1*cm
         for i in range(4):
             x = margin + i * pattern_size
             c.line(x, height-margin, x + pattern_size, height-margin-pattern_size)
             c.line(x, margin, x + pattern_size, margin+pattern_size)
-
 def draw_watermark(c, options, width, height):
-    """Add watermark if specified"""
     if options.get("watermark_text"):
         c.saveState()
         c.translate(width/2, height/2)
@@ -453,10 +394,7 @@ def draw_watermark(c, options, width, height):
         c.drawCentredString(0, 0, options["watermark_text"])
         c.restoreState()
 def create_front_page(options):
-    """Enhanced create_front_page function with more professional features"""
     buffer = io.BytesIO()
-    
-    # Set up the canvas
     page_size = {
         "A4": A4,
         "A4 Landscape": landscape(A4),
@@ -464,16 +402,11 @@ def create_front_page(options):
         "Letter Landscape": landscape(letter),
         "Legal": legal
     }[options["page_size"]]
-    
     c = canvas.Canvas(buffer, pagesize=page_size)
     width, height = page_size
-    
-    # Apply template if selected
     if options.get("template"):
         template = TEMPLATES[options["template"]]
         options = {**template, **options}  # Merge with user options, user options take precedence
-    
-    # Draw background
     if options["background_type"] == "Color":
         c.setFillColor(options["background_color"])
         c.rect(0, 0, width, height, fill=True)
@@ -486,22 +419,15 @@ def create_front_page(options):
             c.setFillColor((r, g, b))
             c.rect(0, height * i / steps, width, height / steps, fill=True)
     elif options["background_type"] == "Pattern":
-        # Draw pattern background
         pattern_size = 1*cm
         c.setStrokeColor(colors.Color(0, 0, 0, alpha=0.1))
         for x in range(0, int(width), int(pattern_size)):
             for y in range(0, int(height), int(pattern_size)):
                 if (x + y) % (2 * int(pattern_size)) == 0:
                     c.rect(x, y, pattern_size, pattern_size, fill=True)
-
-    # Add design elements
     draw_design_elements(c, options, width, height)
-    
-    # Add watermark if specified
     if options.get("watermark_text"):
         draw_watermark(c, options, width, height)
-    
-    # Add logo/image with enhanced positioning
     if options.get("logo"):
         try:
             logo_path = convert_uploadedfile_to_image(options["logo"])
@@ -510,8 +436,6 @@ def create_front_page(options):
                 aspect = logo_img.height / logo_img.width
                 logo_width = options["logo_width"]
                 logo_height = logo_width * aspect
-                
-                # Calculate position based on layout and alignment
                 if options["layout"] == "centered":
                     x = (width - logo_width) / 2
                     y = height - logo_height - 3*cm
@@ -521,17 +445,13 @@ def create_front_page(options):
                 elif options["layout"] == "asymmetric":
                     x = width - logo_width - 3*cm
                     y = height - logo_height - 3*cm
-                
                 c.drawImage(logo_path, x, y, width=logo_width, height=logo_height)
                 os.unlink(logo_path)
                 os.rmdir(os.path.dirname(logo_path))
         except Exception as e:
             st.error(f"Error processing logo: {str(e)}")
-
-    # Add title with enhanced typography
     c.setFont(options["title_font"], options["title_size"])
     c.setFillColor(options["title_color"])
-    
     title_lines = options["title"].split('\n')
     if options["layout"] == "centered":
         title_height = (height + len(title_lines) * options["title_size"]) / 2
@@ -539,7 +459,6 @@ def create_front_page(options):
         title_height = height - 5*cm
     else:  # asymmetric
         title_height = (height + len(title_lines) * options["title_size"]) / 1.5
-    
     for line in title_lines:
         title_width = c.stringWidth(line, options["title_font"], options["title_size"])
         if options["layout"] == "centered":
@@ -550,8 +469,6 @@ def create_front_page(options):
             x = width - title_width - 3*cm
         c.drawString(x, title_height, line)
         title_height -= options["title_size"] * 1.2
-
-    # Add subtitle with consistent styling
     if options["subtitle"]:
         c.setFont(options["subtitle_font"], options["subtitle_size"])
         c.setFillColor(options["subtitle_color"])
@@ -563,15 +480,11 @@ def create_front_page(options):
         else:  # asymmetric
             x = width - subtitle_width - 3*cm
         c.drawString(x, title_height - cm, options["subtitle"])
-
-    # Add text blocks with enhanced formatting
     y_position = title_height - 4*cm
     for text_block in options["text_blocks"]:
         if text_block["text"]:
             c.setFont(text_block["font"], text_block["size"])
             c.setFillColor(text_block["color"])
-            
-            # Handle multi-line text blocks
             lines = text_block["text"].split('\n')
             for line in lines:
                 text_width = c.stringWidth(line, text_block["font"], text_block["size"])
@@ -583,73 +496,56 @@ def create_front_page(options):
                     x = width - text_width - 3*cm
                 c.drawString(x, y_position, line)
                 y_position -= text_block["size"] * 1.5
-
-    # Add enhanced footer
     if options["show_date"] or options["footer_text"]:
         footer_font = options.get("footer_font", "Helvetica")
         footer_size = options.get("footer_size", 10)
         c.setFont(footer_font, footer_size)
         c.setFillColor(options.get("footer_color", colors.black))
-        
         footer_elements = []
         if options["show_date"]:
             date_format = options.get("date_format", "%B %d, %Y")
             footer_elements.append(datetime.now().strftime(date_format))
         if options["footer_text"]:
             footer_elements.append(options["footer_text"])
-        
         footer_text = " | ".join(footer_elements)
         footer_width = c.stringWidth(footer_text, footer_font, footer_size)
-        
         if options["layout"] == "centered":
             x = (width - footer_width) / 2
         elif options["layout"] == "left-aligned":
             x = 3*cm
         else:  # asymmetric
             x = width - footer_width - 3*cm
-        
         c.drawString(x, 2*cm, footer_text)
-
     c.save()
     buffer.seek(0)
     return buffer
-
 def front_page_creator():
     st.header("📄 Professional Front Page Creator")
-    
-    # Template Selection
     st.subheader("Choose a Template")
     template = st.selectbox("Select a Template", 
         ["Custom"] + list(TEMPLATES.keys()),
         help="Choose a pre-designed template or create your own custom design")
-    
     with st.expander("Preview Template", expanded=False):
         st.write("Template Preview would appear here")
-        # In a real implementation, you'd show template previews
     with st.container():
             # Basic Settings
             st.subheader("Basic Settings")
             col1, col2 = st.columns(2)
-            
             with col1:
                 page_size = st.selectbox(
                     "Page Size", 
                     ["A4", "A4 Landscape", "Letter", "Letter Landscape", "Legal"],
-                    help="Choose the size and orientation of your front page"
-                )
-                
+                    help="Choose the size and orientation of your front page")                
                 title = st.text_area(
                     "Title",
                     placeholder="Enter title (can be multiple lines)\nUse new lines for multi-line titles",
                     help="Main title of your front page. Use new lines for multiple lines of text"
                 )
-                
                 subtitle = st.text_input(
                     "Subtitle",
                     placeholder="Enter subtitle (optional)",
                     help="Optional subtitle that appears below the main title"
                 )
-            
             with col2:
                 title_font = st.selectbox(
                     "Title Font",
@@ -657,174 +553,134 @@ def front_page_creator():
                      "Courier", "Courier-Bold", "Roboto", "Montserrat", "OpenSans"],
                     help="Choose the font for your title"
                 )
-                
                 title_size = st.slider(
                     "Title Size",
                     20, 72, 48,
                     help="Adjust the size of your title text"
                 )
-                
                 title_color = st.color_picker(
                     "Title Color",
                     "#000000",
                     help="Choose the color for your title"
                 )
-            
-            # Layout Settings
             st.subheader("Layout Settings")
             col3, col4 = st.columns(2)
-            
             with col3:
                 layout_style = st.selectbox(
                     "Layout Style",
                     ["centered", "left-aligned", "asymmetric"],
-                    help="Choose how your content is aligned on the page"
-                )
-                
+                    help="Choose how your content is aligned on the page")
                 content_spacing = st.slider(
                     "Content Spacing",
                     1.0, 3.0, 1.5,
                     0.1,
-                    help="Adjust the spacing between content elements"
-                )
-            
+                    help="Adjust the spacing between content elements")
             with col4:
                 margins = st.slider(
                     "Page Margins (cm)",
                     1.0, 5.0, 2.5,
                     0.5,
-                    help="Adjust the margins around your content"
-                )
-        
-            # Background Settings
+                    help="Adjust the margins around your content")
             st.subheader("Background Settings")
             background_type = st.radio(
                 "Background Type",
                 ["Color", "Gradient", "Pattern", "None"],
-                help="Choose the type of background for your front page"
-            )
-            
+                help="Choose the type of background for your front page")
             if background_type == "Color":
                 background_color = st.color_picker(
                     "Background Color",
                     "#FFFFFF",
-                    help="Choose a solid color for your background"
-                )
-            
+                    help="Choose a solid color for your background")
             elif background_type == "Gradient":
                 col5, col6 = st.columns(2)
                 with col5:
                     gradient_start = st.color_picker(
                         "Gradient Start Color",
                         "#FFFFFF",
-                        help="Choose the starting color for your gradient"
-                    )
+                        help="Choose the starting color for your gradient")
                     gradient_direction = st.selectbox(
                         "Gradient Direction",
                         ["Top to Bottom", "Left to Right", "Diagonal"],
-                        help="Choose the direction of your gradient"
-                    )
+                        help="Choose the direction of your gradient")
                 with col6:
                     gradient_end = st.color_picker(
                         "Gradient End Color",
                         "#E0E0E0",
-                        help="Choose the ending color for your gradient"
-                    )
-            
+                        help="Choose the ending color for your gradient")
             elif background_type == "Pattern":
                 col7, col8 = st.columns(2)
                 with col7:
                     pattern_type = st.selectbox(
                         "Pattern Type",
                         ["Dots", "Lines", "Grid", "Chevron"],
-                        help="Choose the type of pattern"
-                    )
+                        help="Choose the type of pattern")
                     pattern_color = st.color_picker(
                         "Pattern Color",
                         "#E0E0E0",
-                        help="Choose the color for your pattern"
-                    )
+                        help="Choose the color for your pattern")
                 with col8:
                     pattern_opacity = st.slider(
                         "Pattern Opacity",
                         0.0, 1.0, 0.1,
                         0.1,
-                        help="Adjust the opacity of the pattern"
-                    )
+                        help="Adjust the opacity of the pattern")
                     pattern_size = st.slider(
                         "Pattern Size",
                         0.5, 3.0, 1.0,
                         0.1,
-                        help="Adjust the size of the pattern elements"
-                    )
-            
-            # Logo/Image Settings
+                        help="Adjust the size of the pattern elements")
             st.subheader("Logo/Image Settings")
             logo = st.file_uploader(
                 "Upload Logo/Image",
                 type=["png", "jpg", "jpeg"],
-                help="Upload your organization's logo or an image"
-            )
-            
+                help="Upload your organization's logo or an image")
             if logo:
                 col9, col10 = st.columns(2)
                 with col9:
                     logo_width = st.slider(
                         "Logo Width",
                         50, 400, 200,
-                        help="Adjust the width of your logo"
-                    )
+                        help="Adjust the width of your logo")
                     logo_opacity = st.slider(
                         "Logo Opacity",
                         0.1, 1.0, 1.0,
                         0.1,
-                        help="Adjust the opacity of your logo"
-                    )
+                        help="Adjust the opacity of your logo")
                 with col10:
                     logo_position = st.selectbox(
                         "Logo Position",
                         ["Top Center", "Top Left", "Top Right", "Bottom Center", "Bottom Left", "Bottom Right"],
-                        help="Choose where to place your logo"
-                    )
+                        help="Choose where to place your logo")
                     logo_padding = st.slider(
                         "Logo Padding (cm)",
                         0.5, 5.0, 2.0,
                         0.5,
-                        help="Adjust the space around your logo"
-                    )
-            
-            # Design Elements
+                        help="Adjust the space around your logo")
             st.subheader("Design Elements")
             design_elements = st.multiselect(
                 "Add Design Elements",
                 ["Border", "Double Border", "Corner Lines", "Diagonal Lines", 
                  "Side Bar", "Header Bar", "Accent Bar", "Gold Accents"],
                 default=["Border"],
-                help="Choose decorative elements to enhance your design"
-            )
-            
+                help="Choose decorative elements to enhance your design")
             if any(design_elements):
                 col11, col12 = st.columns(2)
                 with col11:
                     accent_color = st.color_picker(
                         "Accent Color",
                         "#000000",
-                        help="Choose the color for decorative elements"
-                    )
-                    
+                        help="Choose the color for decorative elements")
                 if "Border" in design_elements or "Double Border" in design_elements:
                     with col12:
                         border_color = st.color_picker(
                             "Border Color",
                             "#000000",
-                            help="Choose the color for the border"
-                        )
+                            help="Choose the color for the border")
                         border_width = st.slider(
                             "Border Width",
                             0.5, 5.0, 1.0,
                             0.5,
-                            help="Adjust the thickness of the border"
-                        )
+                            help="Adjust the thickness of the border")
             st.subheader("Additional Text Blocks")
             num_blocks = st.number_input("Number of Additional Text Blocks", 0, 5, 0)
             text_blocks = []
@@ -843,13 +699,11 @@ def front_page_creator():
                 "size": block_size,
                 "color": block_color
             })
-            # Watermark Settings
             st.subheader("Watermark Settings")
             add_watermark = st.checkbox(
                 "Add Watermark",
                 help="Add a watermark to your front page"
             )
-            
             if add_watermark:
                 col15, col16 = st.columns(2)
                 with col15:
