@@ -8028,7 +8028,6 @@ def discount():
     else:
         st.markdown("""
         <div style='text-align: center; padding: 3rem; background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);'>
-            <img src="https://via.placeholder.com/100x100" style="margin-bottom: 1rem;">
             <h2 style='color: #1e293b; margin-bottom: 1rem;'>Welcome to Discount Analytics</h2>
             <p style='color: #64748b; margin-bottom: 2rem;'>Please upload an Excel file to begin your analysis.</p>
         </div>
