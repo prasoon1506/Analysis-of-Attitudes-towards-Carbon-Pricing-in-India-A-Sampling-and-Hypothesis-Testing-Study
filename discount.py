@@ -47,7 +47,7 @@ st.markdown("""
     
     .ticker-item {
         display: inline-block;
-        margin-right: 2px;
+        margin-right: 80px;
         font-size: 16px;
         padding: 5px 10px;
     }
