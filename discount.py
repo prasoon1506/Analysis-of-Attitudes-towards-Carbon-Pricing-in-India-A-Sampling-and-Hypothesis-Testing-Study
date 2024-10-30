@@ -8,19 +8,16 @@ import streamlit.components.v1 as components
 import io
 import warnings
 warnings.filterwarnings('ignore')
-
-# Set page config
 st.set_page_config(
     page_title="Discount Analytics Dashboard",
     page_icon="💰",
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# Updated CSS with slower animation and smoother transition
 st.markdown("""
 <style>
-    /* [Previous CSS styles remain the same] */
-    
-    /* Updated ticker animation */
     @keyframes ticker {
         0% { transform: translateX(100%); }
         100% { transform: translateX(-100%); }
@@ -29,28 +26,47 @@ st.markdown("""
     .ticker-container {
         background-color: #0f172a;
         color: white;
-        padding: 10px;
+        padding: 12px;
         overflow: hidden;
         white-space: nowrap;
         position: relative;
+        margin-bottom: 20px;
+        border-radius: 8px;
     }
     
     .ticker-content {
         display: inline-block;
-        animation: ticker 120s linear infinite;
+        animation: ticker 30s linear infinite;
+        animation-play-state: running;
         padding-right: 100%;
+    }
+    
+    .ticker-content:hover {
+        animation-play-state: paused;
     }
     
     .ticker-item {
         display: inline-block;
-        margin-right: 50px;
+        margin-right: 80px;
+        font-size: 16px;
+        padding: 5px 10px;
     }
     
-    /* [Rest of the CSS remains the same] */
+    .state-name {
+        color: #10B981;
+        font-weight: bold;
+    }
+    
+    .month-name {
+        color: #3B82F6;
+        font-weight: bold;
+    }
+    
+    .discount-value {
+        color: #F59E0B;
+    }
 </style>
 """, unsafe_allow_html=True)
-
-# Cache the Excel processing function independently
 @st.cache_data
 def process_excel_file(file_content, excluded_sheets):
     """Process Excel file and return processed data"""
@@ -133,31 +149,40 @@ class DiscountAnalytics:
         """Create moving ticker with comprehensive discount information"""
         ticker_items = []
         
+        # Get the last month (June in this case)
+        last_month = "June"
+        month_cols = self.month_columns[last_month]
+        
         for state in data.keys():
             df = data[state]
             if not df.empty:
-                state_items = [f"📍 {state}"]
+                # Add state name
+                state_text = f"<span class='state-name'>📍 {state}</span>"
+                
+                # Add month information
+                month_text = f"<span class='month-name'>📅 {last_month}</span>"
                 
                 # Get all discount types for this state
                 discount_types = self.get_discount_types(df)
+                discount_items = []
                 
                 for discount in discount_types:
                     mask = df.iloc[:, 0].fillna('').astype(str).str.strip() == discount.strip()
                     filtered_df = df[mask]
                     
                     if len(filtered_df) > 0:
-                        approved = filtered_df.iloc[0, 4]  # Using the first month's data
-                        actual = filtered_df.iloc[0, 4]
-                        state_items.append(
-                            f"{discount}: Approved ₹{approved:,.2f} | Actual ₹{actual:,.2f}"
+                        approved = filtered_df.iloc[0, month_cols['approved']]
+                        actual = filtered_df.iloc[0, month_cols['actual']]
+                        discount_items.append(
+                            f"{discount}: <span class='discount-value'>₹{actual:,.2f}</span>"
                         )
                 
-                # Join all items for this state
-                state_text = " ➜ ".join(state_items)
-                ticker_items.append(f"<span class='ticker-item'>{state_text}</span>")
+                # Combine all information
+                full_text = f"{state_text} | {month_text} | {' | '.join(discount_items)}"
+                ticker_items.append(f"<span class='ticker-item'>{full_text}</span>")
         
-        # Repeat the items to ensure continuous animation
-        ticker_items = ticker_items * 100  # Repeat 3 times to ensure continuous loop
+        # Repeat items fewer times for slower animation
+        ticker_items = ticker_items * 3
         
         ticker_html = f"""
         <div class="ticker-container">
