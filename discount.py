@@ -182,7 +182,7 @@ class DiscountAnalytics:
                 ticker_items.append(f"<span class='ticker-item'>{full_text}</span>")
         
         # Repeat items fewer times for slower animation
-        ticker_items = ticker_items * 3
+        ticker_items = ticker_items * 1000
         
         ticker_html = f"""
         <div class="ticker-container">
