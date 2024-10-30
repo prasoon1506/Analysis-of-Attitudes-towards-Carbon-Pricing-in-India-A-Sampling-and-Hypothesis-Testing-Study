@@ -206,7 +206,7 @@ class DiscountAnalytics:
                             f"{discount}: <span class='discount-value'>₹{actual:,.2f}</span>"
                         )
                 
-                full_text = f"{state_text} | {month_text} | {' '.join(discount_items)}"
+                full_text = f"{state_text} | {month_text} | {' | '.join(discount_items)}"
                 ticker_items.append(f"<span class='ticker-item'>{full_text}</span>")
         
         # Repeat items 3 times for continuous flow
