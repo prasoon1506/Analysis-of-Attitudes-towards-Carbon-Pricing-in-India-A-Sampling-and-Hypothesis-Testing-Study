@@ -157,7 +157,7 @@ class DiscountAnalytics:
                 ticker_items.append(f"<span class='ticker-item'>{state_text}</span>")
         
         # Repeat the items to ensure continuous animation
-        ticker_items = ticker_items * 3  # Repeat 3 times to ensure continuous loop
+        ticker_items = ticker_items * 100  # Repeat 3 times to ensure continuous loop
         
         ticker_html = f"""
         <div class="ticker-container">
