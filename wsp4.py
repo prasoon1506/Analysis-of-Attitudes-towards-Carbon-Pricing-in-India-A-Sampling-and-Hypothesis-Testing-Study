@@ -7410,6 +7410,7 @@ def market_share():
                 """, unsafe_allow_html=True)
     if __name__ == "__main__":
         main()
+    
 def load_visit_data():
     try:
         with open('visit_data.json', 'r') as f:
@@ -7562,7 +7563,7 @@ def main():
     elif selected == "Analysis Dashboards":
         analysis_menu = option_menu(
             menu_title="Analysis Dashboards",
-            options=["WSP Analysis", "Sales Dashboard","Sales Review Report","Market Share Analysis", "Product-Mix", "Segment-Mix","Geo-Mix"],
+            options=["WSP Analysis", "Sales Dashboard","Sales Review Report","Market Share Analysis","Discount Analysis", "Product-Mix", "Segment-Mix","Geo-Mix"],
             icons=["clipboard-data", "cash","bar-chart", "arrow-up-right", "shuffle", "globe"],
             orientation="horizontal",
         )
@@ -7580,6 +7581,8 @@ def main():
             market_share()
         elif analysis_menu == "Geo-Mix":
             green()
+        elif analysis_menu == "Discount Analysis":
+            discount()
     elif selected == "Predictions":
         prediction_menu = option_menu(
             menu_title="Predictions",
