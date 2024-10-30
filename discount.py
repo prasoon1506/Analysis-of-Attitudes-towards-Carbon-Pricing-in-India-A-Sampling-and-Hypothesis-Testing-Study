@@ -34,11 +34,10 @@ st.markdown("""
         margin-bottom: 20px;
         border-radius: 8px;
     }
-    
     .ticker-content {
         display: inline-block;
-        animation: ticker 30s linear infinite;
-        animation-play-state: running;
+        animation: ticker 60s linear infinite;  /* Set to 60 seconds */
+        animation-delay: -30s;  /* Start halfway through to avoid initial wait */
         padding-right: 100%;
         will-change: transform;
         transform: translateZ(0);
