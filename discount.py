@@ -146,7 +146,7 @@ class DiscountAnalytics:
             'Other (Please specify',
             'G. TOTAL'
         ]
-        
+        self.excluded_states = ['MP (JK)', 'MP (U)','East']
         self.discount_mappings = {
             'group1': {
                 'states': ['HP', 'JMU', 'PUN'],
@@ -255,14 +255,18 @@ class DiscountAnalytics:
         return total_values
 
     def create_summary_metrics(self, data):
-        """Create summary metrics cards using G. Total or last row values"""
-        total_states = len(data)
+        """Create summary metrics cards using G. Total or last row values, excluding specified states"""
+        # Filter out excluded states
+        filtered_data = {state: df for state, df in data.items() 
+                        if state not in self.excluded_states}
         
-        # Calculate averages across all states
+        total_states = len(filtered_data)
+        
+        # Calculate averages across filtered states
         all_state_totals = []
         total_quantities = []
         
-        for state, df in data.items():
+        for state, df in filtered_data.items():
             if not df.empty:
                 state_totals = self.get_state_total_values(df)
                 all_state_totals.append(state_totals)
@@ -291,9 +295,9 @@ class DiscountAnalytics:
             col1, col2, col3 = st.columns(3)
             with col1:
                 st.metric(
-                    "Total States", 
-                    total_states, 
-                    "Active"
+                    "Total Active States", 
+                    f"{total_states}",
+                    f"Excluding {len(self.excluded_states)} states"
                 )
             with col2:
                 st.metric(
