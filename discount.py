@@ -177,6 +177,7 @@ class DiscountAnalytics:
                 'actual': 18
             }
         }
+        self.total_patterns = ['G. TOTAL', 'G.TOTAL', 'G. Total', 'G.Total', 'GRAND TOTAL']
 
     def create_ticker(self, data):
         """Create moving ticker with comprehensive discount information"""
