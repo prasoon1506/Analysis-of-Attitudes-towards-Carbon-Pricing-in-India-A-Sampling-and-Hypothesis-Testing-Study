@@ -179,47 +179,75 @@ class DiscountAnalytics:
         self.total_patterns = ['G. TOTAL', 'G.TOTAL', 'G. Total', 'G.Total', 'GRAND TOTAL',"G. Total (STD + STS)"]
         self.excluded_states = ['MP (JK)', 'MP (U)','East']
     def create_ticker(self, data):
-        """Create moving ticker with comprehensive discount information"""
-        ticker_items = []
-        
-        # Get the last month (June in this case)
-        last_month = "June"
-        month_cols = self.month_columns[last_month]
-        
-        for state in data.keys():
-            df = data[state]
-            if not df.empty:
-                state_text = f"<span class='state-name'>📍 {state}</span>"
-                month_text = f"<span class='month-name'>📅 {last_month}</span>"
+     """Create moving ticker with comprehensive discount information"""
+     ticker_items = []
+    
+     # Get the last month (June in this case)
+     last_month = "June"
+     month_cols = self.month_columns[last_month]
+    
+     for state in data.keys():
+        df = data[state]
+        if not df.empty:
+            state_text = f"<span class='state-name'>📍 {state}</span>"
+            month_text = f"<span class='month-name'>📅 {last_month}</span>"
+            
+            # Get state group for combined discounts
+            state_group = next(
+                (group for group, config in self.discount_mappings.items()
+                 if state in config['states']),
+                None
+            )
+            
+            discount_items = []
+            
+            if state_group:
+                # Handle combined discounts
+                relevant_discounts = self.discount_mappings[state_group]['discounts']
+                combined_data = self.get_combined_data(df, month_cols, state)
                 
-                discount_types = self.get_discount_types(df)
-                discount_items = []
+                if combined_data:
+                    actual = combined_data.get('actual', 0)
+                    discount_items.append(
+                        f"{self.combined_discount_name}: <span class='discount-value'>₹{actual:,.2f}</span>"
+                    )
                 
-                for discount in discount_types:
+                # Add other non-combined discounts
+                for discount in self.get_discount_types(df, state):
+                    if discount != self.combined_discount_name:
+                        mask = df.iloc[:, 0].fillna('').astype(str).str.strip() == discount.strip()
+                        filtered_df = df[mask]
+                        if len(filtered_df) > 0:
+                            actual = filtered_df.iloc[0, month_cols['actual']]
+                            discount_items.append(
+                                f"{discount}: <span class='discount-value'>₹{actual:,.2f}</span>"
+                            )
+            else:
+                # Normal processing for states without combined discounts
+                for discount in self.get_discount_types(df, state):
                     mask = df.iloc[:, 0].fillna('').astype(str).str.strip() == discount.strip()
                     filtered_df = df[mask]
-                    
                     if len(filtered_df) > 0:
-                        approved = filtered_df.iloc[0, month_cols['approved']]
                         actual = filtered_df.iloc[0, month_cols['actual']]
                         discount_items.append(
                             f"{discount}: <span class='discount-value'>₹{actual:,.2f}</span>"
                         )
-                
+            
+            if discount_items:
                 full_text = f"{state_text} | {month_text} | {' | '.join(discount_items)}"
                 ticker_items.append(f"<span class='ticker-item'>{full_text}</span>")
-        
-        # Repeat items 3 times for continuous flow
-        ticker_items = ticker_items * 3
-        
-        ticker_html = f"""
-        <div class="ticker-container">
-            <div class="ticker-content">
-                {' '.join(ticker_items)}
-            </div>
+    
+    # Repeat items 3 times for continuous flow
+     ticker_items = ticker_items * 3
+    
+     ticker_html = f"""
+    <div class="ticker-container">
+        <div class="ticker-content">
+            {' '.join(ticker_items)}
         </div>
-        """
-        st.markdown(ticker_html, unsafe_allow_html=True)
+    </div>
+    """
+     st.markdown(ticker_html, unsafe_allow_html=True)
     def create_summary_metrics(self, data):
         """Create summary metrics cards"""
         total_states = len(data)
@@ -405,15 +433,44 @@ class DiscountAnalytics:
         )
         
         st.plotly_chart(fig, use_container_width=True)
-
-    def get_discount_types(self, df):
-        """Get unique discount types"""
-        first_col = df.iloc[:, 0]
-        return sorted([
-            d for d in first_col.unique()
+    def get_discount_types(self, df, state=None):
+     first_col = df.iloc[:, 0]
+     valid_discounts = []
+     if state:
+        state_group = next(
+            (group for group, config in self.discount_mappings.items()
+             if state in config['states']),
+            None
+        )
+        
+        if state_group:
+            # Get the relevant discounts for this state
+            relevant_discounts = self.discount_mappings[state_group]['discounts']
+            
+            # Add the combined discount name if any of the discounts to combine exist
+            if any(d in first_col.values for d in relevant_discounts):
+                valid_discounts.append(self.combined_discount_name)
+            
+            # Add other discounts that aren't being combined
+            for d in first_col.unique():
+                if (isinstance(d, str) and 
+                    d.strip() not in self.excluded_discounts and 
+                    d.strip() not in relevant_discounts):
+                    valid_discounts.append(d)
+        else:
+            # Normal processing for other states
+            valid_discounts = [
+                d for d in first_col.unique() 
+                if isinstance(d, str) and d.strip() not in self.excluded_discounts
+            ]
+     else:
+        # When no state is provided (for ticker), return all unique discounts
+        valid_discounts = [
+            d for d in first_col.unique() 
             if isinstance(d, str) and d.strip() not in self.excluded_discounts
-        ])
-
+        ]
+    
+     return sorted(valid_discounts)
     def get_combined_data(self, df, month_cols, state):
         """Get combined discount data"""
         combined_data = {'actual': np.nan, 'approved': np.nan}
