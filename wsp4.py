@@ -6887,7 +6887,6 @@ def market_share():
      min_price = (month_data['WSP'].min() // 5) * 5
      max_price = (month_data['WSP'].max() // 5 + 1) * 5
      price_ranges = pd.interval_range(start=min_price, end=max_price, freq=5)
-    
      month_data['Price_Range'] = pd.cut(month_data['WSP'], bins=price_ranges)
     
     # Create pivot tables
@@ -6959,7 +6958,7 @@ def market_share():
                 
                 # Draw horizontal connecting line
                 line_color = get_company_color(company)
-                ax2.plot([bar_x + 0.4, ax2.get_xlim()[1] * 0.99],  # Extend to near right edge
+                ax2.plot([bar_x + 0.4, ax2.get_xlim()[1] * 0.99],
                         [vol, vol],
                         color=line_color,
                         linestyle='-',
@@ -6968,7 +6967,7 @@ def market_share():
                         zorder=1)
                 
                 # Add volume marker
-                ax2.scatter(bar_x + 0.4, vol,  # Offset marker slightly from bar
+                ax2.scatter(bar_x + 0.4, vol,
                           color=line_color,
                           edgecolor='white',
                           linewidth=1.5,
@@ -6977,7 +6976,7 @@ def market_share():
                 
                 # Add volume label on the right side
                 ax2.text(ax2.get_xlim()[1], vol,
-                        f'{vol:,.0f}',
+                        f'{int(vol):,}',  # Format volume with commas
                         ha='right',
                         va='center',
                         fontsize=9,
@@ -7067,11 +7066,8 @@ def market_share():
      ax1.set_ylim(0, max(row_sums) * 1.15)
      ax2.set_ylim(0, max_volume * 1.15)
     
-    # Format y-axis labels for volume axis using string formatting
-     def format_volume(x, p):
-        return format(int(x), ',')
-    
-     ax2.yaxis.set_major_formatter(mticker.FuncFormatter(format_volume))
+    # Format y-axis ticks for volume axis directly
+     ax2.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: format(int(x), ',')))
     
      plt.margins(y=0.1)
      plt.tight_layout()
