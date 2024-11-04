@@ -3,6 +3,7 @@ import streamlit as st
 import pandas as pd
 import openpyxl
 from io import BytesIO
+import matplotlib.ticker as mticker
 import base64
 from pypdf import PdfReader, PdfWriter
 from docx import Document
