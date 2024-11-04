@@ -7066,8 +7066,11 @@ def market_share():
      ax1.set_ylim(0, max(row_sums) * 1.15)
      ax2.set_ylim(0, max_volume * 1.15)
     
-    # Format y-axis labels
-     ax2.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: format(int(x), ',')))
+    # Format y-axis labels for volume axis using string formatting
+     def format_volume(x, p):
+        return format(int(x), ',')
+    
+     ax2.yaxis.set_major_formatter(mticker.FuncFormatter(format_volume))
     
      plt.margins(y=0.1)
      plt.tight_layout()
