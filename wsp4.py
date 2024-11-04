@@ -6876,8 +6876,9 @@ def market_share():
         'grid.alpha': 0.3
     })
     
-     month_data = df[['Company', f'Share_{month}', f'WSP_{month}']].copy()
-     month_data.columns = ['Company', 'Share', 'WSP']
+    # Include volume data in the month_data DataFrame
+     month_data = df[['Company', f'Share_{month}', f'WSP_{month}', f'Vol_{month}']].copy()
+     month_data.columns = ['Company', 'Share', 'WSP', 'Volume']
     
     # Calculate price ranges
      min_price = (month_data['WSP'].min() // 5) * 5
@@ -6890,57 +6891,101 @@ def market_share():
     # Create pivot table
      pivot_df = pd.pivot_table(
         month_data,
-        values='Share',
+        values=['Share', 'Volume'],
         index='Price_Range',
         columns='Company',
         aggfunc='sum',
         fill_value=0
     )
     
+    # Separate share and volume data
+     share_df = pivot_df['Share']
+     volume_df = pivot_df['Volume']
+    
     # Remove zero columns
-     pivot_df = pivot_df.loc[:, (pivot_df != 0).any(axis=0)]
+     share_df = share_df.loc[:, (share_df != 0).any(axis=0)]
     
     # Calculate row sums
-     row_sums = pivot_df.sum(axis=1)
+     row_sums = share_df.sum(axis=1)
     
-    # Create plot with improved styling
-     fig, ax = plt.subplots(figsize=(14, 8))
+    # Create plot with improved styling and twin axis
+     fig, ax1 = plt.subplots(figsize=(14, 8))
+     ax2 = ax1.twinx()  # Create secondary y-axis
     
     # Get WSP for each company and sort companies by WSP
      company_wsps = {}
-     for company in pivot_df.columns:
+     for company in share_df.columns:
         wsp = month_data[month_data['Company'] == company]['WSP'].iloc[0]
         company_wsps[company] = wsp
     
     # Sort companies by WSP
      sorted_companies = sorted(company_wsps.keys(), key=lambda x: company_wsps[x])
     
-    # Reorder columns in pivot_df based on sorted companies
-     pivot_df = pivot_df[sorted_companies]
+    # Reorder columns based on sorted companies
+     share_df = share_df[sorted_companies]
+     volume_df = volume_df[sorted_companies]
     
     # Get colors for companies in sorted order
      colors = [get_company_color(company) for company in sorted_companies]
     
-    # Plot stacked bars
-     bars = pivot_df.plot(
+    # Plot stacked bars on primary axis
+     bars = share_df.plot(
         kind='bar',
         stacked=True,
-        ax=ax,
+        ax=ax1,
         width=0.8,
         color=colors
     )
     
-    # Add bar labels manually
-     y_offset = np.zeros(len(pivot_df))
-     for i, company in enumerate(pivot_df.columns):
-        values = pivot_df[company]
-        for j, v in enumerate(values):
+    # Add bar labels and collect bar positions for connecting lines
+     y_offset = np.zeros(len(share_df))
+     bar_positions = {}
+    
+     for i, company in enumerate(share_df.columns):
+        values = share_df[company]
+        volume_values = volume_df[company]
+        
+        for j, (v, vol) in enumerate(zip(values, volume_values)):
             if v > 1:  # Only show label if value is greater than 1
-                ax.text(j, y_offset[j] + v/2, f'{v:.1f}%',
-                       ha='center', va='center',
-                       fontsize=9)
+                ax1.text(j, y_offset[j] + v/2, f'{v:.1f}%',
+                        ha='center', va='center',
+                        fontsize=9)
+                
+                # Store bar position for connecting lines
+                if vol > 0:  # Only store if volume exists
+                    bar_positions[(company, j)] = (j, y_offset[j] + v/2)
+            
             y_offset[j] += v
     
+    # Plot volume points and connecting lines
+     max_volume = volume_df.values.max()
+     for company in sorted_companies:
+        volumes = volume_df[company]
+        for j, vol in enumerate(volumes):
+            if vol > 0 and (company, j) in bar_positions:
+                # Get bar position
+                bar_x, bar_y = bar_positions[(company, j)]
+                
+                # Plot volume point
+                ax2.scatter(bar_x, vol, color=get_company_color(company), 
+                          zorder=5, s=50)
+                
+                # Add volume label
+                ax2.annotate(f'{vol:,.0f}',
+                           (bar_x, vol),
+                           xytext=(5, 5),
+                           textcoords='offset points',
+                           fontsize=8)
+                
+                # Draw connecting line
+                ax2.plot([bar_x, bar_x],
+                        [bar_y * max_volume/100, vol],
+                        color=get_company_color(company),
+                        linestyle='--',
+                        alpha=0.3,
+                        zorder=1)
+    
+    # Titles and labels
      plt.suptitle(f'Market Share Distribution by Price Range', 
                 fontsize=20, 
                 y=1.02, 
@@ -6949,35 +6994,37 @@ def market_share():
              fontsize=16, 
              pad=20)
     
-     plt.xlabel('WSP Price Range (₹)', fontsize=12, fontweight='bold')
-     plt.ylabel('Market Share (%)', fontsize=12, fontweight='bold')
+     ax1.set_xlabel('WSP Price Range (₹)', fontsize=12, fontweight='bold')
+     ax1.set_ylabel('Market Share (%)', fontsize=12, fontweight='bold')
+     ax2.set_ylabel('Volume', fontsize=12, fontweight='bold')
     
+    # Format x-axis labels
      def format_interval(interval):
         return f'₹{interval.left:.0f}-{interval.right:.0f}'
     
-     x_labels = [format_interval(interval) for interval in pivot_df.index]
-     ax.set_xticklabels(x_labels, rotation=45, ha='right')
+     x_labels = [format_interval(interval) for interval in share_df.index]
+     ax1.set_xticklabels(x_labels, rotation=45, ha='right')
     
     # Add total labels on top of each bar
      for i, total in enumerate(row_sums):
         if total > 0:
-            ax.text(i, total + 1, f'Total: {total:.1f}%',
-                   ha='center',
-                   va='bottom',
-                   fontweight='bold',
-                   fontsize=10,
-                   bbox=dict(facecolor='white',
-                           edgecolor='gray',
-                           alpha=0.9,
-                           pad=3,
-                           boxstyle='round,pad=0.5'))
+            ax1.text(i, total + 1, f'Total: {total:.1f}%',
+                    ha='center',
+                    va='bottom',
+                    fontweight='bold',
+                    fontsize=10,
+                    bbox=dict(facecolor='white',
+                            edgecolor='gray',
+                            alpha=0.9,
+                            pad=3,
+                            boxstyle='round,pad=0.5'))
     
     # Create legend
      legend_labels = [f'{company} (WSP: ₹{company_wsps[company]:.0f})' 
                     for company in sorted_companies]
-     plt.legend(
+     ax1.legend(
         legend_labels,
-        bbox_to_anchor=(1.15, 1),
+        bbox_to_anchor=(1.25, 1),
         loc='upper left',
         borderaxespad=0.,
         frameon=True,
@@ -6988,17 +7035,25 @@ def market_share():
     )
     
     # Final styling
-     plt.grid(axis='y', linestyle='--', alpha=0.3)
-     ax.set_facecolor('#f8f9fa')
+     ax1.grid(axis='y', linestyle='--', alpha=0.3)
+     ax1.set_facecolor('#f8f9fa')
      fig.patch.set_facecolor('#ffffff')
-     ax.spines['top'].set_visible(False)
-     ax.spines['right'].set_visible(False)
-     ax.spines['left'].set_linewidth(0.5)
-     ax.spines['bottom'].set_linewidth(0.5)
     
-    # Adjust y-axis limits
-     current_ymax = ax.get_ylim()[1]
-     ax.set_ylim(0, current_ymax * 1.15)
+    # Remove top and right spines for primary axis
+     ax1.spines['top'].set_visible(False)
+     ax1.spines['right'].set_visible(False)
+     ax1.spines['left'].set_linewidth(0.5)
+     ax1.spines['bottom'].set_linewidth(0.5)
+    
+    # Style secondary axis
+     ax2.spines['top'].set_visible(False)
+     ax2.spines['left'].set_visible(False)
+     ax2.spines['right'].set_linewidth(0.5)
+    
+    # Set y-axis limits
+     current_ymax = ax1.get_ylim()[1]
+     ax1.set_ylim(0, current_ymax * 1.15)
+     ax2.set_ylim(0, max_volume * 1.15)
     
      plt.margins(y=0.1)
      plt.tight_layout()
