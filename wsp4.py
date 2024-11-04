@@ -7195,12 +7195,7 @@ def market_share():
                 # Only create plot if it hasn't been computed yet
                 if plot_key not in st.session_state.computed_figures:
                     with st.spinner(f"📊 Generating visualization for {month.capitalize()}..."):
-                        st.session_state.computed_figures[plot_key] = create_share_plot(
-                            state_dfs[selected_state],
-                            month
-                        )
-                
-                # Display the cached plot
+                        st.session_state.computed_figures[plot_key] = create_share_plot(state_dfs[selected_state],month)
                 st.pyplot(st.session_state.computed_figures[plot_key])
                 
                 # Add download buttons
