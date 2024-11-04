@@ -7014,7 +7014,7 @@ def market_share():
         total_change = (shares[-1] - shares[0])/shares[0]*100
         return sequential_changes, total_change
     @st.cache_data
-    def create_trend_line_plot(_df, selected_companies):
+    def create_trend_line_plot(_df, selected_companies, state_name):
      df = _df.copy()
      share_cols = [col for col in df.columns if col.startswith('Share_')]
      months = [col.split('_')[1] for col in share_cols]
@@ -7026,32 +7026,26 @@ def market_share():
                       for col, month in zip(share_cols, months)]
      sorted_pairs = sorted(month_col_pairs, key=lambda x: x[1])
     
-    # Get sorted column names and months
      sorted_share_cols = [pair[0] for pair in sorted_pairs]
      sorted_months = [col.split('_')[1] for col in sorted_share_cols]
     
      fig, ax = plt.subplots(figsize=(14, 8))
     
-    # Create lists to store lines and labels for legend
      lines = []
      legend_labels = []
     
      for company in selected_companies:
         color = get_company_color(company)
-        # Use sorted column names to get data in correct order
         company_shares = df[df['Company'] == company][sorted_share_cols].iloc[0].values
         avg_share = company_shares.mean()
         
-        # Plot the main line and store it
         line = ax.plot(range(len(sorted_months)), company_shares, 
                       marker='o', linewidth=2, color=color,
                       label=company)[0]
         lines.append(line)
         
-        # Plot average line without adding to legend
         ax.axhline(y=avg_share, color=color, linestyle='--', alpha=0.3)
         
-        # Add share percentage labels at each point
         for i, share in enumerate(company_shares):
             ax.annotate(f'{share:.1f}%', 
                       (i, share),
@@ -7060,6 +7054,7 @@ def market_share():
                       ha='center',
                       va='bottom',
                       fontsize=8)
+        
         sequential_changes, total_change = calculate_share_changes(company_shares, sorted_months)
         for i, change in enumerate(sequential_changes):
             mid_x = (i + 0.5)
@@ -7068,7 +7063,7 @@ def market_share():
             arrow_symbol = '↑' if change > 0 else '↓'
             ax.annotate(f'{arrow_symbol}{abs(change):.1f}%',
                       (mid_x, mid_y),
-                      xytext=(0, 15 if i % 2 == 0 else -15),  # Alternate above/below
+                      xytext=(0, 15 if i % 2 == 0 else -15),
                       textcoords='offset points',
                       ha='center',
                       va='center',
@@ -7078,11 +7073,13 @@ def market_share():
                               edgecolor='none',
                               alpha=0.7,
                               pad=0.5))
+        
         change_symbol = '↑' if total_change > 0 else '↓'
         legend_labels.append(
             f"{company} (Avg: {avg_share:.1f}% | Total Change: {change_symbol}{abs(total_change):.1f}%)"
         )
-     plt.title('Market Share Trends Over Time', 
+    
+     plt.title(f'Market Share Trends Over Time - {state_name}', 
              fontsize=20, 
              pad=20, 
              fontweight='bold')
@@ -7102,6 +7099,23 @@ def market_share():
      ax.set_facecolor('#f8f9fa')
      fig.patch.set_facecolor('#ffffff')
      plt.tight_layout()
+     return fig
+
+    def create_title_page(state_name):
+     fig, ax = plt.subplots(figsize=(11.7, 8.3))  # A4 size
+     ax.axis('off')
+     ax.text(0.5, 0.6, 'Market Share Analysis Report', 
+            horizontalalignment='center',
+            fontsize=24,
+            fontweight='bold')
+     ax.text(0.5, 0.5, f'State: {state_name}', 
+            horizontalalignment='center',
+            fontsize=20)
+     current_date = datetime.now().strftime("%d %B %Y")
+     ax.text(0.5, 0.4, f'Generated on: {current_date}', 
+            horizontalalignment='center',
+            fontsize=16)
+     fig.patch.set_facecolor('#ffffff')
      return fig
     def create_dashboard_header():
         """Create an attractive dashboard header"""
@@ -7179,17 +7193,19 @@ def market_share():
                 default=available_defaults,
                 help="Choose companies to show in the trend line graph"
             )
-    
      with col2:
         if uploaded_file and selected_companies:
             st.markdown("### Market Share Trends")
             
-            # Create trend plot only if companies selection changes
-            trend_key = f"trend_{selected_state}_{'-'.join(sorted(selected_companies))}"
+            # Modified trend key to include data hash
+            df_hash = hash(str(state_dfs[selected_state]))
+            trend_key = f"trend_{selected_state}_{'-'.join(sorted(selected_companies))}_{df_hash}"
+            
             if trend_key not in st.session_state.computed_figures:
                 st.session_state.computed_figures[trend_key] = create_trend_line_plot(
                     state_dfs[selected_state], 
-                    selected_companies
+                    selected_companies,
+                    selected_state
                 )
             
             st.pyplot(st.session_state.computed_figures[trend_key])
@@ -7254,31 +7270,35 @@ def market_share():
                     )
                 
                 st.markdown("---")
-            
-            # Add complete report download button
             if st.session_state.computed_figures:
-                st.markdown("### 📑 Download Complete Report")
-                all_pdf_buf = io.BytesIO()
-                with PdfPages(all_pdf_buf) as pdf:
-                    # Add trend plot if it exists
-                    trend_key = f"trend_{selected_state}_{'-'.join(sorted(selected_companies))}"
-                    if trend_key in st.session_state.computed_figures:
-                        pdf.savefig(st.session_state.computed_figures[trend_key], bbox_inches='tight')
-                    
-                    # Add all monthly plots
-                    for month in selected_months:
-                        plot_key = f"share_{selected_state}_{month}"
-                        if plot_key in st.session_state.computed_figures:
-                            pdf.savefig(st.session_state.computed_figures[plot_key], bbox_inches='tight')
+             st.markdown("### 📑 Download Complete Report")
+             all_pdf_buf = io.BytesIO()
+             with PdfPages(all_pdf_buf) as pdf:
+                # Add title page
+                title_page = create_title_page(selected_state)
+                pdf.savefig(title_page, bbox_inches='tight')
+                plt.close(title_page)
                 
-                all_pdf_buf.seek(0)
-                st.download_button(
-                    label="📥 Download Complete Report (PDF)",
-                    data=all_pdf_buf,
-                    file_name=f'market_share_{selected_state}_complete_report.pdf',
-                    mime='application/pdf',
-                    key="download_complete_pdf"
-                )
+                # Add trend plot if it exists
+                df_hash = hash(str(state_dfs[selected_state]))
+                trend_key = f"trend_{selected_state}_{'-'.join(sorted(selected_companies))}_{df_hash}"
+                if trend_key in st.session_state.computed_figures:
+                    pdf.savefig(st.session_state.computed_figures[trend_key], bbox_inches='tight')
+                
+                # Add all monthly plots
+                for month in selected_months:
+                    plot_key = f"share_{selected_state}_{month}"
+                    if plot_key in st.session_state.computed_figures:
+                        pdf.savefig(st.session_state.computed_figures[plot_key], bbox_inches='tight')
+            
+             all_pdf_buf.seek(0)
+             st.download_button(
+                label="📥 Download Complete Report (PDF)",
+                data=all_pdf_buf,
+                file_name=f'market_share_{selected_state}_complete_report.pdf',
+                mime='application/pdf',
+                key="download_complete_pdf"
+            )
 
     if __name__ == "__main__":
         main()
