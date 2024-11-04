@@ -6823,20 +6823,21 @@ def market_share():
     """, unsafe_allow_html=True)
     # Global color mapping to maintain consistency across states and months
     COMPANY_COLORS = {}
-    
+    @st.cache_data
     def generate_distinct_color(existing_colors):
         """Generate a new distinct color that's visually different from existing ones"""
         if existing_colors:
             return distinctipy.get_colors(1, existing_colors)[0]
         return distinctipy.get_colors(1)[0]
-    
+    @st.cache_data
     def get_company_color(company):
-        """Get or create a consistent color for a company"""
-        if company not in COMPANY_COLORS:
-            existing_colors = list(COMPANY_COLORS.values())
-            COMPANY_COLORS[company] = generate_distinct_color(existing_colors)
-        return COMPANY_COLORS[company]
-
+     if 'company_colors' not in st.session_state:
+        st.session_state.company_colors = {}
+     if company not in st.session_state.company_colors:
+        existing_colors = list(st.session_state.company_colors.values())
+        st.session_state.company_colors[company] = generate_distinct_color(existing_colors)
+     return st.session_state.company_colors[company]
+    @st.cache_data
     def load_and_process_data(uploaded_file):
         """Load Excel file and return dict of dataframes and sheet names"""
         xl = pd.ExcelFile(uploaded_file)
@@ -6862,7 +6863,9 @@ def market_share():
     }
      sorted_months = sorted(months, key=lambda x: month_order[x])
      return sorted_months
-    def create_share_plot(df, month):
+    @st.cache_data
+    def create_share_plot(_df, month):
+      df = _df.copy()
       sns.set_style("whitegrid")
       plt.rcParams.update({
             'font.family': 'sans-serif',
@@ -6987,7 +6990,9 @@ def market_share():
         
         total_change = (shares[-1] - shares[0])/shares[0]*100
         return sequential_changes, total_change
-    def create_trend_line_plot(df, selected_companies):
+    @st.cache_data
+    def create_trend_line_plot(_df, selected_companies):
+     df = _df.copy()
      share_cols = [col for col in df.columns if col.startswith('Share_')]
      months = [col.split('_')[1] for col in share_cols]
      month_order = {
@@ -7101,167 +7106,162 @@ def market_share():
                 pdf.savefig(fig, bbox_inches='tight')
                 plt.close(fig)
     def main():
-        create_dashboard_header()
+    # Initialize session state for storing computed figures
+     if 'computed_figures' not in st.session_state:
+        st.session_state.computed_figures = {}
+    
+     create_dashboard_header()
+    
+     col1, col2 = st.columns([1, 4])
+    
+     with col1:
+        st.markdown("### 🎯 Analysis Controls")
         
-        # Create two columns with improved ratio
-        col1, col2 = st.columns([1, 4])
-        with col1:
-            st.markdown("### 🎯 Analysis Controls")
+        uploaded_file = st.file_uploader(
+            "Upload Excel File",
+            type=['xlsx', 'xls'],
+            help="Upload your market share data file"
+        )
+        
+        if uploaded_file:
+            # Use cached data loading
+            state_dfs, states = load_and_process_data(uploaded_file)
             
-            uploaded_file = st.file_uploader(
-                "Upload Excel File",
-                type=['xlsx', 'xls'],
-                help="Upload your market share data file"
+            st.markdown("### 🎯 Settings")
+            selected_state = st.selectbox(
+                "Select State",
+                states,
+                index=0,
+                help="Choose the state for analysis"
             )
-            if uploaded_file:
-                state_dfs, states = load_and_process_data(uploaded_file)
-                
-                st.markdown("### 🎯 Settings")
-                # Enhanced state selection
-                selected_state = st.selectbox(
-                    "Select State",
-                    states,
-                    index=0,
-                    help="Choose the state for analysis"
+            
+            available_months = get_available_months(state_dfs[selected_state])
+            selected_months = st.multiselect(
+                "Select Months",
+                available_months,
+                default=[available_months[0]],
+                help="Choose months for comparison"
+            )
+            
+            all_companies = state_dfs[selected_state]['Company'].unique()
+            default_companies = [
+                'JK Lakshmi', 'Ultratech', 'Ambuja',
+                'Wonder', 'Shree', 'JK Cement (N)'
+            ]
+            available_defaults = [company for company in default_companies if company in all_companies]
+            
+            selected_companies = st.multiselect(
+                "Select Companies for Trend Analysis",
+                all_companies,
+                default=available_defaults,
+                help="Choose companies to show in the trend line graph"
+            )
+    
+     with col2:
+        if uploaded_file and selected_companies:
+            st.markdown("### Market Share Trends")
+            
+            # Create trend plot only if companies selection changes
+            trend_key = f"trend_{selected_state}_{'-'.join(sorted(selected_companies))}"
+            if trend_key not in st.session_state.computed_figures:
+                st.session_state.computed_figures[trend_key] = create_trend_line_plot(
+                    state_dfs[selected_state], 
+                    selected_companies
                 )
-                
-                # Get available months for selected state
-                available_months = get_available_months(state_dfs[selected_state])
-                
-                # Enhanced month selection
-                selected_months = st.multiselect(
-                    "Select Months",
-                    available_months,
-                    default=[available_months[0]],
-                    help="Choose months for comparison"
-                )
-                all_companies = state_dfs[selected_state]['Company'].unique()
-                default_companies = [
-                    'JK Lakshmi',
-                    'Ultratech',
-                    'Ambuja',
-                    'Wonder',
-                    'Shree',
-                    'JK Cement (N)'
-                ]
-                
-                # Filter default companies to only include those that exist in the data
-                available_defaults = [company for company in default_companies if company in all_companies]
-                
-                selected_companies = st.multiselect(
-                    "Select Companies for Trend Analysis",
-                    all_companies,
-                    default=available_defaults,
-                    help="Choose companies to show in the trend line graph"
-                )
+            
+            st.pyplot(st.session_state.computed_figures[trend_key])
+            st.markdown("---")
         
-        # Enhanced main content
-        with col2:
-            all_figures = []
-            if uploaded_file and selected_companies:
-                    st.markdown("### Market Share Trends")
-                    trend_fig = create_trend_line_plot(state_dfs[selected_state], 
-                                                     selected_companies)
-                    st.pyplot(trend_fig)
-                    all_figures.append(trend_fig)
-                    st.markdown("---")
-            if uploaded_file and selected_months:
-                # Create summary statistics cards
-                st.markdown("### 📊 Key Metrics")
-                metric_cols = st.columns(len(selected_months))
-                for idx, month in enumerate(selected_months):
-                    df = state_dfs[selected_state]
-                    total_share = df[f'Share_{month}'].sum()
-                    avg_wsp = df[f'WSP_{month}'].mean()
-                    num_companies = len(df[df[f'Share_{month}'] > 0])
-                    with metric_cols[idx]:
-                        create_metric_card(
-                            f"{month.capitalize()}",
-                            f"{num_companies} Companies",
-                            f"Avg WSP: ₹{avg_wsp:.0f}",
-                            "Number of active companies and average wholesale price"
-                        )
-                
-                st.markdown("---")
-                
-                # Create separate plots for each selected month
-                month_figures = {}  # Store figures by month for individual PDF downloads
-                for month in selected_months:
-                    with st.spinner(f"📊 Generating visualization for {month.capitalize()}..."):
-                        fig = create_share_plot(state_dfs[selected_state], month)
-                        st.pyplot(fig)
-                        all_figures.append(fig)
-                        month_figures[month] = fig
-                        
-                        # Enhanced download buttons with three columns
-                        col1, col2, col3 = st.columns([1, 1, 2])
-                        with col1:
-                            # PNG download
-                            buf = io.BytesIO()
-                            fig.savefig(buf, format='png', dpi=300, bbox_inches='tight')
-                            buf.seek(0)
-                            st.download_button(
-                                label=f"📥 Download PNG",
-                                data=buf,
-                                file_name=f'market_share_{selected_state}_{month}.png',
-                                mime='image/png',
-                                key=f"download_png_{month}"
-                            )
-                        
-                        with col2:
-                            # Individual PDF download for this month
-                            pdf_buf = io.BytesIO()
-                            with PdfPages(pdf_buf) as pdf:
-                                pdf.savefig(fig, bbox_inches='tight')
-                            pdf_buf.seek(0)
-                            st.download_button(
-                                label=f"📄 Download PDF",
-                                data=pdf_buf,
-                                file_name=f'market_share_{selected_state}_{month}.pdf',
-                                mime='application/pdf',
-                                key=f"download_pdf_{month}"
-                            )
-                        
-                    st.markdown("---")
-                
-                # Add a button to download all plots in a single PDF
-                if all_figures:
-                    st.markdown("### 📑 Download Complete Report")
-                    all_pdf_buf = io.BytesIO()
-                    with PdfPages(all_pdf_buf) as pdf:
-                        # Add trend plot if it exists
-                        if selected_companies:
-                            pdf.savefig(trend_fig, bbox_inches='tight')
-                        # Add all monthly plots
-                        for fig in month_figures.values():
-                            pdf.savefig(fig, bbox_inches='tight')
-                    
-                    all_pdf_buf.seek(0)
-                    st.download_button(
-                        label="📥 Download Complete Report (PDF)",
-                        data=all_pdf_buf,
-                        file_name=f'market_share_{selected_state}_complete_report.pdf',
-                        mime='application/pdf',
-                        key="download_complete_pdf"
+        if uploaded_file and selected_months:
+            st.markdown("### 📊 Key Metrics")
+            metric_cols = st.columns(len(selected_months))
+            
+            for idx, month in enumerate(selected_months):
+                df = state_dfs[selected_state]
+                with metric_cols[idx]:
+                    create_metric_card(
+                        f"{month.capitalize()}",
+                        f"{len(df[df[f'Share_{month}'] > 0])} Companies",
+                        f"Avg WSP: ₹{df[f'WSP_{month}'].mean():.0f}",
+                        "Number of active companies and average wholesale price"
                     )
             
-            elif uploaded_file:
-                st.info("👈 Select state and months from the sidebar to view analysis")
-            else:
-                st.markdown("""
-                    <div style='text-align: center; padding: 3rem; background-color: white; 
-                              border-radius: 1rem; box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);'>
-                        <h2 style='margin-bottom: 1rem;'>Welcome to Market Share Analysis</h2>
-                        <p style='color: #64748b; margin-bottom: 2rem;'>
-                            Upload your data file to get started with comprehensive market analysis
-                        </p>
-                        <div style='color: #64748b;'>
-                            <p>✨ Interactive visualizations</p>
-                            <p>📊 Detailed market insights</p>
-                            <p>📥 Export reports in multiple formats</p>
-                        </div>
-                    </div>
-                """, unsafe_allow_html=True)
+            st.markdown("---")
+            
+            # Create share plots only for newly selected months
+            for month in selected_months:
+                plot_key = f"share_{selected_state}_{month}"
+                
+                # Only create plot if it hasn't been computed yet
+                if plot_key not in st.session_state.computed_figures:
+                    with st.spinner(f"📊 Generating visualization for {month.capitalize()}..."):
+                        st.session_state.computed_figures[plot_key] = create_share_plot(
+                            state_dfs[selected_state],
+                            month
+                        )
+                
+                # Display the cached plot
+                st.pyplot(st.session_state.computed_figures[plot_key])
+                
+                # Add download buttons
+                col1, col2, col3 = st.columns([1, 1, 2])
+                with col1:
+                    buf = io.BytesIO()
+                    st.session_state.computed_figures[plot_key].savefig(
+                        buf,
+                        format='png',
+                        dpi=300,
+                        bbox_inches='tight'
+                    )
+                    buf.seek(0)
+                    st.download_button(
+                        label="📥 Download PNG",
+                        data=buf,
+                        file_name=f'market_share_{selected_state}_{month}.png',
+                        mime='image/png',
+                        key=f"download_png_{month}"
+                    )
+                
+                with col2:
+                    pdf_buf = io.BytesIO()
+                    with PdfPages(pdf_buf) as pdf:
+                        pdf.savefig(st.session_state.computed_figures[plot_key], bbox_inches='tight')
+                    pdf_buf.seek(0)
+                    st.download_button(
+                        label="📄 Download PDF",
+                        data=pdf_buf,
+                        file_name=f'market_share_{selected_state}_{month}.pdf',
+                        mime='application/pdf',
+                        key=f"download_pdf_{month}"
+                    )
+                
+                st.markdown("---")
+            
+            # Add complete report download button
+            if st.session_state.computed_figures:
+                st.markdown("### 📑 Download Complete Report")
+                all_pdf_buf = io.BytesIO()
+                with PdfPages(all_pdf_buf) as pdf:
+                    # Add trend plot if it exists
+                    trend_key = f"trend_{selected_state}_{'-'.join(sorted(selected_companies))}"
+                    if trend_key in st.session_state.computed_figures:
+                        pdf.savefig(st.session_state.computed_figures[trend_key], bbox_inches='tight')
+                    
+                    # Add all monthly plots
+                    for month in selected_months:
+                        plot_key = f"share_{selected_state}_{month}"
+                        if plot_key in st.session_state.computed_figures:
+                            pdf.savefig(st.session_state.computed_figures[plot_key], bbox_inches='tight')
+                
+                all_pdf_buf.seek(0)
+                st.download_button(
+                    label="📥 Download Complete Report (PDF)",
+                    data=all_pdf_buf,
+                    file_name=f'market_share_{selected_state}_complete_report.pdf',
+                    mime='application/pdf',
+                    key="download_complete_pdf"
+                )
+
     if __name__ == "__main__":
         main()
 def discount():
