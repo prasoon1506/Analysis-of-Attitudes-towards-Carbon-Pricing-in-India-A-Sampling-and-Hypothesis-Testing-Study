@@ -6933,14 +6933,11 @@ def market_share():
         cumulative_height += total + (total * spacing_factor)
     
     # Create plot with improved styling and twin axis
-     fig, ax1 = plt.subplots(figsize=(14, 10))
+     fig, ax1 = plt.subplots(figsize=(14, 10))  # Increased height to accommodate spacing
      ax2 = ax1.twinx()
     
     # Get colors for companies
      colors = [get_company_color(company) for company in sorted_companies]
-    
-    # Store volume values and their y-positions for the right axis
-     volume_positions = []
     
     # Plot bars and volume lines for each price range section
      for price_range_idx, (price_range, shares) in enumerate(share_df.iterrows()):
@@ -6965,20 +6962,25 @@ def market_share():
                             va='center',
                             fontsize=9)
                 
-                # Add volume line and store position if volume exists
+                # Add volume line and label if volume exists
                 volume = volume_df.loc[price_range, company]
                 if volume > 0:
-                    # Calculate the y-position in data coordinates
-                    y_pos = y_offset + share/2
-                    volume_positions.append((volume, y_pos, get_company_color(company)))
-                    
-                    # Draw horizontal dashed line from bar center to right edge
-                    line = ax1.hlines(y=y_pos,
+                    # Draw horizontal dashed line
+                    line = ax2.hlines(y=volume,
                                     xmin=price_range_idx,
                                     xmax=len(share_df)-0.2,
                                     colors=get_company_color(company),
                                     linestyles='--',
                                     alpha=0.7)
+                    
+                    # Add volume label on the right side
+                    ax2.text(len(share_df)-0.1,
+                            volume,
+                            f'{volume:,.0f}',
+                            va='center',
+                            ha='left',
+                            fontweight='bold',
+                            color=get_company_color(company))
                 
                 y_offset += share
         
@@ -6997,25 +6999,6 @@ def market_share():
                             alpha=0.9,
                             pad=3,
                             boxstyle='round,pad=0.5'))
-    
-    # Clear the right axis ticks and labels
-     ax2.set_yticks([])
-     ax2.set_yticklabels([])
-    
-    # Add volume labels on the right side
-     for volume, y_pos, color in volume_positions:
-        # Convert data coordinates to axes coordinates for consistent positioning
-        _, y = ax1.transData.transform((0, y_pos))
-        _, y_norm = ax1.transAxes.inverted().transform((0, y))
-        
-        ax2.text(1.02, 
-                y_norm,
-                f'{volume:,.0f}',
-                transform=ax2.transAxes,
-                va='center',
-                ha='left',
-                fontweight='bold',
-                color=color)
     
     # Titles and labels
      plt.suptitle(f'Market Share Distribution by Price Range',
@@ -7068,8 +7051,9 @@ def market_share():
      ax2.spines['left'].set_visible(False)
      ax2.spines['right'].set_linewidth(0.5)
     
-    # Set primary axis limits
+    # Set y-axis limits
      ax1.set_ylim(0, cumulative_height * 1.15)
+     ax2.set_ylim(0, volume_df.values.max() * 1.15)
     
     # Add total market size box below the graph
      total_market_size = volume_df.sum().sum()
@@ -7087,7 +7071,7 @@ def market_share():
                fontweight='bold')
     
      plt.margins(y=0.1)
-     plt.subplots_adjust(bottom=0.2, right=0.85)
+     plt.subplots_adjust(bottom=0.2, right=0.85)  # Adjusted right margin for volume labels
     
      return fig
     @st.cache_data
