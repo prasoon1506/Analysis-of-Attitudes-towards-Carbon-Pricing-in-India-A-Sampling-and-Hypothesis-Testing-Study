@@ -6887,10 +6887,10 @@ def market_share():
         
         adjusted = []
         used_positions = set()
-        
+        min_allowed_y = y_max * 0.05
         for vol, original_y, color, x_pos in positions:
             # Try to keep label close to original position if possible
-            label_y = original_y
+            label_y = max(original_y, min_allowed_y)
             
             # Check for overlap with existing labels
             while any(abs(label_y - used_y) < optimal_gap for used_y in used_positions):
@@ -6898,10 +6898,12 @@ def market_share():
                 
                 # If we've gone too high, try positioning below
                 if label_y > y_range:
-                    label_y = original_y
+                    label_y = min_allowed_y
                     while any(abs(label_y - used_y) < optimal_gap for used_y in used_positions):
-                        label_y -= optimal_gap
-            
+                        label_y += optimal_gap
+                        if label_y > y_range:
+                         optimal_gap *= 0.8
+                         label_y = max(original_y, min_allowed_y)
             used_positions.add(label_y)
             adjusted.append((vol, original_y, label_y, color, x_pos))
         
@@ -7056,13 +7058,13 @@ def market_share():
                     color=color, linestyle='--', alpha=0.4, linewidth=1)
         
         # Add volume label with background
-        label = f'{vol:,.0f}'
+        label = f'{vol:,.0f} MT'
         ax2.text(1.02, label_y, label,
                 transform=ax1.get_yaxis_transform(),
                 va='center', ha='left',
                 color=color,
-                fontsize=8,
-                fontweight='medium',
+                fontsize=11,
+                fontweight='bold',
                 bbox=dict(facecolor='white',
                          edgecolor='none',
                          alpha=0.7,
