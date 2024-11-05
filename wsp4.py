@@ -6938,7 +6938,7 @@ def market_share():
         cumulative_height += total + (total * spacing_factor)
     
     # Create plot with improved styling and twin axis
-     fig, ax1 = plt.subplots(figsize=(14, 10))
+     fig, ax1 = plt.subplots(figsize=(5, 4))
      ax2 = ax1.twinx()
     
     # Get colors for companies
@@ -7045,7 +7045,7 @@ def market_share():
         return f'₹{interval.left:.0f}-{interval.right:.0f}'
     
      x_labels = [format_interval(interval) for interval in share_df.index]
-     ax1.set_xticklabels(x_labels, rotation=45, ha='right')
+     ax1.set_xticklabels(x_labels, ha='right')
     
     # Create legend
      legend_labels = [f'{company} (WSP: ₹{company_wsps[company]:.0f})'
