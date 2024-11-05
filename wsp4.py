@@ -6935,7 +6935,7 @@ def market_share():
                 bottom=bottom,
                 label=company,
                 color=get_company_color(company),
-                alpha=0.85,  # Slightly transparent bars
+                alpha=0.95,  # Slightly transparent bars
                 edgecolor='white',  # White edges for contrast
                 linewidth=0.5)
         
@@ -6968,21 +6968,20 @@ def market_share():
      for i, total_vol in enumerate(total_volumes):
         ax1.text(i, -3, f'Vol: {total_vol:,.0f}',
                 ha='center', va='top',
-                fontsize=8,
-                color='#34495e',
-                rotation=45)
+                fontsize=12,fontweight='bold',
+                color='#34495e')
     
     # Enhanced dashed lines and volume labels
      for vol, y_pos, color, x_pos in volume_positions:
-        ax1.hlines(y=y_pos, xmin=x_pos, xmax=len(share_df)-0.15,
-                  colors=color, linestyles='--', alpha=1, linewidth=1)
+        ax1.hlines(y=y_pos, xmin=x_pos, xmax=len(share_df),
+                  colors=color, linestyles='densely dashdotdotted', alpha=1, linewidth=1)
         
-        ax2.text(1.02, y_pos, f'{vol:,.0f}',
+        ax2.text(1.02, y_pos, f'{vol:,.0f} MT',
                 transform=ax1.get_yaxis_transform(),
                 va='center', ha='left',
                 color=color,
-                fontsize=8,
-                fontweight='medium')
+                fontsize=10,
+                fontweight='BOLD')
     
     # Enhanced axes formatting
      x_labels = [f'₹{interval.left:.0f}-{interval.right:.0f}'
