@@ -6884,7 +6884,7 @@ def market_share():
     # Calculate price ranges
      min_price = (month_data['WSP'].min() // 5) * 5
      max_price = (month_data['WSP'].max() // 5 + 1) * 5
-     price_ranges = pd.interval_range(start=min_price, end=max_price, freq=5)
+     price_ranges = pd.interval_range(start=min_price, end=max_price, freq=10)
     
     # Create price range column
      month_data['Price_Range'] = pd.cut(month_data['WSP'], bins=price_ranges)
