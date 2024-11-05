@@ -7052,14 +7052,14 @@ def market_share():
             mid_x = x_pos + (len(share_df)-0.15 - x_pos) * 0.7
             ax1.plot([x_pos, mid_x, len(share_df)-0.15], 
                     [line_y, label_y, label_y],
-                    color=color, linestyle='--', alpha=0.4, linewidth=1)
+                    color=color, linestyle='--', alpha=1, linewidth=1)
         else:
             ax1.plot([x_pos, len(share_df)-0.15], [line_y, line_y],
-                    color=color, linestyle='--', alpha=0.4, linewidth=1)
+                    color=color, linestyle='--', alpha=1, linewidth=1)
         
         # Add volume label with background
         label = f'{vol:,.0f} MT'
-        ax2.text(1.02, label_y, label,
+        ax2.text(0.98, label_y, label,
                 transform=ax1.get_yaxis_transform(),
                 va='center', ha='left',
                 color=color,
@@ -7067,7 +7067,7 @@ def market_share():
                 fontweight='bold',
                 bbox=dict(facecolor='white',
                          edgecolor='none',
-                         alpha=0.7,
+                         alpha=1,
                          pad=1))
     
     # Enhanced axes formatting
