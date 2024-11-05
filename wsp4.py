@@ -6875,19 +6875,23 @@ def market_share():
         'figure.facecolor': 'white',
         'axes.facecolor': 'white',
         'grid.alpha': 0.3,
+        # Add explicit DPI setting
         'figure.dpi': 100
     })
     
-    # Data preparation (same as before)
+    # Include volume data in the month_data DataFrame
      month_data = df[['Company', f'Share_{month}', f'WSP_{month}', f'Vol_{month}']].copy()
      month_data.columns = ['Company', 'Share', 'WSP', 'Volume']
     
-     min_price = (month_data['WSP'].min() // 10) * 10
+    # Calculate price ranges with larger intervals to reduce number of bars
+     min_price = (month_data['WSP'].min() // 10) * 10  # Changed from 5 to 10
      max_price = (month_data['WSP'].max() // 10 + 1) * 10
-     price_ranges = pd.interval_range(start=min_price, end=max_price, freq=10)
+     price_ranges = pd.interval_range(start=min_price, end=max_price, freq=10)  # Changed from 5 to 10
     
+    # Create price range column
      month_data['Price_Range'] = pd.cut(month_data['WSP'], bins=price_ranges)
     
+    # Create pivot table
      pivot_df = pd.pivot_table(
         month_data,
         values=['Share', 'Volume'],
@@ -6897,21 +6901,25 @@ def market_share():
         fill_value=0
     )
     
+    # Separate share and volume data
      share_df = pivot_df['Share']
      volume_df = pivot_df['Volume']
     
+    # Remove zero columns
      share_df = share_df.loc[:, (share_df != 0).any(axis=0)]
      volume_df = volume_df.loc[:, (volume_df != 0).any(axis=0)]
     
+    # Get WSP for each company and sort
      company_wsps = {company: month_data[month_data['Company'] == company]['WSP'].iloc[0]
                    for company in share_df.columns}
      sorted_companies = sorted(company_wsps.keys(), key=lambda x: company_wsps[x])
     
+    # Reorder columns
      share_df = share_df[sorted_companies]
      volume_df = volume_df[sorted_companies]
     
-    # Create figure with more space on right
-     fig, ax1 = plt.subplots(figsize=(12, 10), dpi=100)
+    # Create fixed-size figure
+     fig, ax1 = plt.subplots(figsize=(12, 8), dpi=100)  # Fixed size and DPI
      ax2 = ax1.twinx()
     
     # Plot stacked bars
@@ -6929,146 +6937,65 @@ def market_share():
         # Add labels and collect volume positions
         for i, v in enumerate(values):
             if v > 0:
+                # Calculate center of each bar segment
                 center = bottom[i] + v/2
-                if v > 1:
+                if v > 1:  # Only show percentage if > 1%
                     ax1.text(i, center, f'{v:.1f}%',
                             ha='center', va='center', fontsize=8)
                 
+                # Store volume position if volume exists
                 vol = volume_df.loc[share_df.index[i], company]
                 if vol > 0:
                     volume_positions.append((vol, center, get_company_color(company), i))
         
         bottom += values
     
-    # Add total share labels
-     for i, total in enumerate(bottom):
-        if total > 0:
-            ax1.text(i, total + 2, f'Total\n{total:.1f}%',
-                    ha='center', va='bottom',
-                    bbox=dict(
-                        facecolor='white',
-                        edgecolor='#666666',
-                        boxstyle='round,pad=0.5',
-                        alpha=0.9
-                    ),
-                    fontsize=10,
-                    fontweight='bold')
-    
-    # Calculate spacing for volume connectors
-     num_ranges = len(share_df)
-     spacing = 0.15  # Space between connection lines
-    
-    # Group volumes by price range and create separated connectors
-     for i in range(num_ranges):
-        range_volumes = [(vol, y_pos) for vol, y_pos, _, x_pos in volume_positions if x_pos == i]
-        if range_volumes:
-            # Sort volumes by y-position for cleaner connections
-            range_volumes.sort(key=lambda x: x[1])
-            
-            # Calculate position for this price range's connector
-            connector_x = len(share_df) + (i * spacing)
-            
-            # Draw dashed lines to the new connector position
-            for vol, y_pos in range_volumes:
-                ax1.hlines(y=y_pos, 
-                          xmin=i, 
-                          xmax=connector_x,
-                          colors='#666666', 
-                          linestyles='--', 
-                          alpha=0.5,
-                          linewidth=1)
-            
-            # Draw vertical connector line
-            if len(range_volumes) > 1:
-                ax1.vlines(x=connector_x,
-                          ymin=min(y[1] for y in range_volumes),
-                          ymax=max(y[1] for y in range_volumes),
-                          color='#666666',
-                          linestyle='-',
-                          linewidth=2,
-                          alpha=0.7)
-            
-            # Calculate total volume for this price range
-            total_volume = sum(vol for vol, _ in range_volumes)
-            
-            # Add total volume label with enhanced style
-            mid_y = (max(y[1] for y in range_volumes) + min(y[1] for y in range_volumes)) / 2
-            ax2.text(connector_x + 0.1,
-                    mid_y,
-                    f'Σ {total_volume:,.0f}',
-                    ha='left',
-                    va='center',
-                    bbox=dict(
-                        facecolor='#f8f9fa',
-                        edgecolor='#666666',
-                        boxstyle='round,pad=0.3',
-                        alpha=0.8
-                    ),
-                    fontsize=9,
-                    fontweight='bold')
-            
-            # Add individual volume labels
-            for vol, y_pos in range_volumes:
-                ax2.text(connector_x + 0.02,
-                        y_pos,
-                        f'{vol:,.0f}',
-                        ha='left',
-                        va='center',
-                        fontsize=8,
-                        alpha=0.7)
+    # Add dashed lines and volume labels
+     for vol, y_pos, color, x_pos in volume_positions:
+        # Add dashed line
+        ax1.hlines(y=y_pos, xmin=x_pos, xmax=len(share_df)-0.2,
+                  colors=color, linestyles='--', alpha=0.5)
+        
+        # Add volume label
+        ax2.text(1.02, y_pos, f'{vol:,.0f}',
+                transform=ax1.get_yaxis_transform(),
+                va='center', ha='left', color=color, fontsize=8)
     
     # Format axes
      x_labels = [f'₹{interval.left:.0f}-{interval.right:.0f}'
                 for interval in share_df.index]
      ax1.set_xticks(range(len(x_labels)))
-     ax1.set_xticklabels(x_labels, ha='right')
+     ax1.set_xticklabels(x_labels,ha='right')
     
-    # Extend x-axis to accommodate connectors
-     ax1.set_xlim(-0.5, len(share_df) + (num_ranges * spacing) + 0.5)
-    
-    # Enhanced titles
+    # Titles
      plt.suptitle('Market Share Distribution by Price Range',
-                fontsize=16, y=1.02, fontweight='bold')
-     plt.title(f'{month.capitalize()}',
-             fontsize=14, pad=15)
+                fontsize=14, y=1.02)
+     plt.title(f'{month.capitalize()}', fontsize=12, pad=10)
     
-     ax1.set_xlabel('WSP Price Range (₹)', fontsize=12, fontweight='bold')
-     ax1.set_ylabel('Market Share (%)', fontsize=12, fontweight='bold')
+    # Labels
+     ax1.set_xlabel('WSP Price Range (₹)', fontsize=10)
+     ax1.set_ylabel('Market Share (%)', fontsize=10)
     
-    # Enhanced legend
+    # Legend with WSP values
      legend_labels = [f'{company} (WSP: ₹{company_wsps[company]:.0f})'
                     for company in sorted_companies]
-     ax1.legend(legend_labels, bbox_to_anchor=(1.35, 1),
-              loc='upper left', fontsize=9,
-              title='Companies with WSP',
-              title_fontsize=10,
-              frameon=True,
-              edgecolor='#666666')
+     ax1.legend(legend_labels, bbox_to_anchor=(1.25, 0.8),
+              loc='upper left', fontsize=8)
     
     # Clear right axis
      ax2.set_yticks([])
     
-    # Move total market size box upward
+    # Add total market size
      total_market_size = volume_df.sum().sum()
-     plt.figtext(0.5, -0.01,
-                f'Total Market Size: {total_market_size:,.0f}',
+     plt.figtext(0.5, -0.02, f'Total Market Size: {total_market_size:,.0f}',
                 ha='center', va='center',
-                bbox=dict(
-                    facecolor='#f0f0f0',
-                    edgecolor='#666666',
-                    boxstyle='round,pad=1.5',
-                    alpha=0.95
-                ),
-                fontsize=14,
-                fontweight='bold')
+                bbox=dict(facecolor='#f0f0f0', edgecolor='gray',
+                         boxstyle='round,pad=0.5'),
+                fontsize=10)
     
-    # Style adjustments
-     ax1.grid(True, alpha=0.3)
-     ax1.set_axisbelow(True)
-    
-    # Adjust layout with more space on right
+    # Adjust layout
      plt.tight_layout()
-     plt.subplots_adjust(right=0.75, bottom=0.15, top=0.9)
+     plt.subplots_adjust(right=0.85, bottom=0.15)
     
      return fig
     @st.cache_data
