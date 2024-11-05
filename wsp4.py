@@ -6988,7 +6988,7 @@ def market_share():
      x_labels = [f'₹{interval.left:.0f}-{interval.right:.0f}'
                 for interval in share_df.index]
      ax1.set_xticks(range(len(x_labels)))
-     ax1.set_xticklabels(x_labels, ha='centre')
+     ax1.set_xticklabels(x_labels, ha='center')
     
     # Enhanced titles with better spacing and styling
      plt.suptitle('Market Share Distribution by Price Range',
