@@ -7090,7 +7090,7 @@ def market_share():
         for i, share in enumerate(company_shares):
             ax.annotate(f'{share:.1f}%', 
                       (i, share),
-                      xytext=(0, 10),
+                      xytext=(0, 0),
                       textcoords='offset points',
                       ha='center',
                       va='bottom',
@@ -7104,7 +7104,7 @@ def market_share():
             arrow_symbol = '↑' if change > 0 else '↓'
             ax.annotate(f'{arrow_symbol}{abs(change):.1f}%',
                       (mid_x, mid_y),
-                      xytext=(0, 15 if i % 2 == 0 else -15),
+                      xytext=(0, 0 if i % 2 == 0 else -15),
                       textcoords='offset points',
                       ha='center',
                       va='center',
