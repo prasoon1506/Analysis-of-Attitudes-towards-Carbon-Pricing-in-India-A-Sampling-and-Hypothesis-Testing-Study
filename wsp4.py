@@ -6981,7 +6981,7 @@ def market_share():
                 va='center', ha='left',
                 color=color,
                 fontsize=10,
-                fontweight='BOLD')
+                fontweight='bold')
     
     # Enhanced axes formatting
      x_labels = [f'₹{interval.left:.0f}-{interval.right:.0f}'
