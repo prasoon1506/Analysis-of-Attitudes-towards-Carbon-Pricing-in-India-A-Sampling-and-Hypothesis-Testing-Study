@@ -6910,7 +6910,7 @@ def market_share():
      share_df = share_df[sorted_companies]
      volume_df = volume_df[sorted_companies]
     
-    # Create figure with more height for decorative elements
+    # Create figure
      fig, ax1 = plt.subplots(figsize=(12, 10), dpi=100)
      ax2 = ax1.twinx()
     
@@ -6940,7 +6940,7 @@ def market_share():
         
         bottom += values
     
-    # Add total share labels with decorative boxes
+    # Add total share labels
      for i, total in enumerate(bottom):
         if total > 0:
             ax1.text(i, total + 2, f'Total\n{total:.1f}%',
@@ -6954,59 +6954,43 @@ def market_share():
                     fontsize=10,
                     fontweight='bold')
     
-    # Create volume brackets and sum labels
-     from matplotlib.patches import PathPatch
-     from matplotlib.path import Path
-    
-     def create_bracket(x, y1, y2, width=0.5, pad=0.1):
-        """Create a decorative bracket path"""
-        vertices = [
-            (x, y1),  # Start
-            (x + width/3, y1),  # First horizontal
-            (x + width/2, y1),  # First curve
-            (x + width, (y1 + y2)/2),  # Middle point
-            (x + width/2, y2),  # Second curve
-            (x + width/3, y2),  # Second horizontal
-            (x, y2)  # End
-        ]
-        codes = [Path.MOVETO] + [Path.CURVE4] * 6
-        return Path(vertices, codes)
-
-    # Group volumes by price range
+    # Group volumes by price range and create elegant connectors
      for i in range(len(share_df)):
         range_volumes = [(vol, y_pos) for vol, y_pos, _, x_pos in volume_positions if x_pos == i]
         if range_volumes:
             y_positions = [y_pos for _, y_pos in range_volumes]
             total_volume = sum(vol for vol, _ in range_volumes)
             
-            # Create and add bracket
-            bracket = create_bracket(
-                len(share_df) - 0.1,  # X position
-                min(y_positions) - 0.5,  # Bottom Y
-                max(y_positions) + 0.5   # Top Y
-            )
-            patch = PathPatch(bracket, facecolor='none', edgecolor='#666666', lw=1.5)
-            ax1.add_patch(patch)
+            # Draw vertical line to connect all dashed lines
+            if len(range_volumes) > 1:
+                ax1.vlines(x=len(share_df) - 0.15,
+                          ymin=min(y_positions),
+                          ymax=max(y_positions),
+                          color='#666666',
+                          linestyle='-',
+                          linewidth=1.5,
+                          alpha=0.7)
             
-            # Add total volume label with decorative box
-            ax2.text(1.15, (max(y_positions) + min(y_positions))/2,
-                    f'{total_volume:,.0f}',
+            # Add total volume label with subtle highlight
+            ax2.text(1.05, (max(y_positions) + min(y_positions))/2,
+                    f'Σ {total_volume:,.0f}',
                     transform=ax1.get_yaxis_transform(),
                     va='center', ha='left',
                     bbox=dict(
                         facecolor='#f8f9fa',
                         edgecolor='#666666',
                         boxstyle='round,pad=0.3',
-                        alpha=0.9
+                        alpha=0.8
                     ),
                     fontsize=9,
                     fontweight='bold')
     
-    # Add dashed lines for volumes
+    # Add dashed lines for volumes with improved spacing
      for vol, y_pos, color, x_pos in volume_positions:
         ax1.hlines(y=y_pos, xmin=x_pos, xmax=len(share_df)-0.2,
                   colors=color, linestyles='--', alpha=0.5)
         
+        # Individual volume labels closer to the lines
         ax2.text(1.02, y_pos, f'{vol:,.0f}',
                 transform=ax1.get_yaxis_transform(),
                 va='center', ha='left', color=color, fontsize=8)
@@ -7039,9 +7023,9 @@ def market_share():
     # Clear right axis
      ax2.set_yticks([])
     
-    # Enhanced total market size box
+    # Move total market size box upward and enhance its style
      total_market_size = volume_df.sum().sum()
-     plt.figtext(0.5, -0.15,
+     plt.figtext(0.5, -0.05,  # Changed from -0.15 to -0.05
                 f'Total Market Size: {total_market_size:,.0f}',
                 ha='center', va='center',
                 bbox=dict(
@@ -7058,7 +7042,7 @@ def market_share():
      ax1.set_axisbelow(True)
     
      plt.tight_layout()
-     plt.subplots_adjust(right=0.8, bottom=0.2, top=0.9)
+     plt.subplots_adjust(right=0.8, bottom=0.15, top=0.9)  # Adjusted bottom margin
     
      return fig
     @st.cache_data
