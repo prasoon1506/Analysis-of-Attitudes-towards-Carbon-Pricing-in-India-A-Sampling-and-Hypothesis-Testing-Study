@@ -7028,7 +7028,7 @@ def market_share():
     
     # Enhanced total market size box
      total_market_size = volume_df.sum().sum()
-     plt.(0.40, 1.05,
+     plt.figtext(0.40, 1.05,
                 f'Total Market Size: {total_market_size:,.0f} MT',
                 ha='center', va='center',
                 bbox=dict(facecolor='#f8f9fa',
