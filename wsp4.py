@@ -6875,23 +6875,19 @@ def market_share():
         'figure.facecolor': 'white',
         'axes.facecolor': 'white',
         'grid.alpha': 0.3,
-        # Add explicit DPI setting
         'figure.dpi': 100
     })
     
-    # Include volume data in the month_data DataFrame
+    # Data preparation (same as before)
      month_data = df[['Company', f'Share_{month}', f'WSP_{month}', f'Vol_{month}']].copy()
      month_data.columns = ['Company', 'Share', 'WSP', 'Volume']
     
-    # Calculate price ranges with larger intervals to reduce number of bars
-     min_price = (month_data['WSP'].min() // 10) * 10  # Changed from 5 to 10
+     min_price = (month_data['WSP'].min() // 10) * 10
      max_price = (month_data['WSP'].max() // 10 + 1) * 10
-     price_ranges = pd.interval_range(start=min_price, end=max_price, freq=10)  # Changed from 5 to 10
+     price_ranges = pd.interval_range(start=min_price, end=max_price, freq=10)
     
-    # Create price range column
      month_data['Price_Range'] = pd.cut(month_data['WSP'], bins=price_ranges)
     
-    # Create pivot table
      pivot_df = pd.pivot_table(
         month_data,
         values=['Share', 'Volume'],
@@ -6901,25 +6897,21 @@ def market_share():
         fill_value=0
     )
     
-    # Separate share and volume data
      share_df = pivot_df['Share']
      volume_df = pivot_df['Volume']
     
-    # Remove zero columns
      share_df = share_df.loc[:, (share_df != 0).any(axis=0)]
      volume_df = volume_df.loc[:, (volume_df != 0).any(axis=0)]
     
-    # Get WSP for each company and sort
      company_wsps = {company: month_data[month_data['Company'] == company]['WSP'].iloc[0]
                    for company in share_df.columns}
      sorted_companies = sorted(company_wsps.keys(), key=lambda x: company_wsps[x])
     
-    # Reorder columns
      share_df = share_df[sorted_companies]
      volume_df = volume_df[sorted_companies]
     
-    # Create fixed-size figure
-     fig, ax1 = plt.subplots(figsize=(12, 8), dpi=100)  # Fixed size and DPI
+    # Create figure with more height for decorative elements
+     fig, ax1 = plt.subplots(figsize=(12, 10), dpi=100)
      ax2 = ax1.twinx()
     
     # Plot stacked bars
@@ -6937,26 +6929,84 @@ def market_share():
         # Add labels and collect volume positions
         for i, v in enumerate(values):
             if v > 0:
-                # Calculate center of each bar segment
                 center = bottom[i] + v/2
-                if v > 1:  # Only show percentage if > 1%
+                if v > 1:
                     ax1.text(i, center, f'{v:.1f}%',
                             ha='center', va='center', fontsize=8)
                 
-                # Store volume position if volume exists
                 vol = volume_df.loc[share_df.index[i], company]
                 if vol > 0:
                     volume_positions.append((vol, center, get_company_color(company), i))
         
         bottom += values
     
-    # Add dashed lines and volume labels
+    # Add total share labels with decorative boxes
+     for i, total in enumerate(bottom):
+        if total > 0:
+            ax1.text(i, total + 2, f'Total\n{total:.1f}%',
+                    ha='center', va='bottom',
+                    bbox=dict(
+                        facecolor='white',
+                        edgecolor='#666666',
+                        boxstyle='round,pad=0.5',
+                        alpha=0.9
+                    ),
+                    fontsize=10,
+                    fontweight='bold')
+    
+    # Create volume brackets and sum labels
+     from matplotlib.patches import PathPatch
+     from matplotlib.path import Path
+    
+     def create_bracket(x, y1, y2, width=0.5, pad=0.1):
+        """Create a decorative bracket path"""
+        vertices = [
+            (x, y1),  # Start
+            (x + width/3, y1),  # First horizontal
+            (x + width/2, y1),  # First curve
+            (x + width, (y1 + y2)/2),  # Middle point
+            (x + width/2, y2),  # Second curve
+            (x + width/3, y2),  # Second horizontal
+            (x, y2)  # End
+        ]
+        codes = [Path.MOVETO] + [Path.CURVE4] * 6
+        return Path(vertices, codes)
+
+    # Group volumes by price range
+     for i in range(len(share_df)):
+        range_volumes = [(vol, y_pos) for vol, y_pos, _, x_pos in volume_positions if x_pos == i]
+        if range_volumes:
+            y_positions = [y_pos for _, y_pos in range_volumes]
+            total_volume = sum(vol for vol, _ in range_volumes)
+            
+            # Create and add bracket
+            bracket = create_bracket(
+                len(share_df) - 0.1,  # X position
+                min(y_positions) - 0.5,  # Bottom Y
+                max(y_positions) + 0.5   # Top Y
+            )
+            patch = PathPatch(bracket, facecolor='none', edgecolor='#666666', lw=1.5)
+            ax1.add_patch(patch)
+            
+            # Add total volume label with decorative box
+            ax2.text(1.15, (max(y_positions) + min(y_positions))/2,
+                    f'{total_volume:,.0f}',
+                    transform=ax1.get_yaxis_transform(),
+                    va='center', ha='left',
+                    bbox=dict(
+                        facecolor='#f8f9fa',
+                        edgecolor='#666666',
+                        boxstyle='round,pad=0.3',
+                        alpha=0.9
+                    ),
+                    fontsize=9,
+                    fontweight='bold')
+    
+    # Add dashed lines for volumes
      for vol, y_pos, color, x_pos in volume_positions:
-        # Add dashed line
         ax1.hlines(y=y_pos, xmin=x_pos, xmax=len(share_df)-0.2,
                   colors=color, linestyles='--', alpha=0.5)
         
-        # Add volume label
         ax2.text(1.02, y_pos, f'{vol:,.0f}',
                 transform=ax1.get_yaxis_transform(),
                 va='center', ha='left', color=color, fontsize=8)
@@ -6967,35 +7017,48 @@ def market_share():
      ax1.set_xticks(range(len(x_labels)))
      ax1.set_xticklabels(x_labels, rotation=45, ha='right')
     
-    # Titles
+    # Enhanced titles
      plt.suptitle('Market Share Distribution by Price Range',
-                fontsize=14, y=1.02)
-     plt.title(f'{month.capitalize()}', fontsize=12, pad=10)
+                fontsize=16, y=1.02, fontweight='bold')
+     plt.title(f'{month.capitalize()}',
+             fontsize=14, pad=15)
     
-    # Labels
-     ax1.set_xlabel('WSP Price Range (₹)', fontsize=10)
-     ax1.set_ylabel('Market Share (%)', fontsize=10)
+     ax1.set_xlabel('WSP Price Range (₹)', fontsize=12, fontweight='bold')
+     ax1.set_ylabel('Market Share (%)', fontsize=12, fontweight='bold')
     
-    # Legend with WSP values
+    # Enhanced legend
      legend_labels = [f'{company} (WSP: ₹{company_wsps[company]:.0f})'
                     for company in sorted_companies]
-     ax1.legend(legend_labels, bbox_to_anchor=(1.25, 1),
-              loc='upper left', fontsize=8)
+     ax1.legend(legend_labels, bbox_to_anchor=(1.35, 1),
+              loc='upper left', fontsize=9,
+              title='Companies with WSP',
+              title_fontsize=10,
+              frameon=True,
+              edgecolor='#666666')
     
     # Clear right axis
      ax2.set_yticks([])
     
-    # Add total market size
+    # Enhanced total market size box
      total_market_size = volume_df.sum().sum()
-     plt.figtext(0.5, -0.1, f'Total Market Size: {total_market_size:,.0f}',
+     plt.figtext(0.5, -0.15,
+                f'Total Market Size: {total_market_size:,.0f}',
                 ha='center', va='center',
-                bbox=dict(facecolor='#f0f0f0', edgecolor='gray',
-                         boxstyle='round,pad=0.5'),
-                fontsize=10)
+                bbox=dict(
+                    facecolor='#f0f0f0',
+                    edgecolor='#666666',
+                    boxstyle='round,pad=1.5',
+                    alpha=0.95
+                ),
+                fontsize=14,
+                fontweight='bold')
     
-    # Adjust layout
+    # Style adjustments
+     ax1.grid(True, alpha=0.3)
+     ax1.set_axisbelow(True)
+    
      plt.tight_layout()
-     plt.subplots_adjust(right=0.85, bottom=0.15)
+     plt.subplots_adjust(right=0.8, bottom=0.2, top=0.9)
     
      return fig
     @st.cache_data
