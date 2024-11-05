@@ -6866,7 +6866,34 @@ def market_share():
      return sorted_months
     @st.cache_data
     def create_share_plot(df, month):
-    # Set modern style with improved aesthetics
+     def adjust_label_positions(positions, min_gap=15):
+        """
+        Adjust only the label end positions while keeping original line start positions
+        positions: list of (volume, original_y, color, x_pos) tuples
+        Returns: list of (volume, line_start_y, label_y, color, x_pos) tuples
+        """
+        if not positions:
+            return positions
+        
+        # Sort positions by original y-coordinate
+        positions = sorted(positions, key=lambda x: x[1])
+        
+        adjusted = []
+        current_label_y = positions[0][1]  # Start with first label at original position
+        
+        for vol, original_y, color, x_pos in positions:
+            # If this label would overlap with the previous one
+            if adjusted and current_label_y + min_gap > original_y:
+                # Move this label up, keeping track of the highest position
+                current_label_y += min_gap
+            else:
+                current_label_y = original_y
+            
+            # Store both original y (for line start) and adjusted y (for label)
+            adjusted.append((vol, original_y, current_label_y, color, x_pos))
+        
+        return adjusted
+
      def check_overlap(y1, y2, height=10):  # height is the estimated text height in points
         return abs(y1 - y2) < height
      def adjust_positions(positions, min_gap=10):
@@ -6999,22 +7026,34 @@ def market_share():
                 ha='center', va='top',
                 fontsize=12,fontweight='bold',
                 color='#34495e')
-     adjusted_positions = adjust_positions(volume_positions, min_gap=15)
+     adjusted_positions = adjust_label_positions(volume_positions, min_gap=12)
     
     # Draw dashed lines and labels with adjusted positions
-     for vol, y_pos, color, x_pos in adjusted_positions:
-        # Draw dashed line from bar to adjusted label position
-        ax1.hlines(y=y_pos, xmin=x_pos, xmax=len(share_df)-0.15,
-                  colors=color, linestyles='--', alpha=0.4, linewidth=1)
+     for vol, line_y, label_y, color, x_pos in adjusted_positions:
+        # Start line from actual bar position
+        line_x = [x_pos, len(share_df)-0.15]
+        line_y_coords = [line_y, label_y]
         
-        # Add volume label at adjusted position
-        label = f'{vol:,.0f} MT'
-        ax2.text(1.02, y_pos, label,
+        # Draw dashed line with bend if needed
+        if abs(label_y - line_y) > 1:  # If there's a significant difference
+            # Add a point to create a horizontal segment
+            mid_x = x_pos + (line_x[1] - x_pos) * 0.7  # Bend point at 70% of the way
+            ax1.plot([x_pos, mid_x, line_x[1]], 
+                    [line_y, label_y, label_y],
+                    color=color, linestyle='--', alpha=0.4, linewidth=1)
+        else:
+            # Draw straight line if no significant adjustment was needed
+            ax1.plot(line_x, [line_y, line_y],
+                    color=color, linestyle='--', alpha=0.4, linewidth=1)
+        
+        # Add volume label
+        label = f'{vol:,.0f}'
+        ax2.text(1.02, label_y, label,
                 transform=ax1.get_yaxis_transform(),
                 va='center', ha='left',
                 color=color,
-                fontsize=10,
-                fontweight='bold',
+                fontsize=8,
+                fontweight='medium',
                 bbox=dict(facecolor='white',
                          edgecolor='none',
                          alpha=0.7,
@@ -7079,7 +7118,7 @@ def market_share():
     
     # Adjusted layout
      plt.tight_layout()
-     plt.subplots_adjust(right=0.82, bottom=0.2, top=0.88)
+     plt.subplots_adjust(right=0.80, bottom=0.2, top=0.88)
     
      return fig
     @st.cache_data
