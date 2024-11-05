@@ -6866,11 +6866,11 @@ def market_share():
      return sorted_months
     @st.cache_data
     def create_share_plot(df, month):
-     def adjust_label_positions(positions, min_gap=15):
+     def adjust_label_positions(positions, y_max, min_gap=12):
         """
-        Adjust only the label end positions while keeping original line start positions
+        Adjust label positions while respecting the plot's y-axis scale
         positions: list of (volume, original_y, color, x_pos) tuples
-        Returns: list of (volume, line_start_y, label_y, color, x_pos) tuples
+        y_max: maximum y value of the plot
         """
         if not positions:
             return positions
@@ -6878,22 +6878,34 @@ def market_share():
         # Sort positions by original y-coordinate
         positions = sorted(positions, key=lambda x: x[1])
         
+        # Calculate the available space for labels
+        y_range = y_max * 0.9  # Use 90% of the plot height for labels
+        
+        # Calculate optimal gap based on number of labels and available space
+        n_labels = len(positions)
+        optimal_gap = min(min_gap, y_range / (n_labels + 1))
+        
         adjusted = []
-        current_label_y = positions[0][1]  # Start with first label at original position
+        used_positions = set()
         
         for vol, original_y, color, x_pos in positions:
-            # If this label would overlap with the previous one
-            if adjusted and current_label_y + min_gap > original_y:
-                # Move this label up, keeping track of the highest position
-                current_label_y += min_gap
-            else:
-                current_label_y = original_y
+            # Try to keep label close to original position if possible
+            label_y = original_y
             
-            # Store both original y (for line start) and adjusted y (for label)
-            adjusted.append((vol, original_y, current_label_y, color, x_pos))
+            # Check for overlap with existing labels
+            while any(abs(label_y - used_y) < optimal_gap for used_y in used_positions):
+                label_y += optimal_gap
+                
+                # If we've gone too high, try positioning below
+                if label_y > y_range:
+                    label_y = original_y
+                    while any(abs(label_y - used_y) < optimal_gap for used_y in used_positions):
+                        label_y -= optimal_gap
+            
+            used_positions.add(label_y)
+            adjusted.append((vol, original_y, label_y, color, x_pos))
         
         return adjusted
-
      def check_overlap(y1, y2, height=10):  # height is the estimated text height in points
         return abs(y1 - y2) < height
      def adjust_positions(positions, min_gap=10):
@@ -7011,10 +7023,13 @@ def market_share():
                     volume_positions.append((vol, center, get_company_color(company), i))
         
         bottom += values
+     max_total_share = total_shares.max()
+     y_max = max_total_share * 1.15  # Add 15% padding
+     ax1.set_ylim(0, y_max)
     
     # Add total share labels at the top of each stacked bar
      for i, total in enumerate(total_shares):
-        ax1.text(i, total + 0.0000001, f'Total: {total:.1f}%',
+        ax1.text(i, total + (y_max * 0.02), f'Total: {total:.1f}%',
                 ha='center', va='bottom',
                 fontsize=12,
                 fontweight='bold',
@@ -7026,27 +7041,21 @@ def market_share():
                 ha='center', va='top',
                 fontsize=12,fontweight='bold',
                 color='#34495e')
-     adjusted_positions = adjust_label_positions(volume_positions, min_gap=12)
+     adjusted_positions = adjust_label_positions(volume_positions, y_max)
     
     # Draw dashed lines and labels with adjusted positions
      for vol, line_y, label_y, color, x_pos in adjusted_positions:
-        # Start line from actual bar position
-        line_x = [x_pos, len(share_df)]
-        line_y_coords = [line_y, label_y]
-        
-        # Draw dashed line with bend if needed
-        if abs(label_y - line_y) > 1:  # If there's a significant difference
-            # Add a point to create a horizontal segment
-            mid_x = x_pos + (line_x[1] - x_pos) * 0.7  # Bend point at 70% of the way
-            ax1.plot([x_pos, mid_x, line_x[1]], 
+        # Draw the connecting lines
+        if abs(label_y - line_y) > 0.5:  # If there's a significant difference
+            mid_x = x_pos + (len(share_df)-0.15 - x_pos) * 0.7
+            ax1.plot([x_pos, mid_x, len(share_df)-0.15], 
                     [line_y, label_y, label_y],
                     color=color, linestyle='--', alpha=0.4, linewidth=1)
         else:
-            # Draw straight line if no significant adjustment was needed
-            ax1.plot(line_x, [line_y, line_y],
+            ax1.plot([x_pos, len(share_df)-0.15], [line_y, line_y],
                     color=color, linestyle='--', alpha=0.4, linewidth=1)
         
-        # Add volume label
+        # Add volume label with background
         label = f'{vol:,.0f}'
         ax2.text(1.02, label_y, label,
                 transform=ax1.get_yaxis_transform(),
