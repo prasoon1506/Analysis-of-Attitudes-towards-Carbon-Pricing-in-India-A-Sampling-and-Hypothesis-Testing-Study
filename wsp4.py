@@ -6925,11 +6925,11 @@ def market_share():
     
     # Calculate scaling factor based on total height needed
      total_share = row_sums.sum()
-     max_height = 100  # Maximum desired height for the plot
+     max_height = 50  # Maximum desired height for the plot
      scale_factor = max_height / total_share
     
     # Calculate vertical spacing with scaling
-     spacing_factor = 0.1  # Reduced spacing between price range sections
+     spacing_factor = 0.01  # Reduced spacing between price range sections
      cumulative_height = 0
      section_heights = {}
     
