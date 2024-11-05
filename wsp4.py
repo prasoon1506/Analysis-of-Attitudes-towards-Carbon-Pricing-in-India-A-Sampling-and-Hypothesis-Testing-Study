@@ -6996,7 +6996,7 @@ def market_share():
      plt.title(f'{month.capitalize()}',
              fontsize=14,
              pad=15,
-             color='#34495e')
+             color='#34495e',y=0.95)
     
     # Enhanced axis labels
      ax1.set_xlabel('WSP Price Range (₹)',
@@ -7028,7 +7028,7 @@ def market_share():
     
     # Enhanced total market size box
      total_market_size = volume_df.sum().sum()
-     plt.figtext(0.40, 1.05,
+     plt.figtext(0.40, 0.90,
                 f'Total Market Size: {total_market_size:,.0f} MT',
                 ha='center', va='center',
                 bbox=dict(facecolor='#f8f9fa',
