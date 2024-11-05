@@ -6965,7 +6965,7 @@ def market_share():
     
     # Add total volume labels below x-axis
      for i, total_vol in enumerate(total_volumes):
-        ax1.text(i, -3, f'Vol: {total_vol:,.0f} MT',
+        ax1.text(i, -4, f'Vol: {total_vol:,.0f} MT',
                 ha='center', va='top',
                 fontsize=12,fontweight='bold',
                 color='#34495e')
