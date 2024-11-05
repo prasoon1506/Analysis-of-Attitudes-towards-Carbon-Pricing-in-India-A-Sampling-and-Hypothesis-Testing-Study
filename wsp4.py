@@ -6974,7 +6974,7 @@ def market_share():
     # Enhanced dashed lines and volume labels
      for vol, y_pos, color, x_pos in volume_positions:
         ax1.hlines(y=y_pos, xmin=x_pos, xmax=len(share_df),
-                  colors=color, linestyles='densely dashdotdotted', alpha=1, linewidth=1)
+                  colors=color, linestyles='--', alpha=1, linewidth=1)
         
         ax2.text(1.02, y_pos, f'{vol:,.0f} MT',
                 transform=ax1.get_yaxis_transform(),
