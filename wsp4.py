@@ -6933,11 +6933,14 @@ def market_share():
         cumulative_height += total + (total * spacing_factor)
     
     # Create plot with improved styling and twin axis
-     fig, ax1 = plt.subplots(figsize=(14, 10))  # Increased height to accommodate spacing
+     fig, ax1 = plt.subplots(figsize=(14, 10))
      ax2 = ax1.twinx()
     
     # Get colors for companies
      colors = [get_company_color(company) for company in sorted_companies]
+    
+    # Store volume positions for axis customization
+     volume_positions = []
     
     # Plot bars and volume lines for each price range section
      for price_range_idx, (price_range, shares) in enumerate(share_df.iterrows()):
@@ -6962,25 +6965,26 @@ def market_share():
                             va='center',
                             fontsize=9)
                 
-                # Add volume line and label if volume exists
+                # Add volume line if volume exists
                 volume = volume_df.loc[price_range, company]
                 if volume > 0:
+                    # Calculate vertical position for volume line
+                    volume_y_pos = y_offset + share/2
+                    
+                    # Store volume and its position
+                    volume_positions.append({
+                        'volume': volume,
+                        'y_pos': volume_y_pos,
+                        'color': get_company_color(company)
+                    })
+                    
                     # Draw horizontal dashed line
-                    line = ax2.hlines(y=volume,
+                    line = ax1.hlines(y=volume_y_pos,
                                     xmin=price_range_idx,
                                     xmax=len(share_df)-0.2,
                                     colors=get_company_color(company),
                                     linestyles='--',
                                     alpha=0.7)
-                    
-                    # Add volume label on the right side
-                    ax2.text(len(share_df)-0.1,
-                            volume,
-                            f'{volume:,.0f}',
-                            va='center',
-                            ha='left',
-                            fontweight='bold',
-                            color=get_company_color(company))
                 
                 y_offset += share
         
@@ -6999,6 +7003,23 @@ def market_share():
                             alpha=0.9,
                             pad=3,
                             boxstyle='round,pad=0.5'))
+    
+    # Customize right axis (ax2) to show volumes at specific positions
+     ax2.set_ylim(ax1.get_ylim())
+    # Remove default ticks and labels
+     ax2.set_yticks([])
+     ax2.set_yticklabels([])
+    
+    # Add custom volume labels at line positions
+     for pos in volume_positions:
+        ax2.text(1.02, pos['y_pos'],
+                f"{pos['volume']:,.0f}",
+                transform=ax2.transAxes,
+                va='center',
+                ha='left',
+                color=pos['color'],
+                fontweight='bold',
+                fontsize=10)
     
     # Titles and labels
      plt.suptitle(f'Market Share Distribution by Price Range',
@@ -7046,14 +7067,10 @@ def market_share():
      ax1.spines['left'].set_linewidth(0.5)
      ax1.spines['bottom'].set_linewidth(0.5)
     
-    # Style secondary axis
+    # Style secondary axis - remove all spines
      ax2.spines['top'].set_visible(False)
+     ax2.spines['right'].set_visible(False)
      ax2.spines['left'].set_visible(False)
-     ax2.spines['right'].set_linewidth(0.5)
-    
-    # Set y-axis limits
-     ax1.set_ylim(0, cumulative_height * 1.15)
-     ax2.set_ylim(0, volume_df.values.max() * 1.15)
     
     # Add total market size box below the graph
      total_market_size = volume_df.sum().sum()
@@ -7071,7 +7088,7 @@ def market_share():
                fontweight='bold')
     
      plt.margins(y=0.1)
-     plt.subplots_adjust(bottom=0.2, right=0.85)  # Adjusted right margin for volume labels
+     plt.subplots_adjust(bottom=0.2, right=0.85)
     
      return fig
     @st.cache_data
