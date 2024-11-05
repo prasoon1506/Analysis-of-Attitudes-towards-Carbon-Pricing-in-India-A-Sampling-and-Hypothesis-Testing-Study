@@ -6867,6 +6867,36 @@ def market_share():
     @st.cache_data
     def create_share_plot(df, month):
     # Set modern style with improved aesthetics
+     def check_overlap(y1, y2, height=10):  # height is the estimated text height in points
+        return abs(y1 - y2) < height
+     def adjust_positions(positions, min_gap=10):
+        """
+        Adjust y-positions of labels to prevent overlap
+        positions: list of (volume, original_y, color, x_pos) tuples
+        """
+        if not positions:
+            return positions
+        
+        # Sort positions by y-coordinate
+        positions = sorted(positions, key=lambda x: x[1])
+        
+        adjusted_positions = [positions[0]]  # Keep first position as is
+        
+        # Adjust subsequent positions if they overlap
+        for vol, y_pos, color, x_pos in positions[1:]:
+            prev_y = adjusted_positions[-1][1]
+            
+            # If current position overlaps with previous
+            if check_overlap(y_pos, prev_y):
+                # Place new label above the previous one with minimum gap
+                new_y = prev_y + min_gap
+            else:
+                new_y = y_pos
+                
+            adjusted_positions.append((vol, new_y, color, x_pos))
+        
+        return adjusted_positions
+
      plt.style.use('seaborn-v0_8-whitegrid')
      plt.rcParams.update({
         'font.family': 'sans-serif',
@@ -6969,18 +6999,26 @@ def market_share():
                 ha='center', va='top',
                 fontsize=12,fontweight='bold',
                 color='#34495e')
+     adjusted_positions = adjust_positions(volume_positions, min_gap=15)
     
-    # Enhanced dashed lines and volume labels
-     for vol, y_pos, color, x_pos in volume_positions:
-        ax1.hlines(y=y_pos, xmin=x_pos, xmax=len(share_df),
-                  colors=color, linestyles='--', alpha=1, linewidth=1)
+    # Draw dashed lines and labels with adjusted positions
+     for vol, y_pos, color, x_pos in adjusted_positions:
+        # Draw dashed line from bar to adjusted label position
+        ax1.hlines(y=y_pos, xmin=x_pos, xmax=len(share_df)-0.15,
+                  colors=color, linestyles='--', alpha=0.4, linewidth=1)
         
-        ax2.text(0.98, y_pos, f'{vol:,.0f} MT',
+        # Add volume label at adjusted position
+        label = f'{vol:,.0f} MT'
+        ax2.text(1.02, y_pos, label,
                 transform=ax1.get_yaxis_transform(),
                 va='center', ha='left',
                 color=color,
                 fontsize=10,
-                fontweight='bold')
+                fontweight='bold',
+                bbox=dict(facecolor='white',
+                         edgecolor='none',
+                         alpha=0.7,
+                         pad=1))
     
     # Enhanced axes formatting
      x_labels = [f'₹{interval.left:.0f}-{interval.right:.0f}'
