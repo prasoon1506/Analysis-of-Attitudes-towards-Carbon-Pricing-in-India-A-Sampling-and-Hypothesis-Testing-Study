@@ -6870,7 +6870,6 @@ def market_share():
      plt.style.use('seaborn-v0_8-whitegrid')
      plt.rcParams.update({
         'font.family': 'sans-serif',
-        'font.sans-serif': ['Arial', 'Helvetica'],
         'font.size': 10,
         'axes.labelweight': 'bold',
         'axes.titleweight': 'bold',
@@ -7029,13 +7028,13 @@ def market_share():
     
     # Enhanced total market size box
      total_market_size = volume_df.sum().sum()
-     plt.figtext(0.45, -0.008,
+     plt.(0.40, 1.05,
                 f'Total Market Size: {total_market_size:,.0f} MT',
                 ha='center', va='center',
                 bbox=dict(facecolor='#f8f9fa',
                          edgecolor='#bdc3c7',
                          boxstyle='round,pad=0.7',
-                         alpha=0.9),
+                         alpha=1),
                 fontsize=11,
                 fontweight='bold',
                 color='#2c3e50')
