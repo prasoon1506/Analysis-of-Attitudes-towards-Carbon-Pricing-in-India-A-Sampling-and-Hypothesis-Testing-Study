@@ -6884,7 +6884,7 @@ def market_share():
     # Calculate price ranges
      min_price = (month_data['WSP'].min() // 5) * 5
      max_price = (month_data['WSP'].max() // 5 + 1) * 5
-     price_ranges = pd.interval_range(start=min_price, end=max_price, freq=10)
+     price_ranges = pd.interval_range(start=min_price, end=max_price, freq=5)
     
     # Create price range column
      month_data['Price_Range'] = pd.cut(month_data['WSP'], bins=price_ranges)
@@ -6923,28 +6923,23 @@ def market_share():
     # Calculate total shares for each price range
      row_sums = share_df.sum(axis=1)
     
-    # Calculate scaling factor based on total height needed
-     total_share = row_sums.sum()
-     max_height = 50  # Maximum desired height for the plot
-     scale_factor = max_height / total_share
-    
-    # Calculate vertical spacing with scaling
-     spacing_factor = 0.01  # Reduced spacing between price range sections
+    # Calculate vertical spacing
+     spacing_factor = 0.2  # Adjustable spacing between price range sections
      cumulative_height = 0
      section_heights = {}
     
      for idx, total in row_sums.items():
-        section_heights[idx] = cumulative_height * scale_factor
+        section_heights[idx] = cumulative_height
         cumulative_height += total + (total * spacing_factor)
     
     # Create plot with improved styling and twin axis
-     fig, ax1 = plt.subplots(figsize=(5, 4))
+     fig, ax1 = plt.subplots(figsize=(14, 10))
      ax2 = ax1.twinx()
     
     # Get colors for companies
      colors = [get_company_color(company) for company in sorted_companies]
     
-    # Store volume positions for axis customization
+    # Store volume values and their y-positions for the right axis
      volume_positions = []
     
     # Plot bars and volume lines for each price range section
@@ -6955,9 +6950,8 @@ def market_share():
         # Plot stacked bars for this price range
         for company_idx, (company, share) in enumerate(shares.items()):
             if share > 0:
-                scaled_share = share * scale_factor
                 ax1.bar(price_range_idx, 
-                       scaled_share, 
+                       share, 
                        bottom=y_offset,
                        color=get_company_color(company),
                        width=0.8)
@@ -6965,40 +6959,34 @@ def market_share():
                 # Add share percentage label
                 if share > 1:
                     ax1.text(price_range_idx, 
-                            y_offset + scaled_share/2,
+                            y_offset + share/2,
                             f'{share:.1f}%',
                             ha='center',
                             va='center',
                             fontsize=9)
                 
-                # Add volume line if volume exists
+                # Add volume line and store position if volume exists
                 volume = volume_df.loc[price_range, company]
                 if volume > 0:
-                    # Calculate vertical position for volume line
-                    volume_y_pos = y_offset + scaled_share/2
+                    # Calculate the y-position in data coordinates
+                    y_pos = y_offset + share/2
+                    volume_positions.append((volume, y_pos, get_company_color(company)))
                     
-                    # Store volume and its position
-                    volume_positions.append({
-                        'volume': volume,
-                        'y_pos': volume_y_pos,
-                        'color': get_company_color(company)
-                    })
-                    
-                    # Draw horizontal dashed line
-                    line = ax1.hlines(y=volume_y_pos,
+                    # Draw horizontal dashed line from bar center to right edge
+                    line = ax1.hlines(y=y_pos,
                                     xmin=price_range_idx,
                                     xmax=len(share_df)-0.2,
                                     colors=get_company_color(company),
                                     linestyles='--',
                                     alpha=0.7)
                 
-                y_offset += scaled_share
+                y_offset += share
         
         # Add total label for this price range
         total = row_sums[price_range]
         if total > 0:
             ax1.text(price_range_idx,
-                    base_height + (total * scale_factor) + (total * scale_factor * spacing_factor * 0.5),
+                    base_height + total + (total * spacing_factor * 0.5),
                     f'Total: {total:.1f}%',
                     ha='center',
                     va='bottom',
@@ -7010,22 +6998,24 @@ def market_share():
                             pad=3,
                             boxstyle='round,pad=0.5'))
     
-    # Customize right axis (ax2) to show volumes at specific positions
-     ax2.set_ylim(ax1.get_ylim())
-     # Remove default ticks and labels
+    # Clear the right axis ticks and labels
      ax2.set_yticks([])
      ax2.set_yticklabels([])
     
-    # Add custom volume labels at line positions
-     for pos in volume_positions:
-        ax2.text(1.02, pos['y_pos'],
-                f"{pos['volume']:,.0f}",
+    # Add volume labels on the right side
+     for volume, y_pos, color in volume_positions:
+        # Convert data coordinates to axes coordinates for consistent positioning
+        _, y = ax1.transData.transform((0, y_pos))
+        _, y_norm = ax1.transAxes.inverted().transform((0, y))
+        
+        ax2.text(1.02, 
+                y_norm,
+                f'{volume:,.0f}',
                 transform=ax2.transAxes,
                 va='center',
                 ha='left',
-                color=pos['color'],
                 fontweight='bold',
-                fontsize=10)
+                color=color)
     
     # Titles and labels
      plt.suptitle(f'Market Share Distribution by Price Range',
@@ -7045,7 +7035,7 @@ def market_share():
         return f'₹{interval.left:.0f}-{interval.right:.0f}'
     
      x_labels = [format_interval(interval) for interval in share_df.index]
-     ax1.set_xticklabels(x_labels, ha='right')
+     ax1.set_xticklabels(x_labels, rotation=45, ha='right')
     
     # Create legend
      legend_labels = [f'{company} (WSP: ₹{company_wsps[company]:.0f})'
@@ -7073,10 +7063,13 @@ def market_share():
      ax1.spines['left'].set_linewidth(0.5)
      ax1.spines['bottom'].set_linewidth(0.5)
     
-    # Style secondary axis - remove all spines
+    # Style secondary axis
      ax2.spines['top'].set_visible(False)
-     ax2.spines['right'].set_visible(False)
      ax2.spines['left'].set_visible(False)
+     ax2.spines['right'].set_linewidth(0.5)
+    
+    # Set primary axis limits
+     ax1.set_ylim(0, cumulative_height * 1.15)
     
     # Add total market size box below the graph
      total_market_size = volume_df.sum().sum()
