@@ -6975,7 +6975,7 @@ def market_share():
         ax1.hlines(y=y_pos, xmin=x_pos, xmax=len(share_df),
                   colors=color, linestyles='--', alpha=1, linewidth=1)
         
-        ax2.text(1.02, y_pos, f'{vol:,.0f} MT',
+        ax2.text(0.98, y_pos, f'{vol:,.0f} MT',
                 transform=ax1.get_yaxis_transform(),
                 va='center', ha='left',
                 color=color,
@@ -6996,7 +6996,7 @@ def market_share():
      plt.title(f'{month.capitalize()}',
              fontsize=14,
              pad=15,
-             color='#34495e',y=1.05)
+             color='#34495e',y=1.11)
     
     # Enhanced axis labels
      ax1.set_xlabel('WSP Price Range (₹)',
@@ -7017,7 +7017,7 @@ def market_share():
                        fontsize=9,
                        frameon=True,
                        facecolor='white',
-                       edgecolor='#dddddd',
+                       edgecolor='brown',
                        title='Companies',
                        title_fontsize=10,
                        borderpad=1)
@@ -7028,7 +7028,7 @@ def market_share():
     
     # Enhanced total market size box
      total_market_size = volume_df.sum().sum()
-     plt.figtext(0.50, 0.925,
+     plt.figtext(0.45, 0.925,
                 f'Total Market Size: {total_market_size:,.0f} MT',
                 ha='center', va='center',
                 bbox=dict(facecolor='#f8f9fa',
