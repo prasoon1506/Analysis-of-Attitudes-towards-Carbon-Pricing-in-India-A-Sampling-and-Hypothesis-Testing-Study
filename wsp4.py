@@ -7025,7 +7025,7 @@ def market_share():
     
     # Move total market size box upward and enhance its style
      total_market_size = volume_df.sum().sum()
-     plt.figtext(0.5, -0.05,  # Changed from -0.15 to -0.05
+     plt.figtext(0.5, -0.02,  # Changed from -0.15 to -0.05
                 f'Total Market Size: {total_market_size:,.0f}',
                 ha='center', va='center',
                 bbox=dict(
