@@ -7031,7 +7031,7 @@ def market_share():
     # Draw dashed lines and labels with adjusted positions
      for vol, line_y, label_y, color, x_pos in adjusted_positions:
         # Start line from actual bar position
-        line_x = [x_pos, len(share_df)-0.15]
+        line_x = [x_pos, len(share_df)]
         line_y_coords = [line_y, label_y]
         
         # Draw dashed line with bend if needed
@@ -7118,7 +7118,7 @@ def market_share():
     
     # Adjusted layout
      plt.tight_layout()
-     plt.subplots_adjust(right=0.80, bottom=0.2, top=0.88)
+     plt.subplots_adjust(right=0.82, bottom=0.2, top=0.88)
     
      return fig
     @st.cache_data
