@@ -6958,7 +6958,7 @@ def market_share():
     
     # Add total share labels at the top of each stacked bar
      for i, total in enumerate(total_shares):
-        ax1.text(i, total + 1, f'Total: {total:.1f}%',
+        ax1.text(i, total + 0.0001, f'Total: {total:.1f}%',
                 ha='center', va='bottom',
                 fontsize=9,
                 fontweight='bold',
@@ -6975,7 +6975,7 @@ def market_share():
     # Enhanced dashed lines and volume labels
      for vol, y_pos, color, x_pos in volume_positions:
         ax1.hlines(y=y_pos, xmin=x_pos, xmax=len(share_df)-0.15,
-                  colors=color, linestyles='--', alpha=0.4, linewidth=1)
+                  colors=color, linestyles='--', alpha=1, linewidth=1)
         
         ax2.text(1.02, y_pos, f'{vol:,.0f}',
                 transform=ax1.get_yaxis_transform(),
@@ -6988,7 +6988,7 @@ def market_share():
      x_labels = [f'₹{interval.left:.0f}-{interval.right:.0f}'
                 for interval in share_df.index]
      ax1.set_xticks(range(len(x_labels)))
-     ax1.set_xticklabels(x_labels, ha='right', rotation=45)
+     ax1.set_xticklabels(x_labels, ha='centre')
     
     # Enhanced titles with better spacing and styling
      plt.suptitle('Market Share Distribution by Price Range',
@@ -7023,15 +7023,15 @@ def market_share():
                        title='Companies',
                        title_fontsize=10,
                        borderpad=1)
-     legend.get_frame().set_alpha(0.9)
+     legend.get_frame().set_alpha(1)
     
     # Clear right axis
      ax2.set_yticks([])
     
     # Enhanced total market size box
      total_market_size = volume_df.sum().sum()
-     plt.figtext(0.5, -0.08,
-                f'Total Market Size: {total_market_size:,.0f}',
+     plt.figtext(0.5, -0.01,
+                f'Total Market Size: {total_market_size:,.0f}MT',
                 ha='center', va='center',
                 bbox=dict(facecolor='#f8f9fa',
                          edgecolor='#bdc3c7',
