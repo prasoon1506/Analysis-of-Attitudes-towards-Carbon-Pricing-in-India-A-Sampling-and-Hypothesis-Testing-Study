@@ -6943,7 +6943,7 @@ def market_share():
         for i, v in enumerate(values):
             if v > 0:
                 center = bottom[i] + v/2
-                if v > 1:  # Only show percentage if > 1%
+                if v > 0.2:  # Only show percentage if > 1%
                     ax1.text(i, center, f'{v:.1f}%',
                             ha='center', va='center', 
                             fontsize=8,
@@ -6958,9 +6958,9 @@ def market_share():
     
     # Add total share labels at the top of each stacked bar
      for i, total in enumerate(total_shares):
-        ax1.text(i, total + 0.0001, f'Total: {total:.1f}%',
+        ax1.text(i, total + 0.0000001, f'Total: {total:.1f}%',
                 ha='center', va='bottom',
-                fontsize=9,
+                fontsize=12,
                 fontweight='bold',
                 color='#2c3e50')
     
@@ -7029,8 +7029,8 @@ def market_share():
     
     # Enhanced total market size box
      total_market_size = volume_df.sum().sum()
-     plt.figtext(0.5, -0.01,
-                f'Total Market Size: {total_market_size:,.0f}MT',
+     plt.figtext(0.45, -0.008,
+                f'Total Market Size: {total_market_size:,.0f} MT',
                 ha='center', va='center',
                 bbox=dict(facecolor='#f8f9fa',
                          edgecolor='#bdc3c7',
