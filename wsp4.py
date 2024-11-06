@@ -4824,7 +4824,7 @@ def normal():
                                           (premium_share/100) * filtered_df[cols[1]])
             
             # Calculate difference between Premium and Normal
-            filtered_df['Difference'] = filtered_df[cols[0]] - filtered_df[cols[1]]
+            filtered_df['Difference'] = filtered_df[cols[1]] - filtered_df[cols[0]]
             
             # Calculate difference between Imaginary and Overall
             filtered_df['Imaginary vs Overall Difference'] = filtered_df[imaginary_col] - filtered_df[overall_col]
