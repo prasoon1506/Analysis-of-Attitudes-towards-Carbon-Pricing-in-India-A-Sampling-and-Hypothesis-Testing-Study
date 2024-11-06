@@ -6866,6 +6866,57 @@ def market_share():
      return sorted_months
     @st.cache_data
     def create_share_plot(df, month):
+     def cascade_label_positions(positions, y_max, min_gap=12):
+        """
+        Arrange labels in a cascading pattern from right to left
+        positions: list of (volume, original_y, color, x_pos) tuples
+        y_max: maximum y value of the plot
+        """
+        if not positions:
+            return positions
+        
+        # Group positions by x-coordinate (price range)
+        x_groups = {}
+        for vol, original_y, color, x_pos in positions:
+            if x_pos not in x_groups:
+                x_groups[x_pos] = []
+            x_groups[x_pos].append((vol, original_y, color, x_pos))
+        
+        # Sort x_positions from right to left
+        x_positions = sorted(x_groups.keys(), reverse=True)
+        
+        # Calculate available vertical space
+        y_range = y_max * 0.9  # Use 90% of plot height
+        min_allowed_y = y_max * 0.05
+        
+        # Calculate cascade parameters
+        total_price_ranges = len(x_positions)
+        height_per_range = y_range / total_price_ranges
+        
+        adjusted = []
+        for i, x_pos in enumerate(x_positions):
+            group = x_groups[x_pos]
+            n_labels = len(group)
+            
+            # Calculate vertical position range for this price band
+            top_y = y_range - (i * height_per_range)
+            bottom_y = top_y - height_per_range
+            
+            # Calculate gap between labels within this group
+            group_gap = min(min_gap, height_per_range / (n_labels + 1))
+            
+            # Sort companies within group by original y-position
+            group = sorted(group, key=lambda x: x[1])
+            
+            # Position labels evenly within their allocated vertical space
+            for j, (vol, original_y, color, x) in enumerate(group):
+                # Calculate label position from top to bottom within this band
+                label_y = top_y - ((j + 1) * group_gap)
+                label_y = max(label_y, min_allowed_y)  # Ensure minimum height
+                
+                adjusted.append((vol, original_y, label_y, color, x_pos))
+        
+        return adjusted
      def adjust_label_positions(positions, y_max, min_gap=12):
         """
         Adjust label positions while respecting the plot's y-axis scale
@@ -7036,28 +7087,23 @@ def market_share():
                 fontsize=12,
                 fontweight='bold',
                 color='#2c3e50')
-    
-    # Add total volume labels below x-axis
      for i, total_vol in enumerate(total_volumes):
         ax1.text(i, -4, f'Vol: {total_vol:,.0f} MT',
                 ha='center', va='top',
                 fontsize=12,fontweight='bold',
                 color='#34495e')
-     adjusted_positions = adjust_label_positions(volume_positions, y_max)
-    
-    # Draw dashed lines and labels with adjusted positions
+     adjusted_positions = cascade_label_positions(volume_positions, y_max)
      for vol, line_y, label_y, color, x_pos in adjusted_positions:
-        # Draw the connecting lines
-        if abs(label_y - line_y) > 0.5:  # If there's a significant difference
+        # Draw the connecting lines with curved style
+        if abs(label_y - line_y) > 0.5:
             mid_x = x_pos + (len(share_df)-0.15 - x_pos) * 0.7
+            # Use curved lines for a more polished look
             ax1.plot([x_pos, mid_x, len(share_df)-0.15], 
                     [line_y, label_y, label_y],
                     color=color, linestyle='--', alpha=1, linewidth=1)
         else:
             ax1.plot([x_pos, len(share_df)-0.15], [line_y, line_y],
                     color=color, linestyle='--', alpha=1, linewidth=1)
-        
-        # Add volume label with background
         label = f'{vol:,.0f} MT'
         ax2.text(0.98, label_y, label,
                 transform=ax1.get_yaxis_transform(),
@@ -7069,8 +7115,6 @@ def market_share():
                          edgecolor='none',
                          alpha=1,
                          pad=1))
-    
-    # Enhanced axes formatting
      x_labels = [f'₹{interval.left:.0f}-{interval.right:.0f}'
                 for interval in share_df.index]
      ax1.set_xticks(range(len(x_labels)))
