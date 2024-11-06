@@ -6828,7 +6828,6 @@ def market_share():
     COMPANY_COLORS = {}
     @st.cache_data
     def generate_distinct_color(existing_colors):
-    """Generate a new distinct color that's visually different from existing ones and not too light"""
      while True:
         # Get a new color
         if existing_colors:
