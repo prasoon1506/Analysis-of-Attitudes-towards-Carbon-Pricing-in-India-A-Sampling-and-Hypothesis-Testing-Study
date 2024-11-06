@@ -6970,7 +6970,7 @@ def market_share():
         
         adjusted = []
         used_positions = set()
-        min_allowed_y = y_max * 0.05
+        min_allowed_y = y_max * 0.0005
         for vol, original_y, color, x_pos in positions:
             # Try to keep label close to original position if possible
             label_y = max(original_y, min_allowed_y)
@@ -7159,7 +7159,7 @@ def market_share():
         
         # Add total volume label with nice formatting
         total_label = f'Total: {info["total_volume"]:,.0f} MT'
-        ax2.text(brace_x + 0.05, mid_y, total_label,
+        ax2.text(brace_x + 0.005, mid_y, total_label,
                 transform=ax1.get_yaxis_transform(),
                 va='center', ha='left',
                 color='#2c3e50',
