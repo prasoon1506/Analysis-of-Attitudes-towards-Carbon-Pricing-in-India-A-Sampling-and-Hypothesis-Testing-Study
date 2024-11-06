@@ -6917,66 +6917,62 @@ def market_share():
                     'bottom_y': min(group_positions)
                 }
         return adjusted, group_info
-     def draw_curly_brace(ax, x, y1, y2, width=0.05, direction='right'):
+     def draw_elegant_connector(ax, x, y1, y2):
         """
-        Draw a curly brace between two y-coordinates
+        Draw an elegant connector with smooth curves using Bezier paths
         """
-        # Calculate control points for the curly brace
         mid_y = (y1 + y2) / 2
-        curve_width = width * (y1 - y2)
+        width = 0.04  # Width of the connector
         
-        if direction == 'right':
-            # Define the curly brace path
-            path_data = [
-                # Top curl
-                (Path.MOVETO, (x, y1)),
-                (Path.CURVE4, (x + curve_width, y1)),
-                (Path.CURVE4, (x + curve_width, y1)),
-                (Path.CURVE4, (x + curve_width, y1 - curve_width)),
-                (Path.CURVE4, (x + curve_width, y1 - 2*curve_width)),
-                (Path.CURVE4, (x, y1 - 2*curve_width)),
-                (Path.CURVE4, (x, y1 - 2*curve_width)),
-                # Middle line
-                (Path.LINETO, (x, mid_y + curve_width)),
-                # Bottom curl
-                (Path.LINETO, (x, mid_y - curve_width)),
-                (Path.LINETO, (x, y2 + 2*curve_width)),
-                (Path.CURVE4, (x, y2 + 2*curve_width)),
-                (Path.CURVE4, (x + curve_width, y2 + 2*curve_width)),
-                (Path.CURVE4, (x + curve_width, y2 + curve_width)),
-                (Path.CURVE4, (x + curve_width, y2)),
-                (Path.CURVE4, (x + curve_width, y2)),
-                (Path.CURVE4, (x, y2))
-            ]
-        else:
-            # Mirror the path for left-facing brace
-            path_data = [
-                (Path.MOVETO, (x, y1)),
-                (Path.CURVE4, (x - curve_width, y1)),
-                (Path.CURVE4, (x - curve_width, y1)),
-                (Path.CURVE4, (x - curve_width, y1 - curve_width)),
-                (Path.CURVE4, (x - curve_width, y1 - 2*curve_width)),
-                (Path.CURVE4, (x, y1 - 2*curve_width)),
-                (Path.CURVE4, (x, y1 - 2*curve_width)),
-                (Path.LINETO, (x, mid_y + curve_width)),
-                (Path.LINETO, (x, mid_y - curve_width)),
-                (Path.LINETO, (x, y2 + 2*curve_width)),
-                (Path.CURVE4, (x, y2 + 2*curve_width)),
-                (Path.CURVE4, (x - curve_width, y2 + 2*curve_width)),
-                (Path.CURVE4, (x - curve_width, y2 + curve_width)),
-                (Path.CURVE4, (x - curve_width, y2)),
-                (Path.CURVE4, (x - curve_width, y2)),
-                (Path.CURVE4, (x, y2))
-            ]
+        # Calculate control points for the smooth curve
+        verts = [
+            (x, y1),  # Start point (top)
+            (x + width/3, y1),  # First control point
+            (x + width/2, y1),  # Second control point
+            (x + width, mid_y),  # Middle point
+            (x + width/2, y2),  # Fourth control point
+            (x + width/3, y2),  # Fifth control point
+            (x, y2),  # End point (bottom)
+        ]
+        
+        # Define the path codes
+        codes = [
+            Path.MOVETO,
+            Path.CURVE4,
+            Path.CURVE4,
+            Path.CURVE4,
+            Path.CURVE4,
+            Path.CURVE4,
+            Path.CURVE4,
+        ]
         
         # Create the path
-        codes, verts = zip(*path_data)
         path = Path(verts, codes)
         
-        # Draw the path
-        patch = PathPatch(path, facecolor='none', edgecolor='#2c3e50', lw=1.5)
+        # Create a patch from the path
+        patch = patches.PathPatch(
+            path,
+            facecolor='none',
+            edgecolor='#34495e',  # Darker blue-grey color
+            linewidth=2,
+            alpha=0.8,
+            capstyle='round',
+            joinstyle='round'
+        )
+        
+        # Add the patch to the axis
         ax.add_patch(patch)
         
+        # Add subtle end caps
+        cap_width = 0.01
+        for y in [y1, y2]:
+            line = Line2D([x - cap_width, x],
+                         [y, y],
+                         color='#34495e',
+                         linewidth=2,
+                         alpha=0.8,
+                         solid_capstyle='round')
+            ax.add_line(line)
         return mid_y
      def adjust_label_positions(positions, y_max, min_gap=12):
         """
@@ -7157,17 +7153,31 @@ def market_share():
     
     # Draw dashed lines and volume labels
      for vol, line_y, label_y, color, x_pos in adjusted_positions:
-        # Draw connecting lines (same as before)
+        # Draw connecting lines with smoother curves
         if abs(label_y - line_y) > 0.5:
             mid_x = x_pos + (len(share_df)-0.15 - x_pos) * 0.7
-            ax1.plot([x_pos, mid_x, len(share_df)-0.15], 
-                    [line_y, label_y, label_y],
-                    color=color, linestyle='--', alpha=1, linewidth=1)
+            # Use curved path instead of straight lines
+            curve_path = Path([
+                (x_pos, line_y),
+                (mid_x, line_y),
+                ((mid_x + len(share_df)-0.15)/2, (line_y + label_y)/2),
+                (len(share_df)-0.15, label_y)
+            ], [Path.MOVETO, Path.CURVE4, Path.CURVE4, Path.CURVE4])
+            
+            patch = patches.PathPatch(
+                curve_path,
+                facecolor='none',
+                edgecolor=color,
+                linestyle='--',
+                alpha=1,
+                linewidth=1
+            )
+            ax1.add_patch(patch)
         else:
             ax1.plot([x_pos, len(share_df)-0.15], [line_y, line_y],
                     color=color, linestyle='--', alpha=1, linewidth=1)
         
-        # Add individual volume labels
+        # Add individual volume labels with refined styling
         label = f'{vol:,.0f} MT'
         ax2.text(0.98, label_y, label,
                 transform=ax1.get_yaxis_transform(),
@@ -7180,27 +7190,27 @@ def market_share():
                          alpha=1,
                          pad=1))
     
-    # Draw curly braces and total volume labels for groups
+    # Draw elegant connectors and total volume labels for groups
      for x_pos, info in group_info.items():
-        # Draw curly brace
-        brace_x = 1.15  # Position after individual volume labels
-        mid_y = draw_curly_brace(ax2, brace_x, info['top_y'], info['bottom_y'], 
-                                width=0.02, direction='right')
+        # Draw elegant connector
+        connector_x = 1.15  # Position after individual volume labels
+        mid_y = draw_elegant_connector(ax2, connector_x, info['top_y'], info['bottom_y'])
         
-        # Add total volume label
+        # Add total volume label with refined styling
         total_label = f'Total: {info["total_volume"]:,.0f} MT'
-        ax2.text(brace_x + 0.05, mid_y, total_label,
+        ax2.text(connector_x + 0.06, mid_y, total_label,
                 transform=ax1.get_yaxis_transform(),
                 va='center', ha='left',
-                color='#2c3e50',
+                color='#34495e',
                 fontsize=11,
                 fontweight='bold',
                 bbox=dict(facecolor='white',
                          edgecolor='#bdc3c7',
-                         boxstyle='round,pad=0.5',
-                         alpha=0.9))
+                         boxstyle='round,pad=0.6',
+                         alpha=0.9,
+                         mutation_scale=0.8))  # Makes the round corners more subtle
     
-    # Adjust the right margin to accommodate the braces and labels
+    # Adjust the right margin to accommodate the connectors and labels
      plt.subplots_adjust(right=0.75)
      x_labels = [f'₹{interval.left:.0f}-{interval.right:.0f}'
                 for interval in share_df.index]
