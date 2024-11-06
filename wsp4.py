@@ -7048,7 +7048,7 @@ def market_share():
      month_data_with_price['Price_Range'] = pd.cut(month_data_with_price['WSP'], bins=price_ranges)
     
      pivot_df = pd.pivot_table(
-        month_data,
+        month_data_with_price,
         values=['Share', 'Volume'],
         index='Price_Range',
         columns='Company',
