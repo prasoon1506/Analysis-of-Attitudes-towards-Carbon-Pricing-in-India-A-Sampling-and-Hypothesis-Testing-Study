@@ -6887,7 +6887,7 @@ def market_share():
         
         # Calculate available vertical space
         y_range = y_max * 0.9  # Use 90% of plot height
-        min_allowed_y = y_max * 0.05
+        min_allowed_y = y_max * 0.001
         
         # Calculate cascade parameters
         total_price_ranges = len(x_positions)
