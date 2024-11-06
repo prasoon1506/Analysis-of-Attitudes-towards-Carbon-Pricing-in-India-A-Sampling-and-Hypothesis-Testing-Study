@@ -6868,6 +6868,38 @@ def market_share():
      return sorted_months
     @st.cache_data
     def create_share_plot(df, month):
+     from matplotlib.lines import Line2D
+     def draw_curly_brace(ax, x, y1, y2):
+        mid_y = (y1 + y2) / 2
+        width = 0.03
+        
+        # Calculate points for the brace
+        brace_points = [
+            # Top horizontal line
+            [x, y1],
+            [x + width, y1],
+            # Top curve
+            [x + width, y1],
+            [x + width, (y1 + mid_y)/2],
+            # Middle point
+            [x, mid_y],
+            # Bottom curve
+            [x + width, (mid_y + y2)/2],
+            [x + width, y2],
+            # Bottom horizontal line
+            [x + width, y2],
+            [x, y2]
+        ]
+        
+        # Draw the brace using line segments
+        for i in range(len(brace_points)-1):
+            line = Line2D([brace_points[i][0], brace_points[i+1][0]],
+                         [brace_points[i][1], brace_points[i+1][1]],
+                         color='#2c3e50',
+                         linewidth=1.5)
+            ax.add_line(line)
+        
+        return mid_y
      def cascade_label_positions(positions, y_max, min_gap=12):
         if not positions:
             return [], {}
@@ -6917,63 +6949,6 @@ def market_share():
                     'bottom_y': min(group_positions)
                 }
         return adjusted, group_info
-     def draw_elegant_connector(ax, x, y1, y2):
-        """
-        Draw an elegant connector with smooth curves using Bezier paths
-        """
-        mid_y = (y1 + y2) / 2
-        width = 0.04  # Width of the connector
-        
-        # Calculate control points for the smooth curve
-        verts = [
-            (x, y1),  # Start point (top)
-            (x + width/3, y1),  # First control point
-            (x + width/2, y1),  # Second control point
-            (x + width, mid_y),  # Middle point
-            (x + width/2, y2),  # Fourth control point
-            (x + width/3, y2),  # Fifth control point
-            (x, y2),  # End point (bottom)
-        ]
-        
-        # Define the path codes
-        codes = [
-            Path.MOVETO,
-            Path.CURVE4,
-            Path.CURVE4,
-            Path.CURVE4,
-            Path.CURVE4,
-            Path.CURVE4,
-            Path.CURVE4,
-        ]
-        
-        # Create the path
-        path = Path(verts, codes)
-        
-        # Create a patch from the path
-        patch = patches.PathPatch(
-            path,
-            facecolor='none',
-            edgecolor='#34495e',  # Darker blue-grey color
-            linewidth=2,
-            alpha=0.8,
-            capstyle='round',
-            joinstyle='round'
-        )
-        
-        # Add the patch to the axis
-        ax.add_patch(patch)
-        
-        # Add subtle end caps
-        cap_width = 0.01
-        for y in [y1, y2]:
-            line = Line2D([x - cap_width, x],
-                         [y, y],
-                         color='#34495e',
-                         linewidth=2,
-                         alpha=0.8,
-                         solid_capstyle='round')
-            ax.add_line(line)
-        return mid_y
      def adjust_label_positions(positions, y_max, min_gap=12):
         """
         Adjust label positions while respecting the plot's y-axis scale
