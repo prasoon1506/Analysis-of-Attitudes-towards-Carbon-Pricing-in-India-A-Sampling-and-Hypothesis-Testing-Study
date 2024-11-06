@@ -6828,17 +6828,36 @@ def market_share():
     COMPANY_COLORS = {}
     @st.cache_data
     def generate_distinct_color(existing_colors):
-        """Generate a new distinct color that's visually different from existing ones"""
+    """Generate a new distinct color that's visually different from existing ones and not too light"""
+     while True:
+        # Get a new color
         if existing_colors:
-            return distinctipy.get_colors(1, existing_colors)[0]
-        return distinctipy.get_colors(1)[0]
+            new_color = distinctipy.get_colors(1, existing_colors)[0]
+        else:
+            new_color = distinctipy.get_colors(1)[0]
+        
+        # Convert RGB (0-1) to RGB (0-255) for easier threshold checking
+        rgb_255 = [int(c * 255) for c in new_color]
+        
+        # Check if the color is too light (close to white)
+        # Sum should be less than 650 (max is 765 for white)
+        # And no individual channel should be higher than 240
+        if (sum(rgb_255) < 650 and 
+            all(c < 240 for c in rgb_255) and
+            # Ensure minimum darkness (at least one channel below 150)
+            any(c < 150 for c in rgb_255)):
+            return new_color
+        
     @st.cache_data
     def get_company_color(company):
+    """Get a consistent color for a company, ensuring it's not too light"""
      if 'company_colors' not in st.session_state:
         st.session_state.company_colors = {}
+        
      if company not in st.session_state.company_colors:
         existing_colors = list(st.session_state.company_colors.values())
         st.session_state.company_colors[company] = generate_distinct_color(existing_colors)
+        
      return st.session_state.company_colors[company]
     @st.cache_data
     def load_and_process_data(uploaded_file):
