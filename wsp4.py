@@ -7119,11 +7119,6 @@ def market_share():
                 fontsize=12,
                 fontweight='bold',
                 color='#2c3e50')
-     for i, total_vol in enumerate(total_volumes):
-        ax1.text(i, -4, f'Vol: {total_vol:,.0f} MT',
-                ha='center', va='top',
-                fontsize=12,fontweight='bold',
-                color='#34495e')
      adjusted_positions, group_info = cascade_label_positions(volume_positions, y_max)
     
     # Draw dashed lines and volume labels
@@ -7154,7 +7149,7 @@ def market_share():
     # Draw braces and total volume labels for groups
      for x_pos, info in group_info.items():
         # Draw brace
-        brace_x = 1.15  # Position after individual volume labels
+        brace_x = 1  # Position after individual volume labels
         mid_y = draw_curly_brace(ax2, brace_x, info['top_y'], info['bottom_y'])
         
         # Add total volume label with nice formatting
