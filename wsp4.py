@@ -7054,11 +7054,12 @@ def market_share():
      # Get company WSPs and sort companies
      company_wsps = {company: month_data_with_price[month_data_with_price['Company'] == company]['WSP'].iloc[0]
                     for company in share_df.columns}
-     sorted_companies = sorted(company_wsps.keys(), key=lambda x: company_wsps[x])
+     # Sort companies in reverse order (highest WSP first)
+     sorted_companies = sorted(company_wsps.keys(), key=lambda x: company_wsps[x], reverse=True)
      
-     # Important fix: Create color dictionary before reordering companies
+     # Create color dictionary in reverse order
      company_colors = {}
-     for company in sorted_companies:
+     for i, company in enumerate(sorted_companies):
          company_colors[company] = get_company_color(company)
      
      # Reorder dataframes based on sorted companies
@@ -7077,14 +7078,14 @@ def market_share():
      total_shares = share_df.sum(axis=1)
      total_volumes = volume_df.sum(axis=1)
     
-     # Use the color dictionary when plotting
-     for company in sorted_companies:
+     # Plot the bars in reverse order
+     for company in reversed(sorted_companies):
          values = share_df[company].values
          ax1.bar(range(len(share_df)), 
                  values, 
                  bottom=bottom,
                  label=company,
-                 color=company_colors[company],  # Use the stored color
+                 color=company_colors[company],
                  alpha=0.95,
                  edgecolor='white',
                  linewidth=0.5)
@@ -7103,7 +7104,6 @@ def market_share():
                  vol = volume_df.loc[share_df.index[i], company]
                  if vol > 0:
                      volume_positions.append((vol, center, company_colors[company], i))
-         
          bottom += values
      max_total_share = total_shares.max()
      y_max = max_total_share * 1.15  # Add 15% padding
