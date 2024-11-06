@@ -7240,7 +7240,7 @@ def market_share():
         summary = f"\nTotal market share and volume without price data: {total_missing_share:.1f}% ({total_missing_volume:,.0f} MT)"
         note += summary
             
-        plt.figtext(0.1, 0.02, 
+        plt.figtext(0.1, 0.001, 
                    note,
                    ha='left', 
                    va='bottom',
