@@ -7039,12 +7039,13 @@ def market_share():
     # Data preparation (same as before)
      month_data = df[['Company', f'Share_{month}', f'WSP_{month}', f'Vol_{month}']].copy()
      month_data.columns = ['Company', 'Share', 'WSP', 'Volume']
-    
-     min_price = (month_data['WSP'].min() // 10) * 10
-     max_price = (month_data['WSP'].max() // 10 + 1) * 10
+     total_market_size = month_data['Volume'].sum()
+     companies_without_price = month_data[month_data['WSP'].isna() & (month_data['Volume'] > 0)]
+     month_data_with_price = month_data.dropna(subset=['WSP'])
+     min_price = (month_data_with_price['WSP'].min() // 10) * 10
+     max_price = (month_data_with_price['WSP'].max() // 10 + 1) * 10
      price_ranges = pd.interval_range(start=min_price, end=max_price, freq=10)
-    
-     month_data['Price_Range'] = pd.cut(month_data['WSP'], bins=price_ranges)
+     month_data_with_price['Price_Range'] = pd.cut(month_data_with_price['WSP'], bins=price_ranges)
     
      pivot_df = pd.pivot_table(
         month_data,
@@ -7205,9 +7206,6 @@ def market_share():
     
     # Clear right axis
      ax2.set_yticks([])
-    
-    # Enhanced total market size box
-     total_market_size = volume_df.sum().sum()
      plt.figtext(0.45, 0.925,
                 f'Total Market Size: {total_market_size:,.0f} MT',
                 ha='center', va='center',
@@ -7219,10 +7217,42 @@ def market_share():
                 fontweight='bold',
                 color='#2c3e50')
     
-    # Adjusted layout
+    # Add note about companies without price data if any exist
+     if not companies_without_price.empty:
+        company_info = companies_without_price.apply(
+            lambda row: f"{row['Company']} ({row['Share']:.1f}%, {row['Volume']:,.0f} MT)", 
+            axis=1
+        ).tolist()
+        
+        if len(company_info) == 1:
+            note = f"Note: Price not reported for {company_info[0]}."
+        elif len(company_info) == 2:
+            note = f"Note: Price not reported for {company_info[0]} and {company_info[1]}."
+        else:
+            *first_companies, last_company = company_info
+            note = f"Note: Price not reported for {', '.join(first_companies)}, and {last_company}."
+        
+        # Calculate total share and volume of companies without price
+        total_missing_share = companies_without_price['Share'].sum()
+        total_missing_volume = companies_without_price['Volume'].sum()
+        
+        # Add summary line
+        summary = f"\nTotal market share and volume without price data: {total_missing_share:.1f}% ({total_missing_volume:,.0f} MT)"
+        note += summary
+            
+        plt.figtext(0.1, 0.02, 
+                   note,
+                   ha='left', 
+                   va='bottom',
+                   fontsize=10,
+                   color='#2c3e50',
+                   style='italic',
+                   bbox=dict(facecolor='#f8f9fa',
+                            edgecolor='#bdc3c7',
+                            boxstyle='round,pad=0.5',
+                            alpha=0.9))
      plt.tight_layout()
      plt.subplots_adjust(right=0.82, bottom=0.2, top=0.88)
-    
      return fig
     @st.cache_data
     def calculate_share_changes(shares, months):
