@@ -6828,19 +6828,10 @@ def market_share():
     COMPANY_COLORS = {}
     @st.cache_data
     def generate_distinct_color(existing_colors):
-     while True:
+        """Generate a new distinct color that's visually different from existing ones"""
         if existing_colors:
-            new_color = distinctipy.get_colors(1, existing_colors)[0]
-        else:
-            new_color = distinctipy.get_colors(1)[0]
-        
-        # Check if the color is too close to white
-        # Convert RGB (0-1) to grayscale using luminance formula
-        luminance = 0.299 * new_color[0] + 0.587 * new_color[1] + 0.114 * new_color[2]
-        
-        # Reject colors that are too light (luminance > 0.85)
-        if luminance <= 0.85:
-            return new_color
+            return distinctipy.get_colors(1, existing_colors)[0]
+        return distinctipy.get_colors(1)[0]
     @st.cache_data
     def get_company_color(company):
      if 'company_colors' not in st.session_state:
