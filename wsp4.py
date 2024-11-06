@@ -7128,31 +7128,17 @@ def market_share():
     
     # Draw dashed lines and volume labels
      for vol, line_y, label_y, color, x_pos in adjusted_positions:
-        # Draw connecting lines with smoother curves
+        # Draw connecting lines
         if abs(label_y - line_y) > 0.5:
             mid_x = x_pos + (len(share_df)-0.15 - x_pos) * 0.7
-            # Use curved path instead of straight lines
-            curve_path = Path([
-                (x_pos, line_y),
-                (mid_x, line_y),
-                ((mid_x + len(share_df)-0.15)/2, (line_y + label_y)/2),
-                (len(share_df)-0.15, label_y)
-            ], [Path.MOVETO, Path.CURVE4, Path.CURVE4, Path.CURVE4])
-            
-            patch = patches.PathPatch(
-                curve_path,
-                facecolor='none',
-                edgecolor=color,
-                linestyle='--',
-                alpha=1,
-                linewidth=1
-            )
-            ax1.add_patch(patch)
+            ax1.plot([x_pos, mid_x, len(share_df)-0.15], 
+                    [line_y, label_y, label_y],
+                    color=color, linestyle='--', alpha=1, linewidth=1)
         else:
             ax1.plot([x_pos, len(share_df)-0.15], [line_y, line_y],
                     color=color, linestyle='--', alpha=1, linewidth=1)
         
-        # Add individual volume labels with refined styling
+        # Add individual volume labels
         label = f'{vol:,.0f} MT'
         ax2.text(0.98, label_y, label,
                 transform=ax1.get_yaxis_transform(),
@@ -7165,27 +7151,24 @@ def market_share():
                          alpha=1,
                          pad=1))
     
-    # Draw elegant connectors and total volume labels for groups
+    # Draw braces and total volume labels for groups
      for x_pos, info in group_info.items():
-        # Draw elegant connector
-        connector_x = 1.15  # Position after individual volume labels
-        mid_y = draw_elegant_connector(ax2, connector_x, info['top_y'], info['bottom_y'])
+        # Draw brace
+        brace_x = 1.15  # Position after individual volume labels
+        mid_y = draw_curly_brace(ax2, brace_x, info['top_y'], info['bottom_y'])
         
-        # Add total volume label with refined styling
+        # Add total volume label with nice formatting
         total_label = f'Total: {info["total_volume"]:,.0f} MT'
-        ax2.text(connector_x + 0.06, mid_y, total_label,
+        ax2.text(brace_x + 0.05, mid_y, total_label,
                 transform=ax1.get_yaxis_transform(),
                 va='center', ha='left',
-                color='#34495e',
+                color='#2c3e50',
                 fontsize=11,
                 fontweight='bold',
                 bbox=dict(facecolor='white',
                          edgecolor='#bdc3c7',
-                         boxstyle='round,pad=0.6',
-                         alpha=0.9,
-                         mutation_scale=0.8))  # Makes the round corners more subtle
-    
-    # Adjust the right margin to accommodate the connectors and labels
+                         boxstyle='round,pad=0.5',
+                         alpha=0.9))
      plt.subplots_adjust(right=0.75)
      x_labels = [f'₹{interval.left:.0f}-{interval.right:.0f}'
                 for interval in share_df.index]
