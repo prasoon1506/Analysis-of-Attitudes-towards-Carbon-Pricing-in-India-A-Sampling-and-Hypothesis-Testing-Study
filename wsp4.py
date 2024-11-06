@@ -7056,7 +7056,7 @@ def market_share():
      company_wsps = {company: month_data_with_price[month_data_with_price['Company'] == company]['WSP'].iloc[0]
                    for company in share_df.columns}
      sorted_companies = sorted(company_wsps.keys(), key=lambda x: company_wsps[x])
-    
+     company_colors = {company: get_company_color(company) for company in sorted_companies}
      share_df = share_df[sorted_companies]
      volume_df = volume_df[sorted_companies]
     
@@ -7078,7 +7078,7 @@ def market_share():
                 values, 
                 bottom=bottom,
                 label=company,
-                color=get_company_color(company),
+                color=company_colors(company),
                 alpha=0.95,  # Slightly transparent bars
                 edgecolor='white',  # White edges for contrast
                 linewidth=0.5)
@@ -7096,7 +7096,7 @@ def market_share():
                 
                 vol = volume_df.loc[share_df.index[i], company]
                 if vol > 0:
-                    volume_positions.append((vol, center, get_company_color(company), i))
+                    volume_positions.append((vol, center, company_colors(company), i))
         
         bottom += values
      max_total_share = total_shares.max()
