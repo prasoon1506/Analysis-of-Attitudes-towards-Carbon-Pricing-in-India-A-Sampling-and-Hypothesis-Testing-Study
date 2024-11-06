@@ -7079,7 +7079,7 @@ def market_share():
      total_volumes = volume_df.sum(axis=1)
     
      # Plot the bars in reverse order
-     for company in reversed(sorted_companies):
+     for company in sorted_companies:
          values = share_df[company].values
          ax1.bar(range(len(share_df)), 
                  values, 
