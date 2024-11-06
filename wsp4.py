@@ -7078,7 +7078,7 @@ def market_share():
                 values, 
                 bottom=bottom,
                 label=company,
-                color=company_colors(company),
+                color=get_company_color(company),
                 alpha=0.95,  # Slightly transparent bars
                 edgecolor='white',  # White edges for contrast
                 linewidth=0.5)
@@ -7096,7 +7096,7 @@ def market_share():
                 
                 vol = volume_df.loc[share_df.index[i], company]
                 if vol > 0:
-                    volume_positions.append((vol, center, company_colors(company), i))
+                    volume_positions.append((vol, center, get_company_color(company), i))
         
         bottom += values
      max_total_share = total_shares.max()
