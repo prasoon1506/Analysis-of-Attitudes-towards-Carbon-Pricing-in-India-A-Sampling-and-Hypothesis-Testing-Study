@@ -7026,8 +7026,6 @@ def market_share():
         'axes.spines.right': False,
         'axes.linewidth': 1.5
     })
-    
-    # Data preparation (same as before)
      month_data = df[['Company', f'Share_{month}', f'WSP_{month}', f'Vol_{month}']].copy()
      month_data.columns = ['Company', 'Share', 'WSP', 'Volume']
      total_market_size = month_data['Volume'].sum()
@@ -7045,7 +7043,7 @@ def market_share():
         columns='Company',
         aggfunc='sum',
         fill_value=0
-    )
+     )
     
      share_df = pivot_df['Share']
      volume_df = pivot_df['Volume']
@@ -7053,52 +7051,60 @@ def market_share():
      share_df = share_df.loc[:, (share_df != 0).any(axis=0)]
      volume_df = volume_df.loc[:, (volume_df != 0).any(axis=0)]
     
+     # Get company WSPs and sort companies
      company_wsps = {company: month_data_with_price[month_data_with_price['Company'] == company]['WSP'].iloc[0]
-                   for company in share_df.columns}
+                    for company in share_df.columns}
      sorted_companies = sorted(company_wsps.keys(), key=lambda x: company_wsps[x])
-     company_colors = {company: get_company_color(company) for company in sorted_companies}
+     
+     # Important fix: Create color dictionary before reordering companies
+     company_colors = {}
+     for company in sorted_companies:
+         company_colors[company] = get_company_color(company)
+     
+     # Reorder dataframes based on sorted companies
      share_df = share_df[sorted_companies]
      volume_df = volume_df[sorted_companies]
-    
-    # Create figure with more refined dimensions
+     
+     # Create figure with more refined dimensions
      fig, ax1 = plt.subplots(figsize=(14, 9), dpi=120)
      ax2 = ax1.twinx()
     
-    # Plot stacked bars with enhanced styling
+     # Plot stacked bars with enhanced styling
      bottom = np.zeros(len(share_df))
      volume_positions = []
     
-    # Calculate total share and volume for each price range
+     # Calculate total share and volume for each price range
      total_shares = share_df.sum(axis=1)
      total_volumes = volume_df.sum(axis=1)
     
+     # Use the color dictionary when plotting
      for company in sorted_companies:
-        values = share_df[company].values
-        ax1.bar(range(len(share_df)), 
-                values, 
-                bottom=bottom,
-                label=company,
-                color=get_company_color(company),
-                alpha=0.95,  # Slightly transparent bars
-                edgecolor='white',  # White edges for contrast
-                linewidth=0.5)
-        
-        # Add labels for individual company shares
-        for i, v in enumerate(values):
-            if v > 0:
-                center = bottom[i] + v/2
-                if v > 0.2:  # Only show percentage if > 1%
-                    ax1.text(i, center, f'{v:.1f}%',
-                            ha='center', va='center', 
-                            fontsize=8,
-                            color='white',
-                            fontweight='bold')
-                
-                vol = volume_df.loc[share_df.index[i], company]
-                if vol > 0:
-                    volume_positions.append((vol, center, get_company_color(company), i))
-        
-        bottom += values
+         values = share_df[company].values
+         ax1.bar(range(len(share_df)), 
+                 values, 
+                 bottom=bottom,
+                 label=company,
+                 color=company_colors[company],  # Use the stored color
+                 alpha=0.95,
+                 edgecolor='white',
+                 linewidth=0.5)
+         
+         # Add labels for individual company shares
+         for i, v in enumerate(values):
+             if v > 0:
+                 center = bottom[i] + v/2
+                 if v > 0.2:
+                     ax1.text(i, center, f'{v:.1f}%',
+                             ha='center', va='center', 
+                             fontsize=8,
+                             color='white',
+                             fontweight='bold')
+                 
+                 vol = volume_df.loc[share_df.index[i], company]
+                 if vol > 0:
+                     volume_positions.append((vol, center, company_colors[company], i))
+         
+         bottom += values
      max_total_share = total_shares.max()
      y_max = max_total_share * 1.15  # Add 15% padding
      ax1.set_ylim(0, y_max)
