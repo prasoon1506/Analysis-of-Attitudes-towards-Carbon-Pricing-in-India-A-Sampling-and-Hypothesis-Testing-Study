@@ -7148,7 +7148,7 @@ def market_share():
     # Draw braces and total volume labels for groups
      for x_pos, info in group_info.items():
         # Draw brace
-        brace_x = 1.07 
+        brace_x = 1.095 
         mid_y = draw_curly_brace(ax2, brace_x, info['top_y'], info['bottom_y'])
         # Add total volume label with nice formatting
         total_label = f'Total: {info["total_volume"]:,.0f} MT'
