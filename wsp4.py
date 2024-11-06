@@ -6828,25 +6828,42 @@ def market_share():
     COMPANY_COLORS = {}
     @st.cache_data
     def generate_distinct_color(existing_colors):
-     while True:
-        # Get a new color
-        if existing_colors:
-            new_color = distinctipy.get_colors(1, existing_colors)[0]
-        else:
-            new_color = distinctipy.get_colors(1)[0]
+     base_colors = [
+        (0.7, 0.1, 0.1),   # Dark red
+        (0.1, 0.5, 0.1),   # Dark green
+        (0.1, 0.1, 0.7),   # Dark blue
+        (0.6, 0.4, 0.1),   # Brown
+        (0.5, 0.1, 0.5),   # Purple
+        (0.1, 0.5, 0.5),   # Teal
+        (0.6, 0.3, 0.1),   # Orange
+        (0.3, 0.3, 0.6),   # Slate blue
+        (0.5, 0.5, 0.1),   # Olive
+        (0.7, 0.2, 0.4),   # Dark pink
+        (0.2, 0.4, 0.3),   # Forest green
+        (0.4, 0.2, 0.6),   # Royal purple
+        (0.5, 0.3, 0.2),   # Sienna
+        (0.3, 0.5, 0.2),   # Olive green
+        (0.2, 0.3, 0.5)    # Steel blue
+    ]
+    
+     if not existing_colors:
+        return base_colors[0]
         
-        # Convert RGB (0-1) to RGB (0-255) for easier threshold checking
-        rgb_255 = [int(c * 255) for c in new_color]
+     max_diff = 0
+     best_color = base_colors[0]
+    
+     for color in base_colors:
+        min_diff = float('inf')
+        for existing in existing_colors:
+            # Calculate color difference
+            diff = sum((a - b) ** 2 for a, b in zip(color, existing))
+            min_diff = min(min_diff, diff)
         
-        # Check if the color is too light (close to white)
-        # Sum should be less than 650 (max is 765 for white)
-        # And no individual channel should be higher than 240
-        if (sum(rgb_255) < 650 and 
-            all(c < 240 for c in rgb_255) and
-            # Ensure minimum darkness (at least one channel below 150)
-            any(c < 150 for c in rgb_255)):
-            return new_color
-        
+        if min_diff > max_diff:
+            max_diff = min_diff
+            best_color = color
+            
+     return best_color
     @st.cache_data
     def get_company_color(company):
      if 'company_colors' not in st.session_state:
