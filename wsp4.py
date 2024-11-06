@@ -6929,34 +6929,49 @@ def market_share():
             # Define the curly brace path
             path_data = [
                 # Top curl
-                ('M', x, y1),
-                ('C', x + curve_width, y1, x + curve_width, y1, x + curve_width, y1 - curve_width),
-                ('C', x + curve_width, y1 - 2*curve_width, x, y1 - 2*curve_width, x, y1 - 2*curve_width),
+                (Path.MOVETO, (x, y1)),
+                (Path.CURVE4, (x + curve_width, y1)),
+                (Path.CURVE4, (x + curve_width, y1)),
+                (Path.CURVE4, (x + curve_width, y1 - curve_width)),
+                (Path.CURVE4, (x + curve_width, y1 - 2*curve_width)),
+                (Path.CURVE4, (x, y1 - 2*curve_width)),
+                (Path.CURVE4, (x, y1 - 2*curve_width)),
                 # Middle line
-                ('L', x, mid_y + curve_width),
+                (Path.LINETO, (x, mid_y + curve_width)),
                 # Bottom curl
-                ('L', x, mid_y - curve_width),
-                ('L', x, y2 + 2*curve_width),
-                ('C', x, y2 + 2*curve_width, x + curve_width, y2 + 2*curve_width, x + curve_width, y2 + curve_width),
-                ('C', x + curve_width, y2, x + curve_width, y2, x, y2),
+                (Path.LINETO, (x, mid_y - curve_width)),
+                (Path.LINETO, (x, y2 + 2*curve_width)),
+                (Path.CURVE4, (x, y2 + 2*curve_width)),
+                (Path.CURVE4, (x + curve_width, y2 + 2*curve_width)),
+                (Path.CURVE4, (x + curve_width, y2 + curve_width)),
+                (Path.CURVE4, (x + curve_width, y2)),
+                (Path.CURVE4, (x + curve_width, y2)),
+                (Path.CURVE4, (x, y2))
             ]
         else:
             # Mirror the path for left-facing brace
             path_data = [
-                ('M', x, y1),
-                ('C', x - curve_width, y1, x - curve_width, y1, x - curve_width, y1 - curve_width),
-                ('C', x - curve_width, y1 - 2*curve_width, x, y1 - 2*curve_width, x, y1 - 2*curve_width),
-                ('L', x, mid_y + curve_width),
-                ('L', x, mid_y - curve_width),
-                ('L', x, y2 + 2*curve_width),
-                ('C', x, y2 + 2*curve_width, x - curve_width, y2 + 2*curve_width, x - curve_width, y2 + curve_width),
-                ('C', x - curve_width, y2, x - curve_width, y2, x, y2),
+                (Path.MOVETO, (x, y1)),
+                (Path.CURVE4, (x - curve_width, y1)),
+                (Path.CURVE4, (x - curve_width, y1)),
+                (Path.CURVE4, (x - curve_width, y1 - curve_width)),
+                (Path.CURVE4, (x - curve_width, y1 - 2*curve_width)),
+                (Path.CURVE4, (x, y1 - 2*curve_width)),
+                (Path.CURVE4, (x, y1 - 2*curve_width)),
+                (Path.LINETO, (x, mid_y + curve_width)),
+                (Path.LINETO, (x, mid_y - curve_width)),
+                (Path.LINETO, (x, y2 + 2*curve_width)),
+                (Path.CURVE4, (x, y2 + 2*curve_width)),
+                (Path.CURVE4, (x - curve_width, y2 + 2*curve_width)),
+                (Path.CURVE4, (x - curve_width, y2 + curve_width)),
+                (Path.CURVE4, (x - curve_width, y2)),
+                (Path.CURVE4, (x - curve_width, y2)),
+                (Path.CURVE4, (x, y2))
             ]
         
         # Create the path
-        codes = [Path.MOVETO if cmd == 'M' else Path.CURVE4 if cmd == 'C' else Path.LINETO for cmd, *_ in path_data]
-        verts = [(x if i == 0 else y) for _, *xy in path_data for i, x in enumerate(xy)]
-        path = Path(list(zip(verts[::2], verts[1::2])), codes)
+        codes, verts = zip(*path_data)
+        path = Path(verts, codes)
         
         # Draw the path
         patch = PathPatch(path, facecolor='none', edgecolor='#2c3e50', lw=1.5)
