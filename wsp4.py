@@ -6949,11 +6949,6 @@ def market_share():
                 }
         return adjusted, group_info
      def adjust_label_positions(positions, y_max, min_gap=12):
-        """
-        Adjust label positions while respecting the plot's y-axis scale
-        positions: list of (volume, original_y, color, x_pos) tuples
-        y_max: maximum y value of the plot
-        """
         if not positions:
             return positions
         
@@ -6993,10 +6988,6 @@ def market_share():
      def check_overlap(y1, y2, height=10):  # height is the estimated text height in points
         return abs(y1 - y2) < height
      def adjust_positions(positions, min_gap=10):
-        """
-        Adjust y-positions of labels to prevent overlap
-        positions: list of (volume, original_y, color, x_pos) tuples
-        """
         if not positions:
             return positions
         
@@ -7062,7 +7053,7 @@ def market_share():
      share_df = share_df.loc[:, (share_df != 0).any(axis=0)]
      volume_df = volume_df.loc[:, (volume_df != 0).any(axis=0)]
     
-     company_wsps = {company: month_data[month_data['Company'] == company]['WSP'].iloc[0]
+     company_wsps = {company: month_data_with_price[month_data_with_price['Company'] == company]['WSP'].iloc[0]
                    for company in share_df.columns}
      sorted_companies = sorted(company_wsps.keys(), key=lambda x: company_wsps[x])
     
