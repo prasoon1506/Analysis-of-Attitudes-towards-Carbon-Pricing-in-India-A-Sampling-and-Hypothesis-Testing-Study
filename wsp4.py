@@ -6849,7 +6849,6 @@ def market_share():
         
     @st.cache_data
     def get_company_color(company):
-    """Get a consistent color for a company, ensuring it's not too light"""
      if 'company_colors' not in st.session_state:
         st.session_state.company_colors = {}
         
