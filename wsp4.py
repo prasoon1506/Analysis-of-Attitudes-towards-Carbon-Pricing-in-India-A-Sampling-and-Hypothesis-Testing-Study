@@ -7352,7 +7352,7 @@ def market_share():
     def create_title_page(state_name):
      fig, ax = plt.subplots(figsize=(11.7, 8.3))  # A4 size
      ax.axis('off')
-     ax.text(0.5, 0.6, 'Market Share Analysis Report', 
+     ax.text(0.5, 0.6, 'Price Band Analysis Report', 
             horizontalalignment='center',
             fontsize=24,
             fontweight='bold')
