@@ -6897,7 +6897,6 @@ def market_share():
                          [brace_points[i][1], brace_points[i+1][1]],
                          color='#2c3e50',
                          linewidth=1.5)
-            ax.add_line(line)
         
         return mid_y
      def cascade_label_positions(positions, y_max, min_gap=12):
@@ -7150,7 +7149,7 @@ def market_share():
      for x_pos, info in group_info.items():
         # Draw brace
         brace_x = 1.07 
-        
+        mid_y = draw_curly_brace(ax2, brace_x, info['top_y'], info['bottom_y'])
         # Add total volume label with nice formatting
         total_label = f'Total: {info["total_volume"]:,.0f} MT'
         ax2.text(brace_x, mid_y, total_label,
