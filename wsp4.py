@@ -8177,11 +8177,11 @@ def discount():
             
             # Wrap charts in custom containers
             st.markdown("<div class='chart-container'>", unsafe_allow_html=True)
-            processor.create_monthly_metrics(data, selected_state, selected_discount)
+            processor.create_monthly_metrics_data(data, selected_state, selected_discount)
             st.markdown("</div>", unsafe_allow_html=True)
             
             st.markdown("<div class='chart-container'>", unsafe_allow_html=True)
-            processor.create_trend_chart(data, selected_state, selected_discount)
+            processor.create_trend_chart_data(data, selected_state, selected_discount)
             st.markdown("</div>", unsafe_allow_html=True)
             if st.button("Generate PDF Report"):
              with st.spinner("Generating PDF report..."):
