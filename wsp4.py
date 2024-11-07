@@ -8209,7 +8209,7 @@ def discount():
         </div>
         """, unsafe_allow_html=True)
         if st.button(f"Generate PDF Report for {selected_state} - {selected_discount}"):
-        with st.spinner('Generating PDF report...'):
+         with st.spinner('Generating PDF report...'):
             pdf_filename = processor.generate_pdf_report(data, selected_state, selected_discount)
             st.success(f"PDF report generated: {pdf_filename}")
             with open(pdf_filename, "rb") as pdf_file:
