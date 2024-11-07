@@ -3249,7 +3249,7 @@ def create_visualization(region_data, region, brand, months):
     ('Yellow', region_data['Yellow Nov'].iloc[-1], region_data['Monthly Achievement(Nov)'].iloc[-1], 'Region'),
     ('Red', region_data['Red Nov'].iloc[-1], region_data['Monthly Achievement(Nov)'].iloc[-1], 'Region'),
     ('Premium', region_data['Premium Nov'].iloc[-1], region_data['Monthly Achievement(Nov)'].iloc[-1], 'Product'),
-    ('Blended', region_data['Blended Till Now Nov'].iloc[-1], region_data['Monthly Achievement(Nov)'].iloc[-1], 'Product')]
+    ('Blended', region_data['Blended Nov'].iloc[-1], region_data['Monthly Achievement(Nov)'].iloc[-1], 'Product')]
     colors = ['blue', 'green', '#CDC50A', 'red', 'darkmagenta', 'saddlebrown']
     
     # Add boxes for grouping metrics
