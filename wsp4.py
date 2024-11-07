@@ -8213,18 +8213,9 @@ def discount():
             st.markdown("<div class='chart-container'>", unsafe_allow_html=True)
             processor.create_trend_chart(data, selected_state, selected_discount)
             st.markdown("</div>", unsafe_allow_html=True)
-            if st.button(f"Generate PDF Report for {selected_state} - {selected_discount}"):
-              with st.spinner('Generating PDF report...'):
-                 pdf_filename = processor.generate_pdf_report(data, selected_state, selected_discount)
-                 st.success(f"PDF report generated: {pdf_filename}")
-              with open(pdf_filename, "rb") as pdf_file:
-                st.download_button(
-                    label="Download PDF Report",
-                    data=pdf_file,
-                    file_name=pdf_filename,
-                    mime="application/pdf",
-                )
-    
+            if st.button("Generate PDF Report"):
+             with st.spinner("Generating PDF report..."):
+                processor.generate_pdf_report(data, selected_state)
     else:
         st.markdown("""
         <div style='text-align: center; padding: 3rem; background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);'>
