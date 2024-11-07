@@ -8208,17 +8208,7 @@ def discount():
             <h3 style='color: #1e293b; margin-bottom: 1rem;'>Detailed Analysis</h3>
         </div>
         """, unsafe_allow_html=True)
-        if st.button(f"Generate PDF Report for {selected_state} - {selected_discount}"):
-         with st.spinner('Generating PDF report...'):
-            pdf_filename = processor.generate_pdf_report(data, selected_state, selected_discount)
-            st.success(f"PDF report generated: {pdf_filename}")
-            with open(pdf_filename, "rb") as pdf_file:
-                st.download_button(
-                    label="Download PDF Report",
-                    data=pdf_file,
-                    file_name=pdf_filename,
-                    mime="application/pdf",
-                )
+        
         col1, col2 = st.columns(2)
         with col1:
             selected_state = st.selectbox("Select State", list(data.keys()))
@@ -8236,6 +8226,17 @@ def discount():
             st.markdown("<div class='chart-container'>", unsafe_allow_html=True)
             processor.create_trend_chart(data, selected_state, selected_discount)
             st.markdown("</div>", unsafe_allow_html=True)
+            if st.button(f"Generate PDF Report for {selected_state} - {selected_discount}"):
+              with st.spinner('Generating PDF report...'):
+                 pdf_filename = processor.generate_pdf_report(data, selected_state, selected_discount)
+                 st.success(f"PDF report generated: {pdf_filename}")
+              with open(pdf_filename, "rb") as pdf_file:
+                st.download_button(
+                    label="Download PDF Report",
+                    data=pdf_file,
+                    file_name=pdf_filename,
+                    mime="application/pdf",
+                )
     
     else:
         st.markdown("""
