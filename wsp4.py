@@ -6291,13 +6291,13 @@ def projection():
     model.fit(X_train, y_train)
     return model, X_test, y_test
   def create_monthly_performance_graph(data):
-    months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']
+    months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct','Nov']
     colors = px.colors.qualitative.Pastel
 
     fig = go.Figure()
 
     for i, month in enumerate(months):
-        if month != 'Oct':
+        if month != 'Nov':
             target = data[f'Month Tgt ({month})'].iloc[0]
             achievement = data[f'Monthly Achievement({month})'].iloc[0]
             percentage = (achievement / target * 100) if target != 0 else 0
@@ -6311,8 +6311,8 @@ def projection():
                 textposition='auto'
             ))
         else:
-            target = data['Month Tgt (Oct)'].iloc[0]
-            projection = data['Predicted Oct 2024'].iloc[0]
+            target = data['Month Tgt (Nov)'].iloc[0]
+            projection = data['Predicted Nov 2024'].iloc[0]
             percentage = (projection / target * 100) if target != 0 else 0
             
             fig.add_trace(go.Bar(
@@ -6344,8 +6344,8 @@ def projection():
     return fig
   def create_target_vs_projected_graph(data):
     fig = go.Figure()
-    fig.add_trace(go.Bar(x=data['Zone'], y=data['Month Tgt (Oct)'], name='Month Target (Oct)', marker_color='#4a69bd'))
-    fig.add_trace(go.Bar(x=data['Zone'], y=data['Predicted Oct 2024'], name='Projected Sales (Oct)', marker_color='#82ccdd'))
+    fig.add_trace(go.Bar(x=data['Zone'], y=data['Month Tgt (Nov)'], name='Month Target (Nov)', marker_color='#4a69bd'))
+    fig.add_trace(go.Bar(x=data['Zone'], y=data['Predicted Nov 2024'], name='Projected Sales (Nov)', marker_color='#82ccdd'))
     
     fig.update_layout(
         title='October 2024: Target vs Projected Sales',
@@ -6379,17 +6379,17 @@ def projection():
 
     totals = []
     for brand_data, brand_name in [(lc_data, 'LC'), (phd_data, 'PHD'), (lc_phd_data, 'LC+PHD')]:
-        total_month_tgt_oct = brand_data['Month Tgt (Oct)'].sum()
-        total_predicted_oct_2024 = brand_data['Predicted Oct 2024'].sum()
-        total_oct_2023 = brand_data['Total Oct 2023'].sum()
-        total_yoy_growth = (total_predicted_oct_2024 - total_oct_2023) / total_oct_2023 * 100
+        total_month_tgt_nov = brand_data['Month Tgt (Nov)'].sum()
+        total_predicted_nov_2024 = brand_data['Predicted Nov 2024'].sum()
+        total_nov_2023 = brand_data['Total Nov 2023'].sum()
+        total_yoy_growth = (total_predicted_nov_2024 - total_nov_2023) / total_nov_2023 * 100
 
         totals.append({
             'Zone': 'All India Total',
             'Brand': brand_name,
-            'Month Tgt (Oct)': total_month_tgt_oct,
-            'Predicted Oct 2024': total_predicted_oct_2024,
-            'Total Oct 2023': total_oct_2023,
+            'Month Tgt (Nov)': total_month_tgt_nov,
+            'Predicted Oct 2024': total_predicted_nov_2024,
+            'Total Oct 2023': total_nov_2023,
             'YoY Growth': total_yoy_growth
         })
 
@@ -6397,9 +6397,9 @@ def projection():
     final_data = pd.concat([filtered_data, pd.DataFrame(totals)], ignore_index=True)
 
     # Round the values
-    final_data['Month Tgt (Oct)'] = final_data['Month Tgt (Oct)'].round().astype(int)
-    final_data['Predicted Oct 2024'] = final_data['Predicted Oct 2024'].round().astype(int)
-    final_data['Total Oct 2023'] = final_data['Total Oct 2023'].round().astype(int)
+    final_data['Month Tgt (Nov)'] = final_data['Month Tgt (Nov)'].round().astype(int)
+    final_data['Predicted Nov 2024'] = final_data['Predicted Nov 2024'].round().astype(int)
+    final_data['Total Nov 2023'] = final_data['Total Nov 2023'].round().astype(int)
     final_data['YoY Growth'] = final_data['YoY Growth'].round(2)
 
     return final_data
@@ -6414,7 +6414,7 @@ def projection():
     styles = getSampleStyleSheet()
     title_style = styles['Heading1']
     title_style.alignment = 1
-    title = Paragraph("Sales Predictions for October 2024", title_style)
+    title = Paragraph("Sales Predictions for Novemeber 2024", title_style)
     elements.append(title)
     elements.append(Spacer(1, 0.15*inch))
     elements.append(Paragraph("<br/><br/>", styles['Normal']))
@@ -6422,14 +6422,14 @@ def projection():
     # Prepare data for PDF
     pdf_data = prepare_data_for_pdf(data)
 
-    table_data = [['Zone', 'Brand', 'Month Tgt (Oct)', 'Predicted Oct 2024', 'Total Oct 2023', 'YoY Growth']]
+    table_data = [['Zone', 'Brand', 'Month Tgt (Nov)', 'Predicted Nov 2024', 'Total Nov 2023', 'YoY Growth']]
     for _, row in pdf_data.iterrows():
         table_data.append([
             row['Zone'],
             row['Brand'],
-            f"{row['Month Tgt (Oct)']:,}",
-            f"{row['Predicted Oct 2024']:,}",
-            f"{row['Total Oct 2023']:,}",
+            f"{row['Month Tgt (Nov)']:,}",
+            f"{row['Predicted Nov 2024']:,}",
+            f"{row['Total Nov 2023']:,}",
             f"{row['YoY Growth']:.2f}%"
         ])
     table_data[0][-1] = table_data[0][-1] + "*"  
@@ -6458,7 +6458,7 @@ def projection():
     footnote_style.fontSize = 8
     footnote_style.leading = 10 
     footnote_style.alignment = 0
-    footnote = Paragraph("*YoY Growth is calculated using October 2023 sales and predicted October 2024 sales.", footnote_style)
+    footnote = Paragraph("*YoY Growth is calculated using November 2023 sales and predicted November 2024 sales.", footnote_style)
     indented_footnote = Indenter(left=-0.75*inch)
     elements.append(Spacer(1, 0.15*inch))
     elements.append(indented_footnote)
@@ -6480,9 +6480,9 @@ def projection():
             styler.apply(lambda x: ['background-color: #f0f0f0'] * len(x), subset=[col])
 
     numeric_format = {
-        'October 2024 Target': '{:.0f}',
-        'October Projection': '{:.2f}',
-        'October 2023 Sales': '{:.0f}',
+        'November 2024 Target': '{:.0f}',
+        'November Projection': '{:.2f}',
+        'November 2023 Sales': '{:.0f}',
         'YoY Growth(Projected)': '{:.2f}%'
     }
     styler.format(numeric_format)
@@ -6496,9 +6496,9 @@ def projection():
         st.markdown(f'<div class="uploaded-filename">Uploaded file: {uploaded_file.name}</div>', unsafe_allow_html=True)
         data = load_data(uploaded_file)
 
-        features = ['Month Tgt (Oct)', 'Monthly Achievement(Sep)', 'Total Sep 2023', 'Total Oct 2023',
+        features = ['Month Tgt (Nov)', 'Monthly Achievement(Oct)', 'Total Oct 2023', 'Total Nov 2023',
                     'Monthly Achievement(Apr)', 'Monthly Achievement(May)', 'Monthly Achievement(June)',
-                    'Monthly Achievement(July)', 'Monthly Achievement(Aug)']
+                    'Monthly Achievement(July)', 'Monthly Achievement(Aug)','Monthly Achievement(Sep)']
 
         X = data[features]
         y = data['Total Oct 2023']
@@ -6567,11 +6567,11 @@ def projection():
             )
             fig_importance.update_xaxes(tickfont_color='peru')
             fig_importance.update_yaxes(tickfont_color='peru')
-            filtered_data['FY2025 Till Sep']= filtered_data['Monthly Achievement(Apr)']+filtered_data['Monthly Achievement(May)']+filtered_data['Monthly Achievement(June)']+filtered_data['Monthly Achievement(July)']+filtered_data['Monthly Achievement(Aug)']+filtered_data['Monthly Achievement(Sep)']
+            filtered_data['FY2025 Till Oct']= filtered_data['Monthly Achievement(Apr)']+filtered_data['Monthly Achievement(May)']+filtered_data['Monthly Achievement(June)']+filtered_data['Monthly Achievement(July)']+filtered_data['Monthly Achievement(Aug)']+filtered_data['Monthly Achievement(Sep)']+filtered_data['Monthly Achievement(Oct)']
             fig_predictions1 = go.Figure()
-            fig_predictions1.add_trace(go.Bar(x=filtered_data['Zone'], y=filtered_data['FY 2025 Till Sep'], name='Till SepSales', marker_color='#4a69bd'))
+            fig_predictions1.add_trace(go.Bar(x=filtered_data['Zone'], y=filtered_data['FY 2025 Till Oct'], name='Till OctSales', marker_color='#4a69bd'))
             fig_predictions1.update_layout(
-                title='FY 2025 Till Sep', 
+                title='FY 2025 Till Oct', 
                 barmode='group', 
                 plot_bgcolor='rgba(255,255,255,0.1)', 
                 paper_bgcolor='rgba(0,0,0,0)', 
@@ -6589,14 +6589,14 @@ def projection():
         with col2:
             st.markdown("<h3>Sales Forecast Visualization</h3>", unsafe_allow_html=True)
             X_2024 = filtered_data[features].copy()
-            X_2024['Total Oct 2023'] = filtered_data['Total Oct 2023']
+            X_2024['Total Nov 2023'] = filtered_data['Total Nov 2023']
             predictions_2024 = model.predict(X_2024)
-            filtered_data['Predicted Oct 2024'] = predictions_2024
-            filtered_data['YoY Growth'] = (filtered_data['Predicted Oct 2024'] - filtered_data['Total Oct 2023']) / filtered_data['Total Oct 2023'] * 100
+            filtered_data['Predicted Nov 2024'] = predictions_2024
+            filtered_data['YoY Growth'] = (filtered_data['Predicted Nov 2024'] - filtered_data['Total Nov 2023']) / filtered_data['Total Nov 2023'] * 100
 
             fig_predictions = go.Figure()
-            fig_predictions.add_trace(go.Bar(x=filtered_data['Zone'], y=filtered_data['Total Oct 2023'], name='Oct 2023 Sales', marker_color='#4a69bd'))
-            fig_predictions.add_trace(go.Bar(x=filtered_data['Zone'], y=filtered_data['Predicted Oct 2024'], name='Predicted Oct 2024 Sales', marker_color='#82ccdd'))
+            fig_predictions.add_trace(go.Bar(x=filtered_data['Zone'], y=filtered_data['Total Nov 2023'], name='Nov 2023 Sales', marker_color='#4a69bd'))
+            fig_predictions.add_trace(go.Bar(x=filtered_data['Zone'], y=filtered_data['Predicted Nov 2024'], name='Predicted Nov 2024 Sales', marker_color='#82ccdd'))
             fig_predictions.update_layout(
                 title='Sales Projection: 2023 vs 2024', 
                 barmode='group', 
@@ -6628,17 +6628,17 @@ def projection():
             fig_monthly_performance = create_monthly_performance_graph(selected_data)
             
             # Update the graph with the selected data
-            months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']
+            months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct','Nov']
             for i, month in enumerate(months):
-                if month != 'Oct':
+                if month != 'Nov':
                     fig_monthly_performance.data[i].y = [
                         selected_data[f'Month Tgt ({month})'].iloc[0],
                         selected_data[f'Monthly Achievement({month})'].iloc[0]
                     ]
                 else:
                     fig_monthly_performance.data[i].y = [
-                        selected_data['Month Tgt (Oct)'].iloc[0],
-                        selected_data['Predicted Oct 2024'].iloc[0]
+                        selected_data['Month Tgt (Nov)'].iloc[0],
+                        selected_data['Predicted Nov 2024'].iloc[0]
                     ]
             
             st.plotly_chart(fig_monthly_performance, use_container_width=True)
@@ -6649,9 +6649,9 @@ def projection():
         share_df = pd.DataFrame({
            'Zone': filtered_data['Zone'],
             'Brand': filtered_data['Brand'],
-             'October 2024 Target': filtered_data['Month Tgt (Oct)'],
-           'October Projection': filtered_data['Predicted Oct 2024'],
-           'October 2023 Sales': filtered_data['Total Oct 2023'],
+             'November 2024 Target': filtered_data['Month Tgt (Nov)'],
+           'November Projection': filtered_data['Predicted Nov 2024'],
+           'November 2023 Sales': filtered_data['Total Nov 2023'],
           'YoY Growth(Projected)': filtered_data['YoY Growth']
              })
         styled_df = style_dataframe(share_df)
