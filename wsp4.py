@@ -7904,127 +7904,92 @@ def discount():
         # Build the PDF
         doc.build(elements)
         st.success(f"PDF report generated: {pdf_filename}")
-    def create_summary_metrics(self, data):
-        """Create summary metrics cards"""
+    def create_summary_metrics_data(self, data, selected_state):
+        """Return a dictionary of summary metrics for the selected state"""
+        df = data[selected_state]
+
         total_states = len(data)
-        total_discounts = sum(len(self.get_discount_types(df)) for df in data.values())
-        avg_discount = np.mean([df.iloc[0, 4] for df in data.values() if not df.empty])
-        
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            st.metric("Total States", total_states, "Active")
-        with col2:
-            st.metric("Total Discount Types", total_discounts, "Available")
-        with col3:
-            st.metric("Average Discount Rate", f"₹{avg_discount:,.2f}", "Per Bag")
-    def create_monthly_metrics(self, data, selected_state, selected_discount):
-        """Create monthly metrics based on selected discount type"""
-        df = data[selected_state]
-        
-        if selected_discount == self.combined_discount_name:
-            monthly_data = {
-                month: self.get_combined_data(df, cols, selected_state)
-                for month, cols in self.month_columns.items()
-            }
-        else:
-            mask = df.iloc[:, 0].fillna('').astype(str).str.strip() == selected_discount.strip()
+        total_discounts = len(self.get_discount_types(df, selected_state))
+
+        # Calculate the average discount rate
+        relevant_discounts = self.get_discount_types(df, selected_state)
+        discount_rates = []
+        for discount in relevant_discounts:
+            mask = df.iloc[:, 0].fillna('').astype(str).str.strip() == discount.strip()
             filtered_df = df[mask]
             if len(filtered_df) > 0:
-                monthly_data = {
-                    month: {
-                        'actual': filtered_df.iloc[0, cols['actual']],
-                        'approved': filtered_df.iloc[0, cols['approved']],
-                        'quantity': filtered_df.iloc[0, cols['quantity']]
-                    }
-                    for month, cols in self.month_columns.items()
-                }
-        
-        # Create three columns for each month
-        for month, data in monthly_data.items():
-            st.markdown(f"""
-            <div style='text-align: center; margin-bottom: 10px;'>
-                <h3 style='color: #1e293b; margin-bottom: 15px;'>{month}</h3>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            col1, col2, col3 = st.columns(3)
-            
-            with col1:
-                quantity = data.get('quantity', 0)
-                st.metric(
-                    "Quantity Sold",
-                    f"{quantity:,.2f}",
-                    delta=None,
-                    help=f"Total quantity sold in {month}"
-                )
-            
-            with col2:
-                approved = data.get('approved', 0)
-                st.metric(
-                    "Approved Payout",
-                    f"₹{approved:,.2f}",
-                    delta=None,
-                    help=f"Approved discount rate for {month}"
-                )
-            
-            with col3:
-                actual = data.get('actual', 0)
-                difference = approved - actual
-                delta_color = "normal" if difference >= 0 else "inverse"
-                st.metric(
-                    "Actual Payout",
-                    f"₹{actual:,.2f}",
-                    delta=f"₹{abs(difference):,.2f}" + (" under approved" if difference >= 0 else " over approved"),
-                    delta_color=delta_color,
-                    help=f"Actual discount rate for {month}"
-                )
-            
-            st.markdown("---")
-    def process_excel(self, uploaded_file):
-        """Process uploaded Excel file using cached function"""
-        return process_excel_file(uploaded_file.getvalue(), ['MP (U)', 'MP (JK)'])
-    def create_trend_chart(self, data, selected_state, selected_discount):
-        """Create trend chart using Plotly"""
+                discount_rates.append(filtered_df.iloc[0, 4])
+        avg_discount_rate = np.mean(discount_rates) if discount_rates else 0
+
+        return {
+            "Total States": total_states,
+            "Total Discount Types": total_discounts,
+            "Average Discount Rate": f"₹{avg_discount_rate:,.2f}"
+        }
+
+    def create_monthly_metrics_data(self, data, selected_state):
+        """Return a dictionary of monthly metrics for the selected state"""
         df = data[selected_state]
-        
-        if selected_discount == self.combined_discount_name:
-            monthly_data = {
-                month: self.get_combined_data(df, cols, selected_state)
-                for month, cols in self.month_columns.items()
+        monthly_data = {}
+
+        for month, cols in self.month_columns.items():
+            month_metrics = {
+                "Quantity Sold": 0,
+                "Approved Payout": 0,
+                "Actual Payout": 0
             }
-        else:
-            mask = df.iloc[:, 0].fillna('').astype(str).str.strip() == selected_discount.strip()
-            filtered_df = df[mask]
-            if len(filtered_df) > 0:
-                monthly_data = {
-                    month: {
-                        'actual': filtered_df.iloc[0, cols['actual']],
-                        'approved': filtered_df.iloc[0, cols['approved']]
-                    }
-                    for month, cols in self.month_columns.items()
-                }
-        
-        months = list(monthly_data.keys())
-        actual_values = [data['actual'] for data in monthly_data.values()]
-        approved_values = [data['approved'] for data in monthly_data.values()]
-        
+
+            for discount in self.get_discount_types(df, selected_state):
+                mask = df.iloc[:, 0].fillna('').astype(str).str.strip() == discount.strip()
+                filtered_df = df[mask]
+                if len(filtered_df) > 0:
+                    month_metrics["Quantity Sold"] += filtered_df.iloc[0, cols["quantity"]]
+                    month_metrics["Approved Payout"] += filtered_df.iloc[0, cols["approved"]]
+                    month_metrics["Actual Payout"] += filtered_df.iloc[0, cols["actual"]]
+
+            monthly_data[month] = month_metrics
+
+        return monthly_data
+
+    def create_trend_chart_data(self, data, selected_state):
+        """Return a Platypus flowable element for the trend chart"""
+        df = data[selected_state]
+        trend_data = {}
+
+        for month, cols in self.month_columns.items():
+            month_data = {
+                "actual": 0,
+                "approved": 0
+            }
+
+            for discount in self.get_discount_types(df, selected_state):
+                mask = df.iloc[:, 0].fillna('').astype(str).str.strip() == discount.strip()
+                filtered_df = df[mask]
+                if len(filtered_df) > 0:
+                    month_data["actual"] += filtered_df.iloc[0, cols["actual"]]
+                    month_data["approved"] += filtered_df.iloc[0, cols["approved"]]
+
+            trend_data[month] = month_data
+
+        months = list(trend_data.keys())
+        actual_values = [data["actual"] for data in trend_data.values()]
+        approved_values = [data["approved"] for data in trend_data.values()]
+
+        # Create the Plotly figure
         fig = go.Figure()
-        
         fig.add_trace(go.Scatter(
             x=months,
             y=actual_values,
             name='Actual',
             line=dict(color='#10B981', width=3)
         ))
-        
         fig.add_trace(go.Scatter(
             x=months,
             y=approved_values,
             name='Approved',
             line=dict(color='#3B82F6', width=3)
         ))
-        
+
         fig.update_layout(
             title=f'Discount Trends - {selected_state}',
             xaxis_title='Month',
@@ -8033,11 +7998,16 @@ def discount():
             height=400,
             margin=dict(t=50, b=50, l=50, r=50)
         )
-        
-        st.plotly_chart(fig, use_container_width=True)
-        
-        # Create and display the difference chart
-        self.create_difference_chart(months, approved_values, actual_values, selected_state)
+
+        # Convert the Plotly figure to a Platypus flowable element
+        from reportlab.graphics.shapes import Drawing
+        from reportlab.graphics import renderPDF
+        chart = Drawing(400, 400)
+        renderPDF.draw(fig, chart, 0, 0)
+        return chart
+    def process_excel(self, uploaded_file):
+        """Process uploaded Excel file using cached function"""
+        return process_excel_file(uploaded_file.getvalue(), ['MP (U)', 'MP (JK)'])
 
     def create_difference_chart(self, months, approved_values, actual_values, selected_state):
         """Create chart showing difference between approved and actual rates"""
