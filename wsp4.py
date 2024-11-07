@@ -3450,7 +3450,7 @@ def create_visualization(region_data, region, brand, months):
     
     ax4.text(0.35, 1, f'November {current_year} Sales Comparison to October 2024:-', fontsize=16, fontweight='bold', ha='center', va='center')
     
-    total_change = ((total_nov_current - total_oct_current) / total_sep_current) * 100
+    total_change = ((total_nov_current - total_oct_current) / total_oct_current) * 100
     arrow = get_arrow(total_change)
     color = get_color(total_change)
     ax4.text(0.36, 0.9, f"November 2024: {total_nov_current:.0f}", fontsize=14, fontweight='bold', ha='center')
