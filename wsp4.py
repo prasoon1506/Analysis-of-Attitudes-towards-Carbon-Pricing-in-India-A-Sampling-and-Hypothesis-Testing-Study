@@ -3777,7 +3777,7 @@ def show_report_generator():
             if st.button("🔍 Generate Individual Report", key='individual_report'):
                 with st.spinner("Creating your report..."):
                     region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)]
-                    months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']
+                    months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct','Nov']
                     fig = create_visualization(region_data, region, brand, months)
                     
                     st.pyplot(fig)
