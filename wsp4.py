@@ -7779,75 +7779,6 @@ def discount():
         }
         self.total_patterns = ['G. TOTAL', 'G.TOTAL', 'G. Total', 'G.Total', 'GRAND TOTAL',"G. Total (STD + STS)"]
         self.excluded_states = ['MP (JK)', 'MP (U)','East']
-    def generate_pdf_report(self, data, selected_state, selected_discount):
-        """Generate a PDF report for the selected state and discount"""
-        df = data[selected_state]
-        
-        if selected_discount == self.combined_discount_name:
-            monthly_data = {
-                month: self.get_combined_data(df, cols, selected_state)
-                for month, cols in self.month_columns.items()
-            }
-        else:
-            mask = df.iloc[:, 0].fillna('').astype(str).str.strip() == selected_discount.strip()
-            filtered_df = df[mask]
-            if len(filtered_df) > 0:
-                monthly_data = {
-                    month: {
-                        'actual': filtered_df.iloc[0, cols['actual']],
-                        'approved': filtered_df.iloc[0, cols['approved']],
-                        'quantity': filtered_df.iloc[0, cols['quantity']]
-                    }
-                    for month, cols in self.month_columns.items()
-                }
-
-        # Create the PDF document
-        pdf_filename = f"{selected_state}_{selected_discount.replace(' ', '_')}_report.pdf"
-        doc = SimpleDocTemplate(pdf_filename, pagesize=letter)
-        elements = []
-
-        # Add a title
-        elements.append(Paragraph(f"{selected_state} - {selected_discount} Discount Report", getSampleStyleSheet()["Heading1"]))
-
-        # Add a table for monthly data
-        data = [["Month", "Quantity", "Approved Payout", "Actual Payout", "Difference"]]
-        quantity = None
-        for month, data in monthly_data.items():
-            difference = data['approved'] - data['actual']
-            if quantity is None:
-                quantity = f"{data['quantity']:,.2f}"
-            data_row = [
-                month,
-                quantity,
-                f"₹{data['approved']:,.2f}",
-                f"₹{data['actual']:,.2f}",
-                f"₹{abs(difference):,.2f}" + (" under approved" if difference >= 0 else " over approved")
-            ]
-            data.append(data_row)
-
-        table = Table(data)
-        table_style = TableStyle([
-            ("BACKGROUND", (0,0), (-1,0), colors.grey),
-            ("TEXTCOLOR", (0,0), (-1,0), colors.whitesmoke),
-            ("ALIGN", (0,0), (-1,-1), "CENTER"),
-            ("FONTNAME", (0,0), (-1,0), "Helvetica-Bold"),
-            ("FONTSIZE", (0,0), (-1,0), 14),
-            ("BOTTOMPADDING", (0,0), (-1,0), 12),
-            ("BACKGROUND", (0,1), (-1,-1), colors.beige),
-            ("GRID", (0,0), (-1,-1), 1, colors.black),
-        ])
-        table.setStyle(table_style)
-        elements.append(table)
-
-        # Add the trend chart
-        elements.append(Spacer(1, 12))
-        self.create_trend_chart(data, selected_state, selected_discount, include_in_pdf=True)
-        elements.append(doc.builtins[-1])  # Add the chart to the elements
-
-        # Build the PDF
-        doc.build(elements)
-
-        return pdf_filename
     def create_ticker(self, data):
      """Create moving ticker with comprehensive discount information"""
      ticker_items = []
@@ -7918,6 +7849,61 @@ def discount():
      </div>
      """
      st.markdown(ticker_html, unsafe_allow_html=True)
+    def generate_pdf_report(self, data, selected_state):
+        """Generate a PDF report for the selected state"""
+        pdf_filename = f"{selected_state.replace(' ', '_')}_discount_report.pdf"
+
+        doc = SimpleDocTemplate(pdf_filename, pagesize=letter)
+        elements = []
+
+        # Add a title
+        styles = getSampleStyleSheet()
+        title_style = styles["Heading1"]
+        title_text = f"Discount Analytics Report - {selected_state}"
+        elements.append(Paragraph(title_text, title_style))
+        elements.append(Paragraph(" ", styles["BodyText"]))
+
+        # Add the summary metrics
+        summary_metrics = self.create_summary_metrics_data(data, selected_state)
+        summary_table = Table(list(summary_metrics.items()))
+        summary_table_style = TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+            ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+            ("FONTSIZE", (0, 0), (-1, 0), 14),
+            ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+            ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
+        ])
+        summary_table.setStyle(summary_table_style)
+        elements.append(summary_table)
+        elements.append(Paragraph(" ", styles["BodyText"]))
+
+        # Add the monthly metrics
+        monthly_metrics = self.create_monthly_metrics_data(data, selected_state)
+        for month, metrics in monthly_metrics.items():
+            elements.append(Paragraph(f"{month} Metrics", styles["Heading2"]))
+            monthly_table = Table([list(metrics.values())], colWidths=[100, 100, 100])
+            monthly_table_style = TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("FONTSIZE", (0, 0), (-1, 0), 12),
+                ("BOTTOMPADDING", (0, 0), (-1, 0), 8),
+                ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
+            ])
+            monthly_table.setStyle(monthly_table_style)
+            elements.append(monthly_table)
+            elements.append(Paragraph(" ", styles["BodyText"]))
+
+        # Add the trend chart
+        trend_chart = self.create_trend_chart_data(data, selected_state)
+        elements.append(trend_chart)
+
+        # Build the PDF
+        doc.build(elements)
+        st.success(f"PDF report generated: {pdf_filename}")
     def create_summary_metrics(self, data):
         """Create summary metrics cards"""
         total_states = len(data)
