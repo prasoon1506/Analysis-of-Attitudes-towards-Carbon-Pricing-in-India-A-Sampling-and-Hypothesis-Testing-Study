@@ -7551,12 +7551,6 @@ def market_share():
     if __name__ == "__main__":
         main()
 def discount():
- import streamlit as st
- import pandas as pd
- import numpy as np
- import plotly.graph_objects as go
- from datetime import datetime
- import time
  import streamlit.components.v1 as components
  import io
  import warnings
@@ -7785,6 +7779,74 @@ def discount():
         }
         self.total_patterns = ['G. TOTAL', 'G.TOTAL', 'G. Total', 'G.Total', 'GRAND TOTAL',"G. Total (STD + STS)"]
         self.excluded_states = ['MP (JK)', 'MP (U)','East']
+    def generate_pdf_report(self, data, selected_state, selected_discount):
+        df = data[selected_state]
+        
+        if selected_discount == self.combined_discount_name:
+            monthly_data = {
+                month: self.get_combined_data(df, cols, selected_state)
+                for month, cols in self.month_columns.items()
+            }
+        else:
+            mask = df.iloc[:, 0].fillna('').astype(str).str.strip() == selected_discount.strip()
+            filtered_df = df[mask]
+            if len(filtered_df) > 0:
+                monthly_data = {
+                    month: {
+                        'actual': filtered_df.iloc[0, cols['actual']],
+                        'approved': filtered_df.iloc[0, cols['approved']],
+                        'quantity': filtered_df.iloc[0, cols['quantity']]
+                    }
+                    for month, cols in self.month_columns.items()
+                }
+
+        # Create the PDF document
+        pdf_filename = f"{selected_state}_{selected_discount.replace(' ', '_')}_report.pdf"
+        doc = SimpleDocTemplate(pdf_filename, pagesize=letter)
+        elements = []
+
+        # Add a title
+        elements.append(Paragraph(f"{selected_state} - {selected_discount} Discount Report", getSampleStyleSheet()["Heading1"]))
+
+        # Add a table for monthly data
+        data = [["Month", "Quantity", "Approved Payout", "Actual Payout", "Difference"]]
+        quantity = None
+        for month, data in monthly_data.items():
+            difference = data['approved'] - data['actual']
+            if quantity is None:
+                quantity = f"{data['quantity']:,.2f}"
+            data_row = [
+                month,
+                quantity,
+                f"₹{data['approved']:,.2f}",
+                f"₹{data['actual']:,.2f}",
+                f"₹{abs(difference):,.2f}" + (" under approved" if difference >= 0 else " over approved")
+            ]
+            data.append(data_row)
+
+        table = Table(data)
+        table_style = TableStyle([
+            ("BACKGROUND", (0,0), (-1,0), colors.grey),
+            ("TEXTCOLOR", (0,0), (-1,0), colors.whitesmoke),
+            ("ALIGN", (0,0), (-1,-1), "CENTER"),
+            ("FONTNAME", (0,0), (-1,0), "Helvetica-Bold"),
+            ("FONTSIZE", (0,0), (-1,0), 14),
+            ("BOTTOMPADDING", (0,0), (-1,0), 12),
+            ("BACKGROUND", (0,1), (-1,-1), colors.beige),
+            ("GRID", (0,0), (-1,-1), 1, colors.black),
+        ])
+        table.setStyle(table_style)
+        elements.append(table)
+
+        # Add the trend chart
+        elements.append(Spacer(1, 12))
+        self.create_trend_chart(data, selected_state, selected_discount, include_in_pdf=True)
+        elements.append(doc.builtins[-1])  # Add the chart to the elements
+
+        # Build the PDF
+        doc.build(elements)
+
+        return pdf_filename
     def create_ticker(self, data):
      """Create moving ticker with comprehensive discount information"""
      ticker_items = []
@@ -8146,7 +8208,17 @@ def discount():
             <h3 style='color: #1e293b; margin-bottom: 1rem;'>Detailed Analysis</h3>
         </div>
         """, unsafe_allow_html=True)
-        
+        if st.button(f"Generate PDF Report for {selected_state} - {selected_discount}"):
+        with st.spinner('Generating PDF report...'):
+            pdf_filename = processor.generate_pdf_report(data, selected_state, selected_discount)
+            st.success(f"PDF report generated: {pdf_filename}")
+            with open(pdf_filename, "rb") as pdf_file:
+                st.download_button(
+                    label="Download PDF Report",
+                    data=pdf_file,
+                    file_name=pdf_filename,
+                    mime="application/pdf",
+                )
         col1, col2 = st.columns(2)
         with col1:
             selected_state = st.selectbox("Select State", list(data.keys()))
