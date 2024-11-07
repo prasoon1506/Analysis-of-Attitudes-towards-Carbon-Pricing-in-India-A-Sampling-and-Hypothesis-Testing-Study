@@ -6567,7 +6567,7 @@ def projection():
             )
             fig_importance.update_xaxes(tickfont_color='peru')
             fig_importance.update_yaxes(tickfont_color='peru')
-            filtered_data['FY2025 Till Oct']= filtered_data['Monthly Achievement(Apr)']+filtered_data['Monthly Achievement(May)']+filtered_data['Monthly Achievement(June)']+filtered_data['Monthly Achievement(July)']+filtered_data['Monthly Achievement(Aug)']+filtered_data['Monthly Achievement(Sep)']+filtered_data['Monthly Achievement(Oct)']
+            filtered_data['FY 2025 Till Oct']= filtered_data['Monthly Achievement(Apr)']+filtered_data['Monthly Achievement(May)']+filtered_data['Monthly Achievement(June)']+filtered_data['Monthly Achievement(July)']+filtered_data['Monthly Achievement(Aug)']+filtered_data['Monthly Achievement(Sep)']+filtered_data['Monthly Achievement(Oct)']
             fig_predictions1 = go.Figure()
             fig_predictions1.add_trace(go.Bar(x=filtered_data['Zone'], y=filtered_data['FY 2025 Till Oct'], name='Till OctSales', marker_color='#4a69bd'))
             fig_predictions1.update_layout(
