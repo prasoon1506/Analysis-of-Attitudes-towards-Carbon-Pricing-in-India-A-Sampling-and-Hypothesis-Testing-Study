@@ -7780,6 +7780,7 @@ def discount():
         self.total_patterns = ['G. TOTAL', 'G.TOTAL', 'G. Total', 'G.Total', 'GRAND TOTAL',"G. Total (STD + STS)"]
         self.excluded_states = ['MP (JK)', 'MP (U)','East']
     def generate_pdf_report(self, data, selected_state, selected_discount):
+        """Generate a PDF report for the selected state and discount"""
         df = data[selected_state]
         
         if selected_discount == self.combined_discount_name:
