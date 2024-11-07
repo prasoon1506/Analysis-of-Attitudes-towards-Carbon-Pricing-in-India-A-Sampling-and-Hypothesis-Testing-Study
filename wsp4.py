@@ -8157,7 +8157,7 @@ def discount():
         </div>
         """, unsafe_allow_html=True)
         
-        processor.create_summary_metrics(data)
+        processor.create_summary_metrics_data(data)
         
         # Enhanced Selection Controls
         st.markdown("""
