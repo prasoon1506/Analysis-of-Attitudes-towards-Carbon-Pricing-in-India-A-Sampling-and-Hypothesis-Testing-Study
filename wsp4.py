@@ -7784,13 +7784,7 @@ def discount():
         
         # Set data
         if data:
-            # Adjust data points to use unique month indices
-            unique_months = len(self._months)
-            adjusted_data = [
-                [(i, val[1]) for i, val in enumerate(data[0])],
-                [(i, val[1]) for i, val in enumerate(data[1])]
-            ]
-            self.chart.data = adjusted_data
+            self.chart.data = data
             
         # Configure X-axis
         self.chart.xValueAxis.labelTextFormat = self._month_formatter
@@ -7819,16 +7813,24 @@ def discount():
         self.chart.lines[1].symbol.size = 6
 
         # Add value labels aligned with points
-        if data and len(data) > 0:
-            # Calculate scale factors for positioning
+        if data and len(data) >= 2:  # Ensure we have both approved and actual data
+            # Get all y-values
+            approved_values = [point[1] for point in data[0]]
+            actual_values = [point[1] for point in data[1]]
+            
+            # Calculate min and max for scaling
+            min_y = min(min(approved_values), min(actual_values))
+            max_y = max(max(approved_values), max(actual_values))
+            y_range = max_y - min_y if max_y != min_y else 1
+            
+            # Calculate scale factors
             x_scale = self.chart.width / (len(self._months) - 1)
-            y_range = max(max(y for _, y in data[0] + data[1])) - min(min(y for _, y in data[0] + data[1]))
             y_scale = self.chart.height / y_range
             
             # Add labels for approved values (above points)
             for i, (_, y) in enumerate(data[0]):
                 x_pos = self.chart.x + (i * x_scale)
-                y_pos = self.chart.y + (y - min(y for _, y in data[0] + data[1])) * y_scale
+                y_pos = self.chart.y + ((y - min_y) * y_scale)
                 
                 label = String(
                     x_pos,
@@ -7843,7 +7845,7 @@ def discount():
             # Add labels for actual values (below points)
             for i, (_, y) in enumerate(data[1]):
                 x_pos = self.chart.x + (i * x_scale)
-                y_pos = self.chart.y + (y - min(y for _, y in data[0] + data[1])) * y_scale
+                y_pos = self.chart.y + ((y - min_y) * y_scale)
                 
                 label = String(
                     x_pos,
@@ -7864,6 +7866,7 @@ def discount():
         except (ValueError, TypeError):
             pass
         return ''
+ 
  class DiscountReportGenerator:
     def __init__(self):
         self.styles = getSampleStyleSheet()
