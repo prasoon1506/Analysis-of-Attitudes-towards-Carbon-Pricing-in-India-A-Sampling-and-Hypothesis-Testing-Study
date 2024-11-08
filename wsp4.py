@@ -7791,11 +7791,11 @@ def discount():
         self.chart.xValueAxis.labels.boxAnchor = 'n'
         self.chart.xValueAxis.labels.angle = 0
         self.chart.xValueAxis.labels.dy = -20
-        self.chart.xValueAxis.tickDown = 2
+        self.chart.xValueAxis.tickDown = 5
         self.chart.xValueAxis.tickUp = 0
         self.chart.xValueAxis.visibleGrid = False
         self.chart.xValueAxis.valueMin = 0
-        self.chart.xValueAxis.valueMax = len(self._months)
+        self.chart.xValueAxis.valueMax = len(self._months)-3
         
         # Configure Y-axis
         self.chart.yValueAxis.labelTextFormat = 'Rs.%.1f'
