@@ -7832,7 +7832,7 @@ def discount():
                 if i==0:
                     x_pos = self.chart.x + (i * x_scale)
                 else:
-                    x_pos = self.chart.x + ((i-1)*x_scale)
+                    x_pos = self.chart.x + ((i-0.5)*x_scale)
                 y_pos = self.chart.y + ((y - min_y) * y_scale)
                 
                 label = String(
@@ -7847,7 +7847,10 @@ def discount():
             
             # Add labels for actual values (below points)
             for i, (_, y) in enumerate(data[1]):
-                x_pos = self.chart.x + (i * x_scale)
+                if i==0:
+                    x_pos = self.chart.x + (i * x_scale)
+                else:
+                    x_post = self.chart.x + ((i-1)*x_scale)
                 y_pos = self.chart.y + ((y - min_y) * y_scale)
                 
                 label = String(
