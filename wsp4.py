@@ -2,6 +2,7 @@ import os
 import streamlit as st
 import pandas as pd
 import openpyxl
+from reportlab.graphics.shapes import Drawing, Line, String
 from matplotlib.path import Path
 from matplotlib.patches import PathPatch
 from io import BytesIO
