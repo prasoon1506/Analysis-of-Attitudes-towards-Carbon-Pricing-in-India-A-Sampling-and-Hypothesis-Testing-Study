@@ -7746,6 +7746,7 @@ def discount():
  from reportlab.lib.colors import HexColor
  import io
  from datetime import datetime
+ import pandas as pd
 
  class DiscountReportGenerator:
     def __init__(self):
@@ -7773,21 +7774,22 @@ def discount():
         ))
         
         self.styles.add(ParagraphStyle(
-            name='SummaryHeader',
-            fontName='Helvetica-Bold',
-            fontSize=14,
-            spaceBefore=15,
+            name='FooterNote',
+            fontName='Helvetica-Italic',
+            fontSize=10,
+            spaceBefore=20,
             spaceAfter=10,
-            textColor=HexColor('#334155')
+            alignment=1,
+            textColor=HexColor('#64748b')
         ))
-        
-        self.styles.add(ParagraphStyle(
-            name='TotalAmount',
-            fontName='Helvetica-Bold',
-            fontSize=12,
-            spaceAfter=5,
-            textColor=HexColor('#1e293b')
-        ))
+
+    def is_valid_discount(self, approved, actual):
+        """Check if the discount values are valid (not both 0 or NaN)"""
+        if pd.isna(approved) and pd.isna(actual):
+            return False
+        if approved == 0 and actual == 0:
+            return False
+        return True
 
     def create_monthly_page(self, month_data, month_name):
         """Create a single page for monthly data"""
@@ -7808,80 +7810,86 @@ def discount():
             ['Discount Type', 'Approved Rate', 'Actual Rate', 'Difference', 'Total Impact']
         ]
         
-        total_approved = 0
-        total_actual = 0
-        
-        # Add data rows
+        # Create a list of valid discounts with their data for sorting
+        valid_discounts = []
         for discount_name, values in month_data['discounts'].items():
             approved = values['approved']
             actual = values['actual']
+            
+            # Skip if both approved and actual are 0 or NaN
+            if not self.is_valid_discount(approved, actual):
+                continue
+                
             diff = approved - actual
-            total_diff = diff * month_data['quantity']*20
+            total_diff = diff * month_data['quantity']
             
-            total_approved += approved * month_data['quantity']*20
-            total_actual += actual * month_data['quantity']*20
-            
-            diff_text = f"{'↓' if diff >= 0 else '↑'} Rs.{abs(diff):,.2f}"
-            impact_text = f"Rs.{abs(total_diff):,.2f}"
+            valid_discounts.append({
+                'name': discount_name,
+                'approved': approved,
+                'actual': actual,
+                'diff': diff,
+                'total_diff': total_diff
+            })
+        
+        # Sort discounts by approved rate in ascending order
+        valid_discounts.sort(key=lambda x: x['approved'])
+        
+        # Add sorted data rows
+        for discount in valid_discounts:
+            diff_text = f"{'↓' if discount['diff'] >= 0 else '↑'} ₹{abs(discount['diff']):,.2f}"
+            impact_text = f"₹{abs(discount['total_diff']):,.2f}"
             
             row = [
-                discount_name,
-                f"Rs.{approved:,.2f}",
-                f"Rs.{actual:,.2f}",
+                discount['name'],
+                f"₹{discount['approved']:,.2f}",
+                f"₹{discount['actual']:,.2f}",
                 diff_text,
                 impact_text
             ]
             table_data.append(row)
         
-        # Create table
-        table = Table(table_data, colWidths=[2.2*inch, 1.3*inch, 1.3*inch, 1.1*inch, 1.3*inch])
+        # Only create table if there are valid discounts
+        if len(table_data) > 1:
+            # Create table
+            table = Table(table_data, colWidths=[2.2*inch, 1.3*inch, 1.3*inch, 1.1*inch, 1.3*inch])
+            
+            # Style the table
+            style = TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), HexColor('#f1f5f9')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), HexColor('#334155')),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 10),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('TOPPADDING', (0, 0), (-1, 0), 12),
+                ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 1), (-1, -1), 9),
+                ('GRID', (0, 0), (-1, -1), 1, HexColor('#e2e8f0')),
+                ('ALIGN', (1, 1), (-1, -1), 'RIGHT'),
+                ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+                ('BOTTOMPADDING', (0, 1), (-1, -1), 8),
+                ('TOPPADDING', (0, 1), (-1, -1), 8),
+            ])
+            
+            # Add conditional formatting for difference column
+            for i in range(1, len(table_data)):
+                if '↓' in table_data[i][3]:  # Savings
+                    style.add('TEXTCOLOR', (3, i), (4, i), HexColor('#10b981'))
+                else:  # Excess
+                    style.add('TEXTCOLOR', (3, i), (4, i), HexColor('#ef4444'))
+            
+            table.setStyle(style)
+            elements.append(table)
+        else:
+            elements.append(Paragraph(
+                "No valid discount data available for this month",
+                self.styles['Normal']
+            ))
         
-        # Style the table
-        style = TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), HexColor('#f1f5f9')),
-            ('TEXTCOLOR', (0, 0), (-1, 0), HexColor('#334155')),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 10),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-            ('TOPPADDING', (0, 0), (-1, 0), 12),
-            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 1), (-1, -1), 9),
-            ('GRID', (0, 0), (-1, -1), 1, HexColor('#e2e8f0')),
-            ('ALIGN', (1, 1), (-1, -1), 'RIGHT'),
-            ('ALIGN', (0, 0), (0, -1), 'LEFT'),
-            ('BOTTOMPADDING', (0, 1), (-1, -1), 8),
-            ('TOPPADDING', (0, 1), (-1, -1), 8),
-        ])
-        
-        # Add conditional formatting for difference column
-        for i in range(1, len(table_data)):
-            if '↓' in table_data[i][3]:  # Savings
-                style.add('TEXTCOLOR', (3, i), (4, i), HexColor('#10b981'))
-            else:  # Excess
-                style.add('TEXTCOLOR', (3, i), (4, i), HexColor('#ef4444'))
-        
-        table.setStyle(style)
-        elements.append(table)
-        
-        # Add summary section
-        total_diff = total_approved - total_actual
-        elements.append(Paragraph("Monthly Summary", self.styles['SummaryHeader']))
+        # Add footer note
         elements.append(Paragraph(
-            f"Total Approved Amount: Rs.{total_approved:,.2f}",
-            self.styles['TotalAmount']
-        ))
-        elements.append(Paragraph(
-            f"Total Actual Amount: Rs.{total_actual:,.2f}",
-            self.styles['TotalAmount']
-        ))
-        elements.append(Paragraph(
-            f"Net {('Savings' if total_diff >= 0 else 'Excess')}: Rs.{abs(total_diff):,.2f}",
-            ParagraphStyle(
-                'DiffAmount',
-                parent=self.styles['TotalAmount'],
-                textColor=HexColor('#10b981' if total_diff >= 0 else '#ef4444')
-            )
+            "This report currently presents data for Q1 2024. The forthcoming update will incorporate comprehensive data for Q2 2024, providing a more extensive analysis of discount trends.",
+            self.styles['FooterNote']
         ))
         
         return elements
@@ -7934,7 +7942,6 @@ def discount():
         doc.build(story)
         buffer.seek(0)
         return buffer
-
  def add_pdf_download(analytics_instance, data, selected_state):
     """Add PDF download button to Streamlit app"""
     # Prepare data for PDF generation
