@@ -8120,13 +8120,10 @@ def discount():
             "Discount Rate Trend(Grand Total)",
             self.styles['ChartTitle']
         ))
-        
-        # Get data for the chart
-        months, approved_values, actual_values = self.get_highest_discount_data(data)
-        chart_data = [
-            list(zip(range(len(months)), approved_values)),  # Approved line
-            list(zip(range(len(months)), actual_values))     # Actual line
-        ]
+        months = list(dict.fromkeys(months))
+        approved_values, actual_values = self.get_highest_discount_data(data)
+        chart_data = [list(zip(range(len(months)), approved_values)),
+                       list(zip(range(len(months)), actual_values))]
         drawing = LineChart(500, 300, chart_data, months)
         story.append(drawing)
         
