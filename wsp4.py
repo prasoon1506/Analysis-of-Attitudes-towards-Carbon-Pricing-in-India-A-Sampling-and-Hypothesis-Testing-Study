@@ -7829,10 +7829,7 @@ def discount():
             
             # Add labels for approved values (above points)
             for i, (_, y) in enumerate(data[0]):
-                if i==0:
-                    x_pos = self.chart.x + (i * x_scale)
-                else:
-                    x_pos = self.chart.x + ((i-0.5)*x_scale)
+                x_pos = self.chart.x + (i * x_scale)
                 y_pos = self.chart.y + ((y - min_y) * y_scale)
                 
                 label = String(
