@@ -7763,35 +7763,49 @@ def discount():
     def __init__(self, width=500, height=250, data=None, months=None):
         Drawing.__init__(self, width, height)
         
-        # Declare months as an attribute of the drawing
-        self._months = months or []
+        # Remove duplicate months while preserving order
+        if months:
+            seen = set()
+            self._months = []
+            for month in months:
+                if month not in seen:
+                    self._months.append(month)
+                    seen.add(month)
+        else:
+            self._months = []
         
         self.add(LinePlot(), name='chart')
         
         # Customize the line chart
         self.chart.width = width * 0.8
         self.chart.height = height * 0.7
-        self.chart.x = width * 0.1  # Margin from left
-        self.chart.y = height * 0.1  # Margin from bottom
+        self.chart.x = width * 0.1
+        self.chart.y = height * 0.1
         
         # Set chart style
-        self.chart.lines[0].strokeColor = HexColor('#3b82f6')  # Blue for approved
-        self.chart.lines[1].strokeColor = HexColor('#ef4444')  # Red for actual
+        self.chart.lines[0].strokeColor = HexColor('#3b82f6')
+        self.chart.lines[1].strokeColor = HexColor('#ef4444')
         self.chart.lines[0].strokeWidth = 2
         self.chart.lines[1].strokeWidth = 2
         
-        # Set data
+        # Prepare data with unique x-coordinates
         if data:
-            self.chart.data = data
-            
+            # Create new data points with unique x-coordinates
+            unique_data = [
+                [(i, y) for i, (_, y) in enumerate(data[0])],  # Approved values
+                [(i, y) for i, (_, y) in enumerate(data[1])]   # Actual values
+            ]
+            self.chart.data = unique_data
+        
         # Customize axis
         self.chart.xValueAxis.labelTextFormat = self._month_formatter
-        self.chart.xValueAxis.labels.boxAnchor = 'n'  # Changed to 'n' for better alignment
-        self.chart.xValueAxis.labels.angle = 0  # Changed to 0 to prevent duplicate labels
-        self.chart.xValueAxis.labels.dx = 0  # Reset dx
-        self.chart.xValueAxis.labels.dy = -10  # Adjusted dy
-        self.chart.xValueAxis.labelTextScale = 0.8  # Reduced text size
+        self.chart.xValueAxis.labels.boxAnchor = 'n'
+        self.chart.xValueAxis.labels.angle = 0
+        self.chart.xValueAxis.labels.dy = -10
+        self.chart.xValueAxis.labelTextScale = 0.8
         self.chart.yValueAxis.labelTextFormat = 'Rs.%.1f'
+        
+        # Grid styling
         self.chart.yValueAxis.gridStrokeColor = HexColor('#e2e8f0')
         self.chart.yValueAxis.gridStrokeWidth = 0.5
         self.chart.xValueAxis.gridStrokeColor = HexColor('#e2e8f0')
@@ -7800,35 +7814,53 @@ def discount():
         # Configure tick marks
         self.chart.xValueAxis.tickUp = 0
         self.chart.xValueAxis.tickDown = 5
+        self.chart.xValueAxis.visibleTicks = True
         
         # Add markers
-        self.chart.lines[0].symbol = makeMarker('Circle')
-        self.chart.lines[1].symbol = makeMarker('Circle')
+        for line in self.chart.lines:
+            line.symbol = makeMarker('Circle')
+            line.symbol.size = 6
+            
         self.chart.lines[0].symbol.strokeColor = HexColor('#3b82f6')
         self.chart.lines[1].symbol.strokeColor = HexColor('#ef4444')
         self.chart.lines[0].symbol.fillColor = HexColor('#ffffff')
         self.chart.lines[1].symbol.fillColor = HexColor('#ffffff')
-        self.chart.lines[0].symbol.size = 6
-        self.chart.lines[1].symbol.size = 6
 
-        # Add value labels
+        # Add value labels correctly positioned
         if data and len(data) > 0:
-            max_value = max(max(point[1] for point in data[0]), max(point[1] for point in data[1]))
-            for i, (x, y) in enumerate(data[0]):  # Approved values
+            # Calculate positions for labels
+            max_value = max(max(y for _, y in data[0]), max(y for _, y in data[1]))
+            chart_bottom = self.chart.y
+            chart_top = self.chart.y + self.chart.height
+            value_range = max_value - min(min(y for _, y in data[0]), min(y for _, y in data[1]))
+
+            # Function to calculate y position
+            def get_y_position(value):
+                return chart_bottom + (self.chart.height * (value - min(min(y for _, y in data[0]), min(y for _, y in data[1]))) / value_range)
+
+            # Add labels for approved values (blue)
+            for i, (_, y) in enumerate(data[0]):
+                x_pos = self.chart.x + (i * self.chart.width / (len(self._months) - 1))
+                y_pos = get_y_position(y)
+                
                 label = String(
-                    self.chart.x + (x * self.chart.width/(len(self._months)-1)),
-                    self.chart.y + self.chart.height * (y/max_value) + 10,  # Offset above point
+                    x_pos,
+                    y_pos + 15,  # Offset above point
                     f'Rs.{y:.1f}',
                     fontSize=8,
                     fillColor=HexColor('#3b82f6'),
                     textAnchor='middle'
                 )
                 self.add(label)
-            
-            for i, (x, y) in enumerate(data[1]):  # Actual values
+
+            # Add labels for actual values (red)
+            for i, (_, y) in enumerate(data[1]):
+                x_pos = self.chart.x + (i * self.chart.width / (len(self._months) - 1))
+                y_pos = get_y_position(y)
+                
                 label = String(
-                    self.chart.x + (x * self.chart.width/(len(self._months)-1)),
-                    self.chart.y + self.chart.height * (y/max_value) - 10,  # Offset below point
+                    x_pos,
+                    y_pos - 15,  # Offset below point
                     f'Rs.{y:.1f}',
                     fontSize=8,
                     fillColor=HexColor('#ef4444'),
