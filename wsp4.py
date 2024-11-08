@@ -7846,11 +7846,8 @@ def discount():
                 self.add(label)
             
             # Add labels for actual values (below points)
-            for i, (_, y) in enumerate(data[1]):
-                if i==0:
-                    x_pos = self.chart.x + (i * x_scale)
-                else:
-                    x_post = self.chart.x + ((i-0.1)*x_scale)
+            for i, (_, y) in enumerate(data[1]): 
+                x_pos = self.chart.x + (i * x_scale)
                 y_pos = self.chart.y + ((y - min_y) * y_scale)
                 
                 label = String(
