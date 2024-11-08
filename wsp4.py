@@ -7816,7 +7816,7 @@ def discount():
             approved = values['approved']
             actual = values['actual']
             diff = approved - actual
-            total_diff = diff * month_data['quantity']
+            total_diff = diff * month_data['quantity']*20
             
             total_approved += approved * month_data['quantity']*20
             total_actual += actual * month_data['quantity']*20
