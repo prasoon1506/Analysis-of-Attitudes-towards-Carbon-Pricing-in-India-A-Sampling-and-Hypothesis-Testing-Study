@@ -8056,7 +8056,7 @@ def discount():
         
         # Add chart title
         story.append(Paragraph(
-            Discount Rate Trend(Grand Total)",
+            "Discount Rate Trend(Grand Total)",
             self.styles['ChartTitle']
         ))
         
