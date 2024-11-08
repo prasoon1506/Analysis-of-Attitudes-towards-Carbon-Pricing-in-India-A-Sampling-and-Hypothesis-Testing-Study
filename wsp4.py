@@ -7791,7 +7791,7 @@ def discount():
         self.chart.xValueAxis.labels.dx = -8
         self.chart.xValueAxis.labels.dy = -8
         self.chart.xValueAxis.labelTextScale = 1
-        self.chart.yValueAxis.labelTextFormat = '₹%.1f'
+        self.chart.yValueAxis.labelTextFormat = 'Rs.%.1f'
         self.chart.yValueAxis.gridStrokeColor = HexColor('#e2e8f0')
         self.chart.yValueAxis.gridStrokeWidth = 0.5
         self.chart.xValueAxis.gridStrokeColor = HexColor('#e2e8f0')
@@ -8056,7 +8056,7 @@ def discount():
         
         # Add chart title
         story.append(Paragraph(
-            "Highest Discount Rate Trend Analysis",
+            Discount Rate Trend(Grand Total)",
             self.styles['ChartTitle']
         ))
         
@@ -8074,16 +8074,16 @@ def discount():
             # Label for approved value
             drawing.add(String(
                 drawing.chart.x + (i * drawing.chart.width/(len(months)-1)),
-                drawing.chart.y + drawing.chart.height * (approved/max(approved_values)) + 10,
-                f'₹{approved:.1f}',
+                drawing.chart.y + drawing.chart.height * (approved/max(approved_values)),
+                f'Rs.{approved:.1f}',
                 fontSize=8,
                 fillColor=HexColor('#3b82f6')
             ))
             # Label for actual value
             drawing.add(String(
                 drawing.chart.x + (i * drawing.chart.width/(len(months)-1)),
-                drawing.chart.y + drawing.chart.height * (actual/max(approved_values)) - 15,
-                f'₹{actual:.1f}',
+                drawing.chart.y + drawing.chart.height * (actual/max(approved_values)),
+                f'Rs.{actual:.1f}',
                 fontSize=8,
                 fillColor=HexColor('#ef4444')
             ))
@@ -8093,8 +8093,8 @@ def discount():
         # Add chart legend
         story.append(Paragraph(
             """<para alignment="center">
-                <font color="#3b82f6">━━ Approved Rate</font>  
-                <font color="#ef4444">━━ Actual Rate</font>
+                <font color="#3b82f6">--Approved Rate</font>  
+                <font color="#ef4444">--Actual Rate</font>
             </para>""",
             self.styles['ChartLegend']
         ))
