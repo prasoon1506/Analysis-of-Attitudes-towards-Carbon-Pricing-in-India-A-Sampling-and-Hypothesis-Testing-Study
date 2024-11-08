@@ -7800,7 +7800,7 @@ def discount():
         
         # Quantity information
         elements.append(Paragraph(
-            f"Total Quantity: {month_data['quantity']:,.2f} bags",
+            f"Total Quantity: {month_data['quantity']:,.2f} MT",
             self.styles['QuantityInfo']
         ))
         
@@ -7821,7 +7821,7 @@ def discount():
                 continue
                 
             diff = approved - actual
-            total_diff = diff * month_data['quantity']
+            total_diff = diff * month_data['quantity']*20
             
             valid_discounts.append({
                 'name': discount_name,
@@ -7836,13 +7836,13 @@ def discount():
         
         # Add sorted data rows
         for discount in valid_discounts:
-            diff_text = f"{'↓' if discount['diff'] >= 0 else '↑'} ₹{abs(discount['diff']):,.2f}"
-            impact_text = f"₹{abs(discount['total_diff']):,.2f}"
+            diff_text = f"{'↓' if discount['diff'] >= 0 else '↑'} Rs.{abs(discount['diff']):,.2f}"
+            impact_text = f"Rs.{abs(discount['total_diff']):,.2f}"
             
             row = [
                 discount['name'],
-                f"₹{discount['approved']:,.2f}",
-                f"₹{discount['actual']:,.2f}",
+                f"Rs.{discount['approved']:,.2f}",
+                f"Rs.{discount['actual']:,.2f}",
                 diff_text,
                 impact_text
             ]
