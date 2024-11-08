@@ -7760,7 +7760,7 @@ def discount():
         self.canv.setLineWidth(self.thickness)
         self.canv.line(0, 0, self.width, 0)
  class LineChart(Drawing):
-    def __init__(self, width=500, height=250, data=None):
+    def __init__(self, width=500, height=250, data=None, months=None):
         Drawing.__init__(self, width, height)
         self.add(LinePlot(), name='chart')
         
@@ -7781,13 +7781,20 @@ def discount():
             self.chart.data = data
             
         # Customize axis
-        self.chart.xValueAxis.labelTextFormat = '%s'
+        self.chart.xValueAxis.labelTextFormat = self._month_formatter
+        self.chart.xValueAxis.labels.boxAnchor = 'ne'
+        self.chart.xValueAxis.labels.angle = 45
+        self.chart.xValueAxis.labels.dx = -8
+        self.chart.xValueAxis.labels.dy = -8
         self.chart.xValueAxis.labelTextScale = 1
         self.chart.yValueAxis.labelTextFormat = '₹%.1f'
         self.chart.yValueAxis.gridStrokeColor = HexColor('#e2e8f0')
         self.chart.yValueAxis.gridStrokeWidth = 0.5
         self.chart.xValueAxis.gridStrokeColor = HexColor('#e2e8f0')
         self.chart.xValueAxis.gridStrokeWidth = 0.5
+        
+        # Store months for the formatter
+        self.months = months or []
         
         # Add markers
         self.chart.lines[0].symbol = makeMarker('Circle')
@@ -7798,6 +7805,16 @@ def discount():
         self.chart.lines[1].symbol.fillColor = HexColor('#ffffff')
         self.chart.lines[0].symbol.size = 6
         self.chart.lines[1].symbol.size = 6
+
+    def _month_formatter(self, value):
+        """Convert numeric value to month name"""
+        try:
+            index = int(value)
+            if 0 <= index < len(self.months):
+                return self.months[index]
+        except (ValueError, TypeError):
+            pass
+        return ''
  class DiscountReportGenerator:
     def __init__(self):
         self.styles = getSampleStyleSheet()
@@ -8044,14 +8061,12 @@ def discount():
         
         # Get data for the chart
         months, approved_values, actual_values = self.get_highest_discount_data(data)
-        
-        # Create and add the chart
         chart_data = [
             list(zip(range(len(months)), approved_values)),  # Approved line
             list(zip(range(len(months)), actual_values))     # Actual line
         ]
         
-        drawing = LineChart(500, 300, chart_data)
+        drawing = LineChart(500, 300, chart_data, months)
         
         # Add value labels to the chart
         for i, (approved, actual) in enumerate(zip(approved_values, actual_values)):
