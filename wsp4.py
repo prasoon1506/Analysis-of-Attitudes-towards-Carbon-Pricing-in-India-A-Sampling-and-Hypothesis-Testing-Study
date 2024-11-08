@@ -7786,11 +7786,12 @@ def discount():
             
         # Customize axis
         self.chart.xValueAxis.labelTextFormat = self._month_formatter
-        self.chart.xValueAxis.labels.boxAnchor = 'ne'
-        self.chart.xValueAxis.labels.angle = 45
-        self.chart.xValueAxis.labels.dx = -8
-        self.chart.xValueAxis.labels.dy = -8
-        self.chart.xValueAxis.labelTextScale = 1
+        self.chart.xValueAxis.labels.boxAnchor = 'n'  # Changed to 'n' for better alignment
+        self.chart.xValueAxis.labels.angle = 0  # Changed to 0 to prevent double rendering
+        self.chart.xValueAxis.labels.dx = 0  # Reset dx
+        self.chart.xValueAxis.labels.dy = -10  # Adjusted dy
+        self.chart.xValueAxis.tickDown = 3  # Add small ticks
+        self.chart.xValueAxis.labels.fontSize = 8
         self.chart.yValueAxis.labelTextFormat = 'Rs.%.1f'
         self.chart.yValueAxis.gridStrokeColor = HexColor('#e2e8f0')
         self.chart.yValueAxis.gridStrokeWidth = 0.5
@@ -7812,10 +7813,43 @@ def discount():
         try:
             index = int(value)
             if 0 <= index < len(self._months):
-                return self._months[index]
+                return str(self._months[index])  # Ensure string conversion
+            return ''
         except (ValueError, TypeError):
-            pass
-        return ''
+            return ''
+            
+    def add_value_labels(self, approved_values, actual_values):
+        """Add value labels to data points with improved positioning"""
+        max_value = max(max(approved_values), max(actual_values))
+        label_offset = self.height * 0.03  # Calculate offset based on chart height
+        
+        for i, (approved, actual) in enumerate(zip(approved_values, actual_values)):
+            # Calculate x position
+            x = self.chart.x + (i * self.chart.width/(len(approved_values)-1 if len(approved_values) > 1 else 1))
+            
+            # Calculate y positions
+            y_approved = self.chart.y + (approved/max_value * self.chart.height)
+            y_actual = self.chart.y + (actual/max_value * self.chart.height)
+            
+            # Add approved value label
+            self.add(String(
+                x,
+                y_approved + label_offset,
+                f'Rs.{approved:.1f}',
+                fontSize=8,
+                fillColor=HexColor('#3b82f6'),
+                textAnchor='middle'
+            ))
+            
+            # Add actual value label
+            self.add(String(
+                x,
+                y_actual - label_offset,
+                f'Rs.{actual:.1f}',
+                fontSize=8,
+                fillColor=HexColor('#ef4444'),
+                textAnchor='middle'
+            ))
  class DiscountReportGenerator:
     def __init__(self):
         self.styles = getSampleStyleSheet()
@@ -8066,28 +8100,8 @@ def discount():
             list(zip(range(len(months)), approved_values)),  # Approved line
             list(zip(range(len(months)), actual_values))     # Actual line
         ]
-        
         drawing = LineChart(500, 300, chart_data, months)
-        
-        # Add value labels to the chart
-        for i, (approved, actual) in enumerate(zip(approved_values, actual_values)):
-            # Label for approved value
-            drawing.add(String(
-                drawing.chart.x + (i * drawing.chart.width/(len(months)-1)),
-                drawing.chart.y + drawing.chart.height * (approved/max(approved_values)),
-                f'Rs.{approved:.1f}',
-                fontSize=8,
-                fillColor=HexColor('#3b82f6')
-            ))
-            # Label for actual value
-            drawing.add(String(
-                drawing.chart.x + (i * drawing.chart.width/(len(months)-1)),
-                drawing.chart.y + drawing.chart.height * (actual/max(approved_values)),
-                f'Rs.{actual:.1f}',
-                fontSize=8,
-                fillColor=HexColor('#ef4444')
-            ))
-        
+        drawing.add_value_labels(approved_values, actual_values)
         story.append(drawing)
         
         # Add chart legend
