@@ -7818,16 +7818,16 @@ def discount():
             diff = approved - actual
             total_diff = diff * month_data['quantity']
             
-            total_approved += approved * month_data['quantity']
-            total_actual += actual * month_data['quantity']
+            total_approved += approved * month_data['quantity']*20
+            total_actual += actual * month_data['quantity']*20
             
-            diff_text = f"{'↓' if diff >= 0 else '↑'} ₹{abs(diff):,.2f}"
-            impact_text = f"₹{abs(total_diff):,.2f}"
+            diff_text = f"{'↓' if diff >= 0 else '↑'} Rs.{abs(diff):,.2f}"
+            impact_text = f"Rs.{abs(total_diff):,.2f}"
             
             row = [
                 discount_name,
-                f"₹{approved:,.2f}",
-                f"₹{actual:,.2f}",
+                f"Rs.{approved:,.2f}",
+                f"Rs.{actual:,.2f}",
                 diff_text,
                 impact_text
             ]
@@ -7868,15 +7868,15 @@ def discount():
         total_diff = total_approved - total_actual
         elements.append(Paragraph("Monthly Summary", self.styles['SummaryHeader']))
         elements.append(Paragraph(
-            f"Total Approved Amount: ₹{total_approved:,.2f}",
+            f"Total Approved Amount: Rs.{total_approved:,.2f}",
             self.styles['TotalAmount']
         ))
         elements.append(Paragraph(
-            f"Total Actual Amount: ₹{total_actual:,.2f}",
+            f"Total Actual Amount: Rs.{total_actual:,.2f}",
             self.styles['TotalAmount']
         ))
         elements.append(Paragraph(
-            f"Net {('Savings' if total_diff >= 0 else 'Excess')}: ₹{abs(total_diff):,.2f}",
+            f"Net {('Savings' if total_diff >= 0 else 'Excess')}: Rs.{abs(total_diff):,.2f}",
             ParagraphStyle(
                 'DiffAmount',
                 parent=self.styles['TotalAmount'],
