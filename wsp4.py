@@ -7775,7 +7775,7 @@ def discount():
         
         self.styles.add(ParagraphStyle(
             name='FooterNote',
-            fontName='Helvetica-Italic',
+            fontName='Helvetica-Bold',
             fontSize=10,
             spaceBefore=20,
             spaceAfter=10,
