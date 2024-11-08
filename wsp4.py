@@ -7849,118 +7849,6 @@ def discount():
      </div>
      """
      st.markdown(ticker_html, unsafe_allow_html=True)
-    def create_pdf_report(self, data, selected_state, selected_discount):
-        """Generate a PDF report for the selected state and discount"""
-        df = data[selected_state]
-        report_name = f"Discount Report - {selected_state}.pdf"
-
-        if selected_discount == self.combined_discount_name:
-            monthly_data = {
-                month: self.get_combined_data(df, cols, selected_state)
-                for month, cols in self.month_columns.items()
-            }
-        else:
-            mask = df.iloc[:, 0].fillna('').astype(str).str.strip() == selected_discount.strip()
-            filtered_df = df[mask]
-            if len(filtered_df) > 0:
-                monthly_data = {
-                    month: {
-                        'actual': filtered_df.iloc[0, cols['actual']],
-                        'approved': filtered_df.iloc[0, cols['approved']],
-                        'quantity': filtered_df.iloc[0, cols['quantity']]
-                    }
-                    for month, cols in self.month_columns.items()
-                }
-
-        styles = getSampleStyleSheet()
-        styles.add(ParagraphStyle(name='Centered', alignment=1))
-
-        doc = SimpleDocTemplate(report_name, pagesize=letter)
-        elements = []
-
-        # Add header
-        elements.append(Paragraph(f"Discount Report for {selected_state}", styles["Heading1"]))
-        elements.append(Spacer(1, 12))
-
-        # Add total quantity
-        total_quantity = sum(data['quantity'] for data in monthly_data.values())
-        elements.append(Paragraph(f"Total Quantity: {total_quantity:,.2f}", styles["BodyText"]))
-        elements.append(Spacer(1, 12))
-
-        # Add monthly data
-        for month, data in monthly_data.items():
-            elements.append(Paragraph(f"{month}", styles["Heading2"]))
-            elements.append(Spacer(1, 6))
-
-            data = [[
-                "Discount Type",
-                "Approved Payout",
-                "Actual Payout",
-                "Difference"
-            ]]
-
-            if selected_discount == self.combined_discount_name:
-                approved = data['approved']
-                actual = data['actual']
-                difference = approved - actual
-                diff_color = green if difference >= 0 else red
-                data.append([
-                    self.combined_discount_name,
-                    f"₹{approved:,.2f}",
-                    f"₹{actual:,.2f}",
-                    f"₹{abs(difference):,.2f}" + (" under" if difference >= 0 else " over")
-                ])
-            else:
-                approved = data['approved']
-                actual = data['actual']
-                difference = approved - actual
-                diff_color = green if difference >= 0 else red
-                data.append([
-                    selected_discount,
-                    f"₹{approved:,.2f}",
-                    f"₹{actual:,.2f}",
-                    f"₹{abs(difference):,.2f}" + (" under" if difference >= 0 else " over")
-                ])
-
-            table = Table(data)
-            table_style = TableStyle([
-                ('BACKGROUND', (0,0), (-1,0), '#CCCCCC'),
-                ('TEXTCOLOR', (0,0), (-1,0), '#000000'),
-                ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-                ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0,0), (-1,0), 14),
-                ('BOTTOMPADDING', (0,0), (-1,0), 12),
-                ('BACKGROUND', (0,1), (-1,-1), '#FFFFFF'),
-                ('GRID', (0,0), (-1,-1), 1, '#000000'),
-                ('FONTSIZE', (0,1), (-1,-1), 12)
-            ])
-            table.setStyle(table_style)
-
-            # Add the table to the elements
-            elements.append(table)
-            elements.append(Spacer(1, 12))
-
-        # Add total actual and approved payout
-        total_approved = sum(data['approved'] for data in monthly_data.values())
-        total_actual = sum(data['actual'] for data in monthly_data.values())
-        total_difference = total_approved - total_actual
-        total_diff_color = green if total_difference >= 0 else red
-
-        elements.append(Paragraph(f"Total Approved Payout: ₹{total_approved:,.2f}", styles["BodyText"]))
-        elements.append(Paragraph(f"Total Actual Payout: ₹{total_actual:,.2f}", styles["BodyText"]))
-        elements.append(Paragraph(f"Total Difference: ₹{abs(total_difference):,.2f}" + (" under" if total_difference >= 0 else " over"), styles["BodyText"], linkColor=total_diff_color))
-
-        try:
-            doc.build(elements)
-            st.success(f"PDF report generated: {report_name}")
-            with open(report_name, "rb") as pdf_file:
-                base64_pdf = base64.b64encode(pdf_file.read()).decode('utf-8')
-            st.markdown(f'<a href="data:application/pdf;base64,{base64_pdf}" download="{report_name}">Download PDF Report</a>', unsafe_allow_html=True)
-        except Exception as e:
-            st.error(f"Error generating PDF report: {e}")
-        finally:
-            if os.path.exists(report_name):
-                os.remove(report_name)
     def create_summary_metrics(self, data):
         """Create summary metrics cards"""
         total_states = len(data)
@@ -8270,9 +8158,6 @@ def discount():
             st.markdown("<div class='chart-container'>", unsafe_allow_html=True)
             processor.create_trend_chart(data, selected_state, selected_discount)
             st.markdown("</div>", unsafe_allow_html=True)
-        if selected_state and selected_discount:
-           processor.create_pdf_report(data, selected_state, selected_discount)
-    
     else:
         st.markdown("""
         <div style='text-align: center; padding: 3rem; background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);'>
