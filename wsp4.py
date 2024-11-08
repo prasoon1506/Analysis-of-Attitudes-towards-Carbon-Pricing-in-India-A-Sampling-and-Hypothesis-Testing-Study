@@ -8050,7 +8050,8 @@ def discount():
         return elements
     def get_highest_discount_data(self, data):
         """Extract data for the highest approved discount type across months"""
-        months = []
+        # First collect all data
+        raw_months = []
         approved_values = []
         actual_values = []
         
@@ -8067,11 +8068,22 @@ def discount():
             if valid_discounts:
                 # Sort by approved rate and get the highest
                 highest_discount = max(valid_discounts, key=lambda x: x['approved'])
-                months.append(month)
+                raw_months.append(month)
                 approved_values.append(highest_discount['approved'])
                 actual_values.append(highest_discount['actual'])
         
-        return months, approved_values, actual_values
+        # Remove duplicate months while preserving order
+        unique_months = list(dict.fromkeys(raw_months))
+        
+        # Create lists with only unique month data
+        unique_approved = []
+        unique_actual = []
+        for month in unique_months:
+            idx = raw_months.index(month)
+            unique_approved.append(approved_values[idx])
+            unique_actual.append(actual_values[idx])
+        
+        return unique_months, unique_approved, unique_actual
 
     def generate_report(self, state, data):
         """Generate PDF report for a state"""
@@ -8112,7 +8124,7 @@ def discount():
         
         # Add horizontal line
         story.append(Spacer(1, 20))
-        story.append(HorizontalLine(540, 2))  # 540 points = 7.5 inches (standard page width minus margins)
+        story.append(HorizontalLine(540, 2))
         story.append(Spacer(1, 30))
         
         # Add chart title
@@ -8120,10 +8132,17 @@ def discount():
             "Discount Rate Trend(Grand Total)",
             self.styles['ChartTitle']
         ))
-        months = list(dict.fromkeys(months))
-        approved_values, actual_values = self.get_highest_discount_data(data)
-        chart_data = [list(zip(range(len(months)), approved_values)),
-                       list(zip(range(len(months)), actual_values))]
+        
+        # Get data for the chart with unique months
+        months, approved_values, actual_values = self.get_highest_discount_data(data)
+        
+        # Prepare chart data with unique month indices
+        chart_data = [
+            list(zip(range(len(months)), approved_values)),  # Approved line
+            list(zip(range(len(months)), actual_values))     # Actual line
+        ]
+        
+        # Create and add the chart
         drawing = LineChart(500, 300, chart_data, months)
         story.append(drawing)
         
@@ -8135,6 +8154,8 @@ def discount():
             </para>""",
             self.styles['ChartLegend']
         ))
+        
+        # Rest of your code remains the same...
         
         # Add footer text
         story.append(Paragraph(
