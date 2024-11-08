@@ -7787,16 +7787,19 @@ def discount():
         # Customize axis
         self.chart.xValueAxis.labelTextFormat = self._month_formatter
         self.chart.xValueAxis.labels.boxAnchor = 'n'  # Changed to 'n' for better alignment
-        self.chart.xValueAxis.labels.angle = 0  # Changed to 0 to prevent double rendering
+        self.chart.xValueAxis.labels.angle = 0  # Changed to 0 to prevent duplicate labels
         self.chart.xValueAxis.labels.dx = 0  # Reset dx
         self.chart.xValueAxis.labels.dy = -10  # Adjusted dy
-        self.chart.xValueAxis.tickDown = 3  # Add small ticks
-        self.chart.xValueAxis.labels.fontSize = 8
+        self.chart.xValueAxis.labelTextScale = 0.8  # Reduced text size
         self.chart.yValueAxis.labelTextFormat = 'Rs.%.1f'
         self.chart.yValueAxis.gridStrokeColor = HexColor('#e2e8f0')
         self.chart.yValueAxis.gridStrokeWidth = 0.5
         self.chart.xValueAxis.gridStrokeColor = HexColor('#e2e8f0')
         self.chart.xValueAxis.gridStrokeWidth = 0.5
+        
+        # Configure tick marks
+        self.chart.xValueAxis.tickUp = 0
+        self.chart.xValueAxis.tickDown = 5
         
         # Add markers
         self.chart.lines[0].symbol = makeMarker('Circle')
@@ -7808,48 +7811,40 @@ def discount():
         self.chart.lines[0].symbol.size = 6
         self.chart.lines[1].symbol.size = 6
 
+        # Add value labels
+        if data and len(data) > 0:
+            max_value = max(max(point[1] for point in data[0]), max(point[1] for point in data[1]))
+            for i, (x, y) in enumerate(data[0]):  # Approved values
+                label = String(
+                    self.chart.x + (x * self.chart.width/(len(self._months)-1)),
+                    self.chart.y + self.chart.height * (y/max_value) + 10,  # Offset above point
+                    f'Rs.{y:.1f}',
+                    fontSize=8,
+                    fillColor=HexColor('#3b82f6'),
+                    textAnchor='middle'
+                )
+                self.add(label)
+            
+            for i, (x, y) in enumerate(data[1]):  # Actual values
+                label = String(
+                    self.chart.x + (x * self.chart.width/(len(self._months)-1)),
+                    self.chart.y + self.chart.height * (y/max_value) - 10,  # Offset below point
+                    f'Rs.{y:.1f}',
+                    fontSize=8,
+                    fillColor=HexColor('#ef4444'),
+                    textAnchor='middle'
+                )
+                self.add(label)
+
     def _month_formatter(self, value):
         """Convert numeric value to month name"""
         try:
             index = int(value)
             if 0 <= index < len(self._months):
-                return str(self._months[index])  # Ensure string conversion
-            return ''
+                return self._months[index]
         except (ValueError, TypeError):
-            return ''
-            
-    def add_value_labels(self, approved_values, actual_values):
-        """Add value labels to data points with improved positioning"""
-        max_value = max(max(approved_values), max(actual_values))
-        label_offset = self.height * 0.03  # Calculate offset based on chart height
-        
-        for i, (approved, actual) in enumerate(zip(approved_values, actual_values)):
-            # Calculate x position
-            x = self.chart.x + (i * self.chart.width/(len(approved_values)-1 if len(approved_values) > 1 else 1))
-            
-            # Calculate y positions
-            y_approved = self.chart.y + (approved/max_value * self.chart.height)
-            y_actual = self.chart.y + (actual/max_value * self.chart.height)
-            
-            # Add approved value label
-            self.add(String(
-                x,
-                y_approved + label_offset,
-                f'Rs.{approved:.1f}',
-                fontSize=8,
-                fillColor=HexColor('#3b82f6'),
-                textAnchor='middle'
-            ))
-            
-            # Add actual value label
-            self.add(String(
-                x,
-                y_actual - label_offset,
-                f'Rs.{actual:.1f}',
-                fontSize=8,
-                fillColor=HexColor('#ef4444'),
-                textAnchor='middle'
-            ))
+            pass
+        return ''
  class DiscountReportGenerator:
     def __init__(self):
         self.styles = getSampleStyleSheet()
@@ -8101,7 +8096,6 @@ def discount():
             list(zip(range(len(months)), actual_values))     # Actual line
         ]
         drawing = LineChart(500, 300, chart_data, months)
-        drawing.add_value_labels(approved_values, actual_values)
         story.append(drawing)
         
         # Add chart legend
