@@ -7775,8 +7775,8 @@ def discount():
         # Set chart style
         self.chart.lines[0].strokeColor = HexColor('#3b82f6')
         self.chart.lines[1].strokeColor = HexColor('#ef4444')
-        self.chart.lines[0].strokeWidth = 2
-        self.chart.lines[1].strokeWidth = 2
+        self.chart.lines[0].strokeWidth = 1
+        self.chart.lines[1].strokeWidth = 1
         
         # Remove duplicate months by ensuring unique values
         if months:
@@ -7795,7 +7795,7 @@ def discount():
         self.chart.xValueAxis.tickUp = 0
         self.chart.xValueAxis.visibleGrid = False
         self.chart.xValueAxis.valueMin = 0
-        self.chart.xValueAxis.valueMax = len(self._months)-3
+        self.chart.xValueAxis.valueMax = len(self._months)-0.5
         
         # Configure Y-axis
         self.chart.yValueAxis.labelTextFormat = 'Rs.%.1f'
