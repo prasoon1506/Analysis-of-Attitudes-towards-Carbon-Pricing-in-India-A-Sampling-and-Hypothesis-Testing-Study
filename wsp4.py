@@ -7741,11 +7741,12 @@ def discount():
  from reportlab.lib.pagesizes import A4
  from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
  from reportlab.lib.units import inch
- from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
  from reportlab.pdfgen import canvas
  from reportlab.lib.colors import HexColor
  import io
  from datetime import datetime
+
  class DiscountReportGenerator:
     def __init__(self):
         self.styles = getSampleStyleSheet()
@@ -7754,122 +7755,134 @@ def discount():
     def setup_custom_styles(self):
         """Setup custom paragraph styles for the report"""
         self.styles.add(ParagraphStyle(
-            name='HeaderStyle',
+            name='MonthHeader',
             fontName='Helvetica-Bold',
-            fontSize=24,
-            spaceAfter=30,
+            fontSize=20,
+            spaceAfter=10,
             alignment=1,
             textColor=HexColor('#1e293b')
         ))
         
         self.styles.add(ParagraphStyle(
-            name='SubHeaderStyle',
-            fontName='Helvetica-Bold',
-            fontSize=18,
-            spaceAfter=20,
-            textColor=HexColor('#334155')
-        ))
-        
-        self.styles.add(ParagraphStyle(
-            name='QuantityStyle',
+            name='QuantityInfo',
             fontName='Helvetica',
-            fontSize=14,
+            fontSize=12,
             spaceAfter=15,
+            alignment=1,
             textColor=HexColor('#475569')
         ))
         
         self.styles.add(ParagraphStyle(
-            name='MetricLabelStyle',
+            name='SummaryHeader',
+            fontName='Helvetica-Bold',
+            fontSize=14,
+            spaceBefore=15,
+            spaceAfter=10,
+            textColor=HexColor('#334155')
+        ))
+        
+        self.styles.add(ParagraphStyle(
+            name='TotalAmount',
             fontName='Helvetica-Bold',
             fontSize=12,
-            textColor=HexColor('#64748b')
-        ))
-        
-        self.styles.add(ParagraphStyle(
-            name='MetricValueStyle',
-            fontName='Helvetica',
-            fontSize=16,
-            textColor=HexColor('#0f172a')
-        ))
-        
-        self.styles.add(ParagraphStyle(
-            name='DifferencePositive',
-            fontName='Helvetica',
-            fontSize=14,
-            textColor=HexColor('#10b981')
-        ))
-        
-        self.styles.add(ParagraphStyle(
-            name='DifferenceNegative',
-            fontName='Helvetica',
-            fontSize=14,
-            textColor=HexColor('#ef4444')
+            spaceAfter=5,
+            textColor=HexColor('#1e293b')
         ))
 
-    def create_header(self, state):
-        """Create report header"""
-        return [
-            Paragraph(f"Discount Analysis Report - {state}", self.styles['HeaderStyle']),
-            Paragraph(f"Generated on {datetime.now().strftime('%B %d, %Y')}", self.styles['Normal']),
-            Spacer(1, 20)
-        ]
-
-    def create_monthly_section(self, month_data, month_name, quantity):
-        """Create a section for monthly data"""
+    def create_monthly_page(self, month_data, month_name):
+        """Create a single page for monthly data"""
         elements = []
         
         # Month header
-        elements.append(Paragraph(f"{month_name} Analysis", self.styles['SubHeaderStyle']))
+        elements.append(Paragraph(month_name, self.styles['MonthHeader']))
         
         # Quantity information
         elements.append(Paragraph(
-            f"Total Quantity: {quantity:,.2f} bags",
-            self.styles['QuantityStyle']
+            f"Total Quantity: {month_data['quantity']:,.2f} bags",
+            self.styles['QuantityInfo']
         ))
-        elements.append(Spacer(1, 20))
         
-        # Discount details
-        for discount_name, values in month_data.items():
-            elements.append(Paragraph(f"<u>{discount_name}</u>", self.styles['MetricLabelStyle']))
-            elements.append(Spacer(1, 10))
+        # Create data for table
+        table_data = [
+            # Header row
+            ['Discount Type', 'Approved Rate', 'Actual Rate', 'Difference', 'Total Impact']
+        ]
+        
+        total_approved = 0
+        total_actual = 0
+        
+        # Add data rows
+        for discount_name, values in month_data['discounts'].items():
+            approved = values['approved']
+            actual = values['actual']
+            diff = approved - actual
+            total_diff = diff * month_data['quantity']
             
-            # Approved and Actual Payouts
-            elements.append(Paragraph(
-                f"Approved Rate: ₹{values['approved']:,.2f} per bag",
-                self.styles['MetricValueStyle']
-            ))
-            elements.append(Paragraph(
-                f"Actual Rate: ₹{values['actual']:,.2f} per bag",
-                self.styles['MetricValueStyle']
-            ))
+            total_approved += approved * month_data['quantity']
+            total_actual += actual * month_data['quantity']
             
-            # Calculate difference
-            diff = values['approved'] - values['actual']
-            diff_style = 'DifferencePositive' if diff >= 0 else 'DifferenceNegative'
-            diff_text = f"{'Under' if diff >= 0 else 'Over'} approved by ₹{abs(diff):,.2f} per bag"
-            elements.append(Paragraph(diff_text, self.styles[diff_style]))
+            diff_text = f"{'↓' if diff >= 0 else '↑'} ₹{abs(diff):,.2f}"
+            impact_text = f"₹{abs(total_diff):,.2f}"
             
-            # Calculate total payouts
-            total_approved = quantity * values['approved']
-            total_actual = quantity * values['actual']
-            total_diff = total_approved - total_actual
-            
-            elements.append(Spacer(1, 15))
-            elements.append(Paragraph("Total Payouts:", self.styles['MetricLabelStyle']))
-            elements.append(Paragraph(
-                f"Total Approved: ₹{total_approved:,.2f}",
-                self.styles['MetricValueStyle']
-            ))
-            elements.append(Paragraph(
-                f"Total Actual: ₹{total_actual:,.2f}",
-                self.styles['MetricValueStyle']
-            ))
-            
-            diff_style = 'DifferencePositive' if total_diff >= 0 else 'DifferenceNegative'
-            diff_text = f"Total {'Savings' if total_diff >= 0 else 'Excess'}: ₹{abs(total_diff):,.2f}"
-            elements.append(Paragraph(diff_text, self.styles[diff_style]))
-            
-            elements.append(Spacer(1, 30))
+            row = [
+                discount_name,
+                f"₹{approved:,.2f}",
+                f"₹{actual:,.2f}",
+                diff_text,
+                impact_text
+            ]
+            table_data.append(row)
+        
+        # Create table
+        table = Table(table_data, colWidths=[2.2*inch, 1.3*inch, 1.3*inch, 1.1*inch, 1.3*inch])
+        
+        # Style the table
+        style = TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), HexColor('#f1f5f9')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), HexColor('#334155')),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('TOPPADDING', (0, 0), (-1, 0), 12),
+            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('GRID', (0, 0), (-1, -1), 1, HexColor('#e2e8f0')),
+            ('ALIGN', (1, 1), (-1, -1), 'RIGHT'),
+            ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 8),
+            ('TOPPADDING', (0, 1), (-1, -1), 8),
+        ])
+        
+        # Add conditional formatting for difference column
+        for i in range(1, len(table_data)):
+            if '↓' in table_data[i][3]:  # Savings
+                style.add('TEXTCOLOR', (3, i), (4, i), HexColor('#10b981'))
+            else:  # Excess
+                style.add('TEXTCOLOR', (3, i), (4, i), HexColor('#ef4444'))
+        
+        table.setStyle(style)
+        elements.append(table)
+        
+        # Add summary section
+        total_diff = total_approved - total_actual
+        elements.append(Paragraph("Monthly Summary", self.styles['SummaryHeader']))
+        elements.append(Paragraph(
+            f"Total Approved Amount: ₹{total_approved:,.2f}",
+            self.styles['TotalAmount']
+        ))
+        elements.append(Paragraph(
+            f"Total Actual Amount: ₹{total_actual:,.2f}",
+            self.styles['TotalAmount']
+        ))
+        elements.append(Paragraph(
+            f"Net {('Savings' if total_diff >= 0 else 'Excess')}: ₹{abs(total_diff):,.2f}",
+            ParagraphStyle(
+                'DiffAmount',
+                parent=self.styles['TotalAmount'],
+                textColor=HexColor('#10b981' if total_diff >= 0 else '#ef4444')
+            )
+        ))
         
         return elements
 
@@ -7879,31 +7892,41 @@ def discount():
         doc = SimpleDocTemplate(
             buffer,
             pagesize=A4,
-            rightMargin=72,
-            leftMargin=72,
-            topMargin=72,
-            bottomMargin=72
+            rightMargin=36,
+            leftMargin=36,
+            topMargin=36,
+            bottomMargin=36,
+            title=f"Discount Report - {state}"
         )
         
         story = []
         
-        # Add header
-        story.extend(self.create_header(state))
+        # Add title page
+        story.append(Paragraph(
+            f"Discount Analysis Report<br/>{state}",
+            ParagraphStyle(
+                'Title',
+                parent=self.styles['Title'],
+                fontSize=24,
+                spaceAfter=30,
+                alignment=1
+            )
+        ))
+        story.append(Paragraph(
+            f"Generated on {datetime.now().strftime('%B %d, %Y')}",
+            ParagraphStyle(
+                'Date',
+                parent=self.styles['Normal'],
+                alignment=1,
+                fontSize=12,
+                textColor=HexColor('#64748b')
+            )
+        ))
+        story.append(PageBreak())
         
-        # Process each month
+        # Add monthly pages
         for month, month_data in data.items():
-            story.extend(self.create_monthly_section(
-                month_data['discounts'],
-                month,
-                month_data['quantity']
-            ))
-            story.append(Paragraph(
-                "_" * 50,
-                self.styles['Normal']
-            ))
-            story.append(Spacer(1, 20))
-            
-            # Add page break after each month except the last
+            story.extend(self.create_monthly_page(month_data, month))
             if month != list(data.keys())[-1]:
                 story.append(PageBreak())
         
