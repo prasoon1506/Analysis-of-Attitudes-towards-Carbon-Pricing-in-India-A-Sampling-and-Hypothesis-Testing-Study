@@ -7741,20 +7741,95 @@ def discount():
  from reportlab.lib.pagesizes import A4
  from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
  from reportlab.lib.units import inch
- from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
+ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, Flowable
  from reportlab.pdfgen import canvas
  from reportlab.lib.colors import HexColor
- import io
- from datetime import datetime
- import pandas as pd
+ from reportlab.graphics.shapes import Drawing, Line
+ from reportlab.graphics.charts.lineplots import LinePlot
+ from reportlab.graphics.widgets.markers import makeMarker
+ from reportlab.graphics import renderPDF
 
+ class HorizontalLine(Flowable):
+    def __init__(self, width, thickness=1):
+        Flowable.__init__(self)
+        self.width = width
+        self.thickness = thickness
+
+    def draw(self):
+        self.canv.setLineWidth(self.thickness)
+        self.canv.line(0, 0, self.width, 0)
+ class LineChart(Drawing):
+    def __init__(self, width=500, height=250, data=None):
+        Drawing.__init__(self, width, height)
+        self.add(LinePlot(), name='chart')
+        
+        # Customize the line chart
+        self.chart.width = width * 0.8
+        self.chart.height = height * 0.7
+        self.chart.x = width * 0.1  # Margin from left
+        self.chart.y = height * 0.1  # Margin from bottom
+        
+        # Set chart style
+        self.chart.lines[0].strokeColor = HexColor('#3b82f6')  # Blue for approved
+        self.chart.lines[1].strokeColor = HexColor('#ef4444')  # Red for actual
+        self.chart.lines[0].strokeWidth = 2
+        self.chart.lines[1].strokeWidth = 2
+        
+        # Set data
+        if data:
+            self.chart.data = data
+            
+        # Customize axis
+        self.chart.xValueAxis.labelTextFormat = '%s'
+        self.chart.xValueAxis.labelTextScale = 1
+        self.chart.yValueAxis.labelTextFormat = '₹%.1f'
+        self.chart.yValueAxis.gridStrokeColor = HexColor('#e2e8f0')
+        self.chart.yValueAxis.gridStrokeWidth = 0.5
+        self.chart.xValueAxis.gridStrokeColor = HexColor('#e2e8f0')
+        self.chart.xValueAxis.gridStrokeWidth = 0.5
+        
+        # Add markers
+        self.chart.lines[0].symbol = makeMarker('Circle')
+        self.chart.lines[1].symbol = makeMarker('Circle')
+        self.chart.lines[0].symbol.strokeColor = HexColor('#3b82f6')
+        self.chart.lines[1].symbol.strokeColor = HexColor('#ef4444')
+        self.chart.lines[0].symbol.fillColor = HexColor('#ffffff')
+        self.chart.lines[1].symbol.fillColor = HexColor('#ffffff')
+        self.chart.lines[0].symbol.size = 6
+        self.chart.lines[1].symbol.size = 6
  class DiscountReportGenerator:
     def __init__(self):
         self.styles = getSampleStyleSheet()
         self.setup_custom_styles()
         
     def setup_custom_styles(self):
-        """Setup custom paragraph styles for the report"""
+        self.styles.add(ParagraphStyle(
+            name='ChartTitle',
+            fontName='Helvetica-Bold',
+            fontSize=14,
+            spaceBefore=30,
+            spaceAfter=10,
+            alignment=1,
+            textColor=HexColor('#1e293b')
+        ))
+        
+        self.styles.add(ParagraphStyle(
+            name='ChartLegend',
+            fontName='Helvetica',
+            fontSize=10,
+            spaceAfter=20,
+            alignment=1,
+            textColor=HexColor('#475569')
+        ))
+        
+        self.styles.add(ParagraphStyle(
+            name='TitlePageFooter',
+            fontName='Helvetica-Bold',
+            fontSize=11,
+            spaceBefore=30,
+            alignment=1,
+            textColor=HexColor('#64748b')
+        ))
         self.styles.add(ParagraphStyle(
             name='MonthHeader',
             fontName='Helvetica-Bold',
@@ -7893,6 +7968,30 @@ def discount():
         ))
         
         return elements
+    def get_highest_discount_data(self, data):
+        """Extract data for the highest approved discount type across months"""
+        months = []
+        approved_values = []
+        actual_values = []
+        
+        for month, month_data in data.items():
+            valid_discounts = []
+            for discount_name, values in month_data['discounts'].items():
+                if self.is_valid_discount(values['approved'], values['actual']):
+                    valid_discounts.append({
+                        'name': discount_name,
+                        'approved': values['approved'],
+                        'actual': values['actual']
+                    })
+            
+            if valid_discounts:
+                # Sort by approved rate and get the highest
+                highest_discount = max(valid_discounts, key=lambda x: x['approved'])
+                months.append(month)
+                approved_values.append(highest_discount['approved'])
+                actual_values.append(highest_discount['actual'])
+        
+        return months, approved_values, actual_values
 
     def generate_report(self, state, data):
         """Generate PDF report for a state"""
@@ -7909,7 +8008,7 @@ def discount():
         
         story = []
         
-        # Add title page
+        # Add title and date
         story.append(Paragraph(
             f"Discount Analysis Report<br/>{state}",
             ParagraphStyle(
@@ -7930,6 +8029,65 @@ def discount():
                 textColor=HexColor('#64748b')
             )
         ))
+        
+        # Add horizontal line
+        story.append(Spacer(1, 20))
+        story.append(HorizontalLine(540, 2))  # 540 points = 7.5 inches (standard page width minus margins)
+        story.append(Spacer(1, 30))
+        
+        # Add chart title
+        story.append(Paragraph(
+            "Highest Discount Rate Trend Analysis",
+            self.styles['ChartTitle']
+        ))
+        
+        # Get data for the chart
+        months, approved_values, actual_values = self.get_highest_discount_data(data)
+        
+        # Create and add the chart
+        chart_data = [
+            list(zip(range(len(months)), approved_values)),  # Approved line
+            list(zip(range(len(months)), actual_values))     # Actual line
+        ]
+        
+        drawing = LineChart(500, 300, chart_data)
+        
+        # Add value labels to the chart
+        for i, (approved, actual) in enumerate(zip(approved_values, actual_values)):
+            # Label for approved value
+            drawing.add(String(
+                drawing.chart.x + (i * drawing.chart.width/(len(months)-1)),
+                drawing.chart.y + drawing.chart.height * (approved/max(approved_values)) + 10,
+                f'₹{approved:.1f}',
+                fontSize=8,
+                fillColor=HexColor('#3b82f6')
+            ))
+            # Label for actual value
+            drawing.add(String(
+                drawing.chart.x + (i * drawing.chart.width/(len(months)-1)),
+                drawing.chart.y + drawing.chart.height * (actual/max(approved_values)) - 15,
+                f'₹{actual:.1f}',
+                fontSize=8,
+                fillColor=HexColor('#ef4444')
+            ))
+        
+        story.append(drawing)
+        
+        # Add chart legend
+        story.append(Paragraph(
+            """<para alignment="center">
+                <font color="#3b82f6">━━ Approved Rate</font>  
+                <font color="#ef4444">━━ Actual Rate</font>
+            </para>""",
+            self.styles['ChartLegend']
+        ))
+        
+        # Add footer text
+        story.append(Paragraph(
+            "Find detailed month-wise analyses in the following pages, where each discount type is meticulously examined and presented in ascending order of approved rates.",
+            self.styles['TitlePageFooter']
+        ))
+        
         story.append(PageBreak())
         
         # Add monthly pages
