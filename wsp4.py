@@ -7763,24 +7763,14 @@ def discount():
     def __init__(self, width=500, height=250, data=None, months=None):
         Drawing.__init__(self, width, height)
         
-        # Remove duplicate months while preserving order
-        if months:
-            seen = set()
-            self._months = []
-            for month in months:
-                if month not in seen:
-                    self._months.append(month)
-                    seen.add(month)
-        else:
-            self._months = []
-        
+        self._months = months or []
         self.add(LinePlot(), name='chart')
         
-        # Customize the line chart
+        # Adjust margins and size
         self.chart.width = width * 0.8
         self.chart.height = height * 0.7
         self.chart.x = width * 0.1
-        self.chart.y = height * 0.1
+        self.chart.y = height * 0.15  # Increased bottom margin
         
         # Set chart style
         self.chart.lines[0].strokeColor = HexColor('#3b82f6')
@@ -7788,60 +7778,57 @@ def discount():
         self.chart.lines[0].strokeWidth = 2
         self.chart.lines[1].strokeWidth = 2
         
-        # Prepare data with unique x-coordinates
-        if data:
-            # Create new data points with unique x-coordinates
-            unique_data = [
-                [(i, y) for i, (_, y) in enumerate(data[0])],  # Approved values
-                [(i, y) for i, (_, y) in enumerate(data[1])]   # Actual values
-            ]
-            self.chart.data = unique_data
+        # Remove duplicate months by ensuring unique values
+        if months:
+            self._months = list(dict.fromkeys(months))
         
-        # Customize axis
+        # Set data
+        if data:
+            # Adjust data points to use unique month indices
+            unique_months = len(self._months)
+            adjusted_data = [
+                [(i, val[1]) for i, val in enumerate(data[0])],
+                [(i, val[1]) for i, val in enumerate(data[1])]
+            ]
+            self.chart.data = adjusted_data
+            
+        # Configure X-axis
         self.chart.xValueAxis.labelTextFormat = self._month_formatter
         self.chart.xValueAxis.labels.boxAnchor = 'n'
         self.chart.xValueAxis.labels.angle = 0
-        self.chart.xValueAxis.labels.dy = -10
-        self.chart.xValueAxis.labelTextScale = 0.8
-        self.chart.yValueAxis.labelTextFormat = 'Rs.%.1f'
+        self.chart.xValueAxis.labels.dy = -20
+        self.chart.xValueAxis.tickDown = 5
+        self.chart.xValueAxis.tickUp = 0
+        self.chart.xValueAxis.visibleGrid = False
+        self.chart.xValueAxis.valueMin = -0.5
+        self.chart.xValueAxis.valueMax = len(self._months) - 0.5
         
-        # Grid styling
+        # Configure Y-axis
+        self.chart.yValueAxis.labelTextFormat = 'Rs.%.1f'
         self.chart.yValueAxis.gridStrokeColor = HexColor('#e2e8f0')
         self.chart.yValueAxis.gridStrokeWidth = 0.5
-        self.chart.xValueAxis.gridStrokeColor = HexColor('#e2e8f0')
-        self.chart.xValueAxis.gridStrokeWidth = 0.5
-        
-        # Configure tick marks
-        self.chart.xValueAxis.tickUp = 0
-        self.chart.xValueAxis.tickDown = 5
-        self.chart.xValueAxis.visibleTicks = True
         
         # Add markers
-        for line in self.chart.lines:
-            line.symbol = makeMarker('Circle')
-            line.symbol.size = 6
-            
+        self.chart.lines[0].symbol = makeMarker('Circle')
+        self.chart.lines[1].symbol = makeMarker('Circle')
         self.chart.lines[0].symbol.strokeColor = HexColor('#3b82f6')
         self.chart.lines[1].symbol.strokeColor = HexColor('#ef4444')
         self.chart.lines[0].symbol.fillColor = HexColor('#ffffff')
         self.chart.lines[1].symbol.fillColor = HexColor('#ffffff')
+        self.chart.lines[0].symbol.size = 6
+        self.chart.lines[1].symbol.size = 6
 
-        # Add value labels correctly positioned
+        # Add value labels aligned with points
         if data and len(data) > 0:
-            # Calculate positions for labels
-            max_value = max(max(y for _, y in data[0]), max(y for _, y in data[1]))
-            chart_bottom = self.chart.y
-            chart_top = self.chart.y + self.chart.height
-            value_range = max_value - min(min(y for _, y in data[0]), min(y for _, y in data[1]))
-
-            # Function to calculate y position
-            def get_y_position(value):
-                return chart_bottom + (self.chart.height * (value - min(min(y for _, y in data[0]), min(y for _, y in data[1]))) / value_range)
-
-            # Add labels for approved values (blue)
+            # Calculate scale factors for positioning
+            x_scale = self.chart.width / (len(self._months) - 1)
+            y_range = max(max(y for _, y in data[0] + data[1])) - min(min(y for _, y in data[0] + data[1]))
+            y_scale = self.chart.height / y_range
+            
+            # Add labels for approved values (above points)
             for i, (_, y) in enumerate(data[0]):
-                x_pos = self.chart.x + (i * self.chart.width / (len(self._months) - 1))
-                y_pos = get_y_position(y)
+                x_pos = self.chart.x + (i * x_scale)
+                y_pos = self.chart.y + (y - min(y for _, y in data[0] + data[1])) * y_scale
                 
                 label = String(
                     x_pos,
@@ -7852,11 +7839,11 @@ def discount():
                     textAnchor='middle'
                 )
                 self.add(label)
-
-            # Add labels for actual values (red)
+            
+            # Add labels for actual values (below points)
             for i, (_, y) in enumerate(data[1]):
-                x_pos = self.chart.x + (i * self.chart.width / (len(self._months) - 1))
-                y_pos = get_y_position(y)
+                x_pos = self.chart.x + (i * x_scale)
+                y_pos = self.chart.y + (y - min(y for _, y in data[0] + data[1])) * y_scale
                 
                 label = String(
                     x_pos,
@@ -7871,7 +7858,7 @@ def discount():
     def _month_formatter(self, value):
         """Convert numeric value to month name"""
         try:
-            index = int(value)
+            index = int(round(value))
             if 0 <= index < len(self._months):
                 return self._months[index]
         except (ValueError, TypeError):
@@ -8050,8 +8037,7 @@ def discount():
         return elements
     def get_highest_discount_data(self, data):
         """Extract data for the highest approved discount type across months"""
-        # First collect all data
-        raw_months = []
+        months = []
         approved_values = []
         actual_values = []
         
@@ -8068,22 +8054,11 @@ def discount():
             if valid_discounts:
                 # Sort by approved rate and get the highest
                 highest_discount = max(valid_discounts, key=lambda x: x['approved'])
-                raw_months.append(month)
+                months.append(month)
                 approved_values.append(highest_discount['approved'])
                 actual_values.append(highest_discount['actual'])
         
-        # Remove duplicate months while preserving order
-        unique_months = list(dict.fromkeys(raw_months))
-        
-        # Create lists with only unique month data
-        unique_approved = []
-        unique_actual = []
-        for month in unique_months:
-            idx = raw_months.index(month)
-            unique_approved.append(approved_values[idx])
-            unique_actual.append(actual_values[idx])
-        
-        return unique_months, unique_approved, unique_actual
+        return months, approved_values, actual_values
 
     def generate_report(self, state, data):
         """Generate PDF report for a state"""
@@ -8124,7 +8099,7 @@ def discount():
         
         # Add horizontal line
         story.append(Spacer(1, 20))
-        story.append(HorizontalLine(540, 2))
+        story.append(HorizontalLine(540, 2))  # 540 points = 7.5 inches (standard page width minus margins)
         story.append(Spacer(1, 30))
         
         # Add chart title
@@ -8133,16 +8108,13 @@ def discount():
             self.styles['ChartTitle']
         ))
         
-        # Get data for the chart with unique months
+        # Get data for the chart
         months, approved_values, actual_values = self.get_highest_discount_data(data)
-        
-        # Prepare chart data with unique month indices
         chart_data = [
             list(zip(range(len(months)), approved_values)),  # Approved line
             list(zip(range(len(months)), actual_values))     # Actual line
         ]
         
-        # Create and add the chart
         drawing = LineChart(500, 300, chart_data, months)
         story.append(drawing)
         
@@ -8154,8 +8126,6 @@ def discount():
             </para>""",
             self.styles['ChartLegend']
         ))
-        
-        # Rest of your code remains the same...
         
         # Add footer text
         story.append(Paragraph(
