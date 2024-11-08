@@ -7850,7 +7850,7 @@ def discount():
                 if i==0:
                     x_pos = self.chart.x + (i * x_scale)
                 else:
-                    x_post = self.chart.x + ((i-1)*x_scale)
+                    x_post = self.chart.x + ((i-0.5)*x_scale)
                 y_pos = self.chart.y + ((y - min_y) * y_scale)
                 
                 label = String(
