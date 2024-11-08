@@ -4484,7 +4484,7 @@ def normal():
         concepts = [
             ("Overall EBITDA:", "Weighted average of Normal and Premium EBITDA based on their actual quantities."),
             ("Imaginary EBITDA:", "Calculated by adjusting shares based on the following rules:"),
-            ("", "• If both (Trade,Non-Trade) are present: Premium +5%, Normal -5%"),
+            ("", "• If both (Normal and Premium) are present: Premium +5%, Normal -5%"),
             ("", "• If only one is present: No change"),
             ("Adjusted Shares:", "These adjustments aim to model potential improvements in product mix."),
         ]
