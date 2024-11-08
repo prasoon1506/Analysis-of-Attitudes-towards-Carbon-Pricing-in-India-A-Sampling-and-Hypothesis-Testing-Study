@@ -7737,7 +7737,237 @@ def discount():
             processed_data[sheet] = df
             
     return processed_data
+ from reportlab.lib import colors
+ from reportlab.lib.pagesizes import A4
+ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+ from reportlab.lib.units import inch
+ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+ from reportlab.pdfgen import canvas
+ from reportlab.lib.colors import HexColor
+ import io
+ from datetime import datetime
+ class DiscountReportGenerator:
+    def __init__(self):
+        self.styles = getSampleStyleSheet()
+        self.setup_custom_styles()
+        
+    def setup_custom_styles(self):
+        """Setup custom paragraph styles for the report"""
+        self.styles.add(ParagraphStyle(
+            name='HeaderStyle',
+            fontName='Helvetica-Bold',
+            fontSize=24,
+            spaceAfter=30,
+            alignment=1,
+            textColor=HexColor('#1e293b')
+        ))
+        
+        self.styles.add(ParagraphStyle(
+            name='SubHeaderStyle',
+            fontName='Helvetica-Bold',
+            fontSize=18,
+            spaceAfter=20,
+            textColor=HexColor('#334155')
+        ))
+        
+        self.styles.add(ParagraphStyle(
+            name='QuantityStyle',
+            fontName='Helvetica',
+            fontSize=14,
+            spaceAfter=15,
+            textColor=HexColor('#475569')
+        ))
+        
+        self.styles.add(ParagraphStyle(
+            name='MetricLabelStyle',
+            fontName='Helvetica-Bold',
+            fontSize=12,
+            textColor=HexColor('#64748b')
+        ))
+        
+        self.styles.add(ParagraphStyle(
+            name='MetricValueStyle',
+            fontName='Helvetica',
+            fontSize=16,
+            textColor=HexColor('#0f172a')
+        ))
+        
+        self.styles.add(ParagraphStyle(
+            name='DifferencePositive',
+            fontName='Helvetica',
+            fontSize=14,
+            textColor=HexColor('#10b981')
+        ))
+        
+        self.styles.add(ParagraphStyle(
+            name='DifferenceNegative',
+            fontName='Helvetica',
+            fontSize=14,
+            textColor=HexColor('#ef4444')
+        ))
 
+    def create_header(self, state):
+        """Create report header"""
+        return [
+            Paragraph(f"Discount Analysis Report - {state}", self.styles['HeaderStyle']),
+            Paragraph(f"Generated on {datetime.now().strftime('%B %d, %Y')}", self.styles['Normal']),
+            Spacer(1, 20)
+        ]
+
+    def create_monthly_section(self, month_data, month_name, quantity):
+        """Create a section for monthly data"""
+        elements = []
+        
+        # Month header
+        elements.append(Paragraph(f"{month_name} Analysis", self.styles['SubHeaderStyle']))
+        
+        # Quantity information
+        elements.append(Paragraph(
+            f"Total Quantity: {quantity:,.2f} bags",
+            self.styles['QuantityStyle']
+        ))
+        elements.append(Spacer(1, 20))
+        
+        # Discount details
+        for discount_name, values in month_data.items():
+            elements.append(Paragraph(f"<u>{discount_name}</u>", self.styles['MetricLabelStyle']))
+            elements.append(Spacer(1, 10))
+            
+            # Approved and Actual Payouts
+            elements.append(Paragraph(
+                f"Approved Rate: ₹{values['approved']:,.2f} per bag",
+                self.styles['MetricValueStyle']
+            ))
+            elements.append(Paragraph(
+                f"Actual Rate: ₹{values['actual']:,.2f} per bag",
+                self.styles['MetricValueStyle']
+            ))
+            
+            # Calculate difference
+            diff = values['approved'] - values['actual']
+            diff_style = 'DifferencePositive' if diff >= 0 else 'DifferenceNegative'
+            diff_text = f"{'Under' if diff >= 0 else 'Over'} approved by ₹{abs(diff):,.2f} per bag"
+            elements.append(Paragraph(diff_text, self.styles[diff_style]))
+            
+            # Calculate total payouts
+            total_approved = quantity * values['approved']
+            total_actual = quantity * values['actual']
+            total_diff = total_approved - total_actual
+            
+            elements.append(Spacer(1, 15))
+            elements.append(Paragraph("Total Payouts:", self.styles['MetricLabelStyle']))
+            elements.append(Paragraph(
+                f"Total Approved: ₹{total_approved:,.2f}",
+                self.styles['MetricValueStyle']
+            ))
+            elements.append(Paragraph(
+                f"Total Actual: ₹{total_actual:,.2f}",
+                self.styles['MetricValueStyle']
+            ))
+            
+            diff_style = 'DifferencePositive' if total_diff >= 0 else 'DifferenceNegative'
+            diff_text = f"Total {'Savings' if total_diff >= 0 else 'Excess'}: ₹{abs(total_diff):,.2f}"
+            elements.append(Paragraph(diff_text, self.styles[diff_style]))
+            
+            elements.append(Spacer(1, 30))
+        
+        return elements
+
+    def generate_report(self, state, data):
+        """Generate PDF report for a state"""
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=A4,
+            rightMargin=72,
+            leftMargin=72,
+            topMargin=72,
+            bottomMargin=72
+        )
+        
+        story = []
+        
+        # Add header
+        story.extend(self.create_header(state))
+        
+        # Process each month
+        for month, month_data in data.items():
+            story.extend(self.create_monthly_section(
+                month_data['discounts'],
+                month,
+                month_data['quantity']
+            ))
+            story.append(Paragraph(
+                "_" * 50,
+                self.styles['Normal']
+            ))
+            story.append(Spacer(1, 20))
+            
+            # Add page break after each month except the last
+            if month != list(data.keys())[-1]:
+                story.append(PageBreak())
+        
+        # Build the PDF
+        doc.build(story)
+        buffer.seek(0)
+        return buffer
+
+ def add_pdf_download(analytics_instance, data, selected_state):
+    """Add PDF download button to Streamlit app"""
+    # Prepare data for PDF generation
+    pdf_data = {}
+    for month, cols in analytics_instance.month_columns.items():
+        month_data = {
+            'quantity': 0,
+            'discounts': {}
+        }
+        
+        df = data[selected_state]
+        discount_types = analytics_instance.get_discount_types(df, selected_state)
+        
+        # Get quantity (same for all discounts)
+        first_discount = discount_types[0]
+        if first_discount == analytics_instance.combined_discount_name:
+            combined_data = analytics_instance.get_combined_data(df, cols, selected_state)
+            month_data['quantity'] = combined_data['quantity']
+        else:
+            mask = df.iloc[:, 0].fillna('').astype(str).str.strip() == first_discount.strip()
+            filtered_df = df[mask]
+            if len(filtered_df) > 0:
+                month_data['quantity'] = filtered_df.iloc[0, cols['quantity']]
+        
+        # Get discount data
+        for discount in discount_types:
+            if discount == analytics_instance.combined_discount_name:
+                combined_data = analytics_instance.get_combined_data(df, cols, selected_state)
+                month_data['discounts'][discount] = {
+                    'approved': combined_data['approved'],
+                    'actual': combined_data['actual']
+                }
+            else:
+                mask = df.iloc[:, 0].fillna('').astype(str).str.strip() == discount.strip()
+                filtered_df = df[mask]
+                if len(filtered_df) > 0:
+                    month_data['discounts'][discount] = {
+                        'approved': filtered_df.iloc[0, cols['approved']],
+                        'actual': filtered_df.iloc[0, cols['actual']]
+                    }
+        
+        pdf_data[month] = month_data
+    
+    # Generate PDF
+    report_generator = DiscountReportGenerator()
+    pdf_buffer = report_generator.generate_report(selected_state, pdf_data)
+    
+    # Add download button
+    st.download_button(
+        label="📄 Download Detailed Report",
+        data=pdf_buffer,
+        file_name=f"discount_report_{selected_state}_{datetime.now().strftime('%Y%m%d')}.pdf",
+        mime="application/pdf",
+        key=f"pdf_download_{selected_state}",
+        help="Download a detailed PDF report for this state"
+    )
  class DiscountAnalytics:
     def __init__(self):
         self.excluded_discounts = [
@@ -8158,6 +8388,7 @@ def discount():
             st.markdown("<div class='chart-container'>", unsafe_allow_html=True)
             processor.create_trend_chart(data, selected_state, selected_discount)
             st.markdown("</div>", unsafe_allow_html=True)
+            add_pdf_download(processor, data, selected_state)
     else:
         st.markdown("""
         <div style='text-align: center; padding: 3rem; background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);'>
