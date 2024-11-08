@@ -7762,6 +7762,10 @@ def discount():
  class LineChart(Drawing):
     def __init__(self, width=500, height=250, data=None, months=None):
         Drawing.__init__(self, width, height)
+        
+        # Declare months as an attribute of the drawing
+        self._months = months or []
+        
         self.add(LinePlot(), name='chart')
         
         # Customize the line chart
@@ -7793,9 +7797,6 @@ def discount():
         self.chart.xValueAxis.gridStrokeColor = HexColor('#e2e8f0')
         self.chart.xValueAxis.gridStrokeWidth = 0.5
         
-        # Store months for the formatter
-        self.months = months or []
-        
         # Add markers
         self.chart.lines[0].symbol = makeMarker('Circle')
         self.chart.lines[1].symbol = makeMarker('Circle')
@@ -7810,8 +7811,8 @@ def discount():
         """Convert numeric value to month name"""
         try:
             index = int(value)
-            if 0 <= index < len(self.months):
-                return self.months[index]
+            if 0 <= index < len(self._months):
+                return self._months[index]
         except (ValueError, TypeError):
             pass
         return ''
@@ -8179,7 +8180,6 @@ def discount():
             'TOTAL OF DP PAYOUT',
             'TOTAL OF STS & RD',
             'Other (Please specify',
-            'G. TOTAL'
         ]
         self.discount_mappings = {
             'group1': {
