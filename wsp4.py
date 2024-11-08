@@ -7775,8 +7775,8 @@ def discount():
         # Set chart style
         self.chart.lines[0].strokeColor = HexColor('#3b82f6')
         self.chart.lines[1].strokeColor = HexColor('#ef4444')
-        self.chart.lines[0].strokeWidth = 1
-        self.chart.lines[1].strokeWidth = 1
+        self.chart.lines[0].strokeWidth = 0.5
+        self.chart.lines[1].strokeWidth = 0.5
         
         # Remove duplicate months by ensuring unique values
         if months:
