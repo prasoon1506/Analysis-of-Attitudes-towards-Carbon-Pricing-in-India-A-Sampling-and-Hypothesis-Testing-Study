@@ -23,6 +23,7 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 from scipy.stats import jarque_bera, kurtosis, skew
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.ticker as mticker
