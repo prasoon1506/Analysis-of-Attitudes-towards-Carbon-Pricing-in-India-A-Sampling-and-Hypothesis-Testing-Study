@@ -462,7 +462,7 @@ def create_front_page(options):
             x = (width - subtitle_width) / 2
         elif options["layout"] == "left-aligned":
             x = 3*cm
-        else:  # asymmetric
+        else: 
             x = width - subtitle_width - 3*cm
         c.drawString(x, title_height - cm, options["subtitle"])
     y_position = title_height - 4*cm
@@ -787,8 +787,7 @@ def excel_editor_and_analyzer():
         "Excel Editor",
         "File Converter", 
         "Data Analyzer",
-        "Front Page Creator"
-    ])
+        "Front Page Creator"])
     with tab1:
         excel_editor()
     with tab2:
@@ -1718,8 +1717,7 @@ def create_stats_pdf(stats_data, district):
         ('FONTSIZE', (0, 1), (-1, -1), 12),
         ('TOPPADDING', (0, 1), (-1, -1), 6),
         ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black)
-    ]))
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)]))
     elements.append(table)
     doc.build(elements)
     buffer.seek(0)
@@ -1750,8 +1748,7 @@ def create_prediction_pdf(prediction_data, district):
         ('FONTSIZE', (0, 1), (-1, -1), 12),
         ('TOPPADDING', (0, 1), (-1, -1), 6),
         ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black)
-    ]))
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)]))
     elements.append(table)
     doc.build(elements)
     buffer.seek(0)
@@ -1870,13 +1867,7 @@ def transform_data(df, week_names_input):
     transformed_df['REGION'] = transformed_df['REGION'].replace(region_replacements)
     transformed_df['REGION'] = transformed_df['REGION'].replace(['Delhi', 'Haryana', 'Punjab'], 'North-I')
     transformed_df['REGION'] = transformed_df['REGION'].replace(['Uttar Pradesh(West)','Uttarakhand'], 'North-II')
-    zone_replacements = {
-        'EZ_East Zone': 'East Zone',
-        'CZ_Central Zone': 'Central Zone',
-        'NZ_North Zone': 'North Zone',
-        'UPEZ_UP East Zone': 'UP East Zone',
-        'upWZ_up West Zone': 'UP West Zone',
-        'WZ_West Zone': 'West Zone'}
+    zone_replacements = {'EZ_East Zone': 'East Zone','CZ_Central Zone': 'Central Zone','NZ_North Zone': 'North Zone','UPEZ_UP East Zone': 'UP East Zone','upWZ_up West Zone': 'UP West Zone','WZ_West Zone': 'West Zone'}
     transformed_df['Zone'] = transformed_df['Zone'].replace(zone_replacements)
     brand_columns = [col for col in df.columns if any(brand in col for brand in brands)]
     num_weeks = len(brand_columns) // len(brands)
@@ -2081,8 +2072,6 @@ def Home():
         </ul>
         </div>
         """, unsafe_allow_html=True)
-
-    # How to use section
     st.markdown("""
     <div class="section-box">
     <h3>How to Use This Dashboard</h3>
@@ -2349,7 +2338,6 @@ def wsp_analysis_dashboard():
                     st.markdown("#### Desired Differences")
                     num_cols = min(len(selected_benchmarks), 3)
                     diff_cols = st.columns(num_cols)
-                    
                     for i, brand in enumerate(selected_benchmarks):
                         with diff_cols[i % num_cols]:
                             value = st.number_input(
@@ -2656,8 +2644,7 @@ def create_prediction_table(prediction_data):
         ('FONTSIZE', (0, 1), (-1, -1), 10),
         ('TOPPADDING', (0, 1), (-1, -1), 6),
         ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black)
-    ]))
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)]))
     return table
 from urllib.parse import quote
 @st.cache_data
@@ -2727,23 +2714,13 @@ def create_visualization(region_data, region, brand, months):
     table_right.set_fontsize(13)
     table_right.scale(1.2, 1.8)
     ax_current.text(0.2, 1.0, 'Novemeber 2024 Performance Metrics', fontsize=16, fontweight='bold', ha='center', va='bottom')
-    detailed_metrics = [
-    ('Trade', region_data['Trade Nov'].iloc[-1], region_data['Monthly Achievement(Nov)'].iloc[-1], 'Channel'),
-    ('Green', region_data['Green Nov'].iloc[-1], region_data['Monthly Achievement(Nov)'].iloc[-1], 'Region'),
-    ('Yellow', region_data['Yellow Nov'].iloc[-1], region_data['Monthly Achievement(Nov)'].iloc[-1], 'Region'),
-    ('Red', region_data['Red Nov'].iloc[-1], region_data['Monthly Achievement(Nov)'].iloc[-1], 'Region'),
-    ('Premium', region_data['Premium Nov'].iloc[-1], region_data['Monthly Achievement(Nov)'].iloc[-1], 'Product'),
-    ('Blended', region_data['Blended Nov'].iloc[-1], region_data['Monthly Achievement(Nov)'].iloc[-1], 'Product')]
+    detailed_metrics = [('Trade', region_data['Trade Nov'].iloc[-1], region_data['Monthly Achievement(Nov)'].iloc[-1], 'Channel'),('Green', region_data['Green Nov'].iloc[-1], region_data['Monthly Achievement(Nov)'].iloc[-1], 'Region'),('Yellow', region_data['Yellow Nov'].iloc[-1], region_data['Monthly Achievement(Nov)'].iloc[-1], 'Region'),('Red', region_data['Red Nov'].iloc[-1], region_data['Monthly Achievement(Nov)'].iloc[-1], 'Region'),('Premium', region_data['Premium Nov'].iloc[-1], region_data['Monthly Achievement(Nov)'].iloc[-1], 'Product'),('Blended', region_data['Blended Nov'].iloc[-1], region_data['Monthly Achievement(Nov)'].iloc[-1], 'Product')]
     colors = ['blue', 'green', '#CDC50A', 'red', 'darkmagenta', 'saddlebrown']
     trade_box = patches.Rectangle((0.45, 0.74), 0.55, 0.125,facecolor='#F0F0F0',edgecolor='black',alpha=1,transform=ax_current.transAxes)
     ax_current.add_patch(trade_box)
     region_box = patches.Rectangle((0.45, 0.35), 0.55, 0.375,facecolor='#F0F0F0',edgecolor='black',alpha=1,transform=ax_current.transAxes)
     ax_current.add_patch(region_box)
-    product_box = patches.Rectangle((0.45, 0.08), 0.55, 0.25,
-                                  facecolor='#F0F0F0',
-                                  edgecolor='black',
-                                  alpha=1,
-                                  transform=ax_current.transAxes)
+    product_box = patches.Rectangle((0.45, 0.08), 0.55, 0.25,facecolor='#F0F0F0',edgecolor='black',alpha=1,transform=ax_current.transAxes)
     ax_current.add_patch(product_box)
     for i, (label, value, total, category) in enumerate(detailed_metrics):
      percentage = (value / total) * 100 if total != 0 else 0
@@ -2765,8 +2742,7 @@ def create_visualization(region_data, region, brand, months):
     table_data = [
                 ['Overall\nRequirement', 'Trade Channel\nRequirement', 'Premium Product\nRequirement','Blended Product\nRequirement'],
                 [f"{region_data['Q3 2023 Total'].iloc[-1]-region_data['Monthly Achievement(Oct)'].iloc[-1]-region_data['Monthly Achievement(Nov)'].iloc[-1]:.0f}", f"{region_data['Q3 2023 Trade'].iloc[-1]-region_data['Trade Oct'].iloc[-1]-region_data['Trade Nov'].iloc[-1]:.0f}",f"{region_data['Q3 2023 Premium'].iloc[-1]-region_data['Premium Oct'].iloc[-1]-region_data['Premium Nov'].iloc[-1]:.0f}", 
-                 f"{region_data['Q3 2023 Blended '].iloc[-1]-region_data['Blended Oct'].iloc[-1]-region_data['Blended Nov'].iloc[-1]:.0f}"],
-            ]
+                 f"{region_data['Q3 2023 Blended '].iloc[-1]-region_data['Blended Oct'].iloc[-1]-region_data['Blended Nov'].iloc[-1]:.0f}"],]
     table = ax_table.table(cellText=table_data[1:], colLabels=table_data[0], cellLoc='center', loc='center')
     table.auto_set_font_size(False)
     table.set_fontsize(12)
@@ -2815,7 +2791,6 @@ def create_visualization(region_data, region, brand, months):
     for i, (pct_plan, pct_ags) in enumerate(zip(percent_achievements_plan, percent_achievements_ags)):
         # Determine which value is higher
         if pct_plan >= pct_ags:
-            # Plan is higher or equal, put Plan above and AGS below
             ax2.annotate(f'{pct_plan:.1f}%',(i, pct_plan),xytext=(0, 10),textcoords='offset points', ha='center',va='bottom',fontsize=12,color='purple')
             ax2.annotate(f'{pct_ags:.1f}%', (i, pct_ags), xytext=(0, -15), textcoords='offset points', ha='center',va='top',fontsize=12,color='brown')
         else:
@@ -2859,11 +2834,7 @@ def create_visualization(region_data, region, brand, months):
                 fontsize=11, color='darkcyan')
     ax4 = fig.add_subplot(gs[5, 2])
     ax4.axis('off')
-    channel_data1 = [
-        ('Trade', region_data['Trade Nov'].iloc[-1], region_data['Trade Oct'].iloc[-1],'Channel'),
-        ('Premium', region_data['Premium Nov'].iloc[-1], region_data['Premium Oct'].iloc[-1],'Product'),
-        ('Blended', region_data['Blended Nov'].iloc[-1], region_data['Blended Oct'].iloc[-1],'Product')
-    ]
+    channel_data1 = [('Trade', region_data['Trade Nov'].iloc[-1], region_data['Trade Oct'].iloc[-1],'Channel'),('Premium', region_data['Premium Nov'].iloc[-1], region_data['Premium Oct'].iloc[-1],'Product'),('Blended', region_data['Blended Nov'].iloc[-1], region_data['Blended Oct'].iloc[-1],'Product')]
     total_oct_current = region_data['Total Oct'].iloc[-1]
     ax4.text(0.35, 1, f'November {current_year} Sales Comparison to October 2024:-', fontsize=16, fontweight='bold', ha='center', va='center')
     total_change = ((total_nov_current - total_oct_current) / total_oct_current) * 100
@@ -2942,70 +2913,30 @@ def create_visualization(region_data, region, brand, months):
     ax7.set_title('October 2024 Region Type Breakdown:-', fontsize=16, fontweight='bold')
     ax_comparison = fig.add_subplot(gs[7, :])
     ax_comparison.axis('off')
-    ax_comparison.set_title('Quarterly Performance Analysis (2023 vs 2024)', 
-                          fontsize=20, fontweight='bold', pad=20)
+    ax_comparison.set_title('Quarterly Performance Analysis (2023 vs 2024)',fontsize=20, fontweight='bold', pad=20)
     def create_modern_quarterly_box(ax, x, y, width, height, q_data, quarter):
-        # Adjust the background rectangle
-        rect = patches.Rectangle(
-            (x, y), width, height,
-            facecolor='#f8f9fa',
-            edgecolor='#dee2e6',
-            linewidth=2,
-            alpha=0.9,
-            zorder=1)
+        rect = patches.Rectangle((x, y), width, height,facecolor='#f8f9fa',edgecolor='#dee2e6',linewidth=2,alpha=0.9,zorder=1)
         ax.add_patch(rect)
         title_height = height * 0.15
-        title_bar = patches.Rectangle(
-            (x, y + height - title_height),
-            width,
-            title_height,
-            facecolor='#4a90e2',
-            alpha=0.9,
-            zorder=2
-        )
+        title_bar = patches.Rectangle((x, y + height - title_height),width,title_height,facecolor='#4a90e2',alpha=0.9,zorder=2)
         ax.add_patch(title_bar)
-        ax.text(x + width/2, y + height - title_height/2,
-                f"{quarter} Performance Overview",
-                ha='center', va='center',
-                fontsize=14, fontweight='bold',
-                color='white',
-                zorder=3)
+        ax.text(x + width/2, y + height - title_height/2,f"{quarter} Performance Overview",ha='center', va='center',fontsize=14, fontweight='bold',color='white',zorder=3)
         total_2023, total_2024 = q_data['total_2023'], q_data['total_2024']
         pct_change = ((total_2024 - total_2023) / total_2023) * 100
         trade_2023, trade_2024 = q_data['trade_2023'], q_data['trade_2024']
         trade_pct_change = ((trade_2024 - trade_2023) / trade_2023) * 100
         y_offset = y + height - title_height - 0.1
-        ax.text(x + 0.05, y_offset,
-                "Total Sales Comparison:",
-                fontsize=14, fontweight='bold',
-                color='#2c3e50')
+        ax.text(x + 0.05, y_offset,"Total Sales Comparison:",fontsize=14, fontweight='bold',color='#2c3e50')
         y_offset -= 0.08
-        ax.text(x + 0.05, y_offset,
-                f"2023: {total_2023:,.0f}",
-                fontsize=11)
-        ax.text(x + width/2, y_offset,
-                f"2024: {total_2024:,.0f}",
-                fontsize=11)
-        ax.text(x + 0.375*width, y_offset,
-                f"{pct_change:+.1f}%",
-                fontsize=11,
-                color='green' if pct_change > 0 else 'red')
+        ax.text(x + 0.05, y_offset,f"2023: {total_2023:,.0f}",fontsize=11)
+        ax.text(x + width/2, y_offset,f"2024: {total_2024:,.0f}",fontsize=11)
+        ax.text(x + 0.375*width, y_offset,f"{pct_change:+.1f}%",fontsize=11,color='green' if pct_change > 0 else 'red')
         y_offset -= 0.12
-        ax.text(x + 0.05, y_offset,
-                "Trade Volume:",
-                fontsize=14, fontweight='bold',
-                color='#2c3e50')
+        ax.text(x + 0.05, y_offset,"Trade Volume:",fontsize=14, fontweight='bold',color='#2c3e50')
         y_offset -= 0.08
-        ax.text(x + 0.05, y_offset,
-                f"2023: {trade_2023:,.0f}",
-                fontsize=11)
-        ax.text(x + width/2, y_offset,
-                f"2024: {trade_2024:,.0f}",
-                fontsize=11)
-        ax.text(x + 0.375*width, y_offset,
-                f"{trade_pct_change:+.1f}%",
-                fontsize=11,
-                color='green' if trade_pct_change > 0 else 'red')
+        ax.text(x + 0.05, y_offset,f"2023: {trade_2023:,.0f}",fontsize=11)
+        ax.text(x + width/2, y_offset,f"2024: {trade_2024:,.0f}",fontsize=11)
+        ax.text(x + 0.375*width, y_offset,f"{trade_pct_change:+.1f}%",fontsize=11,color='green' if trade_pct_change > 0 else 'red')
         if pct_change > 0:
             arrow_style = 'fancy,head_length=4,head_width=6'
             arrow_color = 'green'
@@ -3049,21 +2980,12 @@ def create_visualization(region_data, region, brand, months):
             arrowstyle=arrow_style,
             color=arrow_color,
             linewidth=2,
-            zorder=3
-        )
+            zorder=3)
         ax.add_patch(arrow)
     box_height = 0.6  # Increased height
     box_y = 0.2      # Adjusted vertical position
-    q1_data = {
-        'total_2023': region_data['Q1 2023 Total'].iloc[-1],
-        'total_2024': region_data['Q1 2024 Total'].iloc[-1],
-        'trade_2023': region_data['Q1 2023 Trade'].iloc[-1],
-        'trade_2024': region_data['Q1 2024 Trade'].iloc[-1]}
-    q2_data = {
-        'total_2023': region_data['Q2 2023 Total'].iloc[-1],
-        'total_2024': region_data['Q2 2024 Total'].iloc[-1],
-        'trade_2023': region_data['Q2 2023 Trade'].iloc[-1],
-        'trade_2024': region_data['Q2 2024 Trade'].iloc[-1]}
+    q1_data = {'total_2023': region_data['Q1 2023 Total'].iloc[-1],'total_2024': region_data['Q1 2024 Total'].iloc[-1],'trade_2023': region_data['Q1 2023 Trade'].iloc[-1],'trade_2024': region_data['Q1 2024 Trade'].iloc[-1]}
+    q2_data = {'total_2023': region_data['Q2 2023 Total'].iloc[-1],'total_2024': region_data['Q2 2024 Total'].iloc[-1],'trade_2023': region_data['Q2 2023 Trade'].iloc[-1],'trade_2024': region_data['Q2 2024 Trade'].iloc[-1]}
     create_modern_quarterly_box(ax_comparison, 0.1, box_y, 0.35, box_height, q1_data, "Q1")
     create_modern_quarterly_box(ax_comparison, 0.55, box_y, 0.35, box_height, q2_data, "Q2")
     ax_comparison.set_xlim(0, 1)
@@ -3081,9 +3003,7 @@ def generate_full_report(df, regions):
     from io import BytesIO
     pdf_buffer = BytesIO()
     with PdfPages(pdf_buffer) as pdf:
-        # Iterate through each region
         for region in regions:
-            # Get unique brands for this region
             region_brands = df[df['Zone'] == region]['Brand'].unique().tolist()
             for brand in region_brands:
                 # Filter data for current region and brand
@@ -3152,8 +3072,7 @@ def show_report_generator():
                         label="📥 Download Individual Report (PDF)",
                         data=buf,
                         file_name=f"sales_report_{region}_{brand}_{datetime.now().strftime('%Y%m%d')}.pdf",
-                        mime="application/pdf"
-                    )
+                        mime="application/pdf")
     with tab2:
         st.markdown("""
         <div class='reportBlock'>
@@ -3198,14 +3117,12 @@ def show_about_page():
         </div>
         """, unsafe_allow_html=True)
 def sales_review_report_generator():
-    # Sidebar navigation
     with st.sidebar:
         st.markdown("# 📊 Navigation")
         selected_page = st.radio(
             "",
             ["🏠 Home", "📈 Report Generator", "ℹ️ About"],
-            key="navigation"
-        )
+            key="navigation")
         st.markdown("---")
         st.markdown("### 📅 Current Session")
         st.markdown(f"Date: {datetime.now().strftime('%B %d, %Y')}")
@@ -3235,8 +3152,7 @@ def get_online_editor_url(file_extension):
         '.docx': 'https://www.office.com/launch/word?auth=2',
         '.ppt': 'https://www.office.com/launch/powerpoint?auth=2',
         '.pptx': 'https://www.office.com/launch/powerpoint?auth=2',
-        '.pdf': 'https://documentcloud.adobe.com/link/home/'
-    }
+        '.pdf': 'https://documentcloud.adobe.com/link/home/'}
     return extension_mapping.get(file_extension.lower(), 'https://www.google.com/drive/')
 def folder_menu():
     st.markdown("""
@@ -3303,11 +3219,10 @@ def folder_menu():
     """, unsafe_allow_html=True)
     st.markdown('<div class="title"><span>📓 Advanced File Manager</span></div>', unsafe_allow_html=True)
     lottie_urls = [
-        "https://assets9.lottiefiles.com/packages/lf20_3vbOcw.json",  # File manager animation
-        "https://assets9.lottiefiles.com/packages/lf20_5lAtR7.json",  # Folder animation
-        "https://assets1.lottiefiles.com/packages/lf20_4djadwfo.json",  # Document management
-        "https://assets6.lottiefiles.com/packages/lf20_2a5yxpci.json"   # File transfer
-    ]
+        "https://assets9.lottiefiles.com/packages/lf20_3vbOcw.json",
+        "https://assets9.lottiefiles.com/packages/lf20_5lAtR7.json",
+        "https://assets1.lottiefiles.com/packages/lf20_4djadwfo.json",
+        "https://assets6.lottiefiles.com/packages/lf20_2a5yxpci.json" ]
     lottie_json = None
     for url in lottie_urls:
         lottie_json = load_lottie_url(url)
@@ -3323,8 +3238,7 @@ def folder_menu():
         st.markdown("""
         Welcome to the Advanced File Manager! 
         Here you can upload, download, and manage your files with ease. 
-        Enjoy the smooth animations, user-friendly interface, and new features like file search and sorting.
-        """)
+        Enjoy the smooth animations, user-friendly interface, and new features like file search and sorting.""")
     if not os.path.exists("uploaded_files"):
         os.makedirs("uploaded_files")
     st.markdown('<div class="upload-section">', unsafe_allow_html=True)
@@ -3407,11 +3321,9 @@ def folder_menu():
             st.session_state.todo_items.pop(idx)
             st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
-    # Add a fun fact section
     st.markdown("---")
     st.subheader("📚 Fun File Fact")
-    fun_facts = [
-        "The first computer virus was created in 1983 and was called the Elk Cloner.",
+    fun_facts = ["The first computer virus was created in 1983 and was called the Elk Cloner.",
         "The most common file extension in the world is .dll (Dynamic Link Library).",
         "The largest file size theoretically possible in Windows is 16 exabytes minus 1 KB.",
         "The PDF file format was invented by Adobe in 1993.",
@@ -3420,8 +3332,7 @@ def folder_menu():
         "About 90% of the World's Currency only exists on Computers.",
         "MyDoom is the most expensive computer virus in history.",
         "The original name of windows was Interface Manager.",
-        "The first microprocessor created by Intel was the 4004."
-    ]
+        "The first microprocessor created by Intel was the 4004."]
     st.markdown(f"*{fun_facts[int(os.urandom(1)[0]) % len(fun_facts)]}*")
 def load_lottieurl(url: str):
     r = requests.get(url)
@@ -3498,18 +3409,7 @@ def sales_dashboard():
         if st.button('Generate Report'):
             display_data(df, selected_regions, selected_districts, selected_channels, show_whole_region)
 def process_dataframe(df):
-    column_mapping = {
-    pd.to_datetime('2024-09-23 00:00:00'): '23-Sep',
-    pd.to_datetime('2024-08-23 00:00:00'): '23-Aug',
-    pd.to_datetime('2024-07-23 00:00:00'): '23-Jul',
-    pd.to_datetime('2024-06-23 00:00:00'): '23-Jun',
-    pd.to_datetime('2024-05-23 00:00:00'): '23-May',
-    pd.to_datetime('2024-04-23 00:00:00'): '23-Apr',
-    pd.to_datetime('2024-08-24 00:00:00'): '24-Aug',
-    pd.to_datetime('2024-07-24 00:00:00'): '24-Jul',
-    pd.to_datetime('2024-06-24 00:00:00'): '24-Jun',
-    pd.to_datetime('2024-05-24 00:00:00'): '24-May',
-    pd.to_datetime('2024-04-24 00:00:00'): '24-Apr'}
+    column_mapping = {pd.to_datetime('2024-09-23 00:00:00'): '23-Sep',pd.to_datetime('2024-08-23 00:00:00'): '23-Aug',pd.to_datetime('2024-07-23 00:00:00'): '23-Jul',pd.to_datetime('2024-06-23 00:00:00'): '23-Jun',pd.to_datetime('2024-05-23 00:00:00'): '23-May',pd.to_datetime('2024-04-23 00:00:00'): '23-Apr',pd.to_datetime('2024-08-24 00:00:00'): '24-Aug',pd.to_datetime('2024-07-24 00:00:00'): '24-Jul',pd.to_datetime('2024-06-24 00:00:00'): '24-Jun',pd.to_datetime('2024-05-24 00:00:00'): '24-May',pd.to_datetime('2024-04-24 00:00:00'): '24-Apr'}
     df = df.rename(columns=column_mapping)
     df['FY 2024 till Aug'] = df['24-Apr'] + df['24-May'] + df['24-Jun'] + df['24-Jul'] + df['24-Aug']
     df['FY 2023 till Aug'] = df['23-Apr'] + df['23-May'] + df['23-Jun'] + df['23-Jul'] + df['23-Aug']
@@ -3827,38 +3727,19 @@ def normal():
                     filtered_df['I-O Difference'] = filtered_df['Imaginary EBITDA'] - filtered_df[overall_col]
                     fig = go.Figure()
                     fig = make_subplots(rows=2, cols=1, row_heights=[0.58, 0.42], vertical_spacing=0.18)
-                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Normal EBITDA'],
-                                             mode='lines+markers', name='Normal EBITDA', line=dict(color='green')), row=1, col=1)
-                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Premium EBITDA'],
-                                             mode='lines+markers', name='Premium EBITDA', line=dict(color='blue')), row=1, col=1)
-                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[overall_col],
-                                             mode='lines+markers', name=overall_col, line=dict(color='crimson', dash='dash')), row=1, col=1)
-                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Imaginary EBITDA'],
-                                             mode='lines+markers', name='Imaginary EBITDA',
-                                             line=dict(color='brown', dash='dot')), row=1, col=1)
-                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['I-O Difference'],
-                                             mode='lines+markers+text', name='I-O Difference',
-                                             text=filtered_df['I-O Difference'].round(2),
-                                             textposition='top center',textfont=dict(size=8,weight="bold"),
-                                             line=dict(color='fuchsia')), row=2, col=1)
+                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Normal EBITDA'],mode='lines+markers', name='Normal EBITDA', line=dict(color='green')), row=1, col=1)
+                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Premium EBITDA'],mode='lines+markers', name='Premium EBITDA', line=dict(color='blue')), row=1, col=1)
+                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[overall_col],mode='lines+markers', name=overall_col, line=dict(color='crimson', dash='dash')), row=1, col=1)
+                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Imaginary EBITDA'],mode='lines+markers', name='Imaginary EBITDA',line=dict(color='brown', dash='dot')), row=1, col=1)
+                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['I-O Difference'],mode='lines+markers+text', name='I-O Difference',text=filtered_df['I-O Difference'].round(2),textposition='top center',textfont=dict(size=8,weight="bold"),line=dict(color='fuchsia')), row=2, col=1)
                     mean_diff = filtered_df['I-O Difference'].mean()
                     if not np.isnan(mean_diff):
                         mean_diff=round(mean_diff)
-                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=[mean_diff] * len(filtered_df),
-                                             mode='lines', name=f'Mean I-O Difference[{mean_diff}]',
-                                             line=dict(color='black', dash='dash')), row=2, col=1)
+                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=[mean_diff] * len(filtered_df),mode='lines', name=f'Mean I-O Difference[{mean_diff}]',line=dict(color='black', dash='dash')), row=2, col=1)
                     x_labels = [f"{month}<br>(P-N: {g_r:.0f})<br>(I-O: {g_y:.0f}))" 
                                 for month, g_r, g_y in 
-                                zip(filtered_df['Month'], 
-                                    filtered_df['P-N Difference'],  
-                                    filtered_df['I-O Difference'])]
-                    fig.update_layout(
-                        title=f"EBITDA Analysis for {brand}(Type:-{product_type}) in {region}({region_subset})",
-                        legend_title='Metrics',
-                        plot_bgcolor='cornsilk',
-                        paper_bgcolor='lightcyan',
-                        height=710,  # Increased height to accommodate the new subplot
-                    )
+                                zip(filtered_df['Month'], filtered_df['P-N Difference'],filtered_df['I-O Difference'])]
+                    fig.update_layout(title=f"EBITDA Analysis for {brand}(Type:-{product_type}) in {region}({region_subset})",legend_title='Metrics',plot_bgcolor='cornsilk',paper_bgcolor='lightcyan',height=710,)
                     fig.update_xaxes(tickmode='array', tickvals=list(range(len(x_labels))), ticktext=x_labels, row=1, col=1)
                     fig.update_xaxes(title_text='Months', row=2, col=1)
                     fig.update_yaxes(title_text='EBITDA(Rs./MT)', row=1, col=1)
@@ -3878,23 +3759,14 @@ def normal():
                     c.setFont("Helvetica-Bold", 10)  # Reduced font size
                     c.drawString(50, height - 600, "Average Share Distribution")
                     average_shares = filtered_df[['Average Normal Share', 'Average Premium Share']].mean()
-                    share_fig = px.pie(
-                       values=average_shares.values,
-                       names=average_shares.index,
-                       color=average_shares.index,
-                       color_discrete_map={'Average Normal Share': 'green', 'Average Premium Share': 'blue'},
-                       title="",hole=0.3)
+                    share_fig = px.pie(values=average_shares.values,names=average_shares.index,color=average_shares.index,color_discrete_map={'Average Normal Share': 'green', 'Average Premium Share': 'blue'},title="",hole=0.3)
                     share_fig.update_layout(width=475, height=475, margin=dict(l=0, r=0, t=0, b=0))  
                     draw_graph(share_fig, 80, height - 810, 200, 200)  # Adjusted position and size
                     c.setFont("Helvetica-Bold", 10)
                     c.drawString(330, height - 600, "Monthly Share Distribution")
                     share_data = [['Month', 'Normal', 'Premium']]
                     for _, row in filtered_df[['Month', 'Normal', 'Premium','Average Normal Share', 'Average Premium Share']].iterrows():
-                        share_data.append([
-                            row['Month'],
-                            f"{row['Normal']:.0f} ({row['Average Normal Share']:.2%})",
-                            f"{row['Premium']:.0f} ({row['Average Premium Share']:.2%})"
-                        ])
+                        share_data.append([row['Month'],f"{row['Normal']:.0f} ({row['Average Normal Share']:.2%})",f"{row['Premium']:.0f} ({row['Average Premium Share']:.2%})"])
                     draw_table(share_data, 330, height - 620, [40, 60, 60, 60])
                     add_page_number(c)
                     c.showPage()
@@ -3937,8 +3809,7 @@ def normal():
         st.sidebar.subheader(f"Download Report for {region}")
         download_choice = st.sidebar.radio(
             "Choose report type:",
-            ('Full Region', 'Region Subset')
-        )
+            ('Full Region', 'Region Subset'))
         if download_choice == 'Full Region':
             if st.sidebar.button(f"Download Full Report for {region}"):
                 subset_df = df[(df['Region'] == region) & (df['Type'] != 'PPC Premium')]
@@ -3951,7 +3822,6 @@ def normal():
             region_subsets = df[df['Region'] == region]['Region subsets'].unique()
             selected_subset = st.sidebar.selectbox("Select Region Subset", options=region_subsets)
             if st.sidebar.button(f"Download Report for {region} - {selected_subset}"):
-                # Filter the dataframe for the selected region and subset
                 subset_df = df[(df['Region'] == region) & (df['Region subsets'] == selected_subset) & (df['Type'] != 'PPC Premium')]
                 pdf_buffer = create_pdf_report(region, subset_df, selected_subset)
                 pdf_bytes = pdf_buffer.getvalue()
@@ -3968,8 +3838,7 @@ def normal():
         analysis_type = st.sidebar.radio("Select Analysis Type", analysis_options, index=analysis_options.index(st.session_state.analysis_type), key="analysis_type_radio")
         st.session_state.analysis_type = analysis_type
         premium_share = st.sidebar.slider("Adjust Premium Share (%)", 0, 100, 50)
-        filtered_df = df[(df['Region'] == region) & (df['Brand'] == brand) &
-                         (df['Type'] == product_type) & (df['Region subsets'] == region_subset)].copy()
+        filtered_df = df[(df['Region'] == region) & (df['Brand'] == brand) &(df['Type'] == product_type) & (df['Region subsets'] == region_subset)].copy()
         if not filtered_df.empty:
             if analysis_type == 'NSR Analysis':
                 cols = ['Normal NSR', 'Premium NSR']
@@ -3988,22 +3857,11 @@ def normal():
             filtered_df['Imaginary vs Overall Difference'] = filtered_df[imaginary_col] - filtered_df[overall_col]
             fig = go.Figure()
             for col in cols:
-                fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[col],
-                                         mode='lines+markers', name=col))
-            fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[overall_col],
-                                     mode='lines+markers', name=overall_col, line=dict(dash='dash')))
-            fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[imaginary_col],
-                                     mode='lines+markers', name=f'Imaginary {overall_col} ({premium_share}% Premium)',
-                                     line=dict(color='brown', dash='dot')))
-            x_labels = [f"{month}<br>(P-N: {diff:.2f})<br>(I-O: {i_diff:.2f})" for month, diff, i_diff in 
-                        zip(filtered_df['Month'], filtered_df['Difference'], filtered_df['Imaginary vs Overall Difference'])]
-            fig.update_layout(
-                title=analysis_type,
-                xaxis_title='Month (P-N: Premium - Normal, I-O: Imaginary - Overall)',
-                yaxis_title='Value',
-                legend_title='Metrics',
-                hovermode="x unified",
-                xaxis=dict(tickmode='array', tickvals=list(range(len(x_labels))), ticktext=x_labels))
+                fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[col],mode='lines+markers', name=col))
+            fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[overall_col],mode='lines+markers', name=overall_col, line=dict(dash='dash')))
+            fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[imaginary_col],mode='lines+markers', name=f'Imaginary {overall_col} ({premium_share}% Premium)',line=dict(color='brown', dash='dot')))
+            x_labels = [f"{month}<br>(P-N: {diff:.2f})<br>(I-O: {i_diff:.2f})" for month, diff, i_diff in zip(filtered_df['Month'], filtered_df['Difference'], filtered_df['Imaginary vs Overall Difference'])]
+            fig.update_layout(title=analysis_type,xaxis_title='Month (P-N: Premium - Normal, I-O: Imaginary - Overall)',yaxis_title='Value',legend_title='Metrics',hovermode="x unified",xaxis=dict(tickmode='array', tickvals=list(range(len(x_labels))), ticktext=x_labels))
             st.plotly_chart(fig, use_container_width=True)
             st.subheader("Descriptive Statistics")
             desc_stats = filtered_df[cols + [overall_col, imaginary_col]].describe()
@@ -4012,10 +3870,7 @@ def normal():
             total_quantity = filtered_df['Normal'] + filtered_df['Premium']
             normal_share = (filtered_df['Normal'] / total_quantity * 100).round(2)
             premium_share = (filtered_df['Premium'] / total_quantity * 100).round(2)
-            share_df = pd.DataFrame({
-                'Month': filtered_df['Month'],
-                'Premium Share (%)': premium_share,
-                'Normal Share (%)': normal_share})     
+            share_df = pd.DataFrame({'Month': filtered_df['Month'],'Premium Share (%)': premium_share,'Normal Share (%)': normal_share})     
             fig_pie = px.pie(share_df, values=[normal_share.mean(), premium_share.mean()],names=['Normal', 'Premium'], title='Average Share Distribution',color=["N","P"],color_discrete_map={"N":"green","P":"blue"},hole=0.5)
             st.plotly_chart(fig_pie, use_container_width=True)  
             st.dataframe(share_df.set_index('Month').style.format("{:.2f}").background_gradient(cmap='RdYlGn'), use_container_width=True)
@@ -4024,15 +3879,13 @@ def normal():
         st.markdown("</div>", unsafe_allow_html=True)
  elif selected == "About":
     st.title("About the Product Mix Analysis App")
-    st.markdown("""
-    This advanced data analysis application is designed to provide insightful visualizations and statistics for your Product(Normal and Premium) Mix data. 
+    st.markdown("""This advanced data analysis application is designed to provide insightful visualizations and statistics for your Product(Normal and Premium) Mix data. 
     Key features include:
     - Interactive data filtering
     - Multiple analysis types (NSR, Contribution, EBITDA)
     - Dynamic visualizations with Plotly
     - Descriptive statistics and share analysis
-    - Customizable Premium share adjustments
-    """)
+    - Customizable Premium share adjustments""")
 def load_lottieurl(url: str):
     try:
         r = requests.get(url)
@@ -4119,11 +3972,7 @@ def trade():
         lc.y = 50
         lc.height = 125
         lc.width = 300
-        lc.data = [
-            [random.randint(2000, 3000) for _ in range(12)],
-            [random.randint(1500, 2500) for _ in range(12)], 
-            [random.randint(1800, 2800) for _ in range(12)], 
-            [random.randint(2200, 3200) for _ in range(12)],]
+        lc.data = [[random.randint(2000, 3000) for _ in range(12)],[random.randint(1500, 2500) for _ in range(12)], [random.randint(1800, 2800) for _ in range(12)],[random.randint(2200, 3200) for _ in range(12)],]
         lc.lines[0].strokeColor = colors.green
         lc.lines[1].strokeColor = colors.blue
         lc.lines[2].strokeColor = colors.pink
@@ -4132,30 +3981,21 @@ def trade():
         legend.alignment = 'right'
         legend.x = 330
         legend.y = 150
-        legend.colorNamePairs = [
-            (colors.green, 'Trade EBITDA'),
-            (colors.blue, 'Non-Trade EBITDA'),
-            (colors.crimson, 'Overall EBITDA'),
-            (colors.brown, 'Imaginary EBITDA'),]
+        legend.colorNamePairs = [(colors.green, 'Trade EBITDA'),(colors.blue, 'Non-Trade EBITDA'),(colors.crimson, 'Overall EBITDA'),(colors.brown, 'Imaginary EBITDA'),]
         drawing.add(lc)
         drawing.add(legend)
         renderPDF.draw(drawing, c, inch, height - 300)
         c.setFont("Helvetica-Bold", 18)
         c.drawString(inch, height - 350, "Key Concepts:")
-        concepts = [
-            ("Overall EBITDA:", "Weighted average of Trade and Non-Trade EBITDA based on their actual quantities."),
-            ("Imaginary EBITDA:", "Calculated by adjusting shares based on the following rules:"),
-            ("", "• If both (Trade,Non-Trade) are present: Trade +5%, Non-Trade -5%"),
-            ("", "• If only one is present: No change"),
-            ("Adjusted Shares:", "These adjustments aim to model potential improvements in product mix."),]
+        concepts = [("Overall EBITDA:", "Weighted average of Trade and Non-Trade EBITDA based on their actual quantities."),("Imaginary EBITDA:", "Calculated by adjusting shares based on the following rules:"),("", "• If both (Trade,Non-Trade) are present: Trade +5%, Non-Trade -5%"),("", "• If only one is present: No change"),("Adjusted Shares:", "These adjustments aim to model potential improvements in product mix."),]
         text_object = c.beginText(inch, height - 380)
         for title, description in concepts:
             if title:
                 text_object.setFont("Helvetica-Bold", 12)
-                text_object.setFillColorRGB(0.7, 0.3, 0.1)  # Reddish-brown color for concept titles
+                text_object.setFillColorRGB(0.7, 0.3, 0.1)
                 text_object.textLine(title)
                 text_object.setFont("Helvetica", 12)
-                text_object.setFillColorRGB(0, 0, 0)  # Black color for descriptions
+                text_object.setFillColorRGB(0, 0, 0)  
             text_object.textLine(description)
             if not title:
                 text_object.textLine("")
@@ -4254,14 +4094,10 @@ def trade():
                     mean_diff = filtered_df['I-O Difference'].mean()
                     if not np.isnan(mean_diff):
                         mean_diff=round(mean_diff)
-                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=[mean_diff] * len(filtered_df),
-                                             mode='lines', name=f'Mean I-O Difference[{mean_diff}]',
-                                             line=dict(color='black', dash='dash')), row=2, col=1)
+                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=[mean_diff] * len(filtered_df),mode='lines', name=f'Mean I-O Difference[{mean_diff}]',line=dict(color='black', dash='dash')), row=2, col=1)
                     x_labels = [f"{month}<br>(T-NT: {g_r:.0f})<br>(I-O: {g_y:.0f}))" 
                                 for month, g_r, g_y in 
-                                zip(filtered_df['Month'], 
-                                    filtered_df['T-NT Difference'],  
-                                    filtered_df['I-O Difference'])]
+                                zip(filtered_df['Month'],filtered_df['T-NT Difference'],filtered_df['I-O Difference'])]
                     fig.update_layout(
                         title=f"EBITDA Analysis for {brand}(Type:-{product_type}) in {region}({region_subset})",
                         legend_title='Metrics',
@@ -4759,8 +4595,7 @@ def green():
         st.sidebar.subheader(f"Download Report for {region}")
         download_choice = st.sidebar.radio(
             "Choose report type:",
-            ('Full Region', 'Region Subset')
-        )
+            ('Full Region', 'Region Subset'))
         if download_choice == 'Full Region':
             if st.sidebar.button(f"Download Full Report for {region}"):
                 pdf_buffer = create_pdf_report(region, df)
@@ -4791,9 +4626,7 @@ def green():
         yellow_share = st.sidebar.slider("Adjust Yellow Share (%)", 0, 100-green_share, 0, key="yellow_share_slider")
         red_share = 100 - green_share - yellow_share
         st.sidebar.text(f"Red Share: {red_share}%")
-        # Filter the dataframe
-        filtered_df = df[(df['Region'] == region) & (df['Brand'] == brand) &
-                         (df['Type'] == product_type) & (df['Region subsets'] == region_subset)].copy()
+        filtered_df = df[(df['Region'] == region) & (df['Brand'] == brand) &(df['Type'] == product_type) & (df['Region subsets'] == region_subset)].copy()
         if not filtered_df.empty:
             if analysis_type == 'NSR Analysis':
                 cols = ['Green NSR', 'Yellow NSR', 'Red NSR']
@@ -4804,9 +4637,7 @@ def green():
             elif analysis_type == 'EBITDA Analysis':
                 cols = ['Green EBITDA', 'Yellow EBITDA','Red EBITDA']
                 overall_col = 'Overall EBITDA'
-            filtered_df[overall_col] = (filtered_df['Green'] * filtered_df[cols[0]] +
-                                        filtered_df['Yellow'] * filtered_df[cols[1]] + filtered_df['Red']*filtered_df[cols[2]]) / (
-                                            filtered_df['Green'] + filtered_df['Yellow']+filtered_df['Red'])
+            filtered_df[overall_col] = (filtered_df['Green'] * filtered_df[cols[0]] +filtered_df['Yellow'] * filtered_df[cols[1]] + filtered_df['Red']*filtered_df[cols[2]]) / (filtered_df['Green'] + filtered_df['Yellow']+filtered_df['Red'])
             imaginary_col = f'Imaginary {overall_col}'
             filtered_df[imaginary_col] = ((1 - (green_share+yellow_share)/100) * filtered_df[cols[2]] +
                                           (green_share/100) * filtered_df[cols[0]] + (yellow_share/100) * filtered_df[cols[1]])
@@ -4875,8 +4706,7 @@ def projection():
     return st.session_state.cookie_password
  cookies = EncryptedCookieManager(
     prefix="sales_predictor_",
-    password=get_cookie_password()
-)
+    password=get_cookie_password())
  CORRECT_PASSWORD = "prasoonA1@"  # Replace with your desired password
  MAX_ATTEMPTS = 5
  LOCKOUT_DURATION = 3600  # 1 hour in seconds
@@ -5066,36 +4896,13 @@ def projection():
             target = data[f'Month Tgt ({month})'].iloc[0]
             achievement = data[f'Monthly Achievement({month})'].iloc[0]
             percentage = (achievement / target * 100) if target != 0 else 0
-            fig.add_trace(go.Bar(
-                x=[f"{month} Tgt", f"{month} Ach"],
-                y=[target, achievement],
-                name=month,
-                marker_color=colors[i],
-                text=[f"{target:,.0f}", f"{achievement:,.0f}<br>{percentage:.1f}%"],
-                textposition='auto'))
+            fig.add_trace(go.Bar(x=[f"{month} Tgt", f"{month} Ach"],y=[target, achievement],name=month,marker_color=colors[i],text=[f"{target:,.0f}", f"{achievement:,.0f}<br>{percentage:.1f}%"],textposition='auto'))
         else:
             target = data['Month Tgt (Nov)'].iloc[0]
             projection = data['Predicted Nov 2024'].iloc[0]
             percentage = (projection / target * 100) if target != 0 else 0
-            fig.add_trace(go.Bar(
-                x=[f"{month} Tgt", f"{month} Proj"],
-                y=[target, projection],
-                name=month,
-                marker_color=[colors[i], 'red'],
-                text=[f"{target:,.0f}", f"{projection:,.0f}<br><span style='color:black'>{percentage:.1f}%</span>"],
-                textposition='auto'))
-    fig.update_layout(
-        title='Monthly Performance',
-        plot_bgcolor='rgba(255,255,255,0.1)',
-        paper_bgcolor='rgba(0,0,0,0)',
-        font_color='burlywood',
-        title_font_color='burlywood',
-        xaxis_title_font_color='burlywood',
-        yaxis_title_font_color='burlywood',
-        legend_font_color='burlywood',
-        height=500,
-        width=800,
-        barmode='group')
+            fig.add_trace(go.Bar(x=[f"{month} Tgt", f"{month} Proj"],y=[target, projection],name=month,marker_color=[colors[i], 'red'],text=[f"{target:,.0f}", f"{projection:,.0f}<br><span style='color:black'>{percentage:.1f}%</span>"],textposition='auto'))
+    fig.update_layout(title='Monthly Performance',plot_bgcolor='rgba(255,255,255,0.1)',paper_bgcolor='rgba(0,0,0,0)',font_color='burlywood',title_font_color='burlywood',xaxis_title_font_color='burlywood',yaxis_title_font_color='burlywood',legend_font_color='burlywood',height=500,width=800,barmode='group')
     fig.update_xaxes(tickfont_color='peru')
     fig.update_yaxes(title_text='Sales', tickfont_color='peru')
     fig.update_traces(textfont_color='black')
@@ -5121,13 +4928,7 @@ def projection():
         total_predicted_nov_2024 = brand_data['Predicted Nov 2024'].sum()
         total_nov_2023 = brand_data['Total Nov 2023'].sum()
         total_yoy_growth = (total_predicted_nov_2024 - total_nov_2023) / total_nov_2023 * 100
-        totals.append({
-            'Zone': 'All India Total',
-            'Brand': brand_name,
-            'Month Tgt (Nov)': total_month_tgt_nov,
-            'Predicted Oct 2024': total_predicted_nov_2024,
-            'Total Oct 2023': total_nov_2023,
-            'YoY Growth': total_yoy_growth})
+        totals.append({'Zone': 'All India Total','Brand': brand_name,'Month Tgt (Nov)': total_month_tgt_nov,'Predicted Oct 2024': total_predicted_nov_2024,'Total Oct 2023': total_nov_2023,'YoY Growth': total_yoy_growth})
     final_data = pd.concat([filtered_data, pd.DataFrame(totals)], ignore_index=True)
     final_data['Month Tgt (Nov)'] = final_data['Month Tgt (Nov)'].round().astype(int)
     final_data['Predicted Nov 2024'] = final_data['Predicted Nov 2024'].round().astype(int)
@@ -5148,13 +4949,7 @@ def projection():
     pdf_data = prepare_data_for_pdf(data)
     table_data = [['Zone', 'Brand', 'Month Tgt (Nov)', 'Predicted Nov 2024', 'Total Nov 2023', 'YoY Growth']]
     for _, row in pdf_data.iterrows():
-        table_data.append([
-            row['Zone'],
-            row['Brand'],
-            f"{row['Month Tgt (Nov)']:,}",
-            f"{row['Predicted Nov 2024']:,}",
-            f"{row['Total Nov 2023']:,}",
-            f"{row['YoY Growth']:.2f}%"])
+        table_data.append([row['Zone'],row['Brand'],f"{row['Month Tgt (Nov)']:,}",f"{row['Predicted Nov 2024']:,}",f"{row['Total Nov 2023']:,}",f"{row['YoY Growth']:.2f}%"])
     table_data[0][-1] = table_data[0][-1] + "*"  
     table = Table(table_data, colWidths=[1.25*inch, 0.80*inch, 1.5*inch, 1.75*inch, 1.5*inch, 1.20*inch],rowHeights=[0.60*inch] + [0.38*inch] * (len(table_data) - 1))
     style = TableStyle([
@@ -5170,8 +4965,7 @@ def projection():
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
         ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
         ('FONTSIZE', (0, 1), (-1, -1), 10),
-        ('GRID', (0, 0), (-1, -1), 1, colors.lightgrey)
-    ])
+        ('GRID', (0, 0), (-1, -1), 1, colors.lightgrey)])
     table.setStyle(style)
     elements.append(table)
     footnote_style = getSampleStyleSheet()['Normal']
@@ -5194,11 +4988,7 @@ def projection():
             styler.apply(lambda x: ['background-color: #f0f0f0'] * len(x), subset=[col])
         else:
             styler.apply(lambda x: ['background-color: #f0f0f0'] * len(x), subset=[col])
-    numeric_format = {
-        'November 2024 Target': '{:.0f}',
-        'November Projection': '{:.2f}',
-        'November 2023 Sales': '{:.0f}',
-        'YoY Growth(Projected)': '{:.2f}%'}
+    numeric_format = {'November 2024 Target': '{:.0f}','November Projection': '{:.2f}','November 2023 Sales': '{:.0f}','YoY Growth(Projected)': '{:.2f}%'}
     styler.format(numeric_format)
     return styler
   def main():
@@ -5264,16 +5054,7 @@ def projection():
             filtered_data['FY 2025 Till Oct']= filtered_data['Monthly Achievement(Apr)']+filtered_data['Monthly Achievement(May)']+filtered_data['Monthly Achievement(June)']+filtered_data['Monthly Achievement(July)']+filtered_data['Monthly Achievement(Aug)']+filtered_data['Monthly Achievement(Sep)']+filtered_data['Monthly Achievement(Oct)']
             fig_predictions1 = go.Figure()
             fig_predictions1.add_trace(go.Bar(x=filtered_data['Zone'], y=filtered_data['FY 2025 Till Oct'], name='Till OctSales', marker_color='#4a69bd'))
-            fig_predictions1.update_layout(
-                title='FY 2025 Till Oct', 
-                barmode='group', 
-                plot_bgcolor='rgba(255,255,255,0.1)', 
-                paper_bgcolor='rgba(0,0,0,0)', 
-                font_color='burlywood',
-                xaxis_title_font_color='burlywood',
-                yaxis_title_font_color='burlywood',
-                title_font_color='burlywood',
-                legend_font_color='burlywood')
+            fig_predictions1.update_layout(title='FY 2025 Till Oct',barmode='group',plot_bgcolor='rgba(255,255,255,0.1)',paper_bgcolor='rgba(0,0,0,0)',font_color='burlywood',xaxis_title_font_color='burlywood',yaxis_title_font_color='burlywood',title_font_color='burlywood',legend_font_color='burlywood')
             fig_predictions1.update_xaxes(title_text='Zone', tickfont_color='peru')
             fig_predictions1.update_yaxes(title_text='Sales', tickfont_color='peru')
             st.plotly_chart(fig_importance, use_container_width=True)
@@ -5306,34 +5087,18 @@ def projection():
             months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct','Nov']
             for i, month in enumerate(months):
                 if month != 'Nov':
-                    fig_monthly_performance.data[i].y = [
-                        selected_data[f'Month Tgt ({month})'].iloc[0],
-                        selected_data[f'Monthly Achievement({month})'].iloc[0]]
+                    fig_monthly_performance.data[i].y = [selected_data[f'Month Tgt ({month})'].iloc[0],selected_data[f'Monthly Achievement({month})'].iloc[0]]
                 else:
-                    fig_monthly_performance.data[i].y = [
-                        selected_data['Month Tgt (Nov)'].iloc[0],
-                        selected_data['Predicted Nov 2024'].iloc[0]]
+                    fig_monthly_performance.data[i].y = [selected_data['Month Tgt (Nov)'].iloc[0],selected_data['Predicted Nov 2024'].iloc[0]]
             st.plotly_chart(fig_monthly_performance, use_container_width=True)
         else:
             st.warning("No data available for the selected Zone and Brand combination.")
         st.markdown("<h3>Detailed Sales Forecast</h3>", unsafe_allow_html=True)
-        share_df = pd.DataFrame({
-           'Zone': filtered_data['Zone'],
-            'Brand': filtered_data['Brand'],
-             'November 2024 Target': filtered_data['Month Tgt (Nov)'],
-           'November Projection': filtered_data['Predicted Nov 2024'],
-           'November 2023 Sales': filtered_data['Total Nov 2023'],
-          'YoY Growth(Projected)': filtered_data['YoY Growth']
-             })
+        share_df = pd.DataFrame({'Zone': filtered_data['Zone'],'Brand': filtered_data['Brand'],'November 2024 Target': filtered_data['Month Tgt (Nov)'],'November Projection': filtered_data['Predicted Nov 2024'],'November 2023 Sales': filtered_data['Total Nov 2023'],'YoY Growth(Projected)': filtered_data['YoY Growth']})
         styled_df = style_dataframe(share_df)
         st.dataframe(styled_df, use_container_width=True,hide_index=True)
         pdf_buffer = create_pdf(filtered_data)
-        st.download_button(
-            label="Download Forecast Report",
-            data=pdf_buffer,
-            file_name="sales_forecast_2024.pdf",
-            mime="application/pdf"
-        )
+        st.download_button(label="Download Forecast Report",data=pdf_buffer,file_name="sales_forecast_2024.pdf",mime="application/pdf")
     else:
         st.info("Upload your sales data to begin the simulation!")
   if __name__ == "__main__":
@@ -5341,17 +5106,7 @@ def projection():
  else:
     st.stop()
 def market_share():
-    THEME = {
-        'PRIMARY': '#2563eb',
-        'SECONDARY': '#64748b',
-        'SUCCESS': '#10b981',
-        'WARNING': '#f59e0b',
-        'DANGER': '#ef4444',
-        'BACKGROUND': '#ffffff',
-        'SIDEBAR': '#f8fafc',
-        'TEXT': '#1e293b',
-        'HEADER': '#0f172a'
-    }
+    THEME = {'PRIMARY': '#2563eb','SECONDARY': '#64748b','SUCCESS': '#10b981','WARNING': '#f59e0b','DANGER': '#ef4444','BACKGROUND': '#ffffff','SIDEBAR': '#f8fafc','TEXT': '#1e293b','HEADER': '#0f172a'}
     st.markdown("""
         <style>
         /* Global Styles */
@@ -5473,7 +5228,6 @@ def market_share():
     COMPANY_COLORS = {}
     @st.cache_data
     def generate_distinct_color(existing_colors):
-        """Generate a new distinct color that's visually different from existing ones"""
         if existing_colors:
             return distinctipy.get_colors(1, existing_colors)[0]
         return distinctipy.get_colors(1)[0]
@@ -5499,9 +5253,7 @@ def market_share():
     def get_available_months(df):
      share_cols = [col for col in df.columns if col.startswith('Share_')]
      months = [col.split('_')[1] for col in share_cols]
-     month_order = {
-        'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6,
-        'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12}
+     month_order = {'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6,'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12}
      sorted_months = sorted(months, key=lambda x: month_order[x])
      return sorted_months
     @st.cache_data
@@ -5510,21 +5262,9 @@ def market_share():
      def draw_curly_brace(ax, x, y1, y2):
         mid_y = (y1 + y2) / 2
         width = 0.03
-        brace_points = [
-            [x, y1],
-            [x + width, y1],
-            [x + width, y1],
-            [x + width, (y1 + mid_y)/2],
-            [x, mid_y],
-            [x + width, (mid_y + y2)/2],
-            [x + width, y2],
-            [x + width, y2],
-            [x, y2]]
+        brace_points = [[x, y1],[x + width, y1],[x + width, y1],[x + width, (y1 + mid_y)/2],[x, mid_y],[x + width, (mid_y + y2)/2],[x + width, y2],[x + width, y2],[x, y2]]
         for i in range(len(brace_points)-1):
-            line = Line2D([brace_points[i][0], brace_points[i+1][0]],
-                         [brace_points[i][1], brace_points[i+1][1]],
-                         color='#2c3e50',
-                         linewidth=1.5)
+            line = Line2D([brace_points[i][0], brace_points[i+1][0]],[brace_points[i][1], brace_points[i+1][1]],color='#2c3e50',linewidth=1.5)
         return mid_y
      def cascade_label_positions(positions, y_max, min_gap=12):
         if not positions:
@@ -5557,11 +5297,7 @@ def market_share():
                 group_volumes.append(vol)
                 group_positions.append(label_y)
             if len(group) > 1:
-                group_info[x_pos] = {
-                    'total_volume': sum(group_volumes),
-                    'top_y': max(group_positions),
-                    'bottom_y': min(group_positions)
-                }
+                group_info[x_pos] = {'total_volume': sum(group_volumes),'top_y': max(group_positions),'bottom_y': min(group_positions)}
         return adjusted, group_info
      def adjust_label_positions(positions, y_max, min_gap=12):
         if not positions:
@@ -5603,19 +5339,7 @@ def market_share():
             adjusted_positions.append((vol, new_y, color, x_pos))
         return adjusted_positions
      plt.style.use('seaborn-v0_8-whitegrid')
-     plt.rcParams.update({
-        'font.family': 'sans-serif',
-        'font.size': 10,
-        'axes.labelweight': 'bold',
-        'axes.titleweight': 'bold',
-        'figure.facecolor': 'white',
-        'axes.facecolor': '#f8f9fa',
-        'grid.alpha': 0.2,
-        'grid.color': '#b4b4b4',
-        'figure.dpi': 120,
-        'axes.spines.top': False,
-        'axes.spines.right': False,
-        'axes.linewidth': 1.5})
+     plt.rcParams.update({'font.family': 'sans-serif','font.size': 10,'axes.labelweight': 'bold','axes.titleweight': 'bold','figure.facecolor': 'white','axes.facecolor': '#f8f9fa','grid.alpha': 0.2,'grid.color': '#b4b4b4','figure.dpi': 120,'axes.spines.top': False,'axes.spines.right': False,'axes.linewidth': 1.5})
      month_data = df[['Company', f'Share_{month}', f'WSP_{month}', f'Vol_{month}']].copy()
      month_data.columns = ['Company', 'Share', 'WSP', 'Volume']
      total_market_size = month_data['Volume'].sum()
@@ -5625,19 +5349,12 @@ def market_share():
      max_price = (month_data_with_price['WSP'].max() // 10 + 1) * 10
      price_ranges = pd.interval_range(start=min_price, end=max_price, freq=10)
      month_data_with_price['Price_Range'] = pd.cut(month_data_with_price['WSP'], bins=price_ranges)
-     pivot_df = pd.pivot_table(
-        month_data_with_price,
-        values=['Share', 'Volume'],
-        index='Price_Range',
-        columns='Company',
-        aggfunc='sum',
-        fill_value=0)
+     pivot_df = pd.pivot_table(month_data_with_price,values=['Share', 'Volume'],index='Price_Range',columns='Company',aggfunc='sum',fill_value=0)
      share_df = pivot_df['Share']
      volume_df = pivot_df['Volume']
      share_df = share_df.loc[:, (share_df != 0).any(axis=0)]
      volume_df = volume_df.loc[:, (volume_df != 0).any(axis=0)]
-     company_wsps = {company: month_data_with_price[month_data_with_price['Company'] == company]['WSP'].iloc[0]
-                    for company in share_df.columns}
+     company_wsps = {company: month_data_with_price[month_data_with_price['Company'] == company]['WSP'].iloc[0]for company in share_df.columns}
      sorted_companies = sorted(company_wsps.keys(), key=lambda x: company_wsps[x], reverse=True)
      company_colors = {}
      for i, company in enumerate(sorted_companies):
@@ -5698,30 +5415,16 @@ def market_share():
      for x_pos, info in group_info.items():
         brace_x = 1.095 
         mid_y = draw_curly_brace(ax2, brace_x, info['top_y'], info['bottom_y'])
-        # Add total volume label with nice formatting
         total_label = f'Total: {info["total_volume"]:,.0f} MT'
         ax2.text(brace_x, mid_y, total_label,transform=ax1.get_yaxis_transform(),va='center', ha='left',color='#2c3e50',fontsize=11,fontweight='bold',bbox=dict(facecolor='white',edgecolor='#bdc3c7',boxstyle='round,pad=0.5',alpha=0.9))
      plt.subplots_adjust(right=0.75)
-     x_labels = [f'₹{interval.left:.0f}-{interval.right:.0f}'
-                for interval in share_df.index]
+     x_labels = [f'₹{interval.left:.0f}-{interval.right:.0f}'for interval in share_df.index]
      ax1.set_xticks(range(len(x_labels)))
      ax1.set_xticklabels(x_labels, ha='center')
-     plt.suptitle('Market Share Distribution by Price Range',
-                fontsize=16, y=1.05,
-                color='#2c3e50',
-                fontweight='bold')
-     plt.title(f'{month.capitalize()}',
-             fontsize=14,
-             pad=15,
-             color='#34495e',y=1.11)
-     ax1.set_xlabel('WSP Price Range (₹)',
-                  fontsize=11,
-                  labelpad=15,
-                  color='#2c3e50')
-     ax1.set_ylabel('Market Share (%)',
-                  fontsize=11,
-                  labelpad=10,
-                  color='#2c3e50')
+     plt.suptitle('Market Share Distribution by Price Range',fontsize=16, y=1.05,color='#2c3e50',fontweight='bold')
+     plt.title(f'{month.capitalize()}',fontsize=14,pad=15,color='#34495e',y=1.11)
+     ax1.set_xlabel('WSP Price Range (₹)',fontsize=11,labelpad=15,color='#2c3e50')
+     ax1.set_ylabel('Market Share (%)',fontsize=11,labelpad=10,color='#2c3e50')
      legend_labels = [f'{company} (WSP: ₹{company_wsps[company]:.0f})'for company in sorted_companies]
      legend = ax1.legend(legend_labels,bbox_to_anchor=(1.28, 0.8),loc='upper left',fontsize=9,frameon=True,facecolor='white',edgecolor='brown',title='Companies',title_fontsize=10,borderpad=1)
      legend.get_frame().set_alpha(1)
@@ -5763,9 +5466,7 @@ def market_share():
      df = _df.copy()
      share_cols = [col for col in df.columns if col.startswith('Share_')]
      months = [col.split('_')[1] for col in share_cols]
-     month_order = {
-        'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6,
-        'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12}
+     month_order = {'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6,'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12}
      month_col_pairs = [(col, month_order[month]) for col, month in zip(share_cols, months)]
      sorted_pairs = sorted(month_col_pairs, key=lambda x: x[1])
      sorted_share_cols = [pair[0] for pair in sorted_pairs]
@@ -5884,8 +5585,7 @@ def market_share():
                 "Select Companies for Trend Analysis",
                 all_companies,
                 default=available_defaults,
-                help="Choose companies to show in the trend line graph"
-            )
+                help="Choose companies to show in the trend line graph")
      with col2:
         if uploaded_file and selected_companies:
             st.markdown("### Market Share Trends")
@@ -5923,8 +5623,7 @@ def market_share():
                         buf,
                         format='png',
                         dpi=300,
-                        bbox_inches='tight'
-                    )
+                        bbox_inches='tight')
                     buf.seek(0)
                     st.download_button(
                         label="📥 Download PNG",
@@ -5942,8 +5641,7 @@ def market_share():
                         data=pdf_buf,
                         file_name=f'market_share_{selected_state}_{month}.pdf',
                         mime='application/pdf',
-                        key=f"download_pdf_{month}"
-                    )
+                        key=f"download_pdf_{month}")
                 st.markdown("---")
             if st.session_state.computed_figures:
              st.markdown("### 📑 Download Complete Report")
@@ -6077,7 +5775,6 @@ def discount():
         border-radius: 8px;
         border: 1px solid #e2e8f0;
     }
-    
     /* Custom Header */
     .dashboard-header {
         padding: 1.5rem;
@@ -6255,8 +5952,7 @@ def discount():
             spaceBefore=20,
             spaceAfter=10,
             alignment=1,
-            textColor=HexColor('#64748b')
-        ))
+            textColor=HexColor('#64748b')))
     def is_valid_discount(self, approved, actual):
         if pd.isna(approved) and pd.isna(actual):
             return False
@@ -6283,18 +5979,12 @@ def discount():
                 'approved': approved,
                 'actual': actual,
                 'diff': diff,
-                'total_diff': total_diff
-            })
+                'total_diff': total_diff})
         valid_discounts.sort(key=lambda x: x['approved'])
         for discount in valid_discounts:
             diff_text = f"{'↓' if discount['diff'] >= 0 else '↑'} Rs.{abs(discount['diff']):,.2f}"
             impact_text = f"Rs.{abs(discount['total_diff']):,.2f}"
-            row = [
-                discount['name'],
-                f"Rs.{discount['approved']:,.2f}",
-                f"Rs.{discount['actual']:,.2f}",
-                diff_text,
-                impact_text]
+            row = [discount['name'],f"Rs.{discount['approved']:,.2f}",f"Rs.{discount['actual']:,.2f}",diff_text,impact_text]
             table_data.append(row)
         if len(table_data) > 1:
             # Create table
@@ -6313,8 +6003,7 @@ def discount():
                 ('ALIGN', (1, 1), (-1, -1), 'RIGHT'),
                 ('ALIGN', (0, 0), (0, -1), 'LEFT'),
                 ('BOTTOMPADDING', (0, 1), (-1, -1), 8),
-                ('TOPPADDING', (0, 1), (-1, -1), 8),
-            ])
+                ('TOPPADDING', (0, 1), (-1, -1), 8),])
             for i in range(1, len(table_data)):
                 if '↓' in table_data[i][3]:  # Savings
                     style.add('TEXTCOLOR', (3, i), (4, i), HexColor('#10b981'))
