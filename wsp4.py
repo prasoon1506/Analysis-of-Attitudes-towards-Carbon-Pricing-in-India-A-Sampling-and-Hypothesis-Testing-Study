@@ -4132,17 +4132,14 @@ def trade():
         lc.height = 125
         lc.width = 300
         lc.data = [
-            [random.randint(2000, 3000) for _ in range(12)],  # Trade
-            [random.randint(1500, 2500) for _ in range(12)],  # Non-Trade
-            [random.randint(1800, 2800) for _ in range(12)],  # Overall
-            [random.randint(2200, 3200) for _ in range(12)],  # Imaginary
-        ]
+            [random.randint(2000, 3000) for _ in range(12)],
+            [random.randint(1500, 2500) for _ in range(12)], 
+            [random.randint(1800, 2800) for _ in range(12)], 
+            [random.randint(2200, 3200) for _ in range(12)],]
         lc.lines[0].strokeColor = colors.green
         lc.lines[1].strokeColor = colors.blue
         lc.lines[2].strokeColor = colors.pink
         lc.lines[3].strokeColor = colors.brown
-
-        # Add a legend
         legend = Legend()
         legend.alignment = 'right'
         legend.x = 330
@@ -4151,24 +4148,18 @@ def trade():
             (colors.green, 'Trade EBITDA'),
             (colors.blue, 'Non-Trade EBITDA'),
             (colors.crimson, 'Overall EBITDA'),
-            (colors.brown, 'Imaginary EBITDA'),
-        ]
+            (colors.brown, 'Imaginary EBITDA'),]
         drawing.add(lc)
         drawing.add(legend)
-
         renderPDF.draw(drawing, c, inch, height - 300)
-
-        # Key Concepts
         c.setFont("Helvetica-Bold", 18)
         c.drawString(inch, height - 350, "Key Concepts:")
-
         concepts = [
             ("Overall EBITDA:", "Weighted average of Trade and Non-Trade EBITDA based on their actual quantities."),
             ("Imaginary EBITDA:", "Calculated by adjusting shares based on the following rules:"),
             ("", "• If both (Trade,Non-Trade) are present: Trade +5%, Non-Trade -5%"),
             ("", "• If only one is present: No change"),
-            ("Adjusted Shares:", "These adjustments aim to model potential improvements in product mix."),
-        ]
+            ("Adjusted Shares:", "These adjustments aim to model potential improvements in product mix."),]
         text_object = c.beginText(inch, height - 380)
         for title, description in concepts:
             if title:
@@ -4180,21 +4171,16 @@ def trade():
             text_object.textLine(description)
             if not title:
                 text_object.textLine("")
-            
-
         c.drawText(text_object)
         add_page_number(c)
         c.showPage()
     def add_appendix():
         c.setFont("Helvetica-Bold", 24)
         c.drawString(inch, height - inch, "Appendix")
-
         sections = [
             ("Graph Interpretation:", "Each line represents a different metric over time. The differences between metrics are shown below\n each month."),
             ("Tables:", "The descriptive statistics table provides a summary of the data. The monthly share distribution table\n shows the proportion of Trade and Non-Trade Channel for each month."),
-            ("Importance:", "These visualizations help identify trends, compare performance across product categories, and\n understand the potential impact of changing product distributions."),
-        ]
-
+            ("Importance:", "These visualizations help identify trends, compare performance across product categories, and\n understand the potential impact of changing product distributions."),]
         text_object = c.beginText(inch, height - 1.5*inch)
         text_object.setFont("Helvetica-Bold", 14)
         for title, content in sections:
@@ -4203,150 +4189,97 @@ def trade():
             text_object.textLines(content)
             text_object.textLine("")
             text_object.setFont("Helvetica-Bold", 14)
-
         c.drawText(text_object)
-
-        # Suggestions for Improvement
         c.setFont("Helvetica-Bold", 14)
         c.drawString(inch, height - 4*inch, "Suggestions for Improvement:")
-
         suggestions = [
             "Increase the share of Trade Channel specifically for PPC, which typically have higher EBIDTA.",
             "Analyze factors contributing to higher EBIDTA in Trade Channel,and apply insights to Non-Trade.",
             "Regularly review and adjust pricing strategies to optimize EBITDA across all channels.",
-            "Invest in product innovation to expand Trade Channel offerings.",
-        ]
-
+            "Invest in product innovation to expand Trade Channel offerings.",]
         text_object = c.beginText(inch, height - 4.3*inch)
         text_object.setFont("Helvetica", 12)
         for suggestion in suggestions:
             text_object.textLine(f"• {suggestion}")
-
         c.drawText(text_object)
-
-        # Limitations
         c.setFont("Helvetica-Bold", 14)
         c.drawString(inch, height - 5.2*inch, "Limitations:")
-
         limitations = [
             "This analysis is based on historical data and may not predict future market changes.",
             "External factors such as economic conditions are not accounted for in this report.",
-            "This report analyzes the EBIDTA for Trade and Non-Trade channel ceteris paribus.",
-        ]
-
+            "This report analyzes the EBIDTA for Trade and Non-Trade channel ceteris paribus.",]
         text_object = c.beginText(inch, height - 5.5*inch)
         text_object.setFont("Helvetica", 12)
         for limitation in limitations:
             text_object.textLine(f"• {limitation}")
-
         c.drawText(text_object)
-
         c.setFont("Helvetica", 12)
         c.drawString(inch, 2*inch, "We are currently working on including all other factors which impact the EBIDTA across GYR,")
         c.drawString(inch, 1.8*inch, "regions which will make this analysis more robust and helpful. We will also include NSR and") 
         c.drawString(inch,1.6*inch,"Contribution in our next report.")
-
         c.setFont("Helvetica-Bold", 14)
         c.drawString(inch, inch, "Thank You.")
         c.showPage()
-    
     add_front_page()
     add_tutorial_page()
     brands = df['Brand'].unique()
     types = df['Type'].unique()
     region_subsets = df['Region subsets'].unique()
-
     page_number = 1
     for brand in brands:
         for product_type in types:
             for region_subset in region_subsets:
                 filtered_df = df[(df['Region'] == region) & (df['Brand'] == brand) &
                                  (df['Type'] == product_type) & (df['Region subsets'] == region_subset)].copy()
-                
                 if not filtered_df.empty:
                     add_header(c)
                     cols = ['Trade EBITDA', 'Non-Trade EBITDA']
                     overall_col = 'Overall EBITDA'
-
-                    # Calculate weighted average based on actual quantities
                     total_quantity = filtered_df['Trade'] + filtered_df['Non-Trade']
                     filtered_df[overall_col] = (
                         (filtered_df['Trade'] * filtered_df['Trade EBITDA'] +
-                         filtered_df['Non-Trade'] * filtered_df['Non-Trade EBITDA'])/ total_quantity
-                    )
-
-                    # Calculate current shares
+                         filtered_df['Non-Trade'] * filtered_df['Non-Trade EBITDA'])/ total_quantity)
                     filtered_df['Average Trade Share'] = filtered_df['Trade'] / total_quantity
                     filtered_df['Average Non-Trade Share'] = filtered_df['Non-Trade'] / total_quantity
-                    
-                    
-                    # Calculate Imaginary EBITDA with adjusted shares
                     def adjust_shares(row):
                         trade = row['Average Trade Share']
                         nontrade = row['Average Non-Trade Share']
-                        
                         if trade == 1 or nontrade == 1 :
-                            # If any share is 100%, don't change
                             return trade,nontrade
                         else:
                             trade = min(trade + 0.05, 1)
                             nontrade = min(nontrade - 0.05, 1 - trade)
-                        
                         return trade,nontrade
                     filtered_df['Adjusted Trade Share'], filtered_df['Adjusted Non-Trade Share'] = zip(*filtered_df.apply(adjust_shares, axis=1))
-                    
                     filtered_df['Imaginary EBITDA'] = (
                         filtered_df['Adjusted Trade Share'] * filtered_df['Trade EBITDA'] +
-                        filtered_df['Adjusted Non-Trade Share'] * filtered_df['Non-Trade EBITDA']
-                    )
-
-                    # Calculate differences
+                        filtered_df['Adjusted Non-Trade Share'] * filtered_df['Non-Trade EBITDA'])
                     filtered_df['T-NT Difference'] = filtered_df['Trade EBITDA'] - filtered_df['Non-Trade EBITDA']
                     filtered_df['I-O Difference'] = filtered_df['Imaginary EBITDA'] - filtered_df[overall_col]
-                    
-                    # Create the plot
                     fig = go.Figure()
                     fig = make_subplots(rows=2, cols=1, row_heights=[0.58, 0.42], vertical_spacing=0.18)
-
-                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Trade EBITDA'],
-                                             mode='lines+markers', name='Trade EBIDTA', line=dict(color='green')), row=1, col=1)
-                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Non-Trade EBITDA'],
-                                             mode='lines+markers', name='Non-Trade EBIDTA', line=dict(color='blue')), row=1, col=1)
-                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[overall_col],
-                                             mode='lines+markers', name=overall_col, line=dict(color='crimson', dash='dash')), row=1, col=1)
-                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Imaginary EBITDA'],
-                                             mode='lines+markers', name='Imaginary EBIDTA',
-                                             line=dict(color='brown', dash='dot')), row=1, col=1)
-
-                    # Add I-O difference trace to the second subplot
-                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['I-O Difference'],
-                                             mode='lines+markers+text', name='I-O Difference',
-                                             text=filtered_df['I-O Difference'].round(2),
-                                             textposition='top center',textfont=dict(size=8,weight="bold"),
-                                             line=dict(color='fuchsia')), row=2, col=1)
-
-                    # Add mean line to the second subplot
+                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Trade EBITDA'],mode='lines+markers', name='Trade EBIDTA', line=dict(color='green')), row=1, col=1)
+                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Non-Trade EBITDA'],mode='lines+markers', name='Non-Trade EBIDTA', line=dict(color='blue')), row=1, col=1)
+                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[overall_col],mode='lines+markers', name=overall_col, line=dict(color='crimson', dash='dash')), row=1, col=1)
+                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Imaginary EBITDA'],mode='lines+markers', name='Imaginary EBIDTA',line=dict(color='brown', dash='dot')), row=1, col=1)
+                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['I-O Difference'],mode='lines+markers+text', name='I-O Difference',text=filtered_df['I-O Difference'].round(2),textposition='top center',textfont=dict(size=8,weight="bold"),line=dict(color='fuchsia')), row=2, col=1)
                     mean_diff = filtered_df['I-O Difference'].mean()
                     if not np.isnan(mean_diff):
                         mean_diff=round(mean_diff)
                     fig.add_trace(go.Scatter(x=filtered_df['Month'], y=[mean_diff] * len(filtered_df),
                                              mode='lines', name=f'Mean I-O Difference[{mean_diff}]',
                                              line=dict(color='black', dash='dash')), row=2, col=1)
-
-                    # Customize x-axis labels for the main plot
                     x_labels = [f"{month}<br>(T-NT: {g_r:.0f})<br>(I-O: {g_y:.0f}))" 
                                 for month, g_r, g_y in 
                                 zip(filtered_df['Month'], 
                                     filtered_df['T-NT Difference'],  
                                     filtered_df['I-O Difference'])]
-
                     fig.update_layout(
                         title=f"EBITDA Analysis for {brand}(Type:-{product_type}) in {region}({region_subset})",
                         legend_title='Metrics',
                         plot_bgcolor='cornsilk',
                         paper_bgcolor='lightcyan',
-                        height=710,  # Increased height to accommodate the new subplot
-                    )
+                        height=710,  # Increased height to accommodate the new subplot)
                     fig.update_xaxes(tickmode='array', tickvals=list(range(len(x_labels))), ticktext=x_labels, row=1, col=1)
                     fig.update_xaxes(title_text='Months', row=2, col=1)
                     fig.update_yaxes(title_text='EBITDA(Rs./MT)', row=1, col=1)
@@ -4356,20 +4289,15 @@ def trade():
                         #c.showPage()
                     # Draw the graph
                     draw_graph(fig, 50, height - 410, 500, 350)
-
-                    # Add descriptive statistics
                     c.setFillColorRGB(0.2, 0.2, 0.7)  # Dark grey color for headers
                     c.setFont("Helvetica-Bold", 10)  # Reduced font size
                     c.drawString(50, height - 425, "Descriptive Statistics")
-                    
                     desc_stats = filtered_df[['Trade','Non-Trade']+cols + [overall_col, 'Imaginary EBITDA']].describe().reset_index()
                     desc_stats = desc_stats[desc_stats['index'] != 'count'].round(2)  # Remove 'count' row
                     table_data = [['Metric'] + list(desc_stats.columns[1:])] + desc_stats.values.tolist()
                     draw_table(table_data, 50, height - 435, [45,45,45] + [75] * (len(desc_stats.columns) - 4))  # Reduced column widths
                     c.setFont("Helvetica-Bold", 10)  # Reduced font size
                     c.drawString(50, height - 600, "Average Share Distribution")
-                    
-                    # Create pie chart with correct colors
                     average_shares = filtered_df[['Average Trade Share', 'Average Non-Trade Share']].mean()
                     share_fig = px.pie(
                        values=average_shares.values,
@@ -4377,8 +4305,7 @@ def trade():
                        color=average_shares.index,
                        color_discrete_map={'Average Trade Share': 'green', 'Average Non-Trade Share': 'blue'},
                        title="",hole=0.3)
-                    share_fig.update_layout(width=475, height=475, margin=dict(l=0, r=0, t=0, b=0))  # Reduced size
-                    
+                    share_fig.update_layout(width=475, height=475, margin=dict(l=0, r=0, t=0, b=0)) 
                     draw_graph(share_fig, 80, height - 810, 200, 200)  # Adjusted position and size
                     c.setFont("Helvetica-Bold", 10)
                     c.drawString(330, height - 600, "Monthly Share Distribution")
@@ -4387,8 +4314,7 @@ def trade():
                         share_data.append([
                             row['Month'],
                             f"{row['Trade']:.0f} ({row['Average Trade Share']:.2%})",
-                            f"{row['Non-Trade']:.0f} ({row['Average Non-Trade Share']:.2%})"
-                        ])
+                            f"{row['Non-Trade']:.0f} ({row['Average Non-Trade Share']:.2%})"])
                     draw_table(share_data, 330, height - 620, [40, 60, 60, 60])
                     add_page_number(c)
                     c.showPage()
@@ -4399,12 +4325,9 @@ def trade():
     c.save()
     buffer.seek(0)
     return buffer
-
-
  if selected == "Home":
     st.title("🔍 Advanced Segment Mix Analysis")
     st.markdown("Welcome to our advanced data analysis platform. Upload your Excel file to get started with interactive visualizations and insights.")
-    
     st.markdown("<div class='upload-section'>", unsafe_allow_html=True)
     col1, col2 = st.columns([2, 1])
     with col1:
@@ -4412,7 +4335,6 @@ def trade():
         if uploaded_file is not None:
             st.session_state.uploaded_file = uploaded_file
             st.success("File successfully uploaded! Please go to the Analysis page to view results.")
-
     with col2:
         if lottie_upload:
             st_lottie(lottie_upload, height=150, key="upload")
@@ -4421,27 +4343,21 @@ def trade():
     st.markdown("</div>", unsafe_allow_html=True)
  elif selected == "Segment-Mix Analysis":
     st.title("📈 Segment Mix Dashboard")
-    
     if 'uploaded_file' not in st.session_state or st.session_state.uploaded_file is None:
         st.warning("Please upload an Excel file on the Home page to begin the analysis.")
     else:
         df = pd.read_excel(st.session_state.uploaded_file)
         st.markdown("<div class='analysis-section'>", unsafe_allow_html=True)
-        
         if lottie_analysis:
             st_lottie(lottie_analysis, height=200, key="analysis")
         else:
             st.image("https://cdn-icons-png.flaticon.com/512/2756/2756778.png", width=200)
         st.sidebar.header("Filter Options")
         region = st.sidebar.selectbox("Select Region", options=df['Region'].unique(), key="region_select")
-
-        # Add download options for report
         st.sidebar.subheader(f"Download Report for {region}")
         download_choice = st.sidebar.radio(
             "Choose report type:",
-            ('Full Region', 'Region Subset')
-        )
-        
+            ('Full Region', 'Region Subset'))
         if download_choice == 'Full Region':
             if st.sidebar.button(f"Download Full Report for {region}"):
                 subset_df = df[(df['Region'] == region) & (df['Type'] != 'PPC Premium')]
@@ -4454,7 +4370,6 @@ def trade():
             region_subsets = df[df['Region'] == region]['Region subsets'].unique()
             selected_subset = st.sidebar.selectbox("Select Region Subset", options=region_subsets)
             if st.sidebar.button(f"Download Report for {region} - {selected_subset}"):
-                # Filter the dataframe for the selected region and subset
                 subset_df = df[(df['Region'] == region) & (df['Region subsets'] == selected_subset) & (df['Type'] != 'PPC Premium')]
                 pdf_buffer = create_pdf_report(region, subset_df, selected_subset)
                 pdf_bytes = pdf_buffer.getvalue()
@@ -4464,26 +4379,15 @@ def trade():
         brand = st.sidebar.selectbox("Select Brand", options=df[df['Region']==region]['Brand'].unique(), key="brand_select")
         product_type = st.sidebar.selectbox("Select Type", options=df[df['Region']==region]['Type'].unique(), key="type_select")
         region_subset = st.sidebar.selectbox("Select Region Subset", options=df[df['Region']==region]['Region subsets'].unique(), key="region_subset_select")
-
-        
-        # Analysis type selection using radio buttons
         st.sidebar.header("Analysis on")
         analysis_options = ["NSR Analysis", "Contribution Analysis", "EBITDA Analysis"]
-        
-        # Use session state to store the selected analysis type
         if 'analysis_type' not in st.session_state:
-            st.session_state.analysis_type = "EBITDA Analysis"
-        
+            st.session_state.analysis_type = "EBITDA Analysis"  
         analysis_type = st.sidebar.radio("Select Analysis Type", analysis_options, index=analysis_options.index(st.session_state.analysis_type), key="analysis_type_radio")
-        
-        # Update session state
         st.session_state.analysis_type = analysis_type
         trade_share = st.sidebar.slider("Adjust Trade Share (%)", 0, 100, 50)
-
-        # Filter the dataframe
         filtered_df = df[(df['Region'] == region) & (df['Brand'] == brand) &
                          (df['Type'] == product_type) & (df['Region subsets'] == region_subset)].copy()
-        
         if not filtered_df.empty:
             if analysis_type == 'NSR Analysis':
                 cols = ['Trade NSR', 'Non-Trade NSR']
@@ -4494,86 +4398,47 @@ def trade():
             elif analysis_type == 'EBITDA Analysis':
                 cols = ['Trade EBITDA', 'Non-Trade EBITDA']
                 overall_col = 'Overall EBITDA'
-            
-            # Calculate weighted average based on actual quantities
-            filtered_df[overall_col] = (filtered_df['Trade'] * filtered_df[cols[0]] +
-                                        filtered_df['Non-Trade'] * filtered_df[cols[1]]) / (
-                                            filtered_df['Trade'] + filtered_df['Non-Trade'])
-            
-            # Calculate imaginary overall based on slider
+            filtered_df[overall_col] = (filtered_df['Trade'] * filtered_df[cols[0]] +filtered_df['Non-Trade'] * filtered_df[cols[1]]) / (filtered_df['Trade'] + filtered_df['Non-Trade'])
             imaginary_col = f'Imaginary {overall_col}'
-            filtered_df[imaginary_col] = ((1 - trade_share/100) * filtered_df[cols[1]] +
-                                          (trade_share/100) * filtered_df[cols[0]])
-            
-            # Calculate difference between Premium and Normal
+            filtered_df[imaginary_col] = ((1 - trade_share/100) * filtered_df[cols[1]] +(trade_share/100) * filtered_df[cols[0]])
             filtered_df['Difference'] = filtered_df[cols[0]] - filtered_df[cols[1]]
-            
-            # Calculate difference between Imaginary and Overall
             filtered_df['Imaginary vs Overall Difference'] = filtered_df[imaginary_col] - filtered_df[overall_col]
-            
-            # Create the plot
             fig = go.Figure()
-            
             for col in cols:
-                fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[col],
-                                         mode='lines+markers', name=col))
-            
-            fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[overall_col],
-                                     mode='lines+markers', name=overall_col, line=dict(dash='dash')))
-            
-            fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[imaginary_col],
-                                     mode='lines+markers', name=f'Imaginary {overall_col} ({trade_share}% Trade)',
-                                     line=dict(color='brown', dash='dot')))
-            
-            # Customize x-axis labels to include the differences
+                fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[col],mode='lines+markers', name=col))
+            fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[overall_col],mode='lines+markers', name=overall_col, line=dict(dash='dash')))
+            fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[imaginary_col],mode='lines+markers', name=f'Imaginary {overall_col} ({trade_share}% Trade)',line=dict(color='brown', dash='dot')))
             x_labels = [f"{month}<br>(T-NT: {diff:.2f})<br>(I-O: {i_diff:.2f})" for month, diff, i_diff in 
                         zip(filtered_df['Month'], filtered_df['Difference'], filtered_df['Imaginary vs Overall Difference'])]
-            
             fig.update_layout(
                 title=analysis_type,
                 xaxis_title='Month (T-NT: Trade - Non-Trade, I-O: Imaginary - Overall)',
                 yaxis_title='Value',
                 legend_title='Metrics',
                 hovermode="x unified",
-                xaxis=dict(tickmode='array', tickvals=list(range(len(x_labels))), ticktext=x_labels)
-            )
-            
+                xaxis=dict(tickmode='array', tickvals=list(range(len(x_labels))), ticktext=x_labels))
             st.plotly_chart(fig, use_container_width=True)
-            
-            # Display descriptive statistics
             st.subheader("Descriptive Statistics")
             desc_stats = filtered_df[cols + [overall_col, imaginary_col]].describe()
             st.dataframe(desc_stats.style.format("{:.2f}"), use_container_width=True)
-            
-            # Display share of Normal and Premium Products
             st.subheader("Share of Trade and Non-Trade Channel")
             total_quantity = filtered_df['Trade'] + filtered_df['Non-Trade']
             trade_share = (filtered_df['Trade'] / total_quantity * 100).round(2)
             nontrade_share = (filtered_df['Non-Trade'] / total_quantity * 100).round(2)
-            
             share_df = pd.DataFrame({
                 'Month': filtered_df['Month'],
                 'Trade Share (%)': trade_share,
-                'Non-Trade Share (%)': nontrade_share
-            })
-                  
-            fig_pie = px.pie(share_df, values=[trade_share.mean(), nontrade_share.mean()], 
-                                     names=['Trade', 'Non-Trade'], title='Average Share Distribution',color=["T","NT"],color_discrete_map={"T":"green","NT":"blue"},hole=0.5)
-            st.plotly_chart(fig_pie, use_container_width=True)
-                    
+                'Non-Trade Share (%)': nontrade_share}) 
+            fig_pie = px.pie(share_df, values=[trade_share.mean(), nontrade_share.mean()],names=['Trade', 'Non-Trade'], title='Average Share Distribution',color=["T","NT"],color_discrete_map={"T":"green","NT":"blue"},hole=0.5)
+            st.plotly_chart(fig_pie, use_container_width=True)        
             st.dataframe(share_df.set_index('Month').style.format("{:.2f}").background_gradient(cmap='RdYlGn'), use_container_width=True)
-        
-        
         else:
             st.warning("No data available for the selected combination.")
-        
         st.markdown("</div>", unsafe_allow_html=True)
-
  elif selected == "About":
     st.title("About the Segment Mix Analysis App")
     st.markdown("""
     This advanced data analysis application is designed to provide insightful visualizations and statistics for your Segment(Trade,Non-Trade) Mix data. 
-    
     Key features include:
     - Interactive data filtering
     - Multiple analysis types (NSR, Contribution, EBITDA)
@@ -4804,32 +4669,19 @@ def green():
                             red = max(1 - green - yellow, 0)
                         return green, yellow, red
                     filtered_df['Adjusted Green Share'], filtered_df['Adjusted Yellow Share'], filtered_df['Adjusted Red Share'] = zip(*filtered_df.apply(adjust_shares, axis=1))
-                    filtered_df['Imaginary EBITDA'] = (
-                        filtered_df['Adjusted Green Share'] * filtered_df['Green EBITDA'] +
-                        filtered_df['Adjusted Yellow Share'] * filtered_df['Yellow EBITDA'] +
-                        filtered_df['Adjusted Red Share'] * filtered_df['Red EBITDA'])
+                    filtered_df['Imaginary EBITDA'] = (filtered_df['Adjusted Green Share'] * filtered_df['Green EBITDA'] +filtered_df['Adjusted Yellow Share'] * filtered_df['Yellow EBITDA'] +filtered_df['Adjusted Red Share'] * filtered_df['Red EBITDA'])
                     filtered_df['G-R Difference'] = filtered_df['Green EBITDA'] - filtered_df['Red EBITDA']
                     filtered_df['G-Y Difference'] = filtered_df['Green EBITDA'] - filtered_df['Yellow EBITDA']
                     filtered_df['Y-R Difference'] = filtered_df['Yellow EBITDA'] - filtered_df['Red EBITDA']
                     filtered_df['I-O Difference'] = filtered_df['Imaginary EBITDA'] - filtered_df[overall_col]
                     fig = go.Figure()
                     fig = make_subplots(rows=2, cols=1, row_heights=[0.58, 0.42], vertical_spacing=0.18)
-                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Green EBITDA'],
-                                             mode='lines+markers', name='Green EBIDTA', line=dict(color='green')), row=1, col=1)
-                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Yellow EBITDA'],
-                                             mode='lines+markers', name='Yellow EBIDTA', line=dict(color='yellow')), row=1, col=1)
-                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Red EBITDA'],
-                                             mode='lines+markers', name='Red EBIDTA', line=dict(color='red')), row=1, col=1)
-                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[overall_col],
-                                             mode='lines+markers', name=overall_col, line=dict(color='blue', dash='dash')), row=1, col=1)
-                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Imaginary EBITDA'],
-                                             mode='lines+markers', name='Imaginary EBIDTA',
-                                             line=dict(color='purple', dash='dot')), row=1, col=1)
-                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['I-O Difference'],
-                                             mode='lines+markers+text', name='I-O Difference',
-                                             text=filtered_df['I-O Difference'].round(2),
-                                             textposition='top center',textfont=dict(size=8,weight="bold"),
-                                             line=dict(color='fuchsia')), row=2, col=1)
+                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Green EBITDA'],mode='lines+markers', name='Green EBIDTA', line=dict(color='green')), row=1, col=1)
+                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Yellow EBITDA'],mode='lines+markers', name='Yellow EBIDTA', line=dict(color='yellow')), row=1, col=1)
+                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Red EBITDA'],mode='lines+markers', name='Red EBIDTA', line=dict(color='red')), row=1, col=1)
+                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df[overall_col],mode='lines+markers', name=overall_col, line=dict(color='blue', dash='dash')), row=1, col=1)
+                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['Imaginary EBITDA'],mode='lines+markers', name='Imaginary EBIDTA',line=dict(color='purple', dash='dot')), row=1, col=1)
+                    fig.add_trace(go.Scatter(x=filtered_df['Month'], y=filtered_df['I-O Difference'],mode='lines+markers+text', name='I-O Difference',text=filtered_df['I-O Difference'].round(2),textposition='top center',textfont=dict(size=8,weight="bold"),line=dict(color='fuchsia')), row=2, col=1)
                     mean_diff = filtered_df['I-O Difference'].mean()
                     if not np.isnan(mean_diff):
                         mean_diff=round(mean_diff)
@@ -7089,8 +6941,7 @@ def main():
             menu_title="Analysis Dashboards",
             options=["WSP Analysis", "Sales Dashboard","Sales Review Report","Market Share Analysis","Discount Analysis", "Product-Mix", "Segment-Mix","Geo-Mix"],
             icons=["clipboard-data", "cash","bar-chart", "arrow-up-right", "shuffle", "globe"],
-            orientation="horizontal",
-        )
+            orientation="horizontal",)
         if analysis_menu == "WSP Analysis":
             wsp_analysis_dashboard()
         elif analysis_menu == "Sales Dashboard":
