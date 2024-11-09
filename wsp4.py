@@ -5234,11 +5234,11 @@ def green():
         lc.height = 125
         lc.width = 300
         lc.data = [
-            [random.randint(2000, 3000) for _ in range(12)],  # Green
-            [random.randint(1500, 2500) for _ in range(12)],  # Yellow
-            [random.randint(1000, 2000) for _ in range(12)],  # Red
-            [random.randint(1800, 2800) for _ in range(12)],  # Overall
-            [random.randint(2200, 3200) for _ in range(12)],  # Imaginary]
+            [random.randint(2000, 3000) for _ in range(12)],
+            [random.randint(1500, 2500) for _ in range(12)],
+            [random.randint(1000, 2000) for _ in range(12)], 
+            [random.randint(1800, 2800) for _ in range(12)], 
+            [random.randint(2200, 3200) for _ in range(12)], ]
         lc.lines[0].strokeColor = colors.green
         lc.lines[1].strokeColor = colors.yellow
         lc.lines[2].strokeColor = colors.red
