@@ -6510,141 +6510,7 @@ def update_visit_count():
     visit_data['daily_visits'][today] = visit_data['daily_visits'].get(today, 0) + 1
     save_visit_data(visit_data)
     return visit_data['total_visits'], visit_data['daily_visits'][today]
-def apply_theme(theme, custom_colors):
-    # Base theme configurations
-    theme_config = {
-        "Light": {
-            "primaryColor": custom_colors.get("primary", "#2e7bcf"),
-            "backgroundColor": "#ffffff",
-            "secondaryBackgroundColor": "#f0f2f6",
-            "textColor": "#262730",
-            "font": "sans serif"
-        },
-        "Dark": {
-            "primaryColor": custom_colors.get("primary", "#2e7bcf"),
-            "backgroundColor": "#0e1117",
-            "secondaryBackgroundColor": "#262730",
-            "textColor": "#fafafa",
-            "font": "sans serif"
-        },
-        "System Default": None}
-    if theme in theme_config and theme_config[theme]:
-        st.set_page_config(
-            page_title="Analytics Dashboard",
-            layout="wide",
-            initial_sidebar_state="expanded",
-            theme_config=theme_config[theme])
-def settings_page():
-    st.title("Settings")
-    if 'theme' not in st.session_state:
-        st.session_state.theme = "Light"
-    if 'custom_colors' not in st.session_state:
-        st.session_state.custom_colors = {
-            "primary": "#2e7bcf",
-            "secondary": "#4527A0",
-            "accent": "#4CAF50"}
-    st.markdown('<div class="settings-container">', unsafe_allow_html=True)
-    st.subheader("User Settings")
-    username = st.text_input("Username", value=st.session_state.get('username', 'Guest'))
-    email = st.text_input("Email", value=st.session_state.get('email', 'johndoe@example.com'))
-    st.subheader("Appearance")
-    theme = st.selectbox(
-        "Theme",
-        ["Light", "Dark", "System Default"],
-        index=["Light", "Dark", "System Default"].index(st.session_state.theme)
-    )
-    st.subheader("Color Customization")
-    cols = st.columns(3)
-    with cols[0]:
-        primary_color = st.color_picker(
-            "Primary Color",
-            st.session_state.custom_colors["primary"]
-        )
-    with cols[1]:
-        secondary_color = st.color_picker(
-            "Secondary Color",
-            st.session_state.custom_colors["secondary"]
-        )
-    with cols[2]:
-        accent_color = st.color_picker(
-            "Accent Color",
-            st.session_state.custom_colors["accent"]
-        )
-    st.subheader("Color Presets")
-    color_presets = {
-        "Default Blue": {"primary": "#2e7bcf", "secondary": "#4527A0", "accent": "#4CAF50"},
-        "Dark Mode": {"primary": "#BB86FC", "secondary": "#03DAC5", "accent": "#CF6679"},
-        "Forest": {"primary": "#2E7D32", "secondary": "#1B5E20", "accent": "#81C784"},
-        "Ocean": {"primary": "#0277BD", "secondary": "#01579B", "accent": "#4FC3F7"},
-        "Sunset": {"primary": "#FF7043", "secondary": "#D84315", "accent": "#FFB74D"}
-    }
-    selected_preset = st.selectbox("Color Presets", ["Custom"] + list(color_presets.keys()))
-    if selected_preset != "Custom":
-        st.session_state.custom_colors = color_presets[selected_preset]
-    else:
-        st.session_state.custom_colors = {
-            "primary": primary_color,
-            "secondary": secondary_color,
-            "accent": accent_color}
-    st.subheader("Preview")
-    preview_col1, preview_col2 = st.columns(2)
-    with preview_col1:
-        st.markdown(
-            f"""
-            <div style="padding: 20px; border-radius: 10px; background-color: {st.session_state.custom_colors['primary']}; color: white;">
-                Primary Color Block
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-    with preview_col2:
-        st.markdown(
-            f"""
-            <div style="padding: 20px; border-radius: 10px; background-color: {st.session_state.custom_colors['secondary']}; color: white;">
-                Secondary Color Block
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-    st.subheader("Notifications")
-    email_notifications = st.checkbox(
-        "Receive Email Notifications",
-        value=st.session_state.get('email_notifications', True)
-    )
-    notification_frequency = st.select_slider(
-        "Notification Frequency",
-        options=["Daily", "Weekly", "Monthly"],
-        value=st.session_state.get('notification_frequency', 'Weekly')
-    )
-    if st.button("Save Settings"):
-        st.session_state.theme = theme
-        st.session_state.username = username
-        st.session_state.email = email
-        st.session_state.email_notifications = email_notifications
-        st.session_state.notification_frequency = notification_frequency
-        apply_theme(theme, st.session_state.custom_colors)
-        st.markdown(f"""
-        <style>
-        .sidebar .sidebar-content {{
-            background-image: linear-gradient(180deg, {st.session_state.custom_colors['primary']} 25%, {st.session_state.custom_colors['secondary']} 100%);
-            color: white;
-        }}
-        .stButton>button {{
-            background-color: {st.session_state.custom_colors['accent']};
-        }}
-        .stButton>button:hover {{
-            background-color: {st.session_state.custom_colors['accent']}dd;
-        }}
-        .stProgress .st-bo {{
-            background-color: {st.session_state.custom_colors['accent']};
-        }}
-        </style>
-        """, unsafe_allow_html=True)    
-        st.success("Settings saved successfully! Please refresh the page to see all changes.")   
-    st.markdown('</div>', unsafe_allow_html=True)
 def main():
-    if 'theme' in st.session_state and 'custom_colors' in st.session_state:
-        apply_theme(st.session_state.theme, st.session_state.custom_colors)
     st.markdown("""
     <style>
     .sidebar .sidebar-content {
@@ -6787,7 +6653,24 @@ def main():
         elif prediction_menu == "Sales Projection":
             projection()
     elif selected == "Settings":
-        settings_page()
+        st.title("Settings")
+        st.markdown('<div class="settings-container">', unsafe_allow_html=True)
+        st.subheader("User Settings")
+        username = st.text_input("Username", value=st.session_state.username)
+        email = st.text_input("Email", value="johndoe@example.com")
+        if st.button("Update Profile"):
+            st.session_state.username = username
+            st.success("Profile updated successfully!")
+        st.subheader("Appearance")
+        theme = st.selectbox("Theme", ["Light", "Dark", "System Default"])
+        chart_color = st.color_picker("Default Chart Color", "#2e7bcf")
+        st.subheader("Notifications")
+        email_notifications = st.checkbox("Receive Email Notifications", value=True)
+        notification_frequency = st.select_slider("Notification Frequency", options=["Daily", "Weekly", "Monthly"])
+        # Save Settings Button
+        if st.button("Save Settings"):
+            st.success("Settings saved successfully!")
+        st.markdown('</div>', unsafe_allow_html=True)
     st.sidebar.markdown("---")
     st.sidebar.subheader("📢 Feedback")
     feedback = st.sidebar.text_area("Share your thoughts:")
