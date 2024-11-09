@@ -1,114 +1,82 @@
 import os
-import streamlit as st
-import pandas as pd
-import openpyxl
-from reportlab.graphics.shapes import Drawing, Line, String
-from matplotlib.path import Path
-from matplotlib.patches import PathPatch
-from io import BytesIO
-import matplotlib.ticker as mticker
-import base64
-from pypdf import PdfReader, PdfWriter
-from docx import Document
-from reportlab.pdfgen.canvas import Canvas 
-from pdf2docx import Converter
-from docx2pdf import convert
-import img2pdf
-from PIL import Image
-import PyPDF2
-import fitz  # PyMuPDF
+import io
+import re
+import json
+import math
+import time
+import random
+import secrets
 import tempfile
+import warnings
+import hashlib
 import shutil
+from datetime import datetime
+from pathlib import Path
+from collections import defaultdict, OrderedDict
+from concurrent.futures import ThreadPoolExecutor
+import numpy as np
+import pandas as pd
+from scipy import stats
+from scipy.stats import jarque_bera, kurtosis, skew
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-import distinctipy
-from pathlib import Path
-from collections import defaultdict
+import matplotlib.ticker as mticker
+from matplotlib.path import Path
+from matplotlib.patches import PathPatch, Rectangle
 from matplotlib.backends.backend_pdf import PdfPages
-import numpy as np
-from datetime import datetime
-from streamlit_option_menu import option_menu
-from matplotlib.patches import Rectangle
-import matplotlib.backends.backend_pdf
-from scipy import stats
-from statsmodels.tsa.arima.model import ARIMA
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import letter
-from reportlab.lib.styles import getSampleStyleSheet
-from streamlit_lottie import st_lottie
-import time
-import hashlib
-import secrets
-from streamlit_cookies_manager import EncryptedCookieManager
-import json
-import requests
-from openpyxl.utils import get_column_letter
-import plotly.express as px
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error
-import math
 import seaborn as sns
-import xgboost as xgb
-import plotly.graph_objs as go
-import time
-from collections import OrderedDict
-import re
-import plotly.graph_objects as go
 import plotly.express as px
-from concurrent.futures import ThreadPoolExecutor
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import A4, letter, legal, landscape
-from reportlab.lib import colors
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.lib.units import inch, cm
-from reportlab.platypus import Image as ReportLabImage
-from reportlab.graphics.shapes import Line, Drawing, Rect
-from reportlab.lib.colors import Color, HexColor
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, Flowable, Frame, Indenter
-from reportlab.pdfgen import canvas
-from reportlab.graphics.charts.lineplots import LinePlot
-from reportlab.graphics.widgets.markers import makeMarker
-from reportlab.graphics import renderPDF
+import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-from reportlab.graphics.charts.linecharts import HorizontalLineChart
-from reportlab.graphics.charts.legends import Legend
-from reportlab.lib.enums import TA_CENTER
-from reportlab.graphics import renderPDF
-from reportlab.pdfgen.canvas import Canvas
-from pypdf import PdfReader
-import random
-from streamlit_lottie import st_lottie
-from streamlit_option_menu import option_menu
-from reportlab.pdfgen import canvas
-from reportlab.lib.utils import ImageReader
-from streamlit_option_menu import option_menu
-from reportlab.platypus import Table, TableStyle
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_squared_error, r2_score
-import io
-import streamlit.components.v1 as components
-import warnings
-import statsmodels.api as sm
-from statsmodels.stats.diagnostic import het_breuschpagan, acorr_ljungbox
-from statsmodels.stats.stattools import durbin_watson
-from statsmodels.stats.outliers_influence import variance_inflation_factor
-from statsmodels.tsa.stattools import adfuller
-from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
-from sklearn.model_selection import train_test_split
+import distinctipy
+import xgboost as xgb
+from sklearn.cluster import KMeans
+from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler, PolynomialFeatures
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.linear_model import LinearRegression, Ridge, Lasso
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.svm import SVR
-from sklearn.cluster import KMeans
-from sklearn.decomposition import PCA
-from sklearn.metrics import mean_squared_error, r2_score
-from scipy.stats import jarque_bera, kurtosis, skew
-from statsmodels.stats.stattools import omni_normtest
+import statsmodels.api as sm
+from statsmodels.tsa.arima.model import ARIMA
+from statsmodels.stats.diagnostic import het_breuschpagan, acorr_ljungbox
+from statsmodels.stats.stattools import durbin_watson, omni_normtest
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+from statsmodels.tsa.stattools import adfuller
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+import openpyxl
+from openpyxl.utils import get_column_letter
+from docx import Document
+from docx2pdf import convert
+from pdf2docx import Converter
+import PyPDF2
+from pypdf import PdfReader, PdfWriter
+import fitz  # PyMuPDF
+import img2pdf
+from PIL import Image
+from reportlab.lib import colors
+from reportlab.lib.colors import Color, HexColor
+from reportlab.lib.enums import TA_CENTER
+from reportlab.lib.pagesizes import A4, letter, legal, landscape
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch, cm
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfgen.canvas import Canvas
+from reportlab.platypus import (SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak, Flowable, Frame, Indenter, Image as ReportLabImage)
+from reportlab.graphics import renderPDF
+from reportlab.graphics.shapes import Drawing, Line, String, Rect
+from reportlab.graphics.charts.lineplots import LinePlot
+from reportlab.graphics.charts.linecharts import HorizontalLineChart
+from reportlab.graphics.charts.legends import Legend
+from reportlab.graphics.widgets.markers import makeMarker
+import streamlit as st
+import streamlit.components.v1 as components
+from streamlit_lottie import st_lottie
+from streamlit_option_menu import option_menu
+from streamlit_cookies_manager import EncryptedCookieManager
 def load_lottie_url(url: str):
     r = requests.get(url)
     if r.status_code != 200:
@@ -121,12 +89,10 @@ def process_pdf(input_pdf, operations):
     reader = PdfReader(input_pdf)
     if "extract" in operations:
         selected_pages = operations["extract"]["pages"]  # List of selected page numbers
-        # Add only the selected pages
         for page_num in selected_pages:
             if 0 <= page_num - 1 < len(reader.pages):  # Convert to 0-based index and check bounds
                 writer.add_page(reader.pages[page_num - 1])
     else:
-        # Add all pages from input PDF
         for page in reader.pages:
             writer.add_page(page)
     if "merge" in operations and operations["merge"]["files"]:
@@ -754,8 +720,6 @@ def front_page_creator():
                         0.1,
                         help="Adjust the opacity of your watermark"
                     )
-            
-            # Footer Options
             st.subheader("Footer Options")
             col15, col16 = st.columns(2)
             with col15:
@@ -780,13 +744,10 @@ def front_page_creator():
                     ["Center", "Left", "Right"],
                     help="Choose how the footer is aligned"
                 )
-            
-            # Generate Button
             if st.button("Generate Front Page", help="Click to create your front page"):
                 if not title:
                     st.error("Please enter a title for your front page.")
                     return
-                    
                 try:
                     options = {
                         "template": template if template != "Custom" else None,
@@ -830,10 +791,7 @@ def front_page_creator():
                         "footer_text": footer_text,
                         "footer_alignment": footer_alignment,
                     }
-                    
                     pdf_buffer = create_front_page(options)
-                    
-                    # Add download button with custom filename
                     filename = f"{title.split()[0].lower()}_front_page.pdf"
                     st.download_button(
                         label="📥 Download Front Page",
@@ -842,13 +800,8 @@ def front_page_creator():
                         mime="application/pdf",
                         help="Download your generated front page as a PDF"
                     )
-                    
-                    # Display success message with tips
                     st.success("✨ PDF generated successfully! Click the download button above to save your front page.")
-                    
-                    # Show preview tip
                     st.info("💡 Tip: After downloading, you may want to preview the PDF to ensure everything looks perfect.")
-                    
                 except Exception as e:
                     st.error(f"Error generating front page: {str(e)}")
                     st.info("Please try adjusting your settings or contact support if the problem persists.")
@@ -860,7 +813,6 @@ def excel_editor_and_analyzer():
         "Data Analyzer",
         "Front Page Creator"
     ])
-    
     with tab1:
         excel_editor()
     with tab2:
@@ -871,8 +823,6 @@ def excel_editor_and_analyzer():
         front_page_creator()
 def file_converter():
     st.header("🔄 Universal File Converter")
-    
-    # Add custom CSS for better styling
     st.markdown("""
         <style>
         .converter-card {
@@ -911,7 +861,6 @@ def file_converter():
         }
         </style>
     """, unsafe_allow_html=True)
-
     converter_type = st.selectbox(
         "Select Conversion Type",
         [
@@ -922,23 +871,17 @@ def file_converter():
             "Image Editor"
         ]
     )
-
-    # Excel ↔️ CSV Converter
     if converter_type == "Excel ↔️ CSV Converter":
         st.markdown("### Excel ↔️ CSV Converter")
-        
         conversion_direction = st.radio(
             "Select conversion direction:",
             ["CSV to Excel", "Excel to CSV"],
             horizontal=True
         )
-
         if conversion_direction == "CSV to Excel":
             with st.container():
                 st.markdown('<div class="converter-card">', unsafe_allow_html=True)
-                
                 uploaded_file = st.file_uploader("Upload CSV file", type="csv", key="csv_to_excel")
-                
                 if uploaded_file is not None:
                     try:
                         col1, col2 = st.columns(2)
@@ -946,20 +889,15 @@ def file_converter():
                             separator = st.selectbox(
                                 "Select delimiter",
                                 options=[",", ";", "|", "\t"],
-                                index=0
-                            )
+                                index=0)
                         with col2:
                             encoding = st.selectbox(
                                 "Select encoding",
                                 options=["utf-8", "iso-8859-1", "cp1252"],
-                                index=0
-                            )
-
+                                index=0)
                         df = pd.read_csv(uploaded_file, sep=separator, encoding=encoding)
-                        
                         st.markdown("#### Preview")
                         st.dataframe(df.head(), use_container_width=True)
-                        
                         col1, col2, col3 = st.columns(3)
                         with col1:
                             st.metric("Rows", df.shape[0])
@@ -967,25 +905,20 @@ def file_converter():
                             st.metric("Columns", df.shape[1])
                         with col3:
                             st.metric("Size", f"{uploaded_file.size / 1024:.2f} KB")
-
                         output = BytesIO()
                         with pd.ExcelWriter(output, engine='openpyxl') as writer:
                             df.to_excel(writer, index=False)
                         excel_data = output.getvalue()
-                        
                         st.download_button(
                             label="📥 Download Excel File",
                             data=excel_data,
                             file_name=f"{uploaded_file.name.split('.')[0]}.xlsx",
                             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                         )
-
                     except Exception as e:
                         st.error(f"Error: {str(e)}")
-                
                 st.markdown('</div>', unsafe_allow_html=True)
-
-        else:  # Excel to CSV
+        else: 
             with st.container():
                 st.markdown('<div class="converter-card">', unsafe_allow_html=True)
                 
