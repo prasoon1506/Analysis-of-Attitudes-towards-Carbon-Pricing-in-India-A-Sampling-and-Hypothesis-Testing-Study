@@ -2008,53 +2008,15 @@ def wsp_analysis_dashboard():
         selected_region = st.selectbox("Select Region", region_names, key="region_select")
     filtered_df = filtered_df[filtered_df["REGION"] == selected_region]
     district_names = filtered_df["Dist Name"].unique().tolist()
-    region_recommendations = {
-        "Gujarat": {
-            "districts": ["Ahmadabad", "Mahesana", "Rajkot", "Vadodara", "Surat"],
-            "benchmarks": ["UTCL", "Wonder"],
-            "diffs": {"UTCL": -10.0, "Wonder": 0.0}
-        },
-        "Chhattisgarh": {
-            "districts": ["Durg", "Raipur", "Bilaspur", "Raigarh", "Rajnandgaon"],
-            "benchmarks": ["UTCL"],
-            "diffs": {"UTCL": -10.0}
-        },
-        "Maharashtra(East)": {
-            "districts": ["Nagpur", "Gondiya"],
-            "benchmarks": ["UTCL"],
-            "diffs": {"UTCL": -10.0}
-        },
-        "Odisha": {
-            "districts": ["Cuttack", "Sambalpur", "Khorda"],
-            "benchmarks": ["UTCL"],
-            "diffs": {"UTCL": {"Sambalpur": -25.0, "Cuttack": -15.0, "Khorda": -15.0}}
-        },
-        "Rajasthan": {
-            "districts": ["Alwar", "Jodhpur", "Udaipur", "Jaipur", "Kota", "Bikaner"],
-            "benchmarks": [],
-            "diffs": {}
-        },
-        "Madhya Pradesh(West)": {
-            "districts": ["Indore", "Neemuch", "Ratlam", "Dhar"],
-            "benchmarks": [],
-            "diffs": {}
-        },
-        "Madhya Pradesh(East)": {
-            "districts": ["Jabalpur", "Balaghat", "Chhindwara"],
-            "benchmarks": [],
-            "diffs": {}
-        },
-        "North-I": {
-            "districts": ["East", "Gurugram", "Sonipat", "Hisar", "Yamunanagar", "Bathinda"],
-            "benchmarks": [],
-            "diffs": {}
-        },
-        "North-II": {
-            "districts": ["Ghaziabad", "Meerut"],
-            "benchmarks": [],
-            "diffs": {}
-        }
-    }
+    region_recommendations = {"Gujarat": {"districts": ["Ahmadabad", "Mahesana", "Rajkot", "Vadodara", "Surat"],"benchmarks": ["UTCL", "Wonder"],"diffs": {"UTCL": -10.0, "Wonder": 0.0}},
+        "Chhattisgarh": {"districts": ["Durg", "Raipur", "Bilaspur", "Raigarh", "Rajnandgaon"],"benchmarks": ["UTCL"],"diffs": {"UTCL": -10.0}},
+        "Maharashtra(East)": {"districts": ["Nagpur", "Gondiya"],"benchmarks": ["UTCL"],"diffs": {"UTCL": -10.0}},
+        "Odisha": {"districts": ["Cuttack", "Sambalpur", "Khorda"],"benchmarks": ["UTCL"],"diffs": {"UTCL": {"Sambalpur": -25.0, "Cuttack": -15.0, "Khorda": -15.0}}},
+        "Rajasthan": {"districts": ["Alwar", "Jodhpur", "Udaipur", "Jaipur", "Kota", "Bikaner"],"benchmarks": [],"diffs": {}},
+        "Madhya Pradesh(West)": {"districts": ["Indore", "Neemuch", "Ratlam", "Dhar"],"benchmarks": [],"diffs": {}},
+        "Madhya Pradesh(East)": {"districts": ["Jabalpur", "Balaghat", "Chhindwara"],"benchmarks": [],"diffs": {}},
+        "North-I": {"districts": ["East", "Gurugram", "Sonipat", "Hisar", "Yamunanagar", "Bathinda"],"benchmarks": [],"diffs": {}},
+        "North-II": {"districts": ["Ghaziabad", "Meerut"],"benchmarks": [],"diffs": {}}}
     if selected_region in region_recommendations:
         recommended = region_recommendations[selected_region]
         suggested_districts = [d for d in recommended["districts"] if d in district_names]
@@ -2100,10 +2062,7 @@ def wsp_analysis_dashboard():
         else:
             use_same_benchmarks = st.checkbox("Use same benchmarks for all districts", value=True)
             if use_same_benchmarks:
-                selected_benchmarks = st.multiselect(
-                    "Select Benchmark Brands for all districts", 
-                    benchmark_brands, 
-                    key="unified_benchmark_select")
+                selected_benchmarks = st.multiselect("Select Benchmark Brands for all districts", benchmark_brands, key="unified_benchmark_select")
                 for district in selected_districts:
                     benchmark_brands_dict[district] = selected_benchmarks
                     desired_diff_dict[district] = {}
@@ -2113,13 +2072,7 @@ def wsp_analysis_dashboard():
                     diff_cols = st.columns(num_cols)
                     for i, brand in enumerate(selected_benchmarks):
                         with diff_cols[i % num_cols]:
-                            value = st.number_input(
-                                f"{brand}",
-                                min_value=-100.0,
-                                value=0.0,
-                                step=0.1,
-                                format="%.1f",
-                                key=f"unified_{brand}")
+                            value = st.number_input(f"{brand}",min_value=-100.0,value=0.0,step=0.1,format="%.1f",key=f"unified_{brand}")
                             for district in selected_districts:
                                 desired_diff_dict[district][brand] = float(value)
                 else:
@@ -2137,13 +2090,7 @@ def wsp_analysis_dashboard():
                         diff_cols = st.columns(num_cols)
                         for i, brand in enumerate(benchmark_brands_dict[district]):
                             with diff_cols[i % num_cols]:
-                                desired_diff_dict[district][brand] = st.number_input(
-                                    f"{brand}",
-                                    min_value=-100.0,
-                                    value=0.0,
-                                    step=0.1,
-                                    format="%.1f",
-                                    key=f"{district}_{brand}")
+                                desired_diff_dict[district][brand] = st.number_input(f"{brand}",min_value=-100.0,value=0.0,step=0.1,format="%.1f",key=f"{district}_{brand}")
                     else:
                         st.warning(f"No benchmark brands selected for {district}.")
     st.markdown("### Generate Analysis")
@@ -2282,26 +2229,15 @@ def descriptive_statistics_and_prediction():
                         brand_data = district_df[[col for col in district_df.columns if brand in col]].values.flatten()
                         brand_data = brand_data[~np.isnan(brand_data)]
                         if len(brand_data) > 0:
-                            stats_data[brand] = pd.DataFrame({
-                                'Mean': [np.mean(brand_data)],
-                                'Median': [np.median(brand_data)],
-                                'Std Dev': [np.std(brand_data)],
-                                'Min': [np.min(brand_data)],
-                                'Max': [np.max(brand_data)],
-                                'Skewness': [stats.skew(brand_data)],
-                                'Kurtosis': [stats.kurtosis(brand_data)],
-                                'Range': [np.ptp(brand_data)],
-                                'IQR': [np.percentile(brand_data, 75) - np.percentile(brand_data, 25)]
-                            }).iloc[0]
+                            stats_data[brand] = pd.DataFrame({'Mean': [np.mean(brand_data)],'Median': [np.median(brand_data)],'Std Dev': [np.std(brand_data)],'Min': [np.min(brand_data)],
+                                'Max': [np.max(brand_data)],'Skewness': [stats.skew(brand_data)],'Kurtosis': [stats.kurtosis(brand_data)],'Range': [np.ptp(brand_data)],
+                                'IQR': [np.percentile(brand_data, 75) - np.percentile(brand_data, 25)]}).iloc[0]
                             if len(brand_data) > 2:
                                 model = ARIMA(brand_data, order=(1,1,1))
                                 model_fit = model.fit()
                                 forecast = model_fit.forecast(steps=1)
                                 confidence_interval = model_fit.get_forecast(steps=1).conf_int()
-                                prediction_data[brand] = {
-                                    'forecast': forecast[0],
-                                    'lower_ci': confidence_interval[0, 0],
-                                    'upper_ci': confidence_interval[0, 1]}
+                                prediction_data[brand] = {'forecast': forecast[0],'lower_ci': confidence_interval[0, 0],'upper_ci': confidence_interval[0, 1]}
                     elements.append(Paragraph("Descriptive Statistics", getSampleStyleSheet()['Heading2']))
                     elements.append(create_stats_table(stats_data))
                     elements.append(Paragraph("Price Predictions", getSampleStyleSheet()['Heading2']))
@@ -2327,29 +2263,18 @@ def descriptive_statistics_and_prediction():
                 brand_data = district_df[[col for col in district_df.columns if brand in col]].values.flatten()
                 brand_data = brand_data[~np.isnan(brand_data)]
                 if len(brand_data) > 0:
-                    basic_stats = pd.DataFrame({
-                        'Mean': [np.mean(brand_data)],
-                        'Median': [np.median(brand_data)],
-                        'Std Dev': [np.std(brand_data)],
-                        'Min': [np.min(brand_data)],
-                        'Max': [np.max(brand_data)],
-                        'Skewness': [stats.skew(brand_data)],
-                        'Kurtosis': [stats.kurtosis(brand_data)],
-                        'Range': [np.ptp(brand_data)],
-                        'IQR': [np.percentile(brand_data, 75) - np.percentile(brand_data, 25)]})
+                    basic_stats = pd.DataFrame({'Mean': [np.mean(brand_data)],'Median': [np.median(brand_data)],'Std Dev': [np.std(brand_data)],'Min': [np.min(brand_data)],'Max': [np.max(brand_data)],'Skewness': [stats.skew(brand_data)],
+                        'Kurtosis': [stats.kurtosis(brand_data)],'Range': [np.ptp(brand_data)],'IQR': [np.percentile(brand_data, 75) - np.percentile(brand_data, 25)]})
                     st.dataframe(basic_stats)
                     stats_data[brand] = basic_stats.iloc[0]
-                    if len(brand_data) > 2:  # Need at least 3 data points for ARIMA
+                    if len(brand_data) > 2:  
                         model = ARIMA(brand_data, order=(1,1,1))
                         model_fit = model.fit()
                         forecast = model_fit.forecast(steps=1)
                         confidence_interval = model_fit.get_forecast(steps=1).conf_int()
                         st.markdown(f"Predicted price for next week: {forecast[0]:.2f}")
                         st.markdown(f"95% Confidence Interval: [{confidence_interval[0, 0]:.2f}, {confidence_interval[0, 1]:.2f}]")
-                        prediction_data[brand] = {
-                            'forecast': forecast[0],
-                            'lower_ci': confidence_interval[0, 0],
-                            'upper_ci': confidence_interval[0, 1]}
+                        prediction_data[brand] = {'forecast': forecast[0],'lower_ci': confidence_interval[0, 0],'upper_ci': confidence_interval[0, 1]}
                 else:
                     st.warning(f"No data available for {brand} in this district.")
                 st.markdown('</div>', unsafe_allow_html=True)
@@ -2357,17 +2282,9 @@ def descriptive_statistics_and_prediction():
             predictions_pdf = create_prediction_pdf(prediction_data, district)
             col1, col2 = st.columns(2)
             with col1:
-                st.download_button(
-                    label="Download Statistics PDF",
-                    data=stats_pdf,
-                    file_name=f"{district}_statistics.pdf",
-                    mime="application/pdf")
+                st.download_button(label="Download Statistics PDF",data=stats_pdf,file_name=f"{district}_statistics.pdf",mime="application/pdf")
             with col2:
-                st.download_button(
-                    label="Download Predictions PDF",
-                    data=predictions_pdf,
-                    file_name=f"{district}_predictions.pdf",
-                    mime="application/pdf")
+                st.download_button(label="Download Predictions PDF",data=predictions_pdf,file_name=f"{district}_predictions.pdf",mime="application/pdf")
         st.markdown('</div>', unsafe_allow_html=True)
 def create_stats_table(stats_data):
     data = [['Brand', 'Mean', 'Median', 'Std Dev', 'Min', 'Max', 'Skewness', 'Kurtosis', 'Range', 'IQR']]
@@ -2381,21 +2298,9 @@ def create_stats_table(stats_data):
                 row.append(str(value))
         data.append(row)
     table = Table(data)
-    table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 12),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-        ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-        ('FONTSIZE', (0, 1), (-1, -1), 10),
-        ('TOPPADDING', (0, 1), (-1, -1), 6),
-        ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black)]))
+    table.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, 0), colors.grey),('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),('ALIGN', (0, 0), (-1, -1), 'CENTER'),('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 12),('BOTTOMPADDING', (0, 0), (-1, 0), 12),('BACKGROUND', (0, 1), (-1, -1), colors.beige),('TEXTCOLOR', (0, 1), (-1, -1), colors.black),('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),('FONTSIZE', (0, 1), (-1, -1), 10),('TOPPADDING', (0, 1), (-1, -1), 6),('BOTTOMPADDING', (0, 1), (-1, -1), 6),('GRID', (0, 0), (-1, -1), 1, colors.black)]))
     return table
 def create_prediction_table(prediction_data):
     data = [['Brand', 'Predicted Price', 'Lower CI', 'Upper CI']]
@@ -2403,21 +2308,9 @@ def create_prediction_table(prediction_data):
         row = [brand, f"{pred['forecast']:.2f}", f"{pred['lower_ci']:.2f}", f"{pred['upper_ci']:.2f}"]
         data.append(row)
     table = Table(data)
-    table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 12),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-        ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-        ('FONTSIZE', (0, 1), (-1, -1), 10),
-        ('TOPPADDING', (0, 1), (-1, -1), 6),
-        ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black)]))
+    table.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, 0), colors.grey),('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),('ALIGN', (0, 0), (-1, -1), 'CENTER'),('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 12),('BOTTOMPADDING', (0, 0), (-1, 0), 12),('BACKGROUND', (0, 1), (-1, -1), colors.beige),('TEXTCOLOR', (0, 1), (-1, -1), colors.black),('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),('FONTSIZE', (0, 1), (-1, -1), 10),('TOPPADDING', (0, 1), (-1, -1), 6),('BOTTOMPADDING', (0, 1), (-1, -1), 6),('GRID', (0, 0), (-1, -1), 1, colors.black)]))
     return table
 from urllib.parse import quote
 @st.cache_data
@@ -2445,15 +2338,8 @@ def create_visualization(region_data, region, brand, months):
     overall_nov = region_data['Monthly Achievement(Nov)'].iloc[-1]
     trade_nov = region_data['Trade Nov'].iloc[-1]
     non_trade_nov = overall_nov - trade_nov
-    table_data_left = [
-    ['AGS Target', f"{region_data['AGS Tgt (Nov)'].iloc[-1]:.0f}"],
-    ['Plan', f"{region_data['Month Tgt (Nov)'].iloc[-1]:.0f}"],
-    ['Trade Target', f"{region_data['Trade Tgt (Nov)'].iloc[-1]:.0f}"],
-    ['Non-Trade Target', f"{region_data['Non-Trade Tgt (Nov)'].iloc[-1]:.0f}"]]
-    table_data_right = [
-    [f"{overall_nov:.0f}"],
-    [f"{trade_nov:.0f}"],
-    [f"{non_trade_nov:.0f}"]]
+    table_data_left = [['AGS Target', f"{region_data['AGS Tgt (Nov)'].iloc[-1]:.0f}"],['Plan', f"{region_data['Month Tgt (Nov)'].iloc[-1]:.0f}"],['Trade Target', f"{region_data['Trade Tgt (Nov)'].iloc[-1]:.0f}"],['Non-Trade Target', f"{region_data['Non-Trade Tgt (Nov)'].iloc[-1]:.0f}"]]
+    table_data_right = [[f"{overall_nov:.0f}"],[f"{trade_nov:.0f}"],[f"{non_trade_nov:.0f}"]]
     ax_current.text(0.225, 0.9, 'Targets', fontsize=12, fontweight='bold', ha='center')
     ax_current.text(0.35, 0.9, 'Achievement', fontsize=12, fontweight='bold', ha='center')
     table_left = ax_current.table(
@@ -2512,8 +2398,7 @@ def create_visualization(region_data, region, brand, months):
     ax_table = fig.add_subplot(gs[2, :])
     ax_table.axis('off')
     ax_table.set_title(f"Quarterly Requirement for Decemeber 2024", fontsize=18, fontweight='bold')
-    table_data = [
-                ['Overall\nRequirement', 'Trade Channel\nRequirement', 'Premium Product\nRequirement','Blended Product\nRequirement'],
+    table_data = [['Overall\nRequirement', 'Trade Channel\nRequirement', 'Premium Product\nRequirement','Blended Product\nRequirement'],
                 [f"{region_data['Q3 2023 Total'].iloc[-1]-region_data['Monthly Achievement(Oct)'].iloc[-1]-region_data['Monthly Achievement(Nov)'].iloc[-1]:.0f}", f"{region_data['Q3 2023 Trade'].iloc[-1]-region_data['Trade Oct'].iloc[-1]-region_data['Trade Nov'].iloc[-1]:.0f}",f"{region_data['Q3 2023 Premium'].iloc[-1]-region_data['Premium Oct'].iloc[-1]-region_data['Premium Nov'].iloc[-1]:.0f}", 
                  f"{region_data['Q3 2023 Blended '].iloc[-1]-region_data['Blended Oct'].iloc[-1]-region_data['Blended Nov'].iloc[-1]:.0f}"],]
     table = ax_table.table(cellText=table_data[1:], colLabels=table_data[0], cellLoc='center', loc='center')
@@ -2562,7 +2447,6 @@ def create_visualization(region_data, region, brand, months):
     ax2.set_xticklabels(months)
     ax2.legend(loc='upper right')
     for i, (pct_plan, pct_ags) in enumerate(zip(percent_achievements_plan, percent_achievements_ags)):
-        # Determine which value is higher
         if pct_plan >= pct_ags:
             ax2.annotate(f'{pct_plan:.1f}%',(i, pct_plan),xytext=(0, 10),textcoords='offset points', ha='center',va='bottom',fontsize=12,color='purple')
             ax2.annotate(f'{pct_ags:.1f}%', (i, pct_ags), xytext=(0, -15), textcoords='offset points', ha='center',va='top',fontsize=12,color='brown')
@@ -2573,10 +2457,7 @@ def create_visualization(region_data, region, brand, months):
     ax3.axis('off')
     current_year = 2024
     last_year = 2023
-    channel_data = [
-        ('Trade', region_data['Trade Nov'].iloc[-1], region_data['Trade Nov 2023'].iloc[-1],'Channel'),
-        ('Premium', region_data['Premium Nov'].iloc[-1], region_data['Premium Nov 2023'].iloc[-1],'Product'),
-        ('Blended', region_data['Blended Nov'].iloc[-1], region_data['Blended Nov 2023'].iloc[-1],'Product')]
+    channel_data = [('Trade', region_data['Trade Nov'].iloc[-1], region_data['Trade Nov 2023'].iloc[-1],'Channel'),('Premium', region_data['Premium Nov'].iloc[-1], region_data['Premium Nov 2023'].iloc[-1],'Product'),('Blended', region_data['Blended Nov'].iloc[-1], region_data['Blended Nov 2023'].iloc[-1],'Product')]
     monthly_achievement_nov = region_data['Monthly Achievement(Nov)'].iloc[-1]
     total_nov_current = region_data['Monthly Achievement(Nov)'].iloc[-1]
     total_nov_last = region_data['Total Nov 2023'].iloc[-1]
@@ -2626,7 +2507,6 @@ def create_visualization(region_data, region, brand, months):
         ax4.text(0.65, y_pos, f"{value_current:.0f}", fontsize=14)
         ax4.text(0.10, y_pos-0.05, f"vs Last Month: {value_last:.0f}", fontsize=12)
         ax4.text(0.65, y_pos-0.05, f"({change:.1f}% {arrow})", fontsize=12, color=color)
-        # Add the share percentage comparison
         ax4.text(0.00, y_pos-0.1, 
                 f"•{channel} {t} has share of {percentage_last_month:.1f}% in Oct. as compared to {percentage:.1f}% in Nov.",
                 fontsize=11, color='darkcyan')
@@ -2647,11 +2527,7 @@ def create_visualization(region_data, region, brand, months):
         return f'{pct:.0f}%\n({val:.0f})'
      return my_autopct
     ax5 = fig.add_subplot(gs[6, 0])
-    region_type_data = [
-    region_data['Green Nov'].iloc[-1],
-    region_data['Yellow Nov'].iloc[-1],
-    region_data['Red Nov'].iloc[-1],
-    region_data['Unidentified Nov'].iloc[-1]]
+    region_type_data = [region_data['Green Nov'].iloc[-1],region_data['Yellow Nov'].iloc[-1],region_data['Red Nov'].iloc[-1],region_data['Unidentified Nov'].iloc[-1]]
     region_type_labels = ['G', 'Y', 'R', '']
     colors = ['green', 'yellow', 'red', 'gray']
     filtered_data, filtered_labels, filtered_colors = create_pie_data(
@@ -2724,14 +2600,7 @@ def create_visualization(region_data, region, brand, months):
             end_x = x + width * 0.49
             start_y = y + 0.31
             end_y = y + 0.31
-        arrow = patches.FancyArrowPatch(
-            (start_x, start_y),
-            (end_x, end_y),
-            arrowstyle=arrow_style,
-            color=arrow_color,
-            linewidth=2,
-            zorder=3
-        )
+        arrow = patches.FancyArrowPatch((start_x, start_y),(end_x, end_y),arrowstyle=arrow_style,color=arrow_color,linewidth=2,zorder=3)
         ax.add_patch(arrow)
         if trade_pct_change > 0:
             arrow_style = 'fancy,head_length=4,head_width=6'
@@ -2747,16 +2616,10 @@ def create_visualization(region_data, region, brand, months):
             end_x = x + width * 0.49
             start_y = y + 0.11
             end_y = y + 0.11
-        arrow = patches.FancyArrowPatch(
-            (start_x, start_y),
-            (end_x, end_y),
-            arrowstyle=arrow_style,
-            color=arrow_color,
-            linewidth=2,
-            zorder=3)
+        arrow = patches.FancyArrowPatch((start_x, start_y),(end_x, end_y),arrowstyle=arrow_style,color=arrow_color,linewidth=2,zorder=3)
         ax.add_patch(arrow)
-    box_height = 0.6  # Increased height
-    box_y = 0.2      # Adjusted vertical position
+    box_height = 0.6 
+    box_y = 0.2   
     q1_data = {'total_2023': region_data['Q1 2023 Total'].iloc[-1],'total_2024': region_data['Q1 2024 Total'].iloc[-1],'trade_2023': region_data['Q1 2023 Trade'].iloc[-1],'trade_2024': region_data['Q1 2024 Trade'].iloc[-1]}
     q2_data = {'total_2023': region_data['Q2 2023 Total'].iloc[-1],'total_2024': region_data['Q2 2024 Total'].iloc[-1],'trade_2023': region_data['Q2 2023 Trade'].iloc[-1],'trade_2024': region_data['Q2 2024 Trade'].iloc[-1]}
     create_modern_quarterly_box(ax_comparison, 0.1, box_y, 0.35, box_height, q1_data, "Q1")
@@ -2779,7 +2642,6 @@ def generate_full_report(df, regions):
         for region in regions:
             region_brands = df[df['Zone'] == region]['Brand'].unique().tolist()
             for brand in region_brands:
-                # Filter data for current region and brand
                 region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)]
                 months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct','Nov']
                 fig = create_visualization(region_data, region, brand, months)
@@ -2892,10 +2754,7 @@ def show_about_page():
 def sales_review_report_generator():
     with st.sidebar:
         st.markdown("# 📊 Navigation")
-        selected_page = st.radio(
-            "",
-            ["🏠 Home", "📈 Report Generator", "ℹ️ About"],
-            key="navigation")
+        selected_page = st.radio("",["🏠 Home", "📈 Report Generator", "ℹ️ About"],key="navigation")
         st.markdown("---")
         st.markdown("### 📅 Current Session")
         st.markdown(f"Date: {datetime.now().strftime('%B %d, %Y')}")
@@ -2918,14 +2777,8 @@ def load_lottie_url(url: str):
     except:
         return None
 def get_online_editor_url(file_extension):
-    extension_mapping = {
-        '.xlsx': 'https://www.office.com/launch/excel?auth=2',
-        '.xls': 'https://www.office.com/launch/excel?auth=2',
-        '.doc': 'https://www.office.com/launch/word?auth=2',
-        '.docx': 'https://www.office.com/launch/word?auth=2',
-        '.ppt': 'https://www.office.com/launch/powerpoint?auth=2',
-        '.pptx': 'https://www.office.com/launch/powerpoint?auth=2',
-        '.pdf': 'https://documentcloud.adobe.com/link/home/'}
+    extension_mapping = {'.xlsx': 'https://www.office.com/launch/excel?auth=2','.xls': 'https://www.office.com/launch/excel?auth=2','.doc': 'https://www.office.com/launch/word?auth=2',
+        '.docx': 'https://www.office.com/launch/word?auth=2','.ppt': 'https://www.office.com/launch/powerpoint?auth=2','.pptx': 'https://www.office.com/launch/powerpoint?auth=2','.pdf': 'https://documentcloud.adobe.com/link/home/'}
     return extension_mapping.get(file_extension.lower(), 'https://www.google.com/drive/')
 def folder_menu():
     st.markdown("""
@@ -3350,21 +3203,9 @@ def normal():
         c.drawImage(img, x, y, width, height)
     def draw_table(data, x, y, col_widths):
         table = Table(data, colWidths=col_widths)
-        table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 8),  # Reduced font size
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 6),  # Reduced padding
-            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-            ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 1), (-1, -1), 6),  # Reduced font size
-            ('TOPPADDING', (0, 1), (-1, -1), 3),  # Reduced padding
-            ('BOTTOMPADDING', (0, 1), (-1, -1), 3),  # Reduced padding
-            ('GRID', (0, 0), (-1, -1), 1, colors.black)]))
+        table.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, 0), colors.grey),('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),('ALIGN', (0, 0), (-1, -1), 'CENTER'),('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 8),('BOTTOMPADDING', (0, 0), (-1, 0), 6),('BACKGROUND', (0, 1), (-1, -1), colors.beige),('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),('FONTSIZE', (0, 1), (-1, -1), 6), ('TOPPADDING', (0, 1), (-1, -1), 3),('BOTTOMPADDING', (0, 1), (-1, -1), 3),('GRID', (0, 0), (-1, -1), 1, colors.black)]))
         w, h = table.wrapOn(c, width, height)
         table.drawOn(c, x, y - h)
     def add_tutorial_page():
@@ -3376,8 +3217,7 @@ def normal():
         lc.y = 50
         lc.height = 125
         lc.width = 300
-        lc.data = [
-            [random.randint(2000, 3000) for _ in range(12)],[random.randint(1500, 2500) for _ in range(12)],[random.randint(1800, 2800) for _ in range(12)],[random.randint(2200, 3200) for _ in range(12)],]
+        lc.data = [[random.randint(2000, 3000) for _ in range(12)],[random.randint(1500, 2500) for _ in range(12)],[random.randint(1800, 2800) for _ in range(12)],[random.randint(2200, 3200) for _ in range(12)],]
         lc.lines[0].strokeColor = colors.green
         lc.lines[1].strokeColor = colors.blue
         lc.lines[2].strokeColor = colors.pink
@@ -3386,30 +3226,21 @@ def normal():
         legend.alignment = 'right'
         legend.x = 330
         legend.y = 150
-        legend.colorNamePairs = [
-            (colors.green, 'Normal EBITDA'),
-            (colors.blue, 'Premium EBITDA'),
-            (colors.crimson, 'Overall EBITDA'),
-            (colors.brown, 'Imaginary EBITDA'),]
+        legend.colorNamePairs = [(colors.green, 'Normal EBITDA'),(colors.blue, 'Premium EBITDA'),(colors.crimson, 'Overall EBITDA'),(colors.brown, 'Imaginary EBITDA'),]
         drawing.add(lc)
         drawing.add(legend)
         renderPDF.draw(drawing, c, inch, height - 300)
         c.setFont("Helvetica-Bold", 18)
         c.drawString(inch, height - 350, "Key Concepts:")
-        concepts = [
-            ("Overall EBITDA:", "Weighted average of Normal and Premium EBITDA based on their actual quantities."),
-            ("Imaginary EBITDA:", "Calculated by adjusting shares based on the following rules:"),
-            ("", "• If both (Normal and Premium) are present: Premium +5%, Normal -5%"),
-            ("", "• If only one is present: No change"),
-            ("Adjusted Shares:", "These adjustments aim to model potential improvements in product mix."),]
+        concepts = [("Overall EBITDA:", "Weighted average of Normal and Premium EBITDA based on their actual quantities."),("Imaginary EBITDA:", "Calculated by adjusting shares based on the following rules:"),("", "• If both (Normal and Premium) are present: Premium +5%, Normal -5%"),("", "• If only one is present: No change"),("Adjusted Shares:", "These adjustments aim to model potential improvements in product mix."),]
         text_object = c.beginText(inch, height - 380)
         for title, description in concepts:
             if title:
                 text_object.setFont("Helvetica-Bold", 12)
-                text_object.setFillColorRGB(0.7, 0.3, 0.1)  # Reddish-brown color for concept titles
+                text_object.setFillColorRGB(0.7, 0.3, 0.1) 
                 text_object.textLine(title)
                 text_object.setFont("Helvetica", 12)
-                text_object.setFillColorRGB(0, 0, 0)  # Black color for descriptions
+                text_object.setFillColorRGB(0, 0, 0)  
             text_object.textLine(description)
             if not title:
                 text_object.textLine("")
@@ -3419,10 +3250,7 @@ def normal():
     def add_appendix():
         c.setFont("Helvetica-Bold", 24)
         c.drawString(inch, height - inch, "Appendix")
-        sections = [
-            ("Graph Interpretation:", "Each line represents a different metric over time. The differences between metrics are shown below\n each month."),
-            ("Tables:", "The descriptive statistics table provides a summary of the data. The monthly share distribution table\n shows the proportion of Normal and Premium Product for each month."),
-            ("Importance:", "These visualizations help identify trends, compare performance across product categories, and\n understand the potential impact of changing product distributions."),]
+        sections = [("Graph Interpretation:", "Each line represents a different metric over time. The differences between metrics are shown below\n each month."),("Tables:", "The descriptive statistics table provides a summary of the data. The monthly share distribution table\n shows the proportion of Normal and Premium Product for each month."),("Importance:", "These visualizations help identify trends, compare performance across product categories, and\n understand the potential impact of changing product distributions."),]
         text_object = c.beginText(inch, height - 1.5*inch)
         text_object.setFont("Helvetica-Bold", 14)
         for title, content in sections:
@@ -3434,11 +3262,7 @@ def normal():
         c.drawText(text_object)
         c.setFont("Helvetica-Bold", 14)
         c.drawString(inch, height - 4*inch, "Suggestions for Improvement:")
-        suggestions = [
-            "Increase the share of Premium Product , which typically have higher EBITDA.",
-            "Analyze factors contributing to higher EBITDA in Premium Channel,and apply insights to Normal.",
-            "Regularly review and adjust pricing strategies to optimize EBITDA across all channels.",
-            "Invest in product innovation to expand Premium Product offerings.",]
+        suggestions = ["Increase the share of Premium Product , which typically have higher EBITDA.","Analyze factors contributing to higher EBITDA in Premium Channel,and apply insights to Normal.","Regularly review and adjust pricing strategies to optimize EBITDA across all channels.","Invest in product innovation to expand Premium Product offerings.",]
         text_object = c.beginText(inch, height - 4.3*inch)
         text_object.setFont("Helvetica", 12)
         for suggestion in suggestions:
@@ -3446,10 +3270,7 @@ def normal():
         c.drawText(text_object)
         c.setFont("Helvetica-Bold", 14)
         c.drawString(inch, height - 5.2*inch, "Limitations:")
-        limitations = [
-            "This analysis is based on historical data and may not predict future market changes.",
-            "External factors such as economic conditions are not accounted for in this report.",
-            "This report analyzes the EBIDTA for Normal and Premium Product ceteris paribus.",]
+        limitations = ["This analysis is based on historical data and may not predict future market changes.","External factors such as economic conditions are not accounted for in this report.","This report analyzes the EBIDTA for Normal and Premium Product ceteris paribus.",]
         text_object = c.beginText(inch, height - 5.5*inch)
         text_object.setFont("Helvetica", 12)
         for limitation in limitations:
