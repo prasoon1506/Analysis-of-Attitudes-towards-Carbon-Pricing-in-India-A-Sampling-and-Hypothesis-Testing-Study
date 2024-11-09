@@ -87,7 +87,6 @@ from reportlab.platypus import Table, TableStyle
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error, r2_score
-import time
 import io
 import streamlit.components.v1 as components
 import warnings
@@ -3851,7 +3850,6 @@ def sales_review_report_generator():
             ["🏠 Home", "📈 Report Generator", "ℹ️ About"],
             key="navigation"
         )
-        
         st.markdown("---")
         st.markdown("### 📅 Current Session")
         st.markdown(f"Date: {datetime.now().strftime('%B %d, %Y')}")
