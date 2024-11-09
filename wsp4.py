@@ -513,7 +513,6 @@ def front_page_creator():
     with st.expander("Preview Template", expanded=False):
         st.write("Template Preview would appear here")
     with st.container():
-            # Basic Settings
             st.subheader("Basic Settings")
             col1, col2 = st.columns(2)
             with col1:
@@ -677,45 +676,38 @@ def front_page_creator():
                 "text": block_text,
                 "font": block_font,
                 "size": block_size,
-                "color": block_color
-            })
+                "color": block_color})
             st.subheader("Watermark Settings")
             add_watermark = st.checkbox(
                 "Add Watermark",
-                help="Add a watermark to your front page"
-            )
+                help="Add a watermark to your front page")
             if add_watermark:
                 col15, col16 = st.columns(2)
                 with col15:
                     watermark_text = st.text_input(
                         "Watermark Text",
                         placeholder="Enter watermark text",
-                        help="Text to use as watermark"
-                    )
+                        help="Text to use as watermark")
                     watermark_font = st.selectbox(
                         "Watermark Font",
                         ["Helvetica", "Times-Roman", "Courier"],
-                        help="Choose the font for your watermark"
-                    )
+                        help="Choose the font for your watermark")
                 with col16:
                     watermark_size = st.slider(
                         "Watermark Size",
                         20, 100, 60,
-                        help="Adjust the size of your watermark"
-                    )
+                        help="Adjust the size of your watermark")
                     watermark_opacity = st.slider(
                         "Watermark Opacity",
                         0.0, 1.0, 0.1,
                         0.1,
-                        help="Adjust the opacity of your watermark"
-                    )
+                        help="Adjust the opacity of your watermark")
             st.subheader("Footer Options")
             col15, col16 = st.columns(2)
             with col15:
                 show_date = st.checkbox(
                     "Show Date",
-                    help="Include the current date in the footer"
-                )
+                    help="Include the current date in the footer")
                 if show_date:
                     date_format = st.selectbox(
                         "Date Format",
@@ -852,16 +844,13 @@ def file_converter():
             "Word ↔️ PDF Converter",
             "Image to PDF Converter",
             "PDF Editor",
-            "Image Editor"
-        ]
-    )
+            "Image Editor"])
     if converter_type == "Excel ↔️ CSV Converter":
         st.markdown("### Excel ↔️ CSV Converter")
         conversion_direction = st.radio(
             "Select conversion direction:",
             ["CSV to Excel", "Excel to CSV"],
-            horizontal=True
-        )
+            horizontal=True)
         if conversion_direction == "CSV to Excel":
             with st.container():
                 st.markdown('<div class="converter-card">', unsafe_allow_html=True)
@@ -924,8 +913,7 @@ def file_converter():
                             label="📥 Download CSV File",
                             data=csv_data.getvalue(),
                             file_name=f"{uploaded_file.name.split('.')[0]}.csv",
-                            mime="text/csv"
-                        )
+                            mime="text/csv")
                     except Exception as e:
                         st.error(f"Error: {str(e)}")
                 st.markdown('</div>', unsafe_allow_html=True)
