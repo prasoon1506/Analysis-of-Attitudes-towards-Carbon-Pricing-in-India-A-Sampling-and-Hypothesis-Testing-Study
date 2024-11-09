@@ -74,16 +74,16 @@ from reportlab.graphics.charts.lineplots import LinePlot
 from reportlab.graphics.charts.linecharts import HorizontalLineChart
 from reportlab.graphics.charts.legends import Legend
 from reportlab.graphics.widgets.markers import makeMarker
-import streamlit as st
-import streamlit.components.v1 as components
-from streamlit_lottie import st_lottie
-from streamlit_option_menu import option_menu
-from streamlit_cookies_manager import EncryptedCookieManager
 def load_lottie_url(url: str):
     r = requests.get(url)
     if r.status_code != 200:
         return None
     return r.json()
+import streamlit as st
+import streamlit.components.v1 as components
+from streamlit_lottie import st_lottie
+from streamlit_option_menu import option_menu
+from streamlit_cookies_manager import EncryptedCookieManager
 def process_pdf(input_pdf, operations):
     from PyPDF2 import PdfReader, PdfWriter
     from io import BytesIO
