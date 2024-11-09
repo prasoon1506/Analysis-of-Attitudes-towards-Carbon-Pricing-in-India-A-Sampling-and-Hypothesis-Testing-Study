@@ -10,6 +10,8 @@ import tempfile
 import warnings
 import hashlib
 import shutil
+import plotly.subplots as sp
+import matplotlib.image as mpimg
 from datetime import datetime
 from pathlib import Path
 from collections import defaultdict, OrderedDict
@@ -242,20 +244,13 @@ def process_image(image, operations):
         image = enhancer.enhance(factor)
     return image, None
 def convert_uploadedfile_to_image(uploaded_file):
-    """Convert Streamlit UploadedFile to a temporary file path"""
     if uploaded_file is None:
         return None
-    
-    # Create a temporary file
     temp_dir = tempfile.mkdtemp()
     temp_file_path = os.path.join(temp_dir, uploaded_file.name)
-    
-    # Save the uploaded file to the temporary path
     with open(temp_file_path, 'wb') as f:
         f.write(uploaded_file.getvalue())
-    
     return temp_file_path
-# Professional Templates Dictionary
 TEMPLATES = {
     "Classic Professional": {
         "background_type": "Color",
@@ -308,7 +303,6 @@ TEMPLATES = {
     }
 }
 def register_custom_fonts():
-    """Register additional fonts for use in the PDF"""
     try:
         # Add more fonts as needed
         custom_fonts = [
@@ -530,30 +524,25 @@ def front_page_creator():
                 title = st.text_area(
                     "Title",
                     placeholder="Enter title (can be multiple lines)\nUse new lines for multi-line titles",
-                    help="Main title of your front page. Use new lines for multiple lines of text"
-                )
+                    help="Main title of your front page. Use new lines for multiple lines of text")
                 subtitle = st.text_input(
                     "Subtitle",
                     placeholder="Enter subtitle (optional)",
-                    help="Optional subtitle that appears below the main title"
-                )
+                    help="Optional subtitle that appears below the main title")
             with col2:
                 title_font = st.selectbox(
                     "Title Font",
                     ["Helvetica", "Helvetica-Bold", "Times-Roman", "Times-Bold", 
                      "Courier", "Courier-Bold", "Roboto", "Montserrat", "OpenSans"],
-                    help="Choose the font for your title"
-                )
+                    help="Choose the font for your title")
                 title_size = st.slider(
                     "Title Size",
                     20, 72, 48,
-                    help="Adjust the size of your title text"
-                )
+                    help="Adjust the size of your title text")
                 title_color = st.color_picker(
                     "Title Color",
                     "#000000",
-                    help="Choose the color for your title"
-                )
+                    help="Choose the color for your title")
             st.subheader("Layout Settings")
             col3, col4 = st.columns(2)
             with col3:
@@ -731,19 +720,16 @@ def front_page_creator():
                     date_format = st.selectbox(
                         "Date Format",
                         ["%B %d, %Y", "%d/%m/%Y", "%Y-%m-%d", "%d-%m-%Y"],
-                        help="Choose how the date should be displayed"
-                    )
+                        help="Choose how the date should be displayed")
             with col16:
                 footer_text = st.text_input(
                     "Custom Footer Text",
                     placeholder="Enter custom footer text",
-                    help="Add custom text to the footer"
-                )
+                    help="Add custom text to the footer")
                 footer_alignment = st.selectbox(
                     "Footer Alignment",
                     ["Center", "Left", "Right"],
-                    help="Choose how the footer is aligned"
-                )
+                    help="Choose how the footer is aligned")
             if st.button("Generate Front Page", help="Click to create your front page"):
                 if not title:
                     st.error("Please enter a title for your front page.")
@@ -789,8 +775,7 @@ def front_page_creator():
                         "date_format": date_format if show_date else "%B %d, %Y",
                         "text_blocks": text_blocks,
                         "footer_text": footer_text,
-                        "footer_alignment": footer_alignment,
-                    }
+                        "footer_alignment": footer_alignment,}
                     pdf_buffer = create_front_page(options)
                     filename = f"{title.split()[0].lower()}_front_page.pdf"
                     st.download_button(
@@ -798,8 +783,7 @@ def front_page_creator():
                         data=pdf_buffer,
                         file_name=filename,
                         mime="application/pdf",
-                        help="Download your generated front page as a PDF"
-                    )
+                        help="Download your generated front page as a PDF")
                     st.success("✨ PDF generated successfully! Click the download button above to save your front page.")
                     st.info("💡 Tip: After downloading, you may want to preview the PDF to ensure everything looks perfect.")
                 except Exception as e:
@@ -921,16 +905,12 @@ def file_converter():
         else: 
             with st.container():
                 st.markdown('<div class="converter-card">', unsafe_allow_html=True)
-                
                 uploaded_file = st.file_uploader("Upload Excel file", type=["xlsx", "xls"], key="excel_to_csv")
-                
                 if uploaded_file is not None:
                     try:
                         df = pd.read_excel(uploaded_file)
-                        
                         st.markdown("#### Preview")
                         st.dataframe(df.head(), use_container_width=True)
-                        
                         col1, col2, col3 = st.columns(3)
                         with col1:
                             st.metric("Rows", df.shape[0])
@@ -938,74 +918,54 @@ def file_converter():
                             st.metric("Columns", df.shape[1])
                         with col3:
                             st.metric("Size", f"{uploaded_file.size / 1024:.2f} KB")
-
                         csv_data = BytesIO()
                         df.to_csv(csv_data, index=False)
-                        
                         st.download_button(
                             label="📥 Download CSV File",
                             data=csv_data.getvalue(),
                             file_name=f"{uploaded_file.name.split('.')[0]}.csv",
                             mime="text/csv"
                         )
-
                     except Exception as e:
                         st.error(f"Error: {str(e)}")
-                
                 st.markdown('</div>', unsafe_allow_html=True)
-
-    # Word ↔️ PDF Converter
     elif converter_type == "Word ↔️ PDF Converter":
         st.markdown("### Word ↔️ PDF Converter")
-        
         conversion_direction = st.radio(
             "Select conversion direction:",
             ["Word to PDF", "PDF to Word"],
-            horizontal=True
-        )
-
+            horizontal=True)
         with st.container():
             st.markdown('<div class="converter-card">', unsafe_allow_html=True)
-            
             if conversion_direction == "Word to PDF":
                 uploaded_file = st.file_uploader("Upload Word file", type=["docx", "doc"], key="word_to_pdf")
-                
                 if uploaded_file is not None:
                     try:
                         doc = Document(uploaded_file)
                         output = BytesIO()
-                        
-                        # Convert Word to PDF using ReportLab
                         pdf = SimpleDocTemplate(output, pagesize=letter)
                         story = []
                         for paragraph in doc.paragraphs:
                             story.append(Paragraph(paragraph.text))
                         pdf.build(story)
-                        
                         st.download_button(
                             label="📥 Download PDF File",
                             data=output.getvalue(),
                             file_name=f"{uploaded_file.name.split('.')[0]}.pdf",
-                            mime="application/pdf"
-                        )
+                            mime="application/pdf")
                     except Exception as e:
                         st.error(f"Error: {str(e)}")
-                
-            else:  # PDF to Word
+            else:
                 uploaded_file = st.file_uploader("Upload PDF file", type=["pdf"], key="pdf_to_word")
-                
                 if uploaded_file is not None:
                     try:
                         pdf_reader = PdfReader(uploaded_file)
                         doc = Document()
-                        
                         for page in pdf_reader.pages:
                             text = page.extract_text()
                             doc.add_paragraph(text)
-                        
                         docx_output = BytesIO()
                         doc.save(docx_output)
-                        
                         st.download_button(
                             label="📥 Download Word File",
                             data=docx_output.getvalue(),
@@ -1014,67 +974,47 @@ def file_converter():
                         )
                     except Exception as e:
                         st.error(f"Error: {str(e)}")
-            
             st.markdown('</div>', unsafe_allow_html=True)
-
-    # Image to PDF Converter
     elif converter_type == "Image to PDF Converter":
         st.markdown("### Image to PDF Converter")
-        
         with st.container():
             st.markdown('<div class="converter-card">', unsafe_allow_html=True)
-            
             uploaded_files = st.file_uploader(
                 "Upload images (you can select multiple files)",
                 type=["png", "jpg", "jpeg"],
                 accept_multiple_files=True,
-                key="image_to_pdf"
-            )
-            
+                key="image_to_pdf")
             if uploaded_files:
                 try:
-                    # Preview uploaded images
                     if len(uploaded_files) > 0:
                         st.markdown("#### Preview")
                         cols = st.columns(min(3, len(uploaded_files)))
                         for idx, file in enumerate(uploaded_files[:3]):
                             cols[idx].image(file, use_column_width=True)
-                        
                         if len(uploaded_files) > 3:
                             st.info(f"+ {len(uploaded_files) - 3} more images")
-                    
-                    # Convert images to PDF
                     output = BytesIO()
                     pdf = Canvas(output, pagesize=letter)
-                    
                     for image_file in uploaded_files:
                         img = Image.open(image_file)
                         img_width, img_height = img.size
                         aspect = img_height / float(img_width)
-                        
-                        # Scale image to fit on page
                         if aspect > 1:
                             img_width = letter[0] - 40
                             img_height = img_width * aspect
                         else:
                             img_height = letter[1] - 40
                             img_width = img_height / aspect
-                        
-                        pdf.drawImage(ImageReader(img), 20, letter[1] - img_height - 20,
-                                    width=img_width, height=img_height)
+                        pdf.drawImage(ImageReader(img), 20, letter[1] - img_height - 20,width=img_width, height=img_height)
                         pdf.showPage()
-                    
                     pdf.save()
-                    
                     st.download_button(
                         label="📥 Download PDF File",
                         data=output.getvalue(),
                         file_name="converted_images.pdf",
-                        mime="application/pdf"
-                    )
+                        mime="application/pdf")
                 except Exception as e:
                     st.error(f"Error: {str(e)}")
-            
             st.markdown('</div>', unsafe_allow_html=True)
     elif converter_type == "PDF Editor":
       st.markdown("### PDF Editor") 
@@ -1091,13 +1031,9 @@ def file_converter():
                 uploaded_file.seek(0)
                 original_preview = get_pdf_preview(uploaded_file, preview_page)
                 st.image(original_preview, use_column_width=True)
-                operations = st.multiselect(
-                    "Select operations to perform",
-                    ["Extract Pages", "Merge PDFs", "Rotate Pages", "Add Watermark", 
-                     "Resize", "Crop"])
+                operations = st.multiselect("Select operations to perform",["Extract Pages", "Merge PDFs", "Rotate Pages", "Add Watermark","Resize", "Crop"])
             try:
                 pdf_operations = {}
-            
                 if "Extract Pages" in operations:
                     st.markdown("#### Extract Pages")
                     total_pages = len(pdf_reader.pages)
@@ -1113,8 +1049,7 @@ def file_converter():
                         "Upload PDFs to merge",
                         type=["pdf"],
                         accept_multiple_files=True,
-                        key="merge_pdfs"
-                    )
+                        key="merge_pdfs")
                     if additional_pdfs:
                         pdf_operations["merge"] = {"files": additional_pdfs}
                 if "Rotate Pages" in operations:
@@ -1131,9 +1066,7 @@ def file_converter():
                             ["center", "top-left", "top-right", "bottom-left", "bottom-right"]
                         ),
                         "angle": st.slider("Rotation Angle", -180, 180, 45),
-                        "opacity": st.slider("Opacity", 0.1, 1.0, 0.3)
-                    }
-                    
+                        "opacity": st.slider("Opacity", 0.1, 1.0, 0.3)}
                     page_selection = st.radio("Apply watermark to", ["All Pages", "Selected Pages"])
                     if page_selection == "Selected Pages":
                         selected_pages = st.multiselect(
@@ -1143,7 +1076,6 @@ def file_converter():
                         watermark_options["pages"] = selected_pages
                     else:
                         watermark_options["pages"] = "all"
-                    
                     if watermark_type == "Text":
                         watermark_options.update({
                             "text": st.text_input("Watermark text"),
@@ -1153,14 +1085,11 @@ def file_converter():
                     else:
                         watermark_image = st.file_uploader(
                             "Upload watermark image",
-                            type=["png", "jpg", "jpeg"]
-                        )
+                            type=["png", "jpg", "jpeg"])
                         if watermark_image:
                             watermark_options.update({
                                 "image": watermark_image,
-                                "size": st.slider("Size (% of page width)", 10, 100, 30)
-                            })
-                        
+                                "size": st.slider("Size (% of page width)", 10, 100, 30)})
                     if (watermark_type == "Text" and watermark_options["text"]) or (watermark_type == "Image" and watermark_image):
                         pdf_operations["watermark"] = watermark_options
                 if "Resize" in operations:
@@ -1168,7 +1097,6 @@ def file_converter():
                     scale = st.slider("Scale percentage", 1, 200, 100,
                                     help="100% is original size")
                     pdf_operations["resize"] = {"scale": scale}
-                
                 if "Crop" in operations:
                     st.markdown("#### Crop PDF")
                     st.info("Values are in percentage of original size")
@@ -1183,17 +1111,11 @@ def file_converter():
                         "left": left,
                         "right": right,
                         "top": top,
-                        "bottom": bottom
-                    }
-                # Process PDF if any operations are selected
+                        "bottom": bottom}
                 if pdf_operations:
                     output = BytesIO()
                     uploaded_file.seek(0)
-                    
-                    # Process other operations
                     output = process_pdf(uploaded_file, pdf_operations)
-                    
-                    # Handle watermark if selected
                     if "watermark" in pdf_operations:
                         output.seek(0)
                         pdf_writer = PdfWriter()
@@ -1204,19 +1126,14 @@ def file_converter():
                         final_output = BytesIO()
                         pdf_writer.write(final_output)
                         output = final_output
-                    
-                    # Show preview and metrics for all operations
                     with col2:
                         st.markdown("#### Processed PDF")
                         output.seek(0)
                         processed_preview = get_pdf_preview(output, preview_page)
                         st.image(processed_preview, use_column_width=True)
-                    
-                    # Display metrics
                     original_size = len(uploaded_file.getvalue()) / 1024  # KB
                     output.seek(0)
-                    new_size = len(output.getvalue()) / 1024  # KB
-                    
+                    new_size = len(output.getvalue()) / 1024 
                     metric_col1, metric_col2, metric_col3 = st.columns(3)
                     with metric_col1:
                         st.metric("Original Size", f"{original_size:.1f} KB")
@@ -1225,47 +1142,30 @@ def file_converter():
                     with metric_col3:
                         reduction = ((original_size - new_size) / original_size) * 100
                         st.metric("Size Change", f"{reduction:.1f}%")
-                    
-                    # Download button
                     st.download_button(
                         label="📥 Download Modified PDF",
                         data=output.getvalue(),
                         file_name=f"modified_{uploaded_file.name}",
-                        mime="application/pdf"
-                    )
-                    
+                        mime="application/pdf")       
             except Exception as e:
                 st.error(f"Error: {str(e)}")
-            
       st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Add new Image Editor section
     elif converter_type == "Image Editor":
         st.markdown("### Image Editor")
-        
         with st.container():
             st.markdown('<div class="converter-card">', unsafe_allow_html=True)
-            
             uploaded_file = st.file_uploader(
                 "Upload image",
                 type=["png", "jpg", "jpeg"],
-                key="image_editor"
-            )
-            
+                key="image_editor")
             if uploaded_file is not None:
                 try:
                     original_bytes = uploaded_file.getvalue()
                     image = Image.open(uploaded_file)
-                    
-                    # Show original image
                     st.markdown("#### Original Image")
                     st.image(image, use_column_width=True)
-                    
-                    # Image operations
                     operations = {}
-                    
                     col1, col2 = st.columns(2)
-                    
                     with col1:
                         if st.checkbox("Resize"):
                             st.markdown("##### Resize Settings")
@@ -1273,7 +1173,6 @@ def file_converter():
                             width = st.number_input("Width", min_value=1, value=orig_width)
                             height = st.number_input("Height", min_value=1, value=orig_height)
                             operations["resize"] = {"width": width, "height": height}
-                        
                         if st.checkbox("Crop"):
                             st.markdown("##### Crop Settings")
                             width, height = image.size
@@ -1282,31 +1181,22 @@ def file_converter():
                             right = st.number_input("Right", left+1, width, width)
                             bottom = st.number_input("Bottom", top+1, height, height)
                             operations["crop"] = {"left": left, "top": top, "right": right, "bottom": bottom}
-                    
                     with col2:
                         if st.checkbox("Rotate"):
                             angle = st.slider("Rotation Angle", -180, 180, 0)
                             operations["rotate"] = {"angle": angle}
-                        
                         if st.checkbox("Adjust"):
                             brightness = st.slider("Brightness", 0.0, 2.0, 1.0)
                             contrast = st.slider("Contrast", 0.0, 2.0, 1.0)
                             operations["brightness"] = {"factor": brightness}
                             operations["contrast"] = {"factor": contrast}
-                        
                         if st.checkbox("Compress"):
                             quality = st.slider("Quality", 1, 100, 85)
                             operations["compress"] = {"quality": quality}
-                    
                     if operations:
-                        # Process image
                         processed_image, quality = process_image(image, operations)
-                        
-                        # Show processed image
                         st.markdown("#### Processed Image")
                         st.image(processed_image, use_column_width=True)
-                        
-                        # Save processed image
                         output = BytesIO()
                         if quality is not None:
                             processed_image.save(output, format=image.format, quality=quality, optimize=True)
@@ -1339,10 +1229,7 @@ def file_converter():
                         mime=f"image/{image.format.lower()}")
                 except Exception as e:
                     st.error(f"Error: {str(e)}")
-            
             st.markdown('</div>', unsafe_allow_html=True)
-
-    # Add helpful information
     with st.expander("ℹ️ Need Help?"):
         st.markdown("""
         ### Usage Instructions
@@ -1367,7 +1254,6 @@ def excel_editor():
     def create_excel_structure_html(sheet, max_rows=5):
         html = "<table class='excel-table'>"
         merged_cells = sheet.merged_cells.ranges
-
         for idx, row in enumerate(sheet.iter_rows(max_row=max_rows)):
             html += "<tr>"
             for cell in row:
@@ -1385,8 +1271,6 @@ def excel_editor():
             html += "</tr>"
         html += "</table>"
         return html
-
-    # Function to get merged column groups
     def get_merged_column_groups(sheet):
         merged_groups = {}
         for merged_range in sheet.merged_cells.ranges:
@@ -1394,24 +1278,15 @@ def excel_editor():
                 main_col = sheet.cell(1, merged_range.min_col).value
                 merged_groups[main_col] = list(range(merged_range.min_col, merged_range.max_col + 1))
         return merged_groups
-
-    # File uploader
     uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
-
     if uploaded_file is not None:
         # Read Excel file
         excel_file = openpyxl.load_workbook(uploaded_file)
         sheet = excel_file.active
-
-        # Display original Excel structure (first 5 rows)
         st.subheader("Original Excel Structure (First 5 Rows)")
         excel_html = create_excel_structure_html(sheet, max_rows=5)
         st.markdown(excel_html, unsafe_allow_html=True)
-
-        # Get merged column groups
         merged_groups = get_merged_column_groups(sheet)
-
-        # Create a list of column headers, considering merged cells
         column_headers = []
         column_indices = OrderedDict()  # To store the column indices for each header
         for col in range(1, sheet.max_column + 1):
@@ -1422,52 +1297,32 @@ def excel_editor():
                     column_indices[cell_value] = []
                 column_indices[cell_value].append(col - 1)  # pandas uses 0-based index
             else:
-                # If the cell is empty, it's part of a merged cell, so use the previous header
                 prev_header = column_headers[-1]
                 column_headers.append(prev_header)
                 column_indices[prev_header].append(col - 1)
-
-        # Read as pandas DataFrame using the correct column headers
         df = pd.read_excel(uploaded_file, header=None, names=column_headers)
         df = df.iloc[1:]  # Remove the first row as it's now our header
-
-        # Column selection for deletion
         st.subheader("Select columns to delete")
         all_columns = list(column_indices.keys())  # Use OrderedDict keys to maintain order
         cols_to_delete = st.multiselect("Choose columns to remove", all_columns)
-        
         if cols_to_delete:
             columns_to_remove = []
             for col in cols_to_delete:
                 columns_to_remove.extend(column_indices[col])
-            
             df = df.drop(df.columns[columns_to_remove], axis=1)
             st.success(f"Deleted columns: {', '.join(cols_to_delete)}")
-
-        # Row deletion
         st.subheader("Delete rows")
         num_rows = st.number_input("Enter the number of rows to delete from the start", min_value=0, max_value=len(df)-1, value=0)
-        
         if num_rows > 0:
             df = df.iloc[num_rows:]
             st.success(f"Deleted first {num_rows} rows")
-        
-        # Display editable dataframe
         st.subheader("Edit Data")
         st.write("You can edit individual cell values directly in the table below:")
-        
-        # Replace NaN values with None and convert dataframe to a dictionary
         df_dict = df.where(pd.notnull(df), None).to_dict('records')
-        
-        # Use st.data_editor with the processed dictionary
         edited_data = st.data_editor(df_dict)
-        
-        # Convert edited data back to dataframe
         edited_df = pd.DataFrame(edited_data)
         st.subheader("Edited Data")
         st.dataframe(edited_df)
-        
-        # Download button
         def get_excel_download_link(df):
             output = BytesIO()
             with pd.ExcelWriter(output, engine='openpyxl') as writer:
@@ -1475,34 +1330,24 @@ def excel_editor():
             excel_data = output.getvalue()
             b64 = base64.b64encode(excel_data).decode()
             return f'<a href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64}" download="edited_file.xlsx">Download Edited Excel File</a>'
-        
         st.markdown(get_excel_download_link(edited_df), unsafe_allow_html=True)
-
-        # New button to upload edited file to Home
         if st.button("Upload Edited File to Home"):
-            # Save the edited DataFrame to session state
             st.session_state.edited_df = edited_df
             st.session_state.edited_file_name = "edited_" + uploaded_file.name
             st.success("Edited file has been uploaded to Home. Please switch to the Home tab to see the uploaded file.")
-
     else:
         st.info("Please upload an Excel file to begin editing.")
 def data_analyzer():
     st.header("Advanced Data Analyzer")
-
     uploaded_file = st.file_uploader("Choose an Excel file for analysis", type="xlsx", key="analyser")
-
     if uploaded_file is not None:
         df = pd.read_excel(uploaded_file)
         st.write("Dataset Information:")
         st.write(f"Number of rows: {df.shape[0]}")
         st.write(f"Number of columns: {df.shape[1]}")
-        
         numeric_columns = df.select_dtypes(include=['float64', 'int64']).columns
         categorical_columns = df.select_dtypes(include=['object']).columns
-        
         analysis_type = st.selectbox("Select analysis type", ["Univariate Analysis", "Bivariate Analysis", "Regression Analysis", "Machine Learning Models", "Advanced Statistics"])
-        
         if analysis_type == "Univariate Analysis":
             univariate_analysis(df, numeric_columns, categorical_columns)
         elif analysis_type == "Bivariate Analysis":
@@ -1513,42 +1358,31 @@ def data_analyzer():
             machine_learning_models(df, numeric_columns, categorical_columns)
         elif analysis_type == "Advanced Statistics":
             advanced_statistics(df, numeric_columns)
-
 def univariate_analysis(df, numeric_columns, categorical_columns):
     st.subheader("Univariate Analysis")
-    
     column = st.selectbox("Select a column for analysis", numeric_columns.tolist() + categorical_columns.tolist())
-    
     if column in numeric_columns:
         st.write(df[column].describe())
-        
         col1, col2 = st.columns(2)
-        
         with col1:
             fig = go.Figure()
             fig.add_trace(go.Histogram(x=df[column], name="Histogram"))
             fig.update_layout(title=f"Histogram for {column}")
             st.plotly_chart(fig, use_container_width=True)
-        
         with col2:
             fig = go.Figure()
             fig.add_trace(go.Box(y=df[column], name="Box Plot"))
             fig.update_layout(title=f"Box Plot for {column}")
             st.plotly_chart(fig, use_container_width=True)
-        
         col3, col4 = st.columns(2)
-        
         with col3:
             fig = go.Figure()
             fig.add_trace(go.Violin(y=df[column], box_visible=True, line_color='black', meanline_visible=True, fillcolor='lightseagreen', opacity=0.6, x0=column))
             fig.update_layout(title=f"Violin Plot for {column}")
             st.plotly_chart(fig, use_container_width=True)
-        
         with col4:
             fig = px.line(df, y=column, title=f"Line Plot for {column}")
             st.plotly_chart(fig, use_container_width=True)
-        
-        # Additional statistics
         st.subheader("Additional Statistics")
         col5, col6, col7 = st.columns(3)
         with col5:
@@ -1557,27 +1391,20 @@ def univariate_analysis(df, numeric_columns, categorical_columns):
             st.metric("Kurtosis", f"{kurtosis(df[column]):.4f}")
         with col7:
             st.metric("Coefficient of Variation", f"{df[column].std() / df[column].mean():.4f}")
-        
     else:
         st.write(df[column].value_counts())
         col1, col2 = st.columns(2)
-        
         with col1:
             fig = px.bar(df[column].value_counts(), title=f"Bar Plot for {column}")
             st.plotly_chart(fig, use_container_width=True)
-        
         with col2:
             fig = px.pie(df, names=column, title=f"Pie Chart for {column}")
             st.plotly_chart(fig, use_container_width=True)
-
 def bivariate_analysis(df, numeric_columns):
     st.subheader("Bivariate Analysis")
-    
     x_col = st.selectbox("Select X-axis variable", numeric_columns)
     y_col = st.selectbox("Select Y-axis variable", numeric_columns)
-    
     chart_type = st.selectbox("Select chart type", ["Scatter", "Line", "Bar", "Box", "Violin", "3D Scatter", "Heatmap"])
-    
     if chart_type == "Scatter":
         fig = px.scatter(df, x=x_col, y=y_col, title=f"{y_col} vs {x_col}")
     elif chart_type == "Line":
@@ -1594,20 +1421,15 @@ def bivariate_analysis(df, numeric_columns):
     elif chart_type == "Heatmap":
         corr_matrix = df[numeric_columns].corr()
         fig = px.imshow(corr_matrix, title="Correlation Heatmap")
-    
     st.plotly_chart(fig, use_container_width=True)
-    
     correlation = df[[x_col, y_col]].corr().iloc[0, 1]
     st.write(f"Correlation between {x_col} and {y_col}: {correlation:.4f}")
-    
-    # Add correlation interpretation
     st.subheader("Correlation Interpretation")
     st.write("""
     The correlation coefficient ranges from -1 to 1:
     - 1: Perfect positive correlation
     - 0: No correlation
     - -1: Perfect negative correlation
-    
     Interpretation:
     - 0.00 to 0.19: Very weak correlation
     - 0.20 to 0.39: Weak correlation
@@ -1615,8 +1437,6 @@ def bivariate_analysis(df, numeric_columns):
     - 0.60 to 0.79: Strong correlation
     - 0.80 to 1.00: Very strong correlation
     """)
-    
-    # Add correlation formula
     st.latex(r'''
     r = \frac{\sum_{i=1}^{n} (x_i - \bar{x})(y_i - \bar{y})}{\sqrt{\sum_{i=1}^{n} (x_i - \bar{x})^2} \sqrt{\sum_{i=1}^{n} (y_i - \bar{y})^2}}
     ''')
@@ -1624,32 +1444,22 @@ def bivariate_analysis(df, numeric_columns):
     st.write("- r is the correlation coefficient")
     st.write("- x_i and y_i are individual sample points")
     st.write("- x̄ and ȳ are the sample means")
-
 def regression_analysis(df, numeric_columns, categorical_columns):
     st.subheader("Regression Analysis")
-    
     regression_type = st.selectbox("Select regression type", ["Simple Linear", "Multiple Linear", "Polynomial", "Ridge", "Lasso"])
-    
     y_col = st.selectbox("Select dependent variable", numeric_columns)
     x_cols = st.multiselect("Select independent variables", numeric_columns.tolist() + categorical_columns.tolist())
-    
     if len(x_cols) == 0:
         st.warning("Please select at least one independent variable.")
         return
-    
     X = df[x_cols]
     y = df[y_col]
-    
-    # Handle categorical variables
     X = pd.get_dummies(X, drop_first=True)
-    
     if regression_type == "Polynomial":
         degree = st.slider("Select polynomial degree", 1, 5, 2)
         poly = PolynomialFeatures(degree=degree)
         X = poly.fit_transform(X)
-    
     X = sm.add_constant(X)
-    
     try:
         if regression_type == "Ridge":
             alpha = st.slider("Select alpha for Ridge regression", 0.0, 10.0, 1.0)
@@ -1659,45 +1469,30 @@ def regression_analysis(df, numeric_columns, categorical_columns):
             model = sm.OLS(y, X).fit_regularized(alpha=alpha, L1_wt=1)
         else:
             model = sm.OLS(y, X).fit()
-        
         st.write(model.summary())
-        
-        # Plot actual vs predicted values
         fig = px.scatter(x=y, y=model.predict(X), labels={'x': 'Actual', 'y': 'Predicted'}, title="Actual vs Predicted Values")
         fig.add_trace(go.Scatter(x=[y.min(), y.max()], y=[y.min(), y.max()], mode='lines', name='y=x'))
         st.plotly_chart(fig, use_container_width=True)
-        
-        # Residual plot
         residuals = model.resid
         fig = px.scatter(x=model.predict(X), y=residuals, labels={'x': 'Predicted', 'y': 'Residuals'}, title="Residual Plot")
         fig.add_hline(y=0, line_dash="dash", line_color="red")
         st.plotly_chart(fig, use_container_width=True)
-        
-        # Statistical tests
         st.subheader("Statistical Tests")
-        
-        # Normality test (Jarque-Bera)
         jb_statistic, jb_p_value = jarque_bera(residuals)
         st.write(f"Jarque-Bera Test for Normality: statistic = {jb_statistic:.4f}, p-value = {jb_p_value:.4f}")
         st.write(f"{'Reject' if jb_p_value < 0.05 else 'Fail to reject'} the null hypothesis of normality at 5% significance level.")
-        
-        # Heteroscedasticity test (Breusch-Pagan)
         _, bp_p_value, _, _ = het_breuschpagan(residuals, model.model.exog)
         st.write(f"Breusch-Pagan Test for Heteroscedasticity: p-value = {bp_p_value:.4f}")
         st.write(f"{'Reject' if bp_p_value < 0.05 else 'Fail to reject'} the null hypothesis of homoscedasticity at 5% significance level.")
         dw_statistic = durbin_watson(residuals)
         st.write(f"Durbin-Watson Test for Autocorrelation: {dw_statistic:.4f}")
         st.write("Values close to 2 suggest no autocorrelation, while values toward 0 or 4 suggest positive or negative autocorrelation.")
-        
-        # Multicollinearity (VIF)
         vif_data = pd.DataFrame()
         vif_data["Variable"] = X.columns
         vif_data["VIF"] = [variance_inflation_factor(X.values, i) for i in range(X.shape[1])]
         st.write("Variance Inflation Factors (VIF) for Multicollinearity:")
         st.write(vif_data)
         st.write("VIF > 5 suggests high multicollinearity.")
-        
-        # Add regression formulas and explanations
         st.subheader("Regression Formulas")
         if regression_type == "Simple Linear":
             st.latex(r'y = \beta_0 + \beta_1x + \epsilon')
@@ -1709,88 +1504,63 @@ def regression_analysis(df, numeric_columns, categorical_columns):
             st.latex(r'\min_{\beta} \sum_{i=1}^n (y_i - \beta_0 - \sum_{j=1}^p \beta_jx_{ij})^2 + \lambda \sum_{j=1}^p \beta_j^2')
         elif regression_type == "Lasso":
             st.latex(r'\min_{\beta} \sum_{i=1}^n (y_i - \beta_0 - \sum_{j=1}^p \beta_jx_{ij})^2 + \lambda \sum_{j=1}^p |\beta_j|')
-        
         st.write("Where:")
         st.write("- y is the dependent variable")
         st.write("- x, x_1, x_2, ..., x_n are independent variables")
         st.write("- β_0, β_1, β_2, ..., β_n are regression coefficients")
         st.write("- ε is the error term")
         st.write("- λ is the regularization parameter (for Ridge and Lasso)")
-        
     except Exception as e:
         st.error(f"An error occurred during regression analysis: {str(e)}")
         st.write("This error might be due to multicollinearity, insufficient data, or other issues in the dataset.")
         st.write("Try selecting different variables or using a different regression type.")
-
 def machine_learning_models(df, numeric_columns, categorical_columns):
     st.subheader("Machine Learning Models")
-    
     model_type = st.selectbox("Select model type", ["Supervised", "Unsupervised"])
-    
     if model_type == "Supervised":
         supervised_models(df, numeric_columns, categorical_columns)
     else:
         unsupervised_models(df, numeric_columns)
-
 def supervised_models(df, numeric_columns, categorical_columns):
     st.write("Supervised Learning Models")
-    
     y_col = st.selectbox("Select target variable", numeric_columns)
     x_cols = st.multiselect("Select features", numeric_columns.tolist() + categorical_columns.tolist())
-    
     if len(x_cols) == 0:
         st.warning("Please select at least one feature.")
         return
-    
     X = df[x_cols]
     y = df[y_col]
-    
-    # Handle categorical variables
     X = pd.get_dummies(X, drop_first=True)
-    
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
-    
     models = {
         "Linear Regression": LinearRegression(),
         "Decision Tree": DecisionTreeRegressor(),
         "Random Forest": RandomForestRegressor(),
         "SVR": SVR()
     }
-    
     selected_model = st.selectbox("Select a model", list(models.keys()))
-    
     try:
         model = models[selected_model]
         model.fit(X_train_scaled, y_train)
-        
         y_pred = model.predict(X_test_scaled)
-        
         mse = mean_squared_error(y_test, y_pred)
         r2 = r2_score(y_test, y_pred)
-        
         st.write(f"Mean Squared Error: {mse:.4f}")
         st.write(f"R-squared Score: {r2:.4f}")
-        
         fig = px.scatter(x=y_test, y=y_pred, labels={'x': 'Actual', 'y': 'Predicted'}, title="Actual vs Predicted Values")
         fig.add_trace(go.Scatter(x=[y_test.min(), y_test.max()], y=[y_test.min(), y_test.max()], mode='lines', name='y=x'))
         st.plotly_chart(fig, use_container_width=True)
-        
-        # Feature importance (for tree-based models)
         if selected_model in ["Decision Tree", "Random Forest"]:
             feature_importance = pd.DataFrame({
                 'feature': X.columns,
                 'importance': model.feature_importances_
             }).sort_values('importance', ascending=False)
-            
             st.write("Feature Importance:")
             fig = px.bar(feature_importance, x='feature', y='importance', title="Feature Importance")
             st.plotly_chart(fig, use_container_width=True)
-        
-        # Add model formulas and explanations
         st.subheader("Model Formulas and Explanations")
         if selected_model == "Linear Regression":
             st.latex(r'y = \beta_0 + \beta_1x_1 + \beta_2x_2 + ... + \beta_nx_n')
@@ -1804,79 +1574,56 @@ def supervised_models(df, numeric_columns, categorical_columns):
         elif selected_model == "SVR":
             st.latex(r'\min_{w, b, \xi} \frac{1}{2} \|w\|^2 + C \sum_{i=1}^n \xi_i')
             st.write("Support Vector Regression (SVR) finds a function that deviates from y by a value no greater than ε for each training point x.")
-    
     except Exception as e:
         st.error(f"An error occurred during model training: {str(e)}")
         st.write("This error might be due to insufficient data, incompatible data types, or other issues in the dataset.")
         st.write("Try selecting different variables or using a different model.")
-
 def unsupervised_models(df, numeric_columns):
     st.write("Unsupervised Learning Models")
-    
     x_cols = st.multiselect("Select features for clustering", numeric_columns)
-    
     if len(x_cols) == 0:
         st.warning("Please select at least one feature.")
         return
-    
     X = df[x_cols]
-    
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
-    
     n_clusters = st.slider("Select number of clusters", 2, 10, 3)
-    
     try:
         kmeans = KMeans(n_clusters=n_clusters, random_state=42)
         cluster_labels = kmeans.fit_predict(X_scaled)
-        
         df_clustered = df.copy()
         df_clustered['Cluster'] = cluster_labels
-        
         if len(x_cols) >= 2:
             fig = px.scatter(df_clustered, x=x_cols[0], y=x_cols[1], color='Cluster', title="K-means Clustering")
             st.plotly_chart(fig, use_container_width=True)
-        
         st.write("Cluster Centers:")
         cluster_centers = scaler.inverse_transform(kmeans.cluster_centers_)
         st.write(pd.DataFrame(cluster_centers, columns=x_cols))
-        
-        # Elbow method for optimal number of clusters
         inertias = []
         k_range = range(1, 11)
         for k in k_range:
             kmeans = KMeans(n_clusters=k, random_state=42)
             kmeans.fit(X_scaled)
             inertias.append(kmeans.inertia_)
-        
         fig = px.line(x=k_range, y=inertias, title="Elbow Method for Optimal k",
                       labels={'x': 'Number of Clusters (k)', 'y': 'Inertia'})
         st.plotly_chart(fig, use_container_width=True)
-        
-        # PCA
         st.subheader("Principal Component Analysis (PCA)")
         n_components = st.slider("Select number of components", 2, min(len(x_cols), 10), 2)
         pca = PCA(n_components=n_components)
         pca_result = pca.fit_transform(X_scaled)
-        
         df_pca = pd.DataFrame(data=pca_result, columns=[f'PC{i+1}' for i in range(n_components)])
-        
         fig = px.scatter(df_pca, x='PC1', y='PC2', title="PCA Visualization")
         st.plotly_chart(fig, use_container_width=True)
-        
         explained_variance_ratio = pca.explained_variance_ratio_
         cumulative_variance_ratio = np.cumsum(explained_variance_ratio)
-        
         fig = go.Figure()
         fig.add_trace(go.Bar(x=range(1, n_components+1), y=explained_variance_ratio, name='Individual'))
         fig.add_trace(go.Scatter(x=range(1, n_components+1), y=cumulative_variance_ratio, mode='lines+markers', name='Cumulative'))
         fig.update_layout(title='Explained Variance Ratio', xaxis_title='Principal Components', yaxis_title='Explained Variance Ratio')
         st.plotly_chart(fig, use_container_width=True)
-        
         st.write("Explained Variance Ratio:")
         st.write(pd.DataFrame({'PC': range(1, n_components+1), 'Explained Variance Ratio': explained_variance_ratio, 'Cumulative Variance Ratio': cumulative_variance_ratio}))
-        
-        # Add formulas and explanations
         st.subheader("K-means Clustering Formula")
         st.latex(r'\min_{S} \sum_{i=1}^{k} \sum_{x \in S_i} \|x - \mu_i\|^2')
         st.write("Where:")
@@ -1884,7 +1631,6 @@ def unsupervised_models(df, numeric_columns):
         st.write("- k is the number of clusters")
         st.write("- x is a data point")
         st.write("- μ_i is the mean of points in S_i")
-        
         st.subheader("PCA Formula")
         st.latex(r'X = U\Sigma V^T')
         st.write("Where:")
@@ -1892,28 +1638,19 @@ def unsupervised_models(df, numeric_columns):
         st.write("- U is the left singular vectors (eigenvectors of XX^T)")
         st.write("- Σ is a diagonal matrix of singular values")
         st.write("- V^T is the right singular vectors (eigenvectors of X^TX)")
-    
     except Exception as e:
         st.error(f"An error occurred during unsupervised learning: {str(e)}")
         st.write("This error might be due to insufficient data, incompatible data types, or other issues in the dataset.")
         st.write("Try selecting different variables or adjusting the number of clusters/components.")
-
 def advanced_statistics(df, numeric_columns):
     st.subheader("Advanced Statistics")
-    
     column = st.selectbox("Select a column for advanced statistics", numeric_columns)
-    
     st.write("Descriptive Statistics:")
     st.write(df[column].describe())
-    
     st.subheader("Normality Tests")
-    
-    # Shapiro-Wilk Test
     shapiro_stat, shapiro_p = stats.shapiro(df[column])
     st.write(f"Shapiro-Wilk Test: statistic = {shapiro_stat:.4f}, p-value = {shapiro_p:.4f}")
     st.write(f"{'Reject' if shapiro_p < 0.05 else 'Fail to reject'} the null hypothesis of normality at 5% significance level.")
-    
-    # Anderson-Darling Test
     anderson_result = stats.anderson(df[column])
     st.write("Anderson-Darling Test:")
     st.write(f"Statistic: {anderson_result.statistic:.4f}")
@@ -1924,21 +1661,14 @@ def advanced_statistics(df, numeric_columns):
             st.write(f"The null hypothesis of normality is not rejected at {sl}% significance level.")
         else:
             st.write(f"The null hypothesis of normality is rejected at {sl}% significance level.")
-    
-    # Jarque-Bera Test
     jb_stat, jb_p = stats.jarque_bera(df[column])
     st.write(f"Jarque-Bera Test: statistic = {jb_stat:.4f}, p-value = {jb_p:.4f}")
     st.write(f"{'Reject' if jb_p < 0.05 else 'Fail to reject'} the null hypothesis of normality at 5% significance level.")
-    
-    # Q-Q Plot
     fig, ax = plt.subplots()
     stats.probplot(df[column], dist="norm", plot=ax)
     ax.set_title("Q-Q Plot")
     st.pyplot(fig)
-    
     st.subheader("Time Series Analysis")
-    
-    # Augmented Dickey-Fuller Test for Stationarity
     adf_result = adfuller(df[column])
     st.write("Augmented Dickey-Fuller Test:")
     st.write(f"ADF Statistic: {adf_result[0]:.4f}")
@@ -1946,32 +1676,23 @@ def advanced_statistics(df, numeric_columns):
     for key, value in adf_result[4].items():
         st.write(f"Critical Value ({key}): {value:.4f}")
     st.write(f"{'Reject' if adf_result[1] < 0.05 else 'Fail to reject'} the null hypothesis of a unit root at 5% significance level.")
-    
-    # ACF and PACF plots
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 10))
     plot_acf(df[column], ax=ax1)
     plot_pacf(df[column], ax=ax2)
     ax1.set_title("Autocorrelation Function (ACF)")
     ax2.set_title("Partial Autocorrelation Function (PACF)")
     st.pyplot(fig)
-    
     st.subheader("Distribution Fitting")
-    
-    # Fit normal distribution
     mu, sigma = stats.norm.fit(df[column])
     x = np.linspace(df[column].min(), df[column].max(), 100)
     y = stats.norm.pdf(x, mu, sigma)
-    
     fig, ax = plt.subplots()
     ax.hist(df[column], density=True, alpha=0.7, bins='auto')
     ax.plot(x, y, 'r-', lw=2, label='Normal fit')
     ax.set_title(f"Distribution Fitting for {column}")
     ax.legend()
     st.pyplot(fig)
-    
     st.write(f"Fitted Normal Distribution: μ = {mu:.4f}, σ = {sigma:.4f}")
-    
-    # Kolmogorov-Smirnov Test
     ks_statistic, ks_p_value = stats.kstest(df[column], 'norm', args=(mu, sigma))
     st.write("Kolmogorov-Smirnov Test:")
     st.write(f"Statistic: {ks_statistic:.4f}")
@@ -1981,11 +1702,9 @@ def create_stats_pdf(stats_data, district):
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
     elements = []
-
     styles = getSampleStyleSheet()
     title = Paragraph(f"Descriptive Statistics for {district}", styles['Title'])
     elements.append(title)
-
     data = [['Brand', 'Mean', 'Median', 'Std Dev', 'Min', 'Max', 'Skewness', 'Kurtosis', 'Range', 'IQR']]
     for brand, stats in stats_data.items():
         row = [brand]
@@ -1996,7 +1715,6 @@ def create_stats_pdf(stats_data, district):
             else:
                 row.append(str(value))
         data.append(row)
-
     table = Table(data)
     table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
@@ -2015,7 +1733,6 @@ def create_stats_pdf(stats_data, district):
         ('GRID', (0, 0), (-1, -1), 1, colors.black)
     ]))
     elements.append(table)
-
     doc.build(elements)
     buffer.seek(0)
     return buffer
@@ -2023,16 +1740,13 @@ def create_prediction_pdf(prediction_data, district):
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
     elements = []
-
     styles = getSampleStyleSheet()
     title = Paragraph(f"Price Predictions for {district}", styles['Title'])
     elements.append(title)
-
     data = [['Brand', 'Predicted Price', 'Lower CI', 'Upper CI']]
     for brand, pred in prediction_data.items():
         row = [brand, f"{pred['forecast']:.2f}", f"{pred['lower_ci']:.2f}", f"{pred['upper_ci']:.2f}"]
         data.append(row)
-
     table = Table(data)
     table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
@@ -2051,15 +1765,10 @@ def create_prediction_pdf(prediction_data, district):
         ('GRID', (0, 0), (-1, -1), 1, colors.black)
     ]))
     elements.append(table)
-
     doc.build(elements)
     buffer.seek(0)
     return buffer
-
 st.set_page_config(page_title="WSP Analysis",page_icon="🔬", layout="wide")
-
-# [Keep the existing custom CSS here]
-# Custom CSS for the entire app
 st.markdown("""
 <style>
     .stApp {
@@ -2144,13 +1853,9 @@ if 'file_processed' not in st.session_state:
     st.session_state.file_processed = False
 if 'diff_week' not in st.session_state:
     st.session_state.diff_week = 0
-
-# [Keep the existing transform_data, plot_district_graph, process_file, and update_week_name functions]
 def transform_data(df, week_names_input):
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
     transformed_df = df[['Zone', 'REGION', 'Dist Code', 'Dist Name']].copy()
-    
-    # Region name replacements
     region_replacements = {
         '12_Madhya Pradesh(west)': 'Madhya Pradesh(West)',
         '20_Rajasthan': 'Rajasthan', '50_Rajasthan III': 'Rajasthan', '80_Rajasthan II': 'Rajasthan',
@@ -2173,26 +1878,20 @@ def transform_data(df, week_names_input):
         '04_Bihar': 'Bihar',
         '27_Chandigarh': 'Chandigarh',
         '82_Maharashtra (East)': 'Maharashtra(East)',
-        '25_West Bengal': 'West Bengal'
-    }
-    
+        '25_West Bengal': 'West Bengal'}
     transformed_df['REGION'] = transformed_df['REGION'].replace(region_replacements)
     transformed_df['REGION'] = transformed_df['REGION'].replace(['Delhi', 'Haryana', 'Punjab'], 'North-I')
     transformed_df['REGION'] = transformed_df['REGION'].replace(['Uttar Pradesh(West)','Uttarakhand'], 'North-II')
-    
     zone_replacements = {
         'EZ_East Zone': 'East Zone',
         'CZ_Central Zone': 'Central Zone',
         'NZ_North Zone': 'North Zone',
         'UPEZ_UP East Zone': 'UP East Zone',
         'upWZ_up West Zone': 'UP West Zone',
-        'WZ_West Zone': 'West Zone'
-    }
+        'WZ_West Zone': 'West Zone'}
     transformed_df['Zone'] = transformed_df['Zone'].replace(zone_replacements)
-    
     brand_columns = [col for col in df.columns if any(brand in col for brand in brands)]
     num_weeks = len(brand_columns) // len(brands)
-    
     for i in range(num_weeks):
         start_idx = i * len(brands)
         end_idx = (i + 1) * len(brands)
@@ -2200,11 +1899,8 @@ def transform_data(df, week_names_input):
         week_name = week_names_input[i]
         week_data = week_data.rename(columns={
             col: f"{brand} ({week_name})"
-            for brand, col in zip(brands, week_data.columns)
-        })
+            for brand, col in zip(brands, week_data.columns)})
         week_data.replace(0, np.nan, inplace=True)
-        
-        # Use a unique suffix for each merge operation
         suffix = f'_{i}'
         transformed_df = pd.merge(transformed_df, week_data, left_index=True, right_index=True, suffixes=('', suffix))
     transformed_df = transformed_df.loc[:, ~transformed_df.columns.str.contains('_\d+$')]
@@ -2214,7 +1910,6 @@ def plot_district_graph(df, district_names, benchmark_brands_dict, desired_diff_
     num_weeks = len(df.columns[4:]) // len(brands)
     if download_pdf:
         pdf = matplotlib.backends.backend_pdf.PdfPages("district_plots.pdf")
-    
     for i, district_name in enumerate(district_names):
         fig,ax=plt.subplots(figsize=(10, 8))
         district_df = df[df["Dist Name"] == district_name]
@@ -2245,26 +1940,21 @@ def plot_district_graph(df, district_names, benchmark_brands_dict, desired_diff_
         plt.xlabel('Month/Week', weight='bold')
         reference_week = week_names[diff_week]
         last_week = week_names[-1]
-        
         explanation_text = f"***Numbers in brackets next to brand names show the price difference between {reference_week} and {last_week}.***"
         plt.annotate(explanation_text, 
                      xy=(0, -0.23), xycoords='axes fraction', 
                      ha='left', va='center', fontsize=8, style='italic', color='deeppink',
                      bbox=dict(facecolor="#f0f8ff", edgecolor='none', alpha=0.7, pad=3))
-        
         region_name = district_df['REGION'].iloc[0]
         plt.ylabel('Whole Sale Price(in Rs.)', weight='bold')
         region_name = district_df['REGION'].iloc[0]
-        
         if i == 0:
             plt.text(0.5, 1.1, region_name, ha='center', va='center', transform=plt.gca().transAxes, weight='bold', fontsize=16)
             plt.title(f"{district_name} - Brands Price Trend", weight='bold')
         else:
             plt.title(f"{district_name} - Brands Price Trend", weight='bold')
-        
         plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=6, prop={'weight': 'bold'})
         plt.tight_layout()
-
         text_str = ''
         if district_name in benchmark_brands_dict:
             brand_texts = []
@@ -2306,7 +1996,6 @@ def plot_district_graph(df, district_names, benchmark_brands_dict, desired_diff_
         b64_data = base64.b64encode(buf.getvalue()).decode()
         st.markdown(f'<a download="district_plot_{district_name}.png" href="data:image/png;base64,{b64_data}">Download Plot as PNG</a>', unsafe_allow_html=True)
         plt.close()
-    
     if download_pdf:
         pdf.close()
         with open("district_plots.pdf", "rb") as f:
@@ -2321,21 +2010,15 @@ def update_week_name(index):
             st.warning(f"Attempted to update week {index + 1}, but only {len(st.session_state.week_names_input)} weeks are available.")
         st.session_state.all_weeks_filled = all(st.session_state.week_names_input)
     return callback
-
-
 def load_lottie_url(url: str):
     r = requests.get(url)
     if r.status_code != 200:
         return None
     return r.json()
-    #-webkit-background-clip: text;
-        #-webkit-text-fill-color: transparent;
 def Home():
-    # Custom CSS with more modern and professional styling
     st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap');
-    
     body {
         font-family: 'Roboto', sans-serif;
         background-color: #f5f7fa;
@@ -2390,15 +2073,10 @@ def Home():
     }
     </style>
     """, unsafe_allow_html=True)
-
-    # Main title and subtitle
     st.markdown('<h1 class="title">Statistica</h1>', unsafe_allow_html=True)
     st.markdown('<p class="subtitle">Analyze, Visualize, Optimize.</p>', unsafe_allow_html=True)
-
-    # Load and display Lottie animation
     lottie_url = "https://assets9.lottiefiles.com/packages/lf20_jcikwtux.json"
     lottie_json = load_lottie_url(lottie_url)
-
     col1, col2 = st.columns([1, 2])
     with col1:
         st_lottie(lottie_json, height=250, key="home_animation")
@@ -2428,56 +2106,43 @@ def Home():
     </ol>
     </div>
     """, unsafe_allow_html=True)
-
-    # File upload section
     st.markdown('<div class="upload-section">', unsafe_allow_html=True)
     st.subheader("Upload Your Data")
-
     if 'file_processed' not in st.session_state:
         st.session_state.file_processed = False
     if 'file_ready' not in st.session_state:
         st.session_state.file_ready = False
-
     uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx"],key="wsp_data")
     if 'edited_df' in st.session_state and 'edited_file_name' in st.session_state and not st.session_state.edited_df.empty:
         st.success(f"Edited file uploaded: {st.session_state.edited_file_name}")
         if st.button("Process Edited File", key="process_edited"):
             process_uploaded_file(st.session_state.edited_df)
-
     elif uploaded_file:
         st.success(f"File uploaded: {uploaded_file.name}")
         if st.button("Process Uploaded File", key="process_uploaded"):
             process_uploaded_file(uploaded_file)
-
     if st.session_state.file_ready:
         st.markdown("### Enter Week Names")
         num_weeks = st.session_state.num_weeks
         num_columns = min(4, num_weeks)  # Limit to 4 columns for better layout
         week_cols = st.columns(num_columns)
-
         for i in range(num_weeks):
             with week_cols[i % num_columns]:
                 st.session_state.week_names_input[i] = st.text_input(
                     f'Week {i+1}', 
                     value=st.session_state.week_names_input[i],
-                    key=f'week_{i}'
-                )
-        
+                    key=f'week_{i}')
         if st.button("Confirm Week Names", key="confirm_weeks"):
             if all(st.session_state.week_names_input):
                 st.session_state.file_processed = True
                 st.success("File processed successfully! You can now proceed to the analysis sections.")
             else:
                 st.warning("Please fill in all week names before confirming.")
-
     if st.session_state.file_processed:
         st.success("File processed successfully! You can now proceed to the analysis sections.")
     else:
         st.info("Please upload a file and fill in all week names to proceed with the analysis.")
-
     st.markdown('</div>', unsafe_allow_html=True)
-
-    # Help section
     st.markdown("""
     <div class="section-box">
     <h3>Need Assistance?</h3>
@@ -2486,14 +2151,11 @@ def Home():
     <p>Phone: +91-9219393559</p>
     </div>
     """, unsafe_allow_html=True)
-
-    # Footer
     st.markdown("""
     <div style="text-align: center; margin-top: 2rem; padding: 1rem; background-color: #34495e; color: #ecf0f1;">
     <p>© 2024 WSP Analysis Dashboard. All rights reserved.</p>
     </div>
     """, unsafe_allow_html=True)
-
 def process_uploaded_file(uploaded_file):
     if (isinstance(uploaded_file, pd.DataFrame) or uploaded_file) and not st.session_state.file_processed:
         try:
@@ -2505,17 +2167,12 @@ def process_uploaded_file(uploaded_file):
                 file_content = buffer.getvalue()
             else:
                 file_content = uploaded_file.read()
-
-            # Load workbook to check for hidden columns
             wb = openpyxl.load_workbook(BytesIO(file_content))
             ws = wb.active
             hidden_cols = [idx for idx, col in enumerate(ws.column_dimensions, 1) if ws.column_dimensions[col].hidden]
-
-            # Read Excel file with header=2 for both cases
             df = pd.read_excel(BytesIO(file_content), header=2)
             df = df.dropna(axis=1, how='all')
             df = df.drop(columns=df.columns[hidden_cols], errors='ignore')
-
             if df.empty:
                 st.error("The uploaded file resulted in an empty dataframe. Please check the file content.")
             else:
@@ -2523,11 +2180,9 @@ def process_uploaded_file(uploaded_file):
                 brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
                 brand_columns = [col for col in st.session_state.df.columns if any(brand in str(col) for brand in brands)]
                 num_weeks = len(brand_columns) // len(brands)
-                
                 if num_weeks > 0:
                     if 'week_names_input' not in st.session_state or len(st.session_state.week_names_input) != num_weeks:
                         st.session_state.week_names_input = [''] * num_weeks
-                    
                     st.session_state.num_weeks = num_weeks
                     st.session_state.file_ready = True
                 else:
@@ -2579,11 +2234,9 @@ def wsp_analysis_dashboard():
         border-radius: 20px;
         padding: 10px 20px;
         font-weight: bold;
-        transition: all 0.3s ease;
-    }
+        transition: all 0.3s ease;}
     .stButton>button:hover {
-        transform: scale(1.05);
-    }
+        transform: scale(1.05);}
     </style>
     """, unsafe_allow_html=True)
     st.markdown('<div class="title"><span>WSP Analysis Dashboard</span></div>', unsafe_allow_html=True)
@@ -2593,11 +2246,7 @@ def wsp_analysis_dashboard():
     st.session_state.df = transform_data(st.session_state.df, st.session_state.week_names_input)
     st.markdown('<div class="section-box">', unsafe_allow_html=True)
     st.subheader("Analysis Settings")
-    st.session_state.diff_week = st.slider("Select Week for Difference Calculation", 
-                                           min_value=0, 
-                                           max_value=len(st.session_state.week_names_input) - 1, 
-                                           value=st.session_state.diff_week, 
-                                           key="diff_week_slider") 
+    st.session_state.diff_week = st.slider("Select Week for Difference Calculation",min_value=0,max_value=len(st.session_state.week_names_input) - 1,value=st.session_state.diff_week,key="diff_week_slider") 
     download_pdf = st.checkbox("Download Plots as PDF", value=True)   
     col1, col2 = st.columns(2)
     with col1:
@@ -2607,11 +2256,8 @@ def wsp_analysis_dashboard():
         filtered_df = st.session_state.df[st.session_state.df["Zone"] == selected_zone]
         region_names = filtered_df["REGION"].unique().tolist()
         selected_region = st.selectbox("Select Region", region_names, key="region_select")
-        
     filtered_df = filtered_df[filtered_df["REGION"] == selected_region]
     district_names = filtered_df["Dist Name"].unique().tolist()
-
-    # Define recommended settings for each region
     region_recommendations = {
         "Gujarat": {
             "districts": ["Ahmadabad", "Mahesana", "Rajkot", "Vadodara", "Surat"],
@@ -2724,9 +2370,7 @@ def wsp_analysis_dashboard():
                                 value=0.0,
                                 step=0.1,
                                 format="%.1f",
-                                key=f"unified_{brand}"
-                            )
-                            
+                                key=f"unified_{brand}")
                             for district in selected_districts:
                                 desired_diff_dict[district][brand] = float(value)
                 else:
@@ -2734,15 +2378,11 @@ def wsp_analysis_dashboard():
             else:
                 for district in selected_districts:
                     st.subheader(f"Settings for {district}")
-                    
                     benchmark_brands_dict[district] = st.multiselect(
                         f"Select Benchmark Brands for {district}",
                         benchmark_brands,
-                        key=f"benchmark_select_{district}"
-                    )
-                    
+                        key=f"benchmark_select_{district}")
                     desired_diff_dict[district] = {}
-                    
                     if benchmark_brands_dict[district]:
                         num_cols = min(len(benchmark_brands_dict[district]), 3)
                         diff_cols = st.columns(num_cols)
@@ -2754,20 +2394,13 @@ def wsp_analysis_dashboard():
                                     value=0.0,
                                     step=0.1,
                                     format="%.1f",
-                                    key=f"{district}_{brand}"
-                                )
+                                    key=f"{district}_{brand}")
                     else:
                         st.warning(f"No benchmark brands selected for {district}.")
-
     st.markdown("### Generate Analysis")
-    
     if st.button('Generate Plots', key='generate_plots', use_container_width=True):
         with st.spinner('Generating plots...'):
-            plot_district_graph(filtered_df, selected_districts, benchmark_brands_dict, 
-                              desired_diff_dict, 
-                              st.session_state.week_names_input, 
-                              st.session_state.diff_week, 
-                              download_pdf)
+            plot_district_graph(filtered_df, selected_districts, benchmark_brands_dict, desired_diff_dict, st.session_state.week_names_input, st.session_state.diff_week,download_pdf)
             st.success('Plots generated successfully!')
     else:
         st.warning("Please upload a file in the Home section before using this dashboard.")
@@ -2825,15 +2458,11 @@ def descriptive_statistics_and_prediction():
     }
     </style>
     """, unsafe_allow_html=True)
-
     st.markdown('<div class="title"><span>Descriptive Statistics and Prediction</span></div>', unsafe_allow_html=True)
-
     if not st.session_state.file_processed:
         st.warning("Please upload a file in the Home section before using this feature.")
         return
-
     st.session_state.df = transform_data(st.session_state.df, st.session_state.week_names_input)
-
     st.markdown('<div class="section-box">', unsafe_allow_html=True)
     st.subheader("Analysis Settings")
     col1, col2 = st.columns(2)
@@ -2844,14 +2473,10 @@ def descriptive_statistics_and_prediction():
         filtered_df = st.session_state.df[st.session_state.df["Zone"] == selected_zone]
         region_names = filtered_df["REGION"].unique().tolist()
         selected_region = st.selectbox("Select Region", region_names, key="stats_region_select")
-    
-
     filtered_df = filtered_df[filtered_df["REGION"] == selected_region]
     district_names = filtered_df["Dist Name"].unique().tolist()
-    
     if selected_region in ["Rajasthan", "Madhya Pradesh(West)","Madhya Pradesh(East)","Chhattisgarh","Maharashtra(East)","Odisha","North-I","North-II","Gujarat"]:
         suggested_districts = []
-        
         if selected_region == "Rajasthan":
             rajasthan_districts = ["Alwar", "Jodhpur", "Udaipur", "Jaipur", "Kota", "Bikaner"]
             suggested_districts = [d for d in rajasthan_districts if d in district_names]
@@ -2879,13 +2504,9 @@ def descriptive_statistics_and_prediction():
         elif selected_region == "Gujarat":
             mp_west_districts = ["Ahmadabad","Mahesana","Rajkot","Vadodara","Surat"]
             suggested_districts = [d for d in mp_west_districts if d in district_names]
-        
-        
-        
         if suggested_districts:
             st.markdown(f"### Suggested Districts for {selected_region}")
             select_all = st.checkbox(f"Select all suggested districts for {selected_region}")
-            
             if select_all:
                 selected_districts = st.multiselect("Select District(s)", district_names, default=suggested_districts, key="district_select")
             else:
@@ -2894,11 +2515,7 @@ def descriptive_statistics_and_prediction():
             selected_districts = st.multiselect("Select District(s)", district_names, key="district_select")
     else:
         selected_districts = st.multiselect("Select District(s)", district_names, key="district_select")
-    
-
     st.markdown('</div>', unsafe_allow_html=True)
-
-
     if selected_districts:
         # Add a button to download all stats and predictions in one PDF
         if len(selected_districts) > 1:
@@ -2906,19 +2523,15 @@ def descriptive_statistics_and_prediction():
                 all_stats_pdf = BytesIO()
                 pdf = SimpleDocTemplate(all_stats_pdf, pagesize=letter)
                 elements = []
-                
                 for district in selected_districts:
                     elements.append(Paragraph(f"Statistics and Predictions for {district}", getSampleStyleSheet()['Title']))
                     district_df = filtered_df[filtered_df["Dist Name"] == district]
-                    
                     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
                     stats_data = {}
                     prediction_data = {}
-                    
                     for brand in brands:
                         brand_data = district_df[[col for col in district_df.columns if brand in col]].values.flatten()
                         brand_data = brand_data[~np.isnan(brand_data)]
-                        
                         if len(brand_data) > 0:
                             stats_data[brand] = pd.DataFrame({
                                 'Mean': [np.mean(brand_data)],
@@ -2931,7 +2544,6 @@ def descriptive_statistics_and_prediction():
                                 'Range': [np.ptp(brand_data)],
                                 'IQR': [np.percentile(brand_data, 75) - np.percentile(brand_data, 25)]
                             }).iloc[0]
-
                             if len(brand_data) > 2:
                                 model = ARIMA(brand_data, order=(1,1,1))
                                 model_fit = model.fit()
@@ -2940,40 +2552,31 @@ def descriptive_statistics_and_prediction():
                                 prediction_data[brand] = {
                                     'forecast': forecast[0],
                                     'lower_ci': confidence_interval[0, 0],
-                                    'upper_ci': confidence_interval[0, 1]
-                                }
-                    
+                                    'upper_ci': confidence_interval[0, 1]}
                     elements.append(Paragraph("Descriptive Statistics", getSampleStyleSheet()['Heading2']))
                     elements.append(create_stats_table(stats_data))
                     elements.append(Paragraph("Price Predictions", getSampleStyleSheet()['Heading2']))
                     elements.append(create_prediction_table(prediction_data))
                     elements.append(PageBreak())
-                
                 pdf.build(elements)
                 st.download_button(
                     label="Download All Stats and Predictions PDF",
                     data=all_stats_pdf.getvalue(),
                     file_name=f"{selected_districts}stats_and_predictions.pdf",
-                    mime="application/pdf"
-                )
-
+                    mime="application/pdf")
         st.markdown('<div class="section-box">', unsafe_allow_html=True)
         st.markdown("### Descriptive Statistics")
-        
         for district in selected_districts:
             st.subheader(f"{district}")
             district_df = filtered_df[filtered_df["Dist Name"] == district]
-            
             brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
             stats_data = {}
             prediction_data = {}
-            
             for brand in brands:
                 st.markdown(f'<div class="stats-box">', unsafe_allow_html=True)
                 st.markdown(f"#### {brand}")
                 brand_data = district_df[[col for col in district_df.columns if brand in col]].values.flatten()
                 brand_data = brand_data[~np.isnan(brand_data)]
-                
                 if len(brand_data) > 0:
                     basic_stats = pd.DataFrame({
                         'Mean': [np.mean(brand_data)],
@@ -2984,12 +2587,9 @@ def descriptive_statistics_and_prediction():
                         'Skewness': [stats.skew(brand_data)],
                         'Kurtosis': [stats.kurtosis(brand_data)],
                         'Range': [np.ptp(brand_data)],
-                        'IQR': [np.percentile(brand_data, 75) - np.percentile(brand_data, 25)]
-                    })
+                        'IQR': [np.percentile(brand_data, 75) - np.percentile(brand_data, 25)]})
                     st.dataframe(basic_stats)
                     stats_data[brand] = basic_stats.iloc[0]
-
-                    # ARIMA prediction for next week
                     if len(brand_data) > 2:  # Need at least 3 data points for ARIMA
                         model = ARIMA(brand_data, order=(1,1,1))
                         model_fit = model.fit()
@@ -3000,31 +2600,25 @@ def descriptive_statistics_and_prediction():
                         prediction_data[brand] = {
                             'forecast': forecast[0],
                             'lower_ci': confidence_interval[0, 0],
-                            'upper_ci': confidence_interval[0, 1]
-                        }
+                            'upper_ci': confidence_interval[0, 1]}
                 else:
                     st.warning(f"No data available for {brand} in this district.")
                 st.markdown('</div>', unsafe_allow_html=True)
-
-            # Create download buttons for stats and predictions
             stats_pdf = create_stats_pdf(stats_data, district)
             predictions_pdf = create_prediction_pdf(prediction_data, district)
-
             col1, col2 = st.columns(2)
             with col1:
                 st.download_button(
                     label="Download Statistics PDF",
                     data=stats_pdf,
                     file_name=f"{district}_statistics.pdf",
-                    mime="application/pdf"
-                )
+                    mime="application/pdf")
             with col2:
                 st.download_button(
                     label="Download Predictions PDF",
                     data=predictions_pdf,
                     file_name=f"{district}_predictions.pdf",
-                    mime="application/pdf"
-                )
+                    mime="application/pdf")
         st.markdown('</div>', unsafe_allow_html=True)
 def create_stats_table(stats_data):
     data = [['Brand', 'Mean', 'Median', 'Std Dev', 'Min', 'Max', 'Skewness', 'Kurtosis', 'Range', 'IQR']]
@@ -3037,7 +2631,6 @@ def create_stats_table(stats_data):
             else:
                 row.append(str(value))
         data.append(row)
-    
     table = Table(data)
     table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
@@ -3053,16 +2646,13 @@ def create_stats_table(stats_data):
         ('FONTSIZE', (0, 1), (-1, -1), 10),
         ('TOPPADDING', (0, 1), (-1, -1), 6),
         ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black)
-    ]))
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)]))
     return table
-
 def create_prediction_table(prediction_data):
     data = [['Brand', 'Predicted Price', 'Lower CI', 'Upper CI']]
     for brand, pred in prediction_data.items():
         row = [brand, f"{pred['forecast']:.2f}", f"{pred['lower_ci']:.2f}", f"{pred['upper_ci']:.2f}"]
         data.append(row)
-    
     table = Table(data)
     table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
@@ -3089,18 +2679,12 @@ def load_data(uploaded_file):
     regions = df['Zone'].unique().tolist()
     brands = df['Brand'].unique().tolist()
     return df, regions, brands
-# Cache the model training
 @st.cache_resource
-
 def load_lottie_url(url: str):
     r = requests.get(url)
     if r.status_code != 200:
         return None
     return r.json()
-import plotly.subplots as sp
-from scipy import stats
-import matplotlib.image as mpimg
-from PIL import Image
 def create_visualization(region_data, region, brand, months):
     fig = plt.figure(figsize=(20, 34))
     gs = fig.add_gridspec(8, 3, height_ratios=[0.5,1, 1, 3, 2.25, 2, 2, 2])
@@ -3108,12 +2692,8 @@ def create_visualization(region_data, region, brand, months):
     ax_region = fig.add_subplot(gs[0, :])
     ax_region.axis('off')
     ax_region.text(0.5, 0.5, f'{region} ({brand})', fontsize=28, fontweight='bold', ha='center', va='center')
-    
-    # New layout for current month sales data
     ax_current = fig.add_subplot(gs[1, :])
     ax_current.axis('off')
-    
-    # Calculate values
     overall_nov = region_data['Monthly Achievement(Nov)'].iloc[-1]
     trade_nov = region_data['Trade Nov'].iloc[-1]
     non_trade_nov = overall_nov - trade_nov
@@ -3136,7 +2716,6 @@ def create_visualization(region_data, region, brand, months):
     table_left.auto_set_font_size(False)
     table_left.set_fontsize(12)
     table_left.scale(1.2, 1.8)
-
     for i in range(len(table_data_left)):
       cell = table_left[i, 0]
       cell.set_facecolor('#ECF0F1')
@@ -3149,25 +2728,17 @@ def create_visualization(region_data, region, brand, months):
     cellLoc='center',
     loc='center',
     bbox=[0.3, 0.0, 0.1, 0.8])  
-    cell = table_right.add_cell(0, 0,1, 2, 
-                           text=f"{overall_nov:.0f}",
-                           facecolor='#E8F6F3')
+    cell = table_right.add_cell(0, 0,1, 2, text=f"{overall_nov:.0f}",facecolor='#E8F6F3')
     cell.set_text_props(fontweight='bold')
     cell.set_text_props(fontweight='bold')
-    cell = table_right.add_cell(1, 0, 1, 1,
-                           text=f"{trade_nov:.0f}",
-                           facecolor='#E8F6F3')
+    cell = table_right.add_cell(1, 0, 1, 1,text=f"{trade_nov:.0f}",facecolor='#E8F6F3')
     cell.set_text_props(fontweight='bold')
-    cell = table_right.add_cell(2, 0, 1, 1,
-                           text=f"{non_trade_nov:.0f}",
-                           facecolor='#E8F6F3')
+    cell = table_right.add_cell(2, 0, 1, 1,text=f"{non_trade_nov:.0f}",facecolor='#E8F6F3')
     cell.set_text_props(fontweight='bold')
     table_right.auto_set_font_size(False)
     table_right.set_fontsize(13)
     table_right.scale(1.2, 1.8)
-    ax_current.text(0.2, 1.0, 'Novemeber 2024 Performance Metrics', 
-               fontsize=16, fontweight='bold', ha='center', va='bottom')
-    # Modify the detailed metrics section
+    ax_current.text(0.2, 1.0, 'Novemeber 2024 Performance Metrics', fontsize=16, fontweight='bold', ha='center', va='bottom')
     detailed_metrics = [
     ('Trade', region_data['Trade Nov'].iloc[-1], region_data['Monthly Achievement(Nov)'].iloc[-1], 'Channel'),
     ('Green', region_data['Green Nov'].iloc[-1], region_data['Monthly Achievement(Nov)'].iloc[-1], 'Region'),
@@ -3176,25 +2747,10 @@ def create_visualization(region_data, region, brand, months):
     ('Premium', region_data['Premium Nov'].iloc[-1], region_data['Monthly Achievement(Nov)'].iloc[-1], 'Product'),
     ('Blended', region_data['Blended Nov'].iloc[-1], region_data['Monthly Achievement(Nov)'].iloc[-1], 'Product')]
     colors = ['blue', 'green', '#CDC50A', 'red', 'darkmagenta', 'saddlebrown']
-    
-    # Add boxes for grouping metrics
-    # Box 1 for Trade
-    trade_box = patches.Rectangle((0.45, 0.74), 0.55, 0.125, 
-                                facecolor='#F0F0F0', 
-                                edgecolor='black',
-                                alpha=1,
-                                transform=ax_current.transAxes)
+    trade_box = patches.Rectangle((0.45, 0.74), 0.55, 0.125,facecolor='#F0F0F0',edgecolor='black',alpha=1,transform=ax_current.transAxes)
     ax_current.add_patch(trade_box)
-    
-    # Box 2 for Region types (Green, Yellow, Red)
-    region_box = patches.Rectangle((0.45, 0.35), 0.55, 0.375,
-                                 facecolor='#F0F0F0',
-                                 edgecolor='black',
-                                 alpha=1,
-                                 transform=ax_current.transAxes)
+    region_box = patches.Rectangle((0.45, 0.35), 0.55, 0.375,facecolor='#F0F0F0',edgecolor='black',alpha=1,transform=ax_current.transAxes)
     ax_current.add_patch(region_box)
-    
-    # Box 3 for Products (Premium, Blended)
     product_box = patches.Rectangle((0.45, 0.08), 0.55, 0.25,
                                   facecolor='#F0F0F0',
                                   edgecolor='black',
@@ -3232,24 +2788,20 @@ def create_visualization(region_data, region, brand, months):
                     cell.set_text_props(fontweight='bold', color='black')
                     cell.set_facecolor('goldenrod')
                 cell.set_edgecolor('brown')
-    # Main bar chart (same as before)
     ax1 = fig.add_subplot(gs[3, :])
     actual_ags = [region_data[f'AGS Tgt ({month})'].iloc[-1] for month in months]
     actual_achievements = [region_data[f'Monthly Achievement({month})'].iloc[-1] for month in months]
     actual_targets = [region_data[f'Month Tgt ({month})'].iloc[-1] for month in months]
-    
     x = np.arange(len(months))
     width = 0.25
     rects1 = ax1.bar(x-width, actual_ags, width, label='AGS Target', color='brown', alpha=0.8)
     rects2 = ax1.bar(x, actual_targets, width, label='Plan', color='purple', alpha=0.8)
     rects3 = ax1.bar(x + width, actual_achievements, width, label='Achievement', color='yellow', alpha=0.8)
-    
     ax1.set_ylabel('Targets and Achievement', fontsize=12, fontweight='bold')
     ax1.set_title(f"Monthly Targets and Achievements for FY 2025", fontsize=18, fontweight='bold')
     ax1.set_xticks(x)
     ax1.set_xticklabels(months)
     ax1.legend()
-    
     def autolabel(rects):
         for rect in rects:
             height = rect.get_height()
@@ -3258,100 +2810,56 @@ def create_visualization(region_data, region, brand, months):
                         xytext=(0, 3),
                         textcoords="offset points",
                         ha='center', va='bottom', fontsize=11)
-    
     autolabel(rects1)
     autolabel(rects2)
     autolabel(rects3)
     ax2 = fig.add_subplot(gs[4, :])
     percent_achievements_plan = [((ach / tgt) * 100) for ach, tgt in zip(actual_achievements, actual_targets)]
     percent_achievements_ags = [((ach / ags) * 100) for ach, ags in zip(actual_achievements, actual_ags)]
-    
-    # Plot both lines
     line1 = ax2.plot(x, percent_achievements_plan, marker='o', linestyle='-', color='purple', label='Achievement vs Plan')
     line2 = ax2.plot(x, percent_achievements_ags, marker='s', linestyle='-', color='brown', label='Achievement vs AGS')
     ax2.axhline(y=100, color='lightcoral', linestyle='--', alpha=0.7)
-    
     ax2.set_xlabel('Month', fontsize=12, fontweight='bold')
     ax2.set_ylabel('% Achievement', fontsize=12, fontweight='bold')
     ax2.set_xticks(x)
     ax2.set_xticklabels(months)
     ax2.legend(loc='upper right')
-    
-    # Add annotations with dynamic positioning
     for i, (pct_plan, pct_ags) in enumerate(zip(percent_achievements_plan, percent_achievements_ags)):
         # Determine which value is higher
         if pct_plan >= pct_ags:
             # Plan is higher or equal, put Plan above and AGS below
-            ax2.annotate(f'{pct_plan:.1f}%', 
-                        (i, pct_plan), 
-                        xytext=(0, 10), 
-                        textcoords='offset points', 
-                        ha='center', 
-                        va='bottom', 
-                        fontsize=12,
-                        color='purple')
-            
-            ax2.annotate(f'{pct_ags:.1f}%', 
-                        (i, pct_ags), 
-                        xytext=(0, -15), 
-                        textcoords='offset points', 
-                        ha='center', 
-                        va='top', 
-                        fontsize=12,
-                        color='brown')
+            ax2.annotate(f'{pct_plan:.1f}%',(i, pct_plan),xytext=(0, 10),textcoords='offset points', ha='center',va='bottom',fontsize=12,color='purple')
+            ax2.annotate(f'{pct_ags:.1f}%', (i, pct_ags), xytext=(0, -15), textcoords='offset points', ha='center',va='top',fontsize=12,color='brown')
         else:
-            # AGS is higher, put AGS above and Plan below
-            ax2.annotate(f'{pct_ags:.1f}%', 
-                        (i, pct_ags), 
-                        xytext=(0, 10), 
-                        textcoords='offset points', 
-                        ha='center', 
-                        va='bottom', 
-                        fontsize=12,
-                        color='brown')
-            
-            ax2.annotate(f'{pct_plan:.1f}%', 
-                        (i, pct_plan), 
-                        xytext=(0, -15), 
-                        textcoords='offset points', 
-                        ha='center', 
-                        va='top', 
-                        fontsize=12,
-                        color='purple')
+            ax2.annotate(f'{pct_ags:.1f}%', (i, pct_ags), xytext=(0, 10), textcoords='offset points', ha='center', va='bottom', fontsize=12,color='brown')
+            ax2.annotate(f'{pct_plan:.1f}%', (i, pct_plan), xytext=(0, -15), textcoords='offset points', ha='center', va='top', fontsize=12,color='purple')
     ax3 = fig.add_subplot(gs[5, :])
     ax3.axis('off')
     current_year = 2024
     last_year = 2023
-
     channel_data = [
         ('Trade', region_data['Trade Nov'].iloc[-1], region_data['Trade Nov 2023'].iloc[-1],'Channel'),
         ('Premium', region_data['Premium Nov'].iloc[-1], region_data['Premium Nov 2023'].iloc[-1],'Product'),
-        ('Blended', region_data['Blended Nov'].iloc[-1], region_data['Blended Nov 2023'].iloc[-1],'Product')
-    ]
+        ('Blended', region_data['Blended Nov'].iloc[-1], region_data['Blended Nov 2023'].iloc[-1],'Product')]
     monthly_achievement_nov = region_data['Monthly Achievement(Nov)'].iloc[-1]
     total_nov_current = region_data['Monthly Achievement(Nov)'].iloc[-1]
     total_nov_last = region_data['Total Nov 2023'].iloc[-1]
-    
     ax3.text(0.2, 1, f'October {current_year} Sales Comparison to November 2023:-', fontsize=16, fontweight='bold', ha='center', va='center')
-    
     def get_arrow(value):
         return '↑' if value > 0 else '↓' if value < 0 else '→'
     def get_color(value):
         return 'green' if value > 0 else 'red' if value < 0 else 'black'
-
     total_change = ((total_nov_current - total_nov_last) / total_nov_last) * 100
     arrow = get_arrow(total_change)
     color = get_color(total_change)
     ax3.text(0.21, 0.9, f"November 2024: {total_nov_current:.0f}", fontsize=14, fontweight='bold', ha='center')
     ax3.text(0.22, 0.85, f"vs November 2023: {total_nov_last:.0f} ({total_change:.1f}% {arrow})", fontsize=12, color=color, ha='center')
-    
     for i, (channel, value_current, value_last,x) in enumerate(channel_data):
         percentage = (value_current / monthly_achievement_nov) * 100
         percentage_last_year = (value_last / total_nov_last) * 100
         change = ((value_current - value_last) / value_last) * 100
         arrow = get_arrow(change)
         color = get_color(change)
-        
         y_pos = 0.75 - i*0.25
         ax3.text(0.15, y_pos, f"{channel}:", fontsize=14, fontweight='bold')
         ax3.text(0.28, y_pos, f"{value_current:.0f}", fontsize=14)
@@ -3361,33 +2869,26 @@ def create_visualization(region_data, region, brand, months):
         ax3.text(0.12, y_pos-0.1, 
                 f"•{channel} {x} has share of {percentage_last_year:.1f}% in Nov. last year as compared to {percentage:.1f}% in Nov. this year.",
                 fontsize=11, color='darkcyan')
-
-    # Update the September comparison section similarly
     ax4 = fig.add_subplot(gs[5, 2])
     ax4.axis('off')
-    
     channel_data1 = [
         ('Trade', region_data['Trade Nov'].iloc[-1], region_data['Trade Oct'].iloc[-1],'Channel'),
         ('Premium', region_data['Premium Nov'].iloc[-1], region_data['Premium Oct'].iloc[-1],'Product'),
         ('Blended', region_data['Blended Nov'].iloc[-1], region_data['Blended Oct'].iloc[-1],'Product')
     ]
     total_oct_current = region_data['Total Oct'].iloc[-1]
-    
     ax4.text(0.35, 1, f'November {current_year} Sales Comparison to October 2024:-', fontsize=16, fontweight='bold', ha='center', va='center')
-    
     total_change = ((total_nov_current - total_oct_current) / total_oct_current) * 100
     arrow = get_arrow(total_change)
     color = get_color(total_change)
     ax4.text(0.36, 0.9, f"November 2024: {total_nov_current:.0f}", fontsize=14, fontweight='bold', ha='center')
     ax4.text(0.37, 0.85, f"vs October 2024: {total_oct_current:.0f} ({total_change:.1f}% {arrow})", fontsize=12, color=color, ha='center')
-    
     for i, (channel, value_current, value_last,t) in enumerate(channel_data1):
         percentage = (value_current / monthly_achievement_nov) * 100
         percentage_last_month = (value_last / total_oct_current) * 100
         change = ((value_current - value_last) / value_last) * 100
         arrow = get_arrow(change)
         color = get_color(change)
-        
         y_pos = 0.75 - i*0.25
         ax4.text(0.10, y_pos, f"{channel}:", fontsize=14, fontweight='bold')
         ax4.text(0.65, y_pos, f"{value_current:.0f}", fontsize=14)
@@ -3397,7 +2898,6 @@ def create_visualization(region_data, region, brand, months):
         ax4.text(0.00, y_pos-0.1, 
                 f"•{channel} {t} has share of {percentage_last_month:.1f}% in Oct. as compared to {percentage:.1f}% in Nov.",
                 fontsize=11, color='darkcyan')
-    # Updated: August Region Type Breakdown with values
     def create_pie_data(data_values, labels, colors):
      non_zero_data = []
      non_zero_labels = []
@@ -3408,7 +2908,6 @@ def create_visualization(region_data, region, brand, months):
             non_zero_labels.append(label)
             non_zero_colors.append(color)       
      return non_zero_data, non_zero_labels, non_zero_colors
-
     def make_autopct(values):
      def my_autopct(pct):
         total = sum(values)
@@ -3457,7 +2956,6 @@ def create_visualization(region_data, region, brand, months):
     ax_comparison.axis('off')
     ax_comparison.set_title('Quarterly Performance Analysis (2023 vs 2024)', 
                           fontsize=20, fontweight='bold', pad=20)
-
     def create_modern_quarterly_box(ax, x, y, width, height, q_data, quarter):
         # Adjust the background rectangle
         rect = patches.Rectangle(
@@ -3466,11 +2964,8 @@ def create_visualization(region_data, region, brand, months):
             edgecolor='#dee2e6',
             linewidth=2,
             alpha=0.9,
-            zorder=1
-        )
+            zorder=1)
         ax.add_patch(rect)
-        
-        # Title bar
         title_height = height * 0.15
         title_bar = patches.Rectangle(
             (x, y + height - title_height),
@@ -3481,30 +2976,21 @@ def create_visualization(region_data, region, brand, months):
             zorder=2
         )
         ax.add_patch(title_bar)
-        
-        # Quarter title
         ax.text(x + width/2, y + height - title_height/2,
                 f"{quarter} Performance Overview",
                 ha='center', va='center',
                 fontsize=14, fontweight='bold',
                 color='white',
                 zorder=3)
-
-        # Calculate metrics
         total_2023, total_2024 = q_data['total_2023'], q_data['total_2024']
         pct_change = ((total_2024 - total_2023) / total_2023) * 100
         trade_2023, trade_2024 = q_data['trade_2023'], q_data['trade_2024']
         trade_pct_change = ((trade_2024 - trade_2023) / trade_2023) * 100
-        
-        # Add metric comparisons
         y_offset = y + height - title_height - 0.1
-        
-        # Total Sales
         ax.text(x + 0.05, y_offset,
                 "Total Sales Comparison:",
                 fontsize=14, fontweight='bold',
                 color='#2c3e50')
-        
         y_offset -= 0.08
         ax.text(x + 0.05, y_offset,
                 f"2023: {total_2023:,.0f}",
@@ -3516,14 +3002,11 @@ def create_visualization(region_data, region, brand, months):
                 f"{pct_change:+.1f}%",
                 fontsize=11,
                 color='green' if pct_change > 0 else 'red')
-        
-        # Trade Volume
         y_offset -= 0.12
         ax.text(x + 0.05, y_offset,
                 "Trade Volume:",
                 fontsize=14, fontweight='bold',
                 color='#2c3e50')
-        
         y_offset -= 0.08
         ax.text(x + 0.05, y_offset,
                 f"2023: {trade_2023:,.0f}",
@@ -3535,8 +3018,6 @@ def create_visualization(region_data, region, brand, months):
                 f"{trade_pct_change:+.1f}%",
                 fontsize=11,
                 color='green' if trade_pct_change > 0 else 'red')
-        
-        # Add trend arrow
         if pct_change > 0:
             arrow_style = 'fancy,head_length=4,head_width=6'
             arrow_color = 'green'
@@ -3551,7 +3032,6 @@ def create_visualization(region_data, region, brand, months):
             end_x = x + width * 0.49
             start_y = y + 0.31
             end_y = y + 0.31
-            
         arrow = patches.FancyArrowPatch(
             (start_x, start_y),
             (end_x, end_y),
@@ -3575,7 +3055,6 @@ def create_visualization(region_data, region, brand, months):
             end_x = x + width * 0.49
             start_y = y + 0.11
             end_y = y + 0.11
-            
         arrow = patches.FancyArrowPatch(
             (start_x, start_y),
             (end_x, end_y),
@@ -3585,37 +3064,24 @@ def create_visualization(region_data, region, brand, months):
             zorder=3
         )
         ax.add_patch(arrow)
-    # Create quarterly comparison boxes with adjusted positions
-    # Make boxes taller and adjust vertical position
     box_height = 0.6  # Increased height
     box_y = 0.2      # Adjusted vertical position
-    
     q1_data = {
         'total_2023': region_data['Q1 2023 Total'].iloc[-1],
         'total_2024': region_data['Q1 2024 Total'].iloc[-1],
         'trade_2023': region_data['Q1 2023 Trade'].iloc[-1],
-        'trade_2024': region_data['Q1 2024 Trade'].iloc[-1]
-    }
-
+        'trade_2024': region_data['Q1 2024 Trade'].iloc[-1]}
     q2_data = {
         'total_2023': region_data['Q2 2023 Total'].iloc[-1],
         'total_2024': region_data['Q2 2024 Total'].iloc[-1],
         'trade_2023': region_data['Q2 2023 Trade'].iloc[-1],
-        'trade_2024': region_data['Q2 2024 Trade'].iloc[-1]
-    }
-
-    # Adjust box positioning
+        'trade_2024': region_data['Q2 2024 Trade'].iloc[-1]}
     create_modern_quarterly_box(ax_comparison, 0.1, box_y, 0.35, box_height, q1_data, "Q1")
     create_modern_quarterly_box(ax_comparison, 0.55, box_y, 0.35, box_height, q2_data, "Q2")
-
-    # Set the axis limits explicitly
     ax_comparison.set_xlim(0, 1)
     ax_comparison.set_ylim(0, 1)
-
     plt.tight_layout()
     return fig
-
-
 def load_lottie_url(url: str):
     r = requests.get(url)
     if r.status_code != 200:
@@ -3644,80 +3110,62 @@ def show_welcome_page():
         st.markdown("# 📈 Sales Review Report Generator")
         st.markdown("""
         ### Transform Your Sales Data into Actionable Insights
-        
         This advanced analytics platform helps you:
         - 📊 Generate comprehensive sales review reports
         - 🎯 Track performance across regions and brands
         - 📈 Visualize key metrics and trends
         - 🔄 Compare historical data
         """)
-        
         st.markdown("""
         <div class='reportBlock'>
         <h3>🚀 Getting Started</h3>
         <p>Upload your Excel file to begin analyzing your sales data:</p>
         </div>
         """, unsafe_allow_html=True)
-        
         uploaded_file = st.file_uploader("Choose your Excel file", type="xlsx", key="Sales_Prediction_uploader")
-        
         if uploaded_file:
             with st.spinner("Processing your data..."):
                 progress_bar = st.progress(0)
                 for i in range(100):
                     time.sleep(0.01)
                     progress_bar.progress(i + 1)
-                
                 df, regions, brands = load_data(uploaded_file)
                 st.session_state['df'] = df
                 st.session_state['regions'] = regions
                 st.session_state['brands'] = brands
-                
                 st.success("✅ File processed successfully!")
-
 def show_report_generator():
     st.markdown("# 🎯 Report Generator")
-    
     if st.session_state.get('df') is None:
         st.warning("⚠️ Please upload your data file on the Home page first.")
         return
-    
     df = st.session_state['df']
     regions = st.session_state['regions']
-    
-    # Create tabs for different report types
     tab1, tab2 = st.tabs(["📑 Individual Report", "📚 Complete Report"])
-    
     with tab1:
             st.markdown("""
             <div class='reportBlock'>
             <h3>Report Parameters</h3>
             </div>
             """, unsafe_allow_html=True)
-            
             region = st.selectbox("Select Region", regions, key='region_select')
             region_brands = df[df['Zone'] == region]['Brand'].unique().tolist()
             brand = st.selectbox("Select Brand", region_brands, key='brand_select')
-            
             if st.button("🔍 Generate Individual Report", key='individual_report'):
                 with st.spinner("Creating your report..."):
                     region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)]
                     months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct','Nov']
                     fig = create_visualization(region_data, region, brand, months)
-                    
                     st.pyplot(fig)
-                    
                     buf = BytesIO()
                     fig.savefig(buf, format="pdf")
                     buf.seek(0)
-                    
                     st.download_button(
                         label="📥 Download Individual Report (PDF)",
                         data=buf,
                         file_name=f"sales_report_{region}_{brand}_{datetime.now().strftime('%Y%m%d')}.pdf",
                         mime="application/pdf"
                     )
-    
     with tab2:
         st.markdown("""
         <div class='reportBlock'>
@@ -3725,52 +3173,42 @@ def show_report_generator():
         <p>Generate a comprehensive report covering all regions and brands in your dataset.</p>
         </div>
         """, unsafe_allow_html=True)
-        
         if st.button("📊 Generate Complete Report", key='complete_report'):
             with st.spinner("Generating comprehensive report... This may take a few minutes."):
                 progress_bar = st.progress(0)
                 for i in range(100):
                     time.sleep(0.02)
                     progress_bar.progress(i + 1)
-                
                 pdf_buffer = generate_full_report(df, regions)
-                
                 st.success("✅ Report generated successfully!")
-                
                 st.download_button(
                     label="📥 Download Complete Report (PDF)",
                     data=pdf_buffer,
                     file_name=f"complete_sales_report_{datetime.now().strftime('%Y%m%d')}.pdf",
-                    mime="application/pdf"
-                )
-
+                    mime="application/pdf")
 def show_about_page():
         st.markdown("# ℹ️ About")
         st.markdown("""
         <div class='reportBlock'>
         <h2>Sales Review Report Generator Pro</h2>
         <p>Version 2.0 | Last Updated: October 2024</p>
-        
         <h3>🎯 Purpose</h3>
         Our advanced analytics platform empowers sales teams to:
         - Generate detailed performance reports
         - Track KPIs across regions and brands
         - Identify trends and opportunities
         - Make data-driven decisions
-        
         <h3>🛠️ Features</h3>
         - Automated report generation
         - Interactive visualizations
         - Multi-region analysis
         - Historical comparisons
         - PDF export capabilities
-        
         <h3>📧 Support</h3>
         For technical support or feedback:
         - Email: prasoon.bajpai@lc.jkmail.com
         </div>
         """, unsafe_allow_html=True)
-
 def sales_review_report_generator():
     # Sidebar navigation
     with st.sidebar:
@@ -3787,8 +3225,6 @@ def sales_review_report_generator():
             st.markdown("Status: ✅ Data Loaded")
         else:
             st.markdown("Status: ⚠️ Awaiting Data")
-    
-    # Main content
     if selected_page == "🏠 Home":
         show_welcome_page()
     elif selected_page == "📈 Report Generator":
