@@ -5137,23 +5137,12 @@ def market_share():
      total_volumes = volume_df.sum(axis=1)
      for company in sorted_companies:
          values = share_df[company].values
-         ax1.bar(range(len(share_df)), 
-                 values, 
-                 bottom=bottom,
-                 label=company,
-                 color=company_colors[company],
-                 alpha=0.95,
-                 edgecolor='white',
-                 linewidth=0.5)
+         ax1.bar(range(len(share_df)), values, bottom=bottom,label=company,color=company_colors[company],alpha=0.95,edgecolor='white',linewidth=0.5)
          for i, v in enumerate(values):
              if v > 0:
                  center = bottom[i] + v/2
                  if v > 0.2:
-                     ax1.text(i, center, f'{v:.1f}%',
-                             ha='center', va='center', 
-                             fontsize=8,
-                             color='white',
-                             fontweight='bold')
+                     ax1.text(i, center, f'{v:.1f}%',ha='center', va='center', fontsize=8,color='white',fontweight='bold')
                  vol = volume_df.loc[share_df.index[i], company]
                  if vol > 0:
                      volume_positions.append((vol, center, company_colors[company], i))
@@ -5162,21 +5151,14 @@ def market_share():
      y_max = max_total_share * 1.15  # Add 15% padding
      ax1.set_ylim(0, y_max)
      for i, total in enumerate(total_shares):
-        ax1.text(i, total + (y_max * 0.02), f'Total: {total:.1f}%',
-                ha='center', va='bottom',
-                fontsize=12,
-                fontweight='bold',
-                color='#2c3e50')
+        ax1.text(i, total + (y_max * 0.02), f'Total: {total:.1f}%',ha='center', va='bottom',fontsize=12,fontweight='bold',color='#2c3e50')
      adjusted_positions, group_info = cascade_label_positions(volume_positions, y_max)
      for vol, line_y, label_y, color, x_pos in adjusted_positions:
         if abs(label_y - line_y) > 0.5:
             mid_x = x_pos + (len(share_df)-0.15 - x_pos) * 0.7
-            ax1.plot([x_pos, mid_x, len(share_df)-0.15], 
-                    [line_y, label_y, label_y],
-                    color=color, linestyle='--', alpha=1, linewidth=1)
+            ax1.plot([x_pos, mid_x, len(share_df)-0.15], [line_y, label_y, label_y],color=color, linestyle='--', alpha=1, linewidth=1)
         else:
-            ax1.plot([x_pos, len(share_df)-0.15], [line_y, line_y],
-                    color=color, linestyle='--', alpha=1, linewidth=1)
+            ax1.plot([x_pos, len(share_df)-0.15], [line_y, line_y],color=color, linestyle='--', alpha=1, linewidth=1)
         label = f'{vol:,.0f} MT'
         ax2.text(0.98, label_y, label,
                 transform=ax1.get_yaxis_transform(),va='center', ha='left',color=color,fontsize=11,fontweight='bold',bbox=dict(facecolor='white',edgecolor='none',alpha=1,pad=1))
@@ -5261,23 +5243,12 @@ def market_share():
         change_symbol = '↑' if total_change > 0 else '↓'
         legend_labels.append(
             f"{company} (Avg: {avg_share:.1f}% | Total Change: {change_symbol}{abs(total_change):.1f}%)")
-     plt.title(f'Market Share Trends Over Time - {state_name}', 
-             fontsize=20, 
-             pad=20, 
-             fontweight='bold')
+     plt.title(f'Market Share Trends Over Time - {state_name}', fontsize=20, pad=20, fontweight='bold')
      plt.xlabel('Months', fontsize=12, fontweight='bold')
      plt.ylabel('Market Share (%)', fontsize=12, fontweight='bold')
      plt.xticks(range(len(sorted_months)), sorted_months, rotation=45)
      plt.grid(True, linestyle='--', alpha=0.3)
-     ax.legend(lines, legend_labels,
-             bbox_to_anchor=(1.15, 1),
-             loc='upper left',
-             borderaxespad=0.,
-             frameon=True,
-             fontsize=10,
-             title='Companies with Average Share & Total Change',
-             title_fontsize=12,
-             edgecolor='gray')
+     ax.legend(lines, legend_labels,bbox_to_anchor=(1.15, 1),loc='upper left',borderaxespad=0.,frameon=True,fontsize=10,title='Companies with Average Share & Total Change',title_fontsize=12,edgecolor='gray')
      ax.set_facecolor('#f8f9fa')
      fig.patch.set_facecolor('#ffffff')
      plt.tight_layout()
@@ -5285,17 +5256,10 @@ def market_share():
     def create_title_page(state_name):
      fig, ax = plt.subplots(figsize=(11.7, 8.3))  # A4 size
      ax.axis('off')
-     ax.text(0.5, 0.6, 'Price Band Analysis Report', 
-            horizontalalignment='center',
-            fontsize=24,
-            fontweight='bold')
-     ax.text(0.5, 0.5, f'State: {state_name}', 
-            horizontalalignment='center',
-            fontsize=20)
+     ax.text(0.5, 0.6, 'Price Band Analysis Report', horizontalalignment='center',fontsize=24,fontweight='bold')
+     ax.text(0.5, 0.5, f'State: {state_name}',horizontalalignment='center',fontsize=20)
      current_date = datetime.now().strftime("%d %B %Y")
-     ax.text(0.5, 0.4, f'Generated on: {current_date}', 
-            horizontalalignment='center',
-            fontsize=16)
+     ax.text(0.5, 0.4, f'Generated on: {current_date}',horizontalalignment='center',fontsize=16)
      fig.patch.set_facecolor('#ffffff')
      return fig
     def create_dashboard_header():
@@ -5309,11 +5273,7 @@ def market_share():
             </div>
         """, unsafe_allow_html=True)
     def create_metric_card(title, value, delta=None, help_text=None):
-            st.metric(
-                label=title,
-                value=value,
-                delta=delta,
-                help=help_text)
+            st.metric(label=title,value=value,delta=delta,help=help_text)
     def export_to_pdf(figs, filename):
         with PdfPages(filename) as pdf:
             for fig in figs:
@@ -5326,34 +5286,17 @@ def market_share():
      col1, col2 = st.columns([1, 4])
      with col1:
         st.markdown("### 🎯 Analysis Controls")
-        uploaded_file = st.file_uploader(
-            "Upload Excel File",
-            type=['xlsx', 'xls'],
-            help="Upload your market share data file")
+        uploaded_file = st.file_uploader("Upload Excel File",type=['xlsx', 'xls'],help="Upload your market share data file")
         if uploaded_file:
             state_dfs, states = load_and_process_data(uploaded_file)
             st.markdown("### 🎯 Settings")
-            selected_state = st.selectbox(
-                "Select State",
-                states,
-                index=0,
-                help="Choose the state for analysis")
+            selected_state = st.selectbox("Select State",states,index=0,help="Choose the state for analysis")
             available_months = get_available_months(state_dfs[selected_state])
-            selected_months = st.multiselect(
-                "Select Months",
-                available_months,
-                default=[available_months[0]],
-                help="Choose months for comparison")
+            selected_months = st.multiselect("Select Months",available_months,default=[available_months[0]],help="Choose months for comparison")
             all_companies = state_dfs[selected_state]['Company'].unique()
-            default_companies = [
-                'JK Lakshmi', 'Ultratech', 'Ambuja',
-                'Wonder', 'Shree', 'JK Cement (N)']
+            default_companies = ['JK Lakshmi', 'Ultratech', 'Ambuja','Wonder', 'Shree', 'JK Cement (N)']
             available_defaults = [company for company in default_companies if company in all_companies]
-            selected_companies = st.multiselect(
-                "Select Companies for Trend Analysis",
-                all_companies,
-                default=available_defaults,
-                help="Choose companies to show in the trend line graph")
+            selected_companies = st.multiselect("Select Companies for Trend Analysis",all_companies,default=available_defaults,help="Choose companies to show in the trend line graph")
      with col2:
         if uploaded_file and selected_companies:
             st.markdown("### Market Share Trends")
@@ -5372,11 +5315,7 @@ def market_share():
             for idx, month in enumerate(selected_months):
                 df = state_dfs[selected_state]
                 with metric_cols[idx]:
-                    create_metric_card(
-                        f"{month.capitalize()}",
-                        f"{len(df[df[f'Share_{month}'] > 0])} Companies",
-                        f"Avg WSP: ₹{df[f'WSP_{month}'].mean():.0f}",
-                        "Number of active companies and average wholesale price")
+                    create_metric_card(f"{month.capitalize()}",f"{len(df[df[f'Share_{month}'] > 0])} Companies",f"Avg WSP: ₹{df[f'WSP_{month}'].mean():.0f}","Number of active companies and average wholesale price")
             st.markdown("---")
             for month in selected_months:
                 plot_key = f"share_{selected_state}_{month}"
@@ -5427,12 +5366,7 @@ def market_share():
                     if plot_key in st.session_state.computed_figures:
                         pdf.savefig(st.session_state.computed_figures[plot_key], bbox_inches='tight')
              all_pdf_buf.seek(0)
-             st.download_button(
-                label="📥 Download Complete Report (PDF)",
-                data=all_pdf_buf,
-                file_name=f'market_share_{selected_state}_complete_report.pdf',
-                mime='application/pdf',
-                key="download_complete_pdf")
+             st.download_button(label="📥 Download Complete Report (PDF)",data=all_pdf_buf,file_name=f'market_share_{selected_state}_complete_report.pdf',mime='application/pdf',key="download_complete_pdf")
     if __name__ == "__main__":
         main()
 def discount():
@@ -5645,24 +5579,12 @@ def discount():
             for i, (_, y) in enumerate(data[0]):
                 x_pos = self.chart.x + (i * x_scale)
                 y_pos = self.chart.y + ((y - min_y) * y_scale)
-                label = String(
-                    x_pos,
-                    y_pos + 15,  # Offset above point
-                    f'Rs.{y:.1f}',
-                    fontSize=8,
-                    fillColor=HexColor('#3b82f6'),
-                    textAnchor='middle')
+                label = String(x_pos,y_pos + 15,  f'Rs.{y:.1f}',fontSize=8,fillColor=HexColor('#3b82f6'),textAnchor='middle')
                 self.add(label)
             for i, (_, y) in enumerate(data[1]): 
                 x_pos = self.chart.x + (i * x_scale)
                 y_pos = self.chart.y + ((y - min_y) * y_scale)
-                label = String(
-                    x_pos,
-                    y_pos - 15,  # Offset below point
-                    f'Rs.{y:.1f}',
-                    fontSize=8,
-                    fillColor=HexColor('#ef4444'),
-                    textAnchor='middle')
+                label = String(x_pos,y_pos - 15, f'Rs.{y:.1f}',fontSize=8,fillColor=HexColor('#ef4444'),textAnchor='middle')
                 self.add(label)
     def _month_formatter(self, value):
         try:
@@ -5677,50 +5599,12 @@ def discount():
         self.styles = getSampleStyleSheet()
         self.setup_custom_styles()
     def setup_custom_styles(self):
-        self.styles.add(ParagraphStyle(
-            name='ChartTitle',
-            fontName='Helvetica-Bold',
-            fontSize=14,
-            spaceBefore=30,
-            spaceAfter=10,
-            alignment=1,
-            textColor=HexColor('#1e293b')))
-        self.styles.add(ParagraphStyle(
-            name='ChartLegend',
-            fontName='Helvetica',
-            fontSize=10,
-            spaceAfter=20,
-            alignment=1,
-            textColor=HexColor('#475569')))
-        self.styles.add(ParagraphStyle(
-            name='TitlePageFooter',
-            fontName='Helvetica-Bold',
-            fontSize=11,
-            spaceBefore=30,
-            alignment=1,
-            textColor=HexColor('#64748b')))
-        self.styles.add(ParagraphStyle(
-            name='MonthHeader',
-            fontName='Helvetica-Bold',
-            fontSize=20,
-            spaceAfter=10,
-            alignment=1,
-            textColor=HexColor('#1e293b')))
-        self.styles.add(ParagraphStyle(
-            name='QuantityInfo',
-            fontName='Helvetica',
-            fontSize=12,
-            spaceAfter=15,
-            alignment=1,
-            textColor=HexColor('#475569')))
-        self.styles.add(ParagraphStyle(
-            name='FooterNote',
-            fontName='Helvetica-Bold',
-            fontSize=10,
-            spaceBefore=20,
-            spaceAfter=10,
-            alignment=1,
-            textColor=HexColor('#64748b')))
+        self.styles.add(ParagraphStyle(name='ChartTitle',fontName='Helvetica-Bold',fontSize=14,spaceBefore=30,spaceAfter=10,alignment=1,textColor=HexColor('#1e293b')))
+        self.styles.add(ParagraphStyle(name='ChartLegend',fontName='Helvetica',fontSize=10,spaceAfter=20,alignment=1,textColor=HexColor('#475569')))
+        self.styles.add(ParagraphStyle(name='TitlePageFooter',fontName='Helvetica-Bold',fontSize=11,spaceBefore=30,alignment=1,textColor=HexColor('#64748b')))
+        self.styles.add(ParagraphStyle(name='MonthHeader',fontName='Helvetica-Bold',fontSize=20,spaceAfter=10,alignment=1,textColor=HexColor('#1e293b')))
+        self.styles.add(ParagraphStyle(name='QuantityInfo',fontName='Helvetica',fontSize=12,spaceAfter=15,alignment=1,textColor=HexColor('#475569')))
+        self.styles.add(ParagraphStyle(name='FooterNote',fontName='Helvetica-Bold',fontSize=10,spaceBefore=20,spaceAfter=10,alignment=1,textColor=HexColor('#64748b')))
     def is_valid_discount(self, approved, actual):
         if pd.isna(approved) and pd.isna(actual):
             return False
@@ -5742,12 +5626,7 @@ def discount():
                 continue
             diff = approved - actual
             total_diff = diff * month_data['quantity']*20
-            valid_discounts.append({
-                'name': discount_name,
-                'approved': approved,
-                'actual': actual,
-                'diff': diff,
-                'total_diff': total_diff})
+            valid_discounts.append({'name': discount_name,'approved': approved,'actual': actual,'diff': diff,'total_diff': total_diff})
         valid_discounts.sort(key=lambda x: x['approved'])
         for discount in valid_discounts:
             diff_text = f"{'↓' if discount['diff'] >= 0 else '↑'} Rs.{abs(discount['diff']):,.2f}"
@@ -5757,21 +5636,9 @@ def discount():
         if len(table_data) > 1:
             # Create table
             table = Table(table_data, colWidths=[2.2*inch, 1.3*inch, 1.3*inch, 1.1*inch, 1.3*inch])
-            style = TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), HexColor('#f1f5f9')),
-                ('TEXTCOLOR', (0, 0), (-1, 0), HexColor('#334155')),
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 10),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                ('TOPPADDING', (0, 0), (-1, 0), 12),
-                ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-                ('FONTSIZE', (0, 1), (-1, -1), 9),
-                ('GRID', (0, 0), (-1, -1), 1, HexColor('#e2e8f0')),
-                ('ALIGN', (1, 1), (-1, -1), 'RIGHT'),
-                ('ALIGN', (0, 0), (0, -1), 'LEFT'),
-                ('BOTTOMPADDING', (0, 1), (-1, -1), 8),
-                ('TOPPADDING', (0, 1), (-1, -1), 8),])
+            style = TableStyle([('BACKGROUND', (0, 0), (-1, 0), HexColor('#f1f5f9')),('TEXTCOLOR', (0, 0), (-1, 0), HexColor('#334155')),('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),('FONTSIZE', (0, 0), (-1, 0), 10),('BOTTOMPADDING', (0, 0), (-1, 0), 12),('TOPPADDING', (0, 0), (-1, 0), 12),('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 1), (-1, -1), 9),('GRID', (0, 0), (-1, -1), 1, HexColor('#e2e8f0')),('ALIGN', (1, 1), (-1, -1), 'RIGHT'),('ALIGN', (0, 0), (0, -1), 'LEFT'),('BOTTOMPADDING', (0, 1), (-1, -1), 8),('TOPPADDING', (0, 1), (-1, -1), 8),])
             for i in range(1, len(table_data)):
                 if '↓' in table_data[i][3]:  # Savings
                     style.add('TEXTCOLOR', (3, i), (4, i), HexColor('#10b981'))
@@ -5795,10 +5662,7 @@ def discount():
             valid_discounts = []
             for discount_name, values in month_data['discounts'].items():
                 if self.is_valid_discount(values['approved'], values['actual']):
-                    valid_discounts.append({
-                        'name': discount_name,
-                        'approved': values['approved'],
-                        'actual': values['actual']})
+                    valid_discounts.append({'name': discount_name,'approved': values['approved'],'actual': values['actual']})
             if valid_discounts:
                 highest_discount = max(valid_discounts, key=lambda x: x['approved'])
                 months.append(month)
@@ -5807,37 +5671,18 @@ def discount():
         return months, approved_values, actual_values
     def generate_report(self, state, data):
         buffer = io.BytesIO()
-        doc = SimpleDocTemplate(
-            buffer,
-            pagesize=A4,
-            rightMargin=36,
-            leftMargin=36,
-            topMargin=36,
-            bottomMargin=36,
-            title=f"Discount Report - {state}") 
+        doc = SimpleDocTemplate(buffer,pagesize=A4,rightMargin=36,leftMargin=36,topMargin=36,bottomMargin=36,title=f"Discount Report - {state}") 
         story = []
         story.append(Paragraph(
             f"Discount Analysis Report<br/>{state}",
-            ParagraphStyle(
-                'Title',
-                parent=self.styles['Title'],
-                fontSize=24,
-                spaceAfter=30,
-                alignment=1)))
+            ParagraphStyle('Title',parent=self.styles['Title'],fontSize=24,spaceAfter=30,alignment=1)))
         story.append(Paragraph(
             f"Generated on {datetime.now().strftime('%B %d, %Y')}",
-            ParagraphStyle(
-                'Date',
-                parent=self.styles['Normal'],
-                alignment=1,
-                fontSize=12,
-                textColor=HexColor('#64748b'))))
+            ParagraphStyle('Date',parent=self.styles['Normal'],alignment=1,fontSize=12,textColor=HexColor('#64748b'))))
         story.append(Spacer(1, 20))
         story.append(HorizontalLine(540, 2))  # 540 points = 7.5 inches (standard page width minus margins)
         story.append(Spacer(1, 30))
-        story.append(Paragraph(
-            "Discount Rate Trend(Grand Total)",
-            self.styles['ChartTitle']))
+        story.append(Paragraph("Discount Rate Trend(Grand Total)",self.styles['ChartTitle']))
         months, approved_values, actual_values = self.get_highest_discount_data(data)
         chart_data = [list(zip(range(len(months)), approved_values)), list(zip(range(len(months)), actual_values))]
         drawing = LineChart(500, 300, chart_data, months)
@@ -5901,8 +5746,7 @@ def discount():
         file_name=f"discount_report_{selected_state}_{datetime.now().strftime('%Y%m%d')}.pdf",
         mime="application/pdf",
         key=f"pdf_download_{selected_state}",
-        help="Download a detailed PDF report for this state"
-    )
+        help="Download a detailed PDF report for this state")
  class DiscountAnalytics:
     def __init__(self):
         self.excluded_discounts = [
@@ -5968,8 +5812,7 @@ def discount():
                         if len(filtered_df) > 0:
                             actual = filtered_df.iloc[0, month_cols['actual']]
                             discount_items.append(
-                                f"{discount}: <span class='discount-value'>₹{actual:,.2f}</span>"
-                            )
+                                f"{discount}: <span class='discount-value'>₹{actual:,.2f}</span>")
             else:
                 for discount in self.get_discount_types(df, state):
                     mask = df.iloc[:, 0].fillna('').astype(str).str.strip() == discount.strip()
@@ -5977,8 +5820,7 @@ def discount():
                     if len(filtered_df) > 0:
                         actual = filtered_df.iloc[0, month_cols['actual']]
                         discount_items.append(
-                            f"{discount}: <span class='discount-value'>₹{actual:,.2f}</span>"
-                        )
+                            f"{discount}: <span class='discount-value'>₹{actual:,.2f}</span>")
             if discount_items:
                 full_text = f"{state_text} | {month_text} | {' | '.join(discount_items)}"
                 ticker_items.append(f"<span class='ticker-item'>{full_text}</span>")
@@ -6007,18 +5849,13 @@ def discount():
         if selected_discount == self.combined_discount_name:
             monthly_data = {
                 month: self.get_combined_data(df, cols, selected_state)
-                for month, cols in self.month_columns.items()
-            }
+                for month, cols in self.month_columns.items()}
         else:
             mask = df.iloc[:, 0].fillna('').astype(str).str.strip() == selected_discount.strip()
             filtered_df = df[mask]
             if len(filtered_df) > 0:
                 monthly_data = {
-                    month: {
-                        'actual': filtered_df.iloc[0, cols['actual']],
-                        'approved': filtered_df.iloc[0, cols['approved']],
-                        'quantity': filtered_df.iloc[0, cols['quantity']]
-                    }
+                    month: {'actual': filtered_df.iloc[0, cols['actual']],'approved': filtered_df.iloc[0, cols['approved']],'quantity': filtered_df.iloc[0, cols['quantity']]}
                     for month, cols in self.month_columns.items()}
         for month, data in monthly_data.items():
             st.markdown(f"""
@@ -6029,28 +5866,15 @@ def discount():
             col1, col2, col3 = st.columns(3)
             with col1:
                 quantity = data.get('quantity', 0)
-                st.metric(
-                    "Quantity Sold",
-                    f"{quantity:,.2f}",
-                    delta=None,
-                    help=f"Total quantity sold in {month}")
+                st.metric("Quantity Sold",f"{quantity:,.2f}",delta=None,help=f"Total quantity sold in {month}")
             with col2:
                 approved = data.get('approved', 0)
-                st.metric(
-                    "Approved Payout",
-                    f"₹{approved:,.2f}",
-                    delta=None,
-                    help=f"Approved discount rate for {month}")
+                st.metric("Approved Payout",f"₹{approved:,.2f}",delta=None,help=f"Approved discount rate for {month}")
             with col3:
                 actual = data.get('actual', 0)
                 difference = approved - actual
                 delta_color = "normal" if difference >= 0 else "inverse"
-                st.metric(
-                    "Actual Payout",
-                    f"₹{actual:,.2f}",
-                    delta=f"₹{abs(difference):,.2f}" + (" under approved" if difference >= 0 else " over approved"),
-                    delta_color=delta_color,
-                    help=f"Actual discount rate for {month}")
+                st.metric("Actual Payout",f"₹{actual:,.2f}",delta=f"₹{abs(difference):,.2f}" + (" under approved" if difference >= 0 else " over approved"),delta_color=delta_color,help=f"Actual discount rate for {month}")
             st.markdown("---")
     def process_excel(self, uploaded_file):
         return process_excel_file(uploaded_file.getvalue(), ['MP (U)', 'MP (JK)'])
@@ -6065,32 +5889,15 @@ def discount():
             filtered_df = df[mask]
             if len(filtered_df) > 0:
                 monthly_data = {
-                    month: {
-                        'actual': filtered_df.iloc[0, cols['actual']],
-                        'approved': filtered_df.iloc[0, cols['approved']]
-                    }
+                    month: {'actual': filtered_df.iloc[0, cols['actual']],'approved': filtered_df.iloc[0, cols['approved']]}
                     for month, cols in self.month_columns.items()}
         months = list(monthly_data.keys())
         actual_values = [data['actual'] for data in monthly_data.values()]
         approved_values = [data['approved'] for data in monthly_data.values()]
         fig = go.Figure()
-        fig.add_trace(go.Scatter(
-            x=months,
-            y=actual_values,
-            name='Actual',
-            line=dict(color='#10B981', width=3)))
-        fig.add_trace(go.Scatter(
-            x=months,
-            y=approved_values,
-            name='Approved',
-            line=dict(color='#3B82F6', width=3)))
-        fig.update_layout(
-            title=f'Discount Trends - {selected_state}',
-            xaxis_title='Month',
-            yaxis_title='Discount Rate (₹/Bag)',
-            template='plotly_white',
-            height=400,
-            margin=dict(t=50, b=50, l=50, r=50))
+        fig.add_trace(go.Scatter(x=months,y=actual_values,name='Actual',line=dict(color='#10B981', width=3)))
+        fig.add_trace(go.Scatter(x=months,y=approved_values,name='Approved',line=dict(color='#3B82F6', width=3)))
+        fig.update_layout(title=f'Discount Trends - {selected_state}',xaxis_title='Month',yaxis_title='Discount Rate (₹/Bag)',template='plotly_white',height=400,margin=dict(t=50, b=50, l=50, r=50))
         st.plotly_chart(fig, use_container_width=True)
         self.create_difference_chart(months, approved_values, actual_values, selected_state)
     def create_difference_chart(self, months, approved_values, actual_values, selected_state):
@@ -6098,36 +5905,10 @@ def discount():
         fig = go.Figure()
         for i in range(len(months)):
             color = '#10B981' if differences[i] >= 0 else '#EF4444'  # Green for positive, red for negative
-            fig.add_trace(go.Scatter(
-                x=[months[i], months[i]],
-                y=[0, differences[i]],
-                mode='lines',
-                line=dict(color=color, width=3),
-                showlegend=False))
-        fig.add_trace(go.Scatter(
-            x=months,
-            y=differences,
-            mode='markers',
-            marker=dict(
-                size=8,
-                color=['#10B981' if d >= 0 else '#EF4444' for d in differences],
-                line=dict(width=2, color='white')
-            ),
-            name='Difference'))
-        fig.add_shape(
-            type='line',
-            x0=months[0],
-            x1=months[-1],
-            y0=0,
-            y1=0,
-            line=dict(color='gray', width=1, dash='dash'))
-        fig.update_layout(
-            title=f'Approved vs Actual Difference - {selected_state}',
-            xaxis_title='Month',
-            yaxis_title='Difference in Discount Rate (₹/Bag)',
-            template='plotly_white',
-            height=300,
-            margin=dict(t=50, b=50, l=50, r=50))
+            fig.add_trace(go.Scatter(x=[months[i], months[i]],y=[0, differences[i]],mode='lines',line=dict(color=color, width=3),showlegend=False))
+        fig.add_trace(go.Scatter(x=months,y=differences,mode='markers',marker=dict(size=8,color=['#10B981' if d >= 0 else '#EF4444' for d in differences],line=dict(width=2, color='white')),name='Difference'))
+        fig.add_shape(type='line',x0=months[0],x1=months[-1],y0=0,y1=0,line=dict(color='gray', width=1, dash='dash'))
+        fig.update_layout(title=f'Approved vs Actual Difference - {selected_state}',xaxis_title='Month',yaxis_title='Difference in Discount Rate (₹/Bag)',template='plotly_white',height=300,margin=dict(t=50, b=50, l=50, r=50))
         st.plotly_chart(fig, use_container_width=True)
     def get_discount_types(self, df, state=None):
      first_col = df.iloc[:, 0]
@@ -6138,7 +5919,6 @@ def discount():
              if state in config['states']),
             None)
         if state_group:
-            # Get the relevant discounts for this state
             relevant_discounts = self.discount_mappings[state_group]['discounts']
             if any(d in first_col.values for d in relevant_discounts):
                 valid_discounts.append(self.combined_discount_name)
@@ -6148,7 +5928,6 @@ def discount():
                     d.strip() not in relevant_discounts):
                     valid_discounts.append(d)
         else:
-            # Normal processing for other states
             valid_discounts = [
                 d for d in first_col.unique() 
                 if isinstance(d, str) and d.strip() not in self.excluded_discounts]
@@ -6158,10 +5937,7 @@ def discount():
             if isinstance(d, str) and d.strip() not in self.excluded_discounts]
      return sorted(valid_discounts)
     def get_combined_data(self, df, month_cols, state):
-     combined_data = {
-        'actual': np.nan, 
-        'approved': np.nan,
-        'quantity': np.nan}
+     combined_data = {'actual': np.nan, 'approved': np.nan,'quantity': np.nan}
      state_group = next(
         (group for group, config in self.discount_mappings.items()
          if state in config['states']),
@@ -6171,7 +5947,6 @@ def discount():
         mask = df.iloc[:, 0].fillna('').astype(str).str.strip().isin(relevant_discounts)
         filtered_df = df[mask]
         if len(filtered_df) > 0:
-            # Sum up the values for all relevant discounts
             combined_data['approved'] = filtered_df.iloc[:, month_cols['approved']].sum()
             combined_data['actual'] = filtered_df.iloc[:, month_cols['actual']].sum()
             total_quantity = filtered_df.iloc[:, month_cols['quantity']].sum()
