@@ -1,5 +1,6 @@
 import os
 import io
+from io import BytesIO
 import re
 import json
 import math
@@ -91,9 +92,9 @@ def process_pdf(input_pdf, operations):
     writer = PdfWriter()
     reader = PdfReader(input_pdf)
     if "extract" in operations:
-        selected_pages = operations["extract"]["pages"]  # List of selected page numbers
+        selected_pages = operations["extract"]["pages"]  
         for page_num in selected_pages:
-            if 0 <= page_num - 1 < len(reader.pages):  # Convert to 0-based index and check bounds
+            if 0 <= page_num - 1 < len(reader.pages): 
                 writer.add_page(reader.pages[page_num - 1])
     else:
         for page in reader.pages:
