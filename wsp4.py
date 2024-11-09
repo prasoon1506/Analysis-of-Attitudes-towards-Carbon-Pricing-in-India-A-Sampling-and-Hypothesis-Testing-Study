@@ -91,11 +91,6 @@ import time
 import io
 import streamlit.components.v1 as components
 import warnings
-def load_lottie_url(url: str):
-    r = requests.get(url)
-    if r.status_code != 200:
-        return None
-    return r.json()
 import statsmodels.api as sm
 from statsmodels.stats.diagnostic import het_breuschpagan, acorr_ljungbox
 from statsmodels.stats.stattools import durbin_watson
@@ -113,6 +108,11 @@ from sklearn.decomposition import PCA
 from sklearn.metrics import mean_squared_error, r2_score
 from scipy.stats import jarque_bera, kurtosis, skew
 from statsmodels.stats.stattools import omni_normtest
+def load_lottie_url(url: str):
+    r = requests.get(url)
+    if r.status_code != 200:
+        return None
+    return r.json()
 def process_pdf(input_pdf, operations):
     from PyPDF2 import PdfReader, PdfWriter
     from io import BytesIO
@@ -2609,8 +2609,6 @@ def process_uploaded_file(uploaded_file):
             st.error(f"Error processing file: {e}")
             st.exception(e)
             st.session_state.file_processed = False
-import streamlit as st
-from streamlit_option_menu import option_menu
 def wsp_analysis_dashboard():
     st.markdown("""
     <style>
@@ -2659,18 +2657,13 @@ def wsp_analysis_dashboard():
     }
     </style>
     """, unsafe_allow_html=True)
-
     st.markdown('<div class="title"><span>WSP Analysis Dashboard</span></div>', unsafe_allow_html=True)
-
     if not st.session_state.file_processed:
         st.warning("Please upload a file and fill in all week names in the Home section before using this dashboard.")
         return
-
     st.session_state.df = transform_data(st.session_state.df, st.session_state.week_names_input)
-    
     st.markdown('<div class="section-box">', unsafe_allow_html=True)
     st.subheader("Analysis Settings")
-    
     st.session_state.diff_week = st.slider("Select Week for Difference Calculation", 
                                            min_value=0, 
                                            max_value=len(st.session_state.week_names_input) - 1, 
@@ -2737,81 +2730,58 @@ def wsp_analysis_dashboard():
             "diffs": {}
         }
     }
-
     if selected_region in region_recommendations:
         recommended = region_recommendations[selected_region]
         suggested_districts = [d for d in recommended["districts"] if d in district_names]
-        
         if suggested_districts:
             st.markdown(f"### Suggested Districts for {selected_region}")
             select_all = st.checkbox(f"Select all suggested districts for {selected_region}")
-            
             if select_all:
                 selected_districts = st.multiselect("Select District(s)", district_names, default=suggested_districts, key="district_select")
             else:
                 selected_districts = st.multiselect("Select District(s)", district_names, key="district_select")
     else:
         selected_districts = st.multiselect("Select District(s)", district_names, key="district_select")
-
     st.markdown('</div>', unsafe_allow_html=True)
-
     brands = ['UTCL', 'JKS', 'JKLC', 'Ambuja', 'Wonder', 'Shree']
     benchmark_brands = [brand for brand in brands if brand != 'JKLC']
-        
     benchmark_brands_dict = {}
     desired_diff_dict = {}
     if selected_districts:
         st.markdown("### Benchmark Settings")
-        
-        # First determine if recommendations are available
         has_recommendations = (
             selected_region in region_recommendations and 
-            region_recommendations[selected_region]["benchmarks"]
-        )
-        
+            region_recommendations[selected_region]["benchmarks"])
         if has_recommendations:
             use_recommended_benchmarks = st.checkbox(
                 "Use recommended benchmarks and differences", 
-                value=False
-            )
+                value=False)
         else:
             use_recommended_benchmarks = False
-            
         if use_recommended_benchmarks:
-            # Automatically use recommended settings without showing additional controls
             for district in selected_districts:
                 benchmark_brands_dict[district] = region_recommendations[selected_region]["benchmarks"]
                 desired_diff_dict[district] = {}
-                
                 if selected_region == "Odisha":
                     # Handle Odisha's district-specific differences
                     for brand in benchmark_brands_dict[district]:
                         if brand in region_recommendations[selected_region]["diffs"]:
                             desired_diff_dict[district][brand] = float(
-                                region_recommendations[selected_region]["diffs"][brand].get(district, 0.0)
-                            )
+                                region_recommendations[selected_region]["diffs"][brand].get(district, 0.0))
                 else:
-                    # Handle other regions' differences
                     for brand in benchmark_brands_dict[district]:
                         desired_diff_dict[district][brand] = float(
-                            region_recommendations[selected_region]["diffs"].get(brand, 0.0)
-                        )
-                        
+                            region_recommendations[selected_region]["diffs"].get(brand, 0.0))            
         else:
-            # Show manual configuration options
             use_same_benchmarks = st.checkbox("Use same benchmarks for all districts", value=True)
-            
             if use_same_benchmarks:
                 selected_benchmarks = st.multiselect(
                     "Select Benchmark Brands for all districts", 
                     benchmark_brands, 
-                    key="unified_benchmark_select"
-                )
-                
+                    key="unified_benchmark_select")
                 for district in selected_districts:
                     benchmark_brands_dict[district] = selected_benchmarks
                     desired_diff_dict[district] = {}
-
                 if selected_benchmarks:
                     st.markdown("#### Desired Differences")
                     num_cols = min(len(selected_benchmarks), 3)
@@ -7641,7 +7611,6 @@ def update_visit_count():
     save_visit_data(visit_data)
     return visit_data['total_visits'], visit_data['daily_visits'][today]
 def main():
-    # Custom CSS for the sidebar and main content
     st.markdown("""
     <style>
     .sidebar .sidebar-content {
@@ -7738,10 +7707,7 @@ def main():
                 "container": {"padding": "0!important", "background-color": "transparent"},
                 "icon": {"color": "orange", "font-size": "20px"}, 
                 "nav-link": {"font-size": "16px", "text-align": "left", "margin":"0px", "--hover-color": "#eee"},
-                "nav-link-selected": {"background-color": "rgba(255, 255, 255, 0.2)"},
-            }
-        )
-    # Submenu based on main selection
+                "nav-link-selected": {"background-color": "rgba(255, 255, 255, 0.2)"},})
     if selected == "Home":
         Home()
     elif selected == "Data Management":
@@ -7749,8 +7715,7 @@ def main():
             menu_title="Data Management",
             options=["Editor", "File Manager"],
             icons=["pencil-square", "folder"],
-            orientation="horizontal",
-        )
+            orientation="horizontal",)
         if data_management_menu == "Editor":
             excel_editor_and_analyzer()
         elif data_management_menu == "File Manager":
@@ -7783,8 +7748,7 @@ def main():
             menu_title="Predictions",
             options=["WSP Projection","Sales Projection"],
             icons=["bar-chart", "graph-up-arrow"],
-            orientation="horizontal",
-        )
+            orientation="horizontal",)
         if prediction_menu == "WSP Projection":
             descriptive_statistics_and_prediction()
         elif prediction_menu == "Sales Projection":
