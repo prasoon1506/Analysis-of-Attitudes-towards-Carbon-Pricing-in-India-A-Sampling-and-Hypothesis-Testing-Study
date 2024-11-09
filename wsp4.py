@@ -4098,12 +4098,7 @@ def trade():
                     x_labels = [f"{month}<br>(T-NT: {g_r:.0f})<br>(I-O: {g_y:.0f}))" 
                                 for month, g_r, g_y in 
                                 zip(filtered_df['Month'],filtered_df['T-NT Difference'],filtered_df['I-O Difference'])]
-                    fig.update_layout(
-                        title=f"EBITDA Analysis for {brand}(Type:-{product_type}) in {region}({region_subset})",
-                        legend_title='Metrics',
-                        plot_bgcolor='cornsilk',
-                        paper_bgcolor='lightcyan',
-                        height=710,  # Increased height to accommodate the new subplot)
+                    fig.update_layout(title=f"EBITDA Analysis for {brand}(Type:-{product_type}) in {region}({region_subset})",legend_title='Metrics',plot_bgcolor='cornsilk',paper_bgcolor='lightcyan',height=710,)
                     fig.update_xaxes(tickmode='array', tickvals=list(range(len(x_labels))), ticktext=x_labels, row=1, col=1)
                     fig.update_xaxes(title_text='Months', row=2, col=1)
                     fig.update_yaxes(title_text='EBITDA(Rs./MT)', row=1, col=1)
