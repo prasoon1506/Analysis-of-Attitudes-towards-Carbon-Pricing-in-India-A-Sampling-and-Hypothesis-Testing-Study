@@ -58,7 +58,7 @@ import PyPDF2
 from pypdf import PdfReader, PdfWriter
 import fitz  # PyMuPDF
 import img2pdf
-from PIL import Image
+from PIL import Image, ImageEnhance
 from reportlab.lib import colors
 from reportlab.lib.colors import Color, HexColor
 from reportlab.lib.enums import TA_CENTER
@@ -75,16 +75,16 @@ from reportlab.graphics.charts.lineplots import LinePlot
 from reportlab.graphics.charts.linecharts import HorizontalLineChart
 from reportlab.graphics.charts.legends import Legend
 from reportlab.graphics.widgets.markers import makeMarker
-def load_lottie_url(url: str):
-    r = requests.get(url)
-    if r.status_code != 200:
-        return None
-    return r.json()
 import streamlit as st
 import streamlit.components.v1 as components
 from streamlit_lottie import st_lottie
 from streamlit_option_menu import option_menu
 from streamlit_cookies_manager import EncryptedCookieManager
+def load_lottie_url(url: str):
+    r = requests.get(url)
+    if r.status_code != 200:
+        return None
+    return r.json()
 def process_pdf(input_pdf, operations):
     from PyPDF2 import PdfReader, PdfWriter
     from io import BytesIO
@@ -200,8 +200,6 @@ def add_watermark(pdf_writer, watermark_options):
             page.merge_page(watermark_pdf.pages[0])
     return pdf_writer
 def get_pdf_preview(pdf_file, page_num=0):
-    import fitz
-    from PIL import Image
     doc = fitz.open(stream=pdf_file.read(), filetype="pdf")
     page = doc[page_num]
     pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))
@@ -211,20 +209,14 @@ def get_image_size_metrics(original_image_bytes, processed_image_bytes):
     original_size = len(original_image_bytes) / 1024  # KB
     processed_size = len(processed_image_bytes) / 1024  # KB
     size_change = ((original_size - processed_size) / original_size) * 100  
-    return {
-        'original_size': original_size,
-        'processed_size': processed_size,
-        'size_change': size_change
-    }
+    return {'original_size': original_size,'processed_size': processed_size,'size_change': size_change}
 def process_image(image, operations):
-    from PIL import Image, ImageEnhance
     if "resize" in operations:
         width = operations["resize"]["width"]
         height = operations["resize"]["height"]
         image = image.resize((width, height), Image.Resampling.LANCZOS)
     if "compress" in operations:
         quality = operations["compress"]["quality"]
-        # Return image for JPEG saving with quality
         return image, quality
     if "crop" in operations:
         left = operations["crop"]["left"]
@@ -252,65 +244,14 @@ def convert_uploadedfile_to_image(uploaded_file):
     with open(temp_file_path, 'wb') as f:
         f.write(uploaded_file.getvalue())
     return temp_file_path
-TEMPLATES = {
-    "Classic Professional": {
-        "background_type": "Color",
-        "background_color": "#FFFFFF",
-        "design_elements": ["Border"],
-        "border_color": "#000000",
-        "border_width": 1,
-        "title_font": "Helvetica-Bold",
-        "title_color": "#000000",
-        "accent_color": "#4A4A4A",
-        "layout": "centered"
-    },
-    "Modern Minimal": {
-        "background_type": "Color",
-        "background_color": "#FFFFFF",
-        "design_elements": ["Accent Bar"],
-        "accent_color": "#2C3E50",
-        "title_font": "Helvetica",
-        "title_color": "#2C3E50",
-        "layout": "left-aligned"
-    },
-    "Corporate Blue": {
-        "background_type": "Gradient",
-        "gradient_start": "#E8F0FE",
-        "gradient_end": "#FFFFFF",
-        "design_elements": ["Corner Lines", "Header Bar"],
-        "accent_color": "#1B4F72",
-        "title_font": "Helvetica-Bold",
-        "title_color": "#1B4F72",
-        "layout": "centered"
-    },
-    "Creative Bold": {
-        "background_type": "Color",
-        "background_color": "#FFFFFF",
-        "design_elements": ["Diagonal Lines", "Side Bar"],
-        "accent_color": "#FF5733",
-        "title_font": "Helvetica-Bold",
-        "title_color": "#2C3E50",
-        "layout": "asymmetric"
-    },
-    "Executive Elite": {
-        "background_type": "Color",
-        "background_color": "#F5F5F5",
-        "design_elements": ["Gold Accents", "Double Border"],
-        "accent_color": "#D4AF37",
-        "border_color": "#000000",
-        "title_font": "Times-Bold",
-        "title_color": "#000000",
-        "layout": "centered"
-    }
-}
+TEMPLATES = {"Classic Professional": {"background_type": "Color","background_color": "#FFFFFF","design_elements": ["Border"],"border_color": "#000000","border_width": 1,"title_font": "Helvetica-Bold","title_color": "#000000","accent_color": "#4A4A4A","layout": "centered"},
+             "Modern Minimal": {"background_type": "Color","background_color": "#FFFFFF","design_elements": ["Accent Bar"],"accent_color": "#2C3E50","title_font": "Helvetica","title_color": "#2C3E50","layout": "left-aligned"},
+             "Corporate Blue": {"background_type": "Gradient","gradient_start": "#E8F0FE","gradient_end": "#FFFFFF","design_elements": ["Corner Lines", "Header Bar"],"accent_color": "#1B4F72","title_font": "Helvetica-Bold","title_color": "#1B4F72","layout": "centered"},
+              "Creative Bold": {"background_type": "Color","background_color": "#FFFFFF","design_elements": ["Diagonal Lines", "Side Bar"],"accent_color": "#FF5733","title_font": "Helvetica-Bold","title_color": "#2C3E50","layout": "asymmetric"},
+            "Executive Elite": {"background_type": "Color","background_color": "#F5F5F5","design_elements": ["Gold Accents", "Double Border"],"accent_color": "#D4AF37","border_color": "#000000","title_font": "Times-Bold","title_color": "#000000","layout": "centered"}}
 def register_custom_fonts():
     try:
-        # Add more fonts as needed
-        custom_fonts = [
-            ("Roboto-Regular.ttf", "Roboto"),
-            ("Montserrat-Regular.ttf", "Montserrat"),
-            ("OpenSans-Regular.ttf", "OpenSans")
-        ]
+        custom_fonts = [("Roboto-Regular.ttf", "Roboto"),("Montserrat-Regular.ttf", "Montserrat"),("OpenSans-Regular.ttf", "OpenSans")]
         for font_file, font_name in custom_fonts:
             if not font_name in pdfmetrics.getRegisteredFontNames():
                 font_path = f"fonts/{font_file}"
@@ -327,16 +268,13 @@ def draw_design_elements(c, options, width, height):
     if "Double Border" in options["design_elements"]:
         c.setStrokeColor(options["border_color"])
         c.setLineWidth(options["border_width"])
-        # Outer border
         c.rect(margin, margin, width - 2*margin, height - 2*margin)
-        # Inner border
         inner_margin = margin + 0.5*cm
         c.rect(inner_margin, inner_margin, width - 2*inner_margin, height - 2*inner_margin)
     if "Corner Lines" in options["design_elements"]:
         c.setStrokeColor(options["accent_color"])
         c.setLineWidth(2)
         corner_size = 3*cm
-        # Draw sophisticated corner lines
         for x, y in [(margin, height-margin), (width-margin, height-margin),
                      (margin, margin), (width-margin, margin)]:
             c.saveState()
@@ -381,18 +319,12 @@ def draw_watermark(c, options, width, height):
         c.restoreState()
 def create_front_page(options):
     buffer = io.BytesIO()
-    page_size = {
-        "A4": A4,
-        "A4 Landscape": landscape(A4),
-        "Letter": letter,
-        "Letter Landscape": landscape(letter),
-        "Legal": legal
-    }[options["page_size"]]
+    page_size = {"A4": A4,"A4 Landscape": landscape(A4),"Letter": letter,"Letter Landscape": landscape(letter),"Legal": legal}[options["page_size"]]
     c = canvas.Canvas(buffer, pagesize=page_size)
     width, height = page_size
     if options.get("template"):
         template = TEMPLATES[options["template"]]
-        options = {**template, **options}  # Merge with user options, user options take precedence
+        options = {**template, **options}
     if options["background_type"] == "Color":
         c.setFillColor(options["background_color"])
         c.rect(0, 0, width, height, fill=True)
@@ -535,132 +467,54 @@ def front_page_creator():
                     ["Helvetica", "Helvetica-Bold", "Times-Roman", "Times-Bold", 
                      "Courier", "Courier-Bold", "Roboto", "Montserrat", "OpenSans"],
                     help="Choose the font for your title")
-                title_size = st.slider(
-                    "Title Size",
-                    20, 72, 48,
-                    help="Adjust the size of your title text")
-                title_color = st.color_picker(
-                    "Title Color",
-                    "#000000",
-                    help="Choose the color for your title")
+                title_size = st.slider("Title Size",20, 72, 48,help="Adjust the size of your title text")
+                title_color = st.color_picker("Title Color","#000000",help="Choose the color for your title")
             st.subheader("Layout Settings")
             col3, col4 = st.columns(2)
             with col3:
-                layout_style = st.selectbox(
-                    "Layout Style",
-                    ["centered", "left-aligned", "asymmetric"],
-                    help="Choose how your content is aligned on the page")
-                content_spacing = st.slider(
-                    "Content Spacing",
-                    1.0, 3.0, 1.5,
-                    0.1,
-                    help="Adjust the spacing between content elements")
+                layout_style = st.selectbox("Layout Style",["centered", "left-aligned", "asymmetric"],help="Choose how your content is aligned on the page")
+                content_spacing = st.slider("Content Spacing",1.0, 3.0, 1.5,0.1,help="Adjust the spacing between content elements")
             with col4:
-                margins = st.slider(
-                    "Page Margins (cm)",
-                    1.0, 5.0, 2.5,
-                    0.5,
-                    help="Adjust the margins around your content")
+                margins = st.slider("Page Margins (cm)",1.0, 5.0, 2.5,0.5,help="Adjust the margins around your content")
             st.subheader("Background Settings")
-            background_type = st.radio(
-                "Background Type",
-                ["Color", "Gradient", "Pattern", "None"],
-                help="Choose the type of background for your front page")
+            background_type = st.radio("Background Type",["Color", "Gradient", "Pattern", "None"],help="Choose the type of background for your front page")
             if background_type == "Color":
-                background_color = st.color_picker(
-                    "Background Color",
-                    "#FFFFFF",
-                    help="Choose a solid color for your background")
+                background_color = st.color_picker("Background Color","#FFFFFF",help="Choose a solid color for your background")
             elif background_type == "Gradient":
                 col5, col6 = st.columns(2)
                 with col5:
-                    gradient_start = st.color_picker(
-                        "Gradient Start Color",
-                        "#FFFFFF",
-                        help="Choose the starting color for your gradient")
-                    gradient_direction = st.selectbox(
-                        "Gradient Direction",
-                        ["Top to Bottom", "Left to Right", "Diagonal"],
-                        help="Choose the direction of your gradient")
+                    gradient_start = st.color_picker("Gradient Start Color","#FFFFFF",help="Choose the starting color for your gradient")
+                    gradient_direction = st.selectbox("Gradient Direction",["Top to Bottom", "Left to Right", "Diagonal"],help="Choose the direction of your gradient")
                 with col6:
-                    gradient_end = st.color_picker(
-                        "Gradient End Color",
-                        "#E0E0E0",
-                        help="Choose the ending color for your gradient")
+                    gradient_end = st.color_picker("Gradient End Color","#E0E0E0",help="Choose the ending color for your gradient")
             elif background_type == "Pattern":
                 col7, col8 = st.columns(2)
                 with col7:
-                    pattern_type = st.selectbox(
-                        "Pattern Type",
-                        ["Dots", "Lines", "Grid", "Chevron"],
-                        help="Choose the type of pattern")
-                    pattern_color = st.color_picker(
-                        "Pattern Color",
-                        "#E0E0E0",
-                        help="Choose the color for your pattern")
+                    pattern_type = st.selectbox("Pattern Type",["Dots", "Lines", "Grid", "Chevron"],help="Choose the type of pattern")
+                    pattern_color = st.color_picker("Pattern Color","#E0E0E0",help="Choose the color for your pattern")
                 with col8:
-                    pattern_opacity = st.slider(
-                        "Pattern Opacity",
-                        0.0, 1.0, 0.1,
-                        0.1,
-                        help="Adjust the opacity of the pattern")
-                    pattern_size = st.slider(
-                        "Pattern Size",
-                        0.5, 3.0, 1.0,
-                        0.1,
-                        help="Adjust the size of the pattern elements")
+                    pattern_opacity = st.slider("Pattern Opacity",0.0, 1.0, 0.1,0.1,help="Adjust the opacity of the pattern")
+                    pattern_size = st.slider("Pattern Size",0.5, 3.0, 1.0,0.1,help="Adjust the size of the pattern elements")
             st.subheader("Logo/Image Settings")
-            logo = st.file_uploader(
-                "Upload Logo/Image",
-                type=["png", "jpg", "jpeg"],
-                help="Upload your organization's logo or an image")
+            logo = st.file_uploader("Upload Logo/Image",type=["png", "jpg", "jpeg"],help="Upload your organization's logo or an image")
             if logo:
                 col9, col10 = st.columns(2)
                 with col9:
-                    logo_width = st.slider(
-                        "Logo Width",
-                        50, 400, 200,
-                        help="Adjust the width of your logo")
-                    logo_opacity = st.slider(
-                        "Logo Opacity",
-                        0.1, 1.0, 1.0,
-                        0.1,
-                        help="Adjust the opacity of your logo")
+                    logo_width = st.slider("Logo Width",50, 400, 200,help="Adjust the width of your logo")
+                    logo_opacity = st.slider("Logo Opacity",0.1, 1.0, 1.0,0.1,help="Adjust the opacity of your logo")
                 with col10:
-                    logo_position = st.selectbox(
-                        "Logo Position",
-                        ["Top Center", "Top Left", "Top Right", "Bottom Center", "Bottom Left", "Bottom Right"],
-                        help="Choose where to place your logo")
-                    logo_padding = st.slider(
-                        "Logo Padding (cm)",
-                        0.5, 5.0, 2.0,
-                        0.5,
-                        help="Adjust the space around your logo")
+                    logo_position = st.selectbox("Logo Position",["Top Center", "Top Left", "Top Right", "Bottom Center", "Bottom Left", "Bottom Right"],help="Choose where to place your logo")
+                    logo_padding = st.slider("Logo Padding (cm)",0.5, 5.0, 2.0,0.5,help="Adjust the space around your logo")
             st.subheader("Design Elements")
-            design_elements = st.multiselect(
-                "Add Design Elements",
-                ["Border", "Double Border", "Corner Lines", "Diagonal Lines", 
-                 "Side Bar", "Header Bar", "Accent Bar", "Gold Accents"],
-                default=["Border"],
-                help="Choose decorative elements to enhance your design")
+            design_elements = st.multiselect("Add Design Elements",["Border", "Double Border", "Corner Lines", "Diagonal Lines", "Side Bar", "Header Bar", "Accent Bar", "Gold Accents"],default=["Border"],help="Choose decorative elements to enhance your design")
             if any(design_elements):
                 col11, col12 = st.columns(2)
                 with col11:
-                    accent_color = st.color_picker(
-                        "Accent Color",
-                        "#000000",
-                        help="Choose the color for decorative elements")
+                    accent_color = st.color_picker("Accent Color","#000000",help="Choose the color for decorative elements")
                 if "Border" in design_elements or "Double Border" in design_elements:
                     with col12:
-                        border_color = st.color_picker(
-                            "Border Color",
-                            "#000000",
-                            help="Choose the color for the border")
-                        border_width = st.slider(
-                            "Border Width",
-                            0.5, 5.0, 1.0,
-                            0.5,
-                            help="Adjust the thickness of the border")
+                        border_color = st.color_picker("Border Color","#000000",help="Choose the color for the border")
+                        border_width = st.slider("Border Width",0.5, 5.0, 1.0,0.5,help="Adjust the thickness of the border")
             st.subheader("Additional Text Blocks")
             num_blocks = st.number_input("Number of Additional Text Blocks", 0, 5, 0)
             text_blocks = []
@@ -673,102 +527,43 @@ def front_page_creator():
              with col14:
                 block_size = st.slider(f"Size for Block {i+1}", 8, 36, 12)
                 block_color = st.color_picker(f"Color for Block {i+1}", "#000000")
-             text_blocks.append({
-                "text": block_text,
-                "font": block_font,
-                "size": block_size,
-                "color": block_color})
+             text_blocks.append({"text": block_text,"font": block_font,"size": block_size,"color": block_color})
             st.subheader("Watermark Settings")
-            add_watermark = st.checkbox(
-                "Add Watermark",
-                help="Add a watermark to your front page")
+            add_watermark = st.checkbox("Add Watermark",help="Add a watermark to your front page")
             if add_watermark:
                 col15, col16 = st.columns(2)
                 with col15:
-                    watermark_text = st.text_input(
-                        "Watermark Text",
-                        placeholder="Enter watermark text",
-                        help="Text to use as watermark")
-                    watermark_font = st.selectbox(
-                        "Watermark Font",
-                        ["Helvetica", "Times-Roman", "Courier"],
-                        help="Choose the font for your watermark")
+                    watermark_text = st.text_input("Watermark Text",placeholder="Enter watermark text",help="Text to use as watermark")
+                    watermark_font = st.selectbox("Watermark Font",["Helvetica", "Times-Roman", "Courier"],help="Choose the font for your watermark")
                 with col16:
-                    watermark_size = st.slider(
-                        "Watermark Size",
-                        20, 100, 60,
-                        help="Adjust the size of your watermark")
-                    watermark_opacity = st.slider(
-                        "Watermark Opacity",
-                        0.0, 1.0, 0.1,
-                        0.1,
-                        help="Adjust the opacity of your watermark")
+                    watermark_size = st.slider("Watermark Size",20, 100, 60,help="Adjust the size of your watermark")
+                    watermark_opacity = st.slider("Watermark Opacity",0.0, 1.0, 0.1,0.1,help="Adjust the opacity of your watermark")
             st.subheader("Footer Options")
             col15, col16 = st.columns(2)
             with col15:
-                show_date = st.checkbox(
-                    "Show Date",
-                    help="Include the current date in the footer")
+                show_date = st.checkbox("Show Date",help="Include the current date in the footer")
                 if show_date:
-                    date_format = st.selectbox(
-                        "Date Format",
-                        ["%B %d, %Y", "%d/%m/%Y", "%Y-%m-%d", "%d-%m-%Y"],
-                        help="Choose how the date should be displayed")
+                    date_format = st.selectbox("Date Format",["%B %d, %Y", "%d/%m/%Y", "%Y-%m-%d", "%d-%m-%Y"],help="Choose how the date should be displayed")
             with col16:
-                footer_text = st.text_input(
-                    "Custom Footer Text",
-                    placeholder="Enter custom footer text",
-                    help="Add custom text to the footer")
-                footer_alignment = st.selectbox(
-                    "Footer Alignment",
-                    ["Center", "Left", "Right"],
-                    help="Choose how the footer is aligned")
+                footer_text = st.text_input("Custom Footer Text",placeholder="Enter custom footer text",help="Add custom text to the footer")
+                footer_alignment = st.selectbox("Footer Alignment",["Center", "Left", "Right"],help="Choose how the footer is aligned")
             if st.button("Generate Front Page", help="Click to create your front page"):
                 if not title:
                     st.error("Please enter a title for your front page.")
                     return
                 try:
-                    options = {
-                        "template": template if template != "Custom" else None,
-                        "page_size": page_size,
-                        "title": title,
-                        "subtitle": subtitle,
-                        "title_font": title_font,
-                        "title_size": title_size,
-                        "title_color": colors.HexColor(title_color),
-                        "subtitle_font": title_font,
-                        "subtitle_size": int(title_size * 0.6),
-                        "subtitle_color": colors.HexColor(title_color),
-                        "layout": layout_style,
-                        "content_spacing": content_spacing,
-                        "margins": margins,
-                        "background_type": background_type,
-                        "background_color": colors.HexColor(background_color) if background_type == "Color" else None,
-                        "gradient_start": colors.HexColor(gradient_start) if background_type == "Gradient" else None,
-                        "gradient_end": colors.HexColor(gradient_end) if background_type == "Gradient" else None,
-                        "gradient_direction": gradient_direction if background_type == "Gradient" else None,
-                        "pattern_type": pattern_type if background_type == "Pattern" else None,
-                        "pattern_color": colors.HexColor(pattern_color) if background_type == "Pattern" else None,
-                        "pattern_opacity": pattern_opacity if background_type == "Pattern" else None,
-                        "pattern_size": pattern_size if background_type == "Pattern" else None,
-                        "logo": logo,
-                        "logo_width": logo_width if logo else None,
-                        "logo_position": logo_position if logo else None,
-                        "logo_opacity": logo_opacity if logo else None,
-                        "logo_padding": logo_padding if logo else None,
-                        "design_elements": design_elements,
-                        "accent_color": colors.HexColor(accent_color) if any(design_elements) else None,
-                        "border_color": colors.HexColor(border_color) if "Border" in design_elements or "Double Border" in design_elements else None,
-                        "border_width": border_width if "Border" in design_elements or "Double Border" in design_elements else None,
-                        "watermark_text": watermark_text if add_watermark else None,
-                        "watermark_font": watermark_font if add_watermark else None,
-                        "watermark_size": watermark_size if add_watermark else None,
-                        "watermark_opacity": watermark_opacity if add_watermark else None,
-                        "show_date": show_date,
-                        "date_format": date_format if show_date else "%B %d, %Y",
-                        "text_blocks": text_blocks,
-                        "footer_text": footer_text,
-                        "footer_alignment": footer_alignment,}
+                    options = {"template": template if template != "Custom" else None,"page_size": page_size,"title": title,"subtitle": subtitle,"title_font": title_font,
+                        "title_size": title_size,"title_color": colors.HexColor(title_color),"subtitle_font": title_font,"subtitle_size": int(title_size * 0.6),"subtitle_color": colors.HexColor(title_color),
+                        "layout": layout_style,"content_spacing": content_spacing,"margins": margins,"background_type": background_type,"background_color": colors.HexColor(background_color) if background_type == "Color" else None,
+                        "gradient_start": colors.HexColor(gradient_start) if background_type == "Gradient" else None,"gradient_end": colors.HexColor(gradient_end) if background_type == "Gradient" else None,
+                        "gradient_direction": gradient_direction if background_type == "Gradient" else None,"pattern_type": pattern_type if background_type == "Pattern" else None,
+                        "pattern_color": colors.HexColor(pattern_color) if background_type == "Pattern" else None,"pattern_opacity": pattern_opacity if background_type == "Pattern" else None,
+                        "pattern_size": pattern_size if background_type == "Pattern" else None,"logo": logo,"logo_width": logo_width if logo else None,"logo_position": logo_position if logo else None,"logo_opacity": logo_opacity if logo else None,
+                        "logo_padding": logo_padding if logo else None,"design_elements": design_elements,"accent_color": colors.HexColor(accent_color) if any(design_elements) else None,
+                        "border_color": colors.HexColor(border_color) if "Border" in design_elements or "Double Border" in design_elements else None,"border_width": border_width if "Border" in design_elements or "Double Border" in design_elements else None,
+                        "watermark_text": watermark_text if add_watermark else None,"watermark_font": watermark_font if add_watermark else None,"watermark_size": watermark_size if add_watermark else None,
+                        "watermark_opacity": watermark_opacity if add_watermark else None,"show_date": show_date,"date_format": date_format if show_date else "%B %d, %Y",
+                        "text_blocks": text_blocks,"footer_text": footer_text,"footer_alignment": footer_alignment,}
                     pdf_buffer = create_front_page(options)
                     filename = f"{title.split()[0].lower()}_front_page.pdf"
                     st.download_button(
@@ -784,11 +579,7 @@ def front_page_creator():
                     st.info("Please try adjusting your settings or contact support if the problem persists.")
 def excel_editor_and_analyzer():
     st.title("🧩 Advanced Excel Editor, File Converter and Data Analyzer")
-    tab1, tab2, tab3, tab4 = st.tabs([
-        "Excel Editor",
-        "File Converter", 
-        "Data Analyzer",
-        "Front Page Creator"])
+    tab1, tab2, tab3, tab4 = st.tabs(["Excel Editor","File Converter","Data Analyzer","Front Page Creator"])
     with tab1:
         excel_editor()
     with tab2:
@@ -954,12 +745,7 @@ def file_converter():
                             doc.add_paragraph(text)
                         docx_output = BytesIO()
                         doc.save(docx_output)
-                        st.download_button(
-                            label="📥 Download Word File",
-                            data=docx_output.getvalue(),
-                            file_name=f"{uploaded_file.name.split('.')[0]}.docx",
-                            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                        )
+                        st.download_button(label="📥 Download Word File",data=docx_output.getvalue(),file_name=f"{uploaded_file.name.split('.')[0]}.docx",mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
                     except Exception as e:
                         st.error(f"Error: {str(e)}")
             st.markdown('</div>', unsafe_allow_html=True)
@@ -1057,33 +843,21 @@ def file_converter():
                         "opacity": st.slider("Opacity", 0.1, 1.0, 0.3)}
                     page_selection = st.radio("Apply watermark to", ["All Pages", "Selected Pages"])
                     if page_selection == "Selected Pages":
-                        selected_pages = st.multiselect(
-                            "Select pages",
-                            range(1, total_pages + 1)
-                        )
+                        selected_pages = st.multiselect("Select pages",range(1, total_pages + 1))
                         watermark_options["pages"] = selected_pages
                     else:
                         watermark_options["pages"] = "all"
                     if watermark_type == "Text":
-                        watermark_options.update({
-                            "text": st.text_input("Watermark text"),
-                            "color": st.color_picker("Color", "#000000"),
-                            "size": st.slider("Size", 20, 100, 40)
-                        })
+                        watermark_options.update({"text": st.text_input("Watermark text"),"color": st.color_picker("Color", "#000000"),"size": st.slider("Size", 20, 100, 40)})
                     else:
-                        watermark_image = st.file_uploader(
-                            "Upload watermark image",
-                            type=["png", "jpg", "jpeg"])
+                        watermark_image = st.file_uploader("Upload watermark image",type=["png", "jpg", "jpeg"])
                         if watermark_image:
-                            watermark_options.update({
-                                "image": watermark_image,
-                                "size": st.slider("Size (% of page width)", 10, 100, 30)})
+                            watermark_options.update({"image": watermark_image,"size": st.slider("Size (% of page width)", 10, 100, 30)})
                     if (watermark_type == "Text" and watermark_options["text"]) or (watermark_type == "Image" and watermark_image):
                         pdf_operations["watermark"] = watermark_options
                 if "Resize" in operations:
                     st.markdown("#### Resize PDF")
-                    scale = st.slider("Scale percentage", 1, 200, 100,
-                                    help="100% is original size")
+                    scale = st.slider("Scale percentage", 1, 200, 100,help="100% is original size")
                     pdf_operations["resize"] = {"scale": scale}
                 if "Crop" in operations:
                     st.markdown("#### Crop PDF")
@@ -1095,11 +869,7 @@ def file_converter():
                     with crop_col2:
                         top = st.number_input("Top", 0, 100, 100)
                         bottom = st.number_input("Bottom", 0, 100, 0)
-                    pdf_operations["crop"] = {
-                        "left": left,
-                        "right": right,
-                        "top": top,
-                        "bottom": bottom}
+                    pdf_operations["crop"] = {"left": left,"right": right,"top": top,"bottom": bottom}
                 if pdf_operations:
                     output = BytesIO()
                     uploaded_file.seek(0)
@@ -1130,11 +900,7 @@ def file_converter():
                     with metric_col3:
                         reduction = ((original_size - new_size) / original_size) * 100
                         st.metric("Size Change", f"{reduction:.1f}%")
-                    st.download_button(
-                        label="📥 Download Modified PDF",
-                        data=output.getvalue(),
-                        file_name=f"modified_{uploaded_file.name}",
-                        mime="application/pdf")       
+                    st.download_button(label="📥 Download Modified PDF",data=output.getvalue(),file_name=f"modified_{uploaded_file.name}",mime="application/pdf")       
             except Exception as e:
                 st.error(f"Error: {str(e)}")
       st.markdown('</div>', unsafe_allow_html=True)
@@ -1142,10 +908,7 @@ def file_converter():
         st.markdown("### Image Editor")
         with st.container():
             st.markdown('<div class="converter-card">', unsafe_allow_html=True)
-            uploaded_file = st.file_uploader(
-                "Upload image",
-                type=["png", "jpg", "jpeg"],
-                key="image_editor")
+            uploaded_file = st.file_uploader("Upload image",type=["png", "jpg", "jpeg"],key="image_editor")
             if uploaded_file is not None:
                 try:
                     original_bytes = uploaded_file.getvalue()
@@ -1225,14 +988,12 @@ def file_converter():
         2. Upload your file(s) in the supported format
         3. Configure any additional settings if available
         4. Click the download button to save your converted file
-        
         ### Supported Formats
         - Excel: .xlsx, .xls
         - CSV: .csv
         - Word: .docx, .doc
         - PDF: .pdf
         - Images: .png, .jpg, .jpeg
-        
         ### Common Issues
         - If you're having trouble with CSV encoding, try different encoding options
         - Large files may take longer to process
