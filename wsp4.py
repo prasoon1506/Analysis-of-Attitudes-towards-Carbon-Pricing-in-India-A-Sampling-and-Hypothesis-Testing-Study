@@ -1827,7 +1827,6 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
-# Global variables
 if 'df' not in st.session_state:
     st.session_state.df = None
 if 'week_names_input' not in st.session_state:
@@ -1990,10 +1989,17 @@ def update_week_name(index):
         st.session_state.all_weeks_filled = all(st.session_state.week_names_input)
     return callback
 def load_lottie_url(url: str):
-    r = requests.get(url)
-    if r.status_code != 200:
+    """
+    Load Lottie animation from URL with error handling
+    """
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # Raises an HTTPError for bad responses
+        return response.json()
+    except Exception as e:
+        st.warning(f"Failed to load Lottie animation: {str(e)}")
         return None
-    return r.json()
+
 def Home():
     st.markdown("""
     <style>
@@ -2011,7 +2017,6 @@ def Home():
         padding: 2rem 0;
         margin-bottom: 2rem;
         background: linear-gradient(to right, #f0f8ff, #e6f3ff);
-        
     }
     .subtitle {
         font-size: 1.5rem;
@@ -2052,13 +2057,24 @@ def Home():
     }
     </style>
     """, unsafe_allow_html=True)
+    
     st.markdown('<h1 class="title">Statistica</h1>', unsafe_allow_html=True)
     st.markdown('<p class="subtitle">Analyze, Visualize, Optimize.</p>', unsafe_allow_html=True)
+
+    # Lottie animation with error handling
     lottie_url = "https://assets9.lottiefiles.com/packages/lf20_jcikwtux.json"
     lottie_json = load_lottie_url(lottie_url)
+    
     col1, col2 = st.columns([1, 2])
     with col1:
-        st_lottie(lottie_json, height=250, key="home_animation")
+        if lottie_json:
+            from streamlit_lottie import st_lottie
+            st_lottie(lottie_json, height=250, key="home_animation")
+        else:
+            # Fallback content when animation fails to load
+            st.image("https://via.placeholder.com/250x250?text=Analytics+Dashboard", 
+                    caption="Dashboard Visualization")
+
     with col2:
         st.markdown("""
         <div class="section-box">
@@ -2072,6 +2088,7 @@ def Home():
         </ul>
         </div>
         """, unsafe_allow_html=True)
+
     st.markdown("""
     <div class="section-box">
     <h3>How to Use This Dashboard</h3>
@@ -2083,13 +2100,20 @@ def Home():
     </ol>
     </div>
     """, unsafe_allow_html=True)
+
     st.markdown('<div class="upload-section">', unsafe_allow_html=True)
     st.subheader("Upload Your Data")
+
+    # Initialize session state variables
     if 'file_processed' not in st.session_state:
         st.session_state.file_processed = False
     if 'file_ready' not in st.session_state:
         st.session_state.file_ready = False
-    uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx"],key="wsp_data")
+    if 'week_names_input' not in st.session_state:
+        st.session_state.week_names_input = []
+
+    uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx"], key="wsp_data")
+
     if 'edited_df' in st.session_state and 'edited_file_name' in st.session_state and not st.session_state.edited_df.empty:
         st.success(f"Edited file uploaded: {st.session_state.edited_file_name}")
         if st.button("Process Edited File", key="process_edited"):
@@ -2098,28 +2122,39 @@ def Home():
         st.success(f"File uploaded: {uploaded_file.name}")
         if st.button("Process Uploaded File", key="process_uploaded"):
             process_uploaded_file(uploaded_file)
+
     if st.session_state.file_ready:
         st.markdown("### Enter Week Names")
         num_weeks = st.session_state.num_weeks
         num_columns = min(4, num_weeks)  # Limit to 4 columns for better layout
+        
+        # Ensure week_names_input has correct length
+        if len(st.session_state.week_names_input) != num_weeks:
+            st.session_state.week_names_input = [''] * num_weeks
+
         week_cols = st.columns(num_columns)
         for i in range(num_weeks):
             with week_cols[i % num_columns]:
                 st.session_state.week_names_input[i] = st.text_input(
                     f'Week {i+1}', 
                     value=st.session_state.week_names_input[i],
-                    key=f'week_{i}')
+                    key=f'week_{i}'
+                )
+
         if st.button("Confirm Week Names", key="confirm_weeks"):
             if all(st.session_state.week_names_input):
                 st.session_state.file_processed = True
                 st.success("File processed successfully! You can now proceed to the analysis sections.")
             else:
                 st.warning("Please fill in all week names before confirming.")
+
     if st.session_state.file_processed:
         st.success("File processed successfully! You can now proceed to the analysis sections.")
     else:
         st.info("Please upload a file and fill in all week names to proceed with the analysis.")
+
     st.markdown('</div>', unsafe_allow_html=True)
+
     st.markdown("""
     <div class="section-box">
     <h3>Need Assistance?</h3>
@@ -2128,6 +2163,7 @@ def Home():
     <p>Phone: +91-9219393559</p>
     </div>
     """, unsafe_allow_html=True)
+
     st.markdown("""
     <div style="text-align: center; margin-top: 2rem; padding: 1rem; background-color: #34495e; color: #ecf0f1;">
     <p>© 2024 WSP Analysis Dashboard. All rights reserved.</p>
