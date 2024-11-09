@@ -77,6 +77,8 @@ from reportlab.graphics.charts.linecharts import HorizontalLineChart
 from reportlab.graphics.charts.legends import Legend
 from reportlab.lib.enums import TA_CENTER
 from reportlab.graphics import renderPDF
+from reportlab.pdfgen.canvas import Canvas
+from pypdf import PdfReader
 import random
 from streamlit_lottie import st_lottie
 from streamlit_option_menu import option_menu
@@ -158,11 +160,6 @@ def process_pdf(input_pdf, operations):
     transformed_writer.write(output)
     return output
 def add_watermark(pdf_writer, watermark_options):
-    from reportlab.pdfgen.canvas import Canvas
-    from reportlab.lib.colors import Color
-    from pypdf import PdfReader
-    from PIL import Image
-    from io import BytesIO
     watermark_buffer = BytesIO()
     c = Canvas(watermark_buffer)
     first_page = pdf_writer.pages[0]
