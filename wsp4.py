@@ -3610,10 +3610,7 @@ def trade():
         c.drawText(text_object)
         c.setFont("Helvetica-Bold", 14)
         c.drawString(inch, height - 5.2*inch, "Limitations:")
-        limitations = [
-            "This analysis is based on historical data and may not predict future market changes.",
-            "External factors such as economic conditions are not accounted for in this report.",
-            "This report analyzes the EBIDTA for Trade and Non-Trade channel ceteris paribus.",]
+        limitations = ["This analysis is based on historical data and may not predict future market changes.","External factors such as economic conditions are not accounted for in this report.","This report analyzes the EBIDTA for Trade and Non-Trade channel ceteris paribus.",]
         text_object = c.beginText(inch, height - 5.5*inch)
         text_object.setFont("Helvetica", 12)
         for limitation in limitations:
@@ -3635,8 +3632,7 @@ def trade():
     for brand in brands:
         for product_type in types:
             for region_subset in region_subsets:
-                filtered_df = df[(df['Region'] == region) & (df['Brand'] == brand) &
-                                 (df['Type'] == product_type) & (df['Region subsets'] == region_subset)].copy()
+                filtered_df = df[(df['Region'] == region) & (df['Brand'] == brand) &(df['Type'] == product_type) & (df['Region subsets'] == region_subset)].copy()
                 if not filtered_df.empty:
                     add_header(c)
                     cols = ['Trade EBITDA', 'Non-Trade EBITDA']
@@ -3655,9 +3651,7 @@ def trade():
                             nontrade = min(nontrade - 0.05, 1 - trade)
                         return trade,nontrade
                     filtered_df['Adjusted Trade Share'], filtered_df['Adjusted Non-Trade Share'] = zip(*filtered_df.apply(adjust_shares, axis=1))
-                    filtered_df['Imaginary EBITDA'] = (
-                        filtered_df['Adjusted Trade Share'] * filtered_df['Trade EBITDA'] +
-                        filtered_df['Adjusted Non-Trade Share'] * filtered_df['Non-Trade EBITDA'])
+                    filtered_df['Imaginary EBITDA'] = (filtered_df['Adjusted Trade Share'] * filtered_df['Trade EBITDA'] +filtered_df['Adjusted Non-Trade Share'] * filtered_df['Non-Trade EBITDA'])
                     filtered_df['T-NT Difference'] = filtered_df['Trade EBITDA'] - filtered_df['Non-Trade EBITDA']
                     filtered_df['I-O Difference'] = filtered_df['Imaginary EBITDA'] - filtered_df[overall_col]
                     fig = go.Figure()
@@ -3671,9 +3665,7 @@ def trade():
                     if not np.isnan(mean_diff):
                         mean_diff=round(mean_diff)
                     fig.add_trace(go.Scatter(x=filtered_df['Month'], y=[mean_diff] * len(filtered_df),mode='lines', name=f'Mean I-O Difference[{mean_diff}]',line=dict(color='black', dash='dash')), row=2, col=1)
-                    x_labels = [f"{month}<br>(T-NT: {g_r:.0f})<br>(I-O: {g_y:.0f}))" 
-                                for month, g_r, g_y in 
-                                zip(filtered_df['Month'],filtered_df['T-NT Difference'],filtered_df['I-O Difference'])]
+                    x_labels = [f"{month}<br>(T-NT: {g_r:.0f})<br>(I-O: {g_y:.0f}))" for month, g_r, g_y in zip(filtered_df['Month'],filtered_df['T-NT Difference'],filtered_df['I-O Difference'])]
                     fig.update_layout(title=f"EBITDA Analysis for {brand}(Type:-{product_type}) in {region}({region_subset})",legend_title='Metrics',plot_bgcolor='cornsilk',paper_bgcolor='lightcyan',height=710,)
                     fig.update_xaxes(tickmode='array', tickvals=list(range(len(x_labels))), ticktext=x_labels, row=1, col=1)
                     fig.update_xaxes(title_text='Months', row=2, col=1)
@@ -3684,32 +3676,24 @@ def trade():
                         #c.showPage()
                     # Draw the graph
                     draw_graph(fig, 50, height - 410, 500, 350)
-                    c.setFillColorRGB(0.2, 0.2, 0.7)  # Dark grey color for headers
-                    c.setFont("Helvetica-Bold", 10)  # Reduced font size
+                    c.setFillColorRGB(0.2, 0.2, 0.7) 
+                    c.setFont("Helvetica-Bold", 10) 
                     c.drawString(50, height - 425, "Descriptive Statistics")
                     desc_stats = filtered_df[['Trade','Non-Trade']+cols + [overall_col, 'Imaginary EBITDA']].describe().reset_index()
                     desc_stats = desc_stats[desc_stats['index'] != 'count'].round(2)  # Remove 'count' row
                     table_data = [['Metric'] + list(desc_stats.columns[1:])] + desc_stats.values.tolist()
-                    draw_table(table_data, 50, height - 435, [45,45,45] + [75] * (len(desc_stats.columns) - 4))  # Reduced column widths
-                    c.setFont("Helvetica-Bold", 10)  # Reduced font size
+                    draw_table(table_data, 50, height - 435, [45,45,45] + [75] * (len(desc_stats.columns) - 4))
+                    c.setFont("Helvetica-Bold", 10)
                     c.drawString(50, height - 600, "Average Share Distribution")
                     average_shares = filtered_df[['Average Trade Share', 'Average Non-Trade Share']].mean()
-                    share_fig = px.pie(
-                       values=average_shares.values,
-                       names=average_shares.index,
-                       color=average_shares.index,
-                       color_discrete_map={'Average Trade Share': 'green', 'Average Non-Trade Share': 'blue'},
-                       title="",hole=0.3)
+                    share_fig = px.pie(values=average_shares.values,names=average_shares.index,color=average_shares.index,color_discrete_map={'Average Trade Share': 'green', 'Average Non-Trade Share': 'blue'},title="",hole=0.3)
                     share_fig.update_layout(width=475, height=475, margin=dict(l=0, r=0, t=0, b=0)) 
                     draw_graph(share_fig, 80, height - 810, 200, 200)  # Adjusted position and size
                     c.setFont("Helvetica-Bold", 10)
                     c.drawString(330, height - 600, "Monthly Share Distribution")
                     share_data = [['Month', 'Trade', 'Non-Trade']]
                     for _, row in filtered_df[['Month', 'Trade', 'Non-Trade','Average Trade Share', 'Average Non-Trade Share']].iterrows():
-                        share_data.append([
-                            row['Month'],
-                            f"{row['Trade']:.0f} ({row['Average Trade Share']:.2%})",
-                            f"{row['Non-Trade']:.0f} ({row['Average Non-Trade Share']:.2%})"])
+                        share_data.append([row['Month'],f"{row['Trade']:.0f} ({row['Average Trade Share']:.2%})",f"{row['Non-Trade']:.0f} ({row['Average Non-Trade Share']:.2%})"])
                     draw_table(share_data, 330, height - 620, [40, 60, 60, 60])
                     add_page_number(c)
                     c.showPage()
@@ -3810,10 +3794,7 @@ def trade():
             total_quantity = filtered_df['Trade'] + filtered_df['Non-Trade']
             trade_share = (filtered_df['Trade'] / total_quantity * 100).round(2)
             nontrade_share = (filtered_df['Non-Trade'] / total_quantity * 100).round(2)
-            share_df = pd.DataFrame({
-                'Month': filtered_df['Month'],
-                'Trade Share (%)': trade_share,
-                'Non-Trade Share (%)': nontrade_share}) 
+            share_df = pd.DataFrame({'Month': filtered_df['Month'],'Trade Share (%)': trade_share,'Non-Trade Share (%)': nontrade_share}) 
             fig_pie = px.pie(share_df, values=[trade_share.mean(), nontrade_share.mean()],names=['Trade', 'Non-Trade'], title='Average Share Distribution',color=["T","NT"],color_discrete_map={"T":"green","NT":"blue"},hole=0.5)
             st.plotly_chart(fig_pie, use_container_width=True)        
             st.dataframe(share_df.set_index('Month').style.format("{:.2f}").background_gradient(cmap='RdYlGn'), use_container_width=True)
@@ -3910,32 +3891,22 @@ def green():
         legend.alignment = 'right'
         legend.x = 330
         legend.y = 150
-        legend.colorNamePairs = [
-            (colors.green, 'Green EBITDA'),
-            (colors.yellow, 'Yellow EBITDA'),
-            (colors.red, 'Red EBITDA'),
-            (colors.blue, 'Overall EBITDA'),
-            (colors.purple, 'Imaginary EBITDA'),]
+        legend.colorNamePairs = [(colors.green, 'Green EBITDA'),(colors.yellow, 'Yellow EBITDA'),(colors.red, 'Red EBITDA'),(colors.blue, 'Overall EBITDA'),(colors.purple, 'Imaginary EBITDA'),]
         drawing.add(lc)
         drawing.add(legend)
         renderPDF.draw(drawing, c, inch, height - 300)
         c.setFont("Helvetica-Bold", 18)
         c.drawString(inch, height - 350, "Key Concepts:")
-        concepts = [
-            ("Overall EBITDA:", "Weighted average of Green, Yellow, and Red EBITDA based on their actual quantities."),
-            ("Imaginary EBITDA:", "Calculated by adjusting shares based on the following rules:"),
-            ("", "• If all three (Green, Yellow, Red) are present: Green +5%, Yellow +2.5%, Red -7.5%"),
-            ("", "• If only two are present: Superior one (Green in GR or GY, Yellow in YR) +5%, other -5%"),
-            ("", "• If only one is present: No change"),
-            ("Adjusted Shares:", "These adjustments aim to model potential improvements in product mix."),]
+        concepts = [("Overall EBITDA:", "Weighted average of Green, Yellow, and Red EBITDA based on their actual quantities."),("Imaginary EBITDA:", "Calculated by adjusting shares based on the following rules:"),("", "• If all three (Green, Yellow, Red) are present: Green +5%, Yellow +2.5%, Red -7.5%"),
+            ("", "• If only two are present: Superior one (Green in GR or GY, Yellow in YR) +5%, other -5%"),("", "• If only one is present: No change"),("Adjusted Shares:", "These adjustments aim to model potential improvements in product mix."),]
         text_object = c.beginText(inch, height - 380)
         for title, description in concepts:
             if title:
                 text_object.setFont("Helvetica-Bold", 12)
-                text_object.setFillColorRGB(0.7, 0.3, 0.1)  # Reddish-brown color for concept titles
+                text_object.setFillColorRGB(0.7, 0.3, 0.1) 
                 text_object.textLine(title)
                 text_object.setFont("Helvetica", 12)
-                text_object.setFillColorRGB(0, 0, 0)  # Black color for descriptions
+                text_object.setFillColorRGB(0, 0, 0) 
             text_object.textLine(description)
             if not title:
                 text_object.textLine("")
@@ -4211,9 +4182,9 @@ def projection():
  cookies = EncryptedCookieManager(
     prefix="sales_predictor_",
     password=get_cookie_password())
- CORRECT_PASSWORD = "prasoonA1@"  # Replace with your desired password
+ CORRECT_PASSWORD = "prasoonA1@"
  MAX_ATTEMPTS = 5
- LOCKOUT_DURATION = 3600  # 1 hour in seconds
+ LOCKOUT_DURATION = 3600 
  def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
  def check_password():
@@ -5011,10 +4982,7 @@ def market_share():
             df_hash = hash(str(state_dfs[selected_state]))
             trend_key = f"trend_{selected_state}_{'-'.join(sorted(selected_companies))}_{df_hash}"
             if trend_key not in st.session_state.computed_figures:
-                st.session_state.computed_figures[trend_key] = create_trend_line_plot(
-                    state_dfs[selected_state], 
-                    selected_companies,
-                    selected_state)
+                st.session_state.computed_figures[trend_key] = create_trend_line_plot(state_dfs[selected_state],selected_companies,selected_state)
             st.pyplot(st.session_state.computed_figures[trend_key])
             st.markdown("---")
         if uploaded_file and selected_months:
@@ -5034,29 +5002,15 @@ def market_share():
                 col1, col2, col3 = st.columns([1, 1, 2])
                 with col1:
                     buf = io.BytesIO()
-                    st.session_state.computed_figures[plot_key].savefig(
-                        buf,
-                        format='png',
-                        dpi=300,
-                        bbox_inches='tight')
+                    st.session_state.computed_figures[plot_key].savefig(buf,format='png',dpi=300,bbox_inches='tight')
                     buf.seek(0)
-                    st.download_button(
-                        label="📥 Download PNG",
-                        data=buf,
-                        file_name=f'market_share_{selected_state}_{month}.png',
-                        mime='image/png',
-                        key=f"download_png_{month}")
+                    st.download_button(label="📥 Download PNG",data=buf,file_name=f'market_share_{selected_state}_{month}.png',mime='image/png',key=f"download_png_{month}")
                 with col2:
                     pdf_buf = io.BytesIO()
                     with PdfPages(pdf_buf) as pdf:
                         pdf.savefig(st.session_state.computed_figures[plot_key], bbox_inches='tight')
                     pdf_buf.seek(0)
-                    st.download_button(
-                        label="📄 Download PDF",
-                        data=pdf_buf,
-                        file_name=f'market_share_{selected_state}_{month}.pdf',
-                        mime='application/pdf',
-                        key=f"download_pdf_{month}")
+                    st.download_button(label="📄 Download PDF",data=pdf_buf,file_name=f'market_share_{selected_state}_{month}.pdf',mime='application/pdf',key=f"download_pdf_{month}")
                 st.markdown("---")
             if st.session_state.computed_figures:
              st.markdown("### 📑 Download Complete Report")
