@@ -88,6 +88,116 @@ def load_lottie_url(url: str):
     if r.status_code != 200:
         return None
     return r.json()
+import zipfile
+def create_file_management_tab():
+    st.title("File Management System")
+    
+    # Create two columns for better layout
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.header("Upload Files")
+        uploaded_files = st.file_uploader("Choose files", accept_multiple_files=True)
+        
+        if uploaded_files:
+            st.write(f"Uploaded {len(uploaded_files)} files:")
+            for file in uploaded_files:
+                st.write(f"- {file.name}")
+        
+        folder_name = st.text_input("Enter folder name", "my_folder")
+        
+        if st.button("Create Folder and Zip"):
+            if uploaded_files:
+                try:
+                    # Create temporary directory
+                    os.makedirs(folder_name, exist_ok=True)
+                    
+                    # Save uploaded files to the folder
+                    for file in uploaded_files:
+                        file_path = os.path.join(folder_name, file.name)
+                        with open(file_path, "wb") as f:
+                            f.write(file.getbuffer())
+                    
+                    # Create zip file
+                    zip_path = f"{folder_name}.zip"
+                    with zipfile.ZipFile(zip_path, 'w') as zipf:
+                        for root, dirs, files in os.walk(folder_name):
+                            for file in files:
+                                file_path = os.path.join(root, file)
+                                arcname = os.path.relpath(file_path, folder_name)
+                                zipf.write(file_path, arcname)
+                    
+                    # Provide download button for zip
+                    with open(zip_path, "rb") as f:
+                        st.download_button(
+                            label="Download ZIP file",
+                            data=f,
+                            file_name=zip_path,
+                            mime="application/zip"
+                        )
+                    
+                    # Cleanup
+                    for file in os.listdir(folder_name):
+                        os.remove(os.path.join(folder_name, file))
+                    os.rmdir(folder_name)
+                    os.remove(zip_path)
+                    
+                    st.success("Folder created and zipped successfully!")
+                
+                except Exception as e:
+                    st.error(f"An error occurred: {str(e)}")
+            else:
+                st.warning("Please upload files first!")
+    
+    with col2:
+        st.header("Password Protect PDF")
+        pdf_file = st.file_uploader("Choose PDF file", type=['pdf'])
+        
+        if pdf_file:
+            # Option to generate random password or enter custom
+            password_option = st.radio(
+                "Password Option",
+                ["Generate Random 4-digit Password", "Enter Custom Password"]
+            )
+            
+            if password_option == "Generate Random 4-digit Password":
+                password = str(random.randint(1000, 9999))
+                st.info(f"Generated Password: {password}")
+            else:
+                password = st.text_input("Enter password", type="password")
+            
+            if st.button("Protect PDF"):
+                try:
+                    # Read the PDF
+                    pdf_reader = PyPDF2.PdfReader(pdf_file)
+                    pdf_writer = PyPDF2.PdfWriter()
+                    
+                    # Add all pages to the writer
+                    for page in pdf_reader.pages:
+                        pdf_writer.add_page(page)
+                    
+                    # Encrypt the PDF
+                    pdf_writer.encrypt(password)
+                    
+                    # Save to BytesIO object
+                    output_pdf = BytesIO()
+                    pdf_writer.write(output_pdf)
+                    output_pdf.seek(0)
+                    
+                    # Provide download button
+                    st.download_button(
+                        label="Download Protected PDF",
+                        data=output_pdf,
+                        file_name=f"protected_{pdf_file.name}",
+                        mime="application/pdf"
+                    )
+                    
+                    st.success("PDF protected successfully!")
+                    if password_option == "Generate Random 4-digit Password":
+                        st.info("Make sure to save the password!")
+                
+                except Exception as e:
+                    st.error(f"An error occurred: {str(e)}")
 def process_pdf(input_pdf, operations):
     from PyPDF2 import PdfReader, PdfWriter
     from io import BytesIO
@@ -169,7 +279,7 @@ def add_watermark(pdf_writer, watermark_options):
         opacity = watermark_options["opacity"]
         angle = watermark_options["angle"]
         position = watermark_options["position"]
-        size = watermark_options["size"]  # percentage of page width
+        size = watermark_options["size"]
         img_width = page_width * size / 100
         img_height = img_width * image.height / image.width
         if position == "center":
@@ -209,8 +319,8 @@ def get_pdf_preview(pdf_file, page_num=0):
     img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
     return img
 def get_image_size_metrics(original_image_bytes, processed_image_bytes):
-    original_size = len(original_image_bytes) / 1024  # KB
-    processed_size = len(processed_image_bytes) / 1024  # KB
+    original_size = len(original_image_bytes) / 1024 
+    processed_size = len(processed_image_bytes) / 1024
     size_change = ((original_size - processed_size) / original_size) * 100  
     return {'original_size': original_size,'processed_size': processed_size,'size_change': size_change}
 def process_image(image, operations):
@@ -581,8 +691,8 @@ def front_page_creator():
                     st.error(f"Error generating front page: {str(e)}")
                     st.info("Please try adjusting your settings or contact support if the problem persists.")
 def excel_editor_and_analyzer():
-    st.title("🧩 Advanced Excel Editor, File Converter and Data Analyzer")
-    tab1, tab2, tab3, tab4 = st.tabs(["Excel Editor","File Converter","Data Analyzer","Front Page Creator"])
+    st.title("🧩 Data Central")
+    tab1, tab2, tab3, tab4 = st.tabs(["Excel Editor","File Converter","Data Analyzer","Front Page Creator","File Management"])
     with tab1:
         excel_editor()
     with tab2:
@@ -591,6 +701,8 @@ def excel_editor_and_analyzer():
         data_analyzer()
     with tab4:
         front_page_creator()
+    with tab5:
+        create_file_management_tab()
 def file_converter():
     st.header("🔄 Universal File Converter")
     st.markdown("""
