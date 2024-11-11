@@ -299,11 +299,11 @@ def create_file_management_tab():
                     st.success("PDF protected successfully!")
                     if password_option == "Generate Random 4-digit Password":
                         st.info("Make sure to save the password!")
-    with col4:
-        pdf_table_extractor()
         
                 except Exception as e:
                     st.error(f"An error occurred: {str(e)}")
+    with col4:
+        pdf_table_extractor()
 def process_pdf(input_pdf, operations):
     from PyPDF2 import PdfReader, PdfWriter
     from io import BytesIO
