@@ -90,39 +90,100 @@ def load_lottie_url(url: str):
     return r.json()
 import zipfile
 def create_file_management_tab():
-    st.title("File Management System")
+    # Custom CSS for better styling
+    st.markdown("""
+        <style>
+        .main-header {
+            text-align: center;
+            padding: 1rem;
+            background-color: #f0f2f6;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+        }
+        .sub-header {
+            color: #0f1116;
+            text-align: center;
+            padding: 0.5rem;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #e6e6e6;
+        }
+        .success-message {
+            padding: 1rem;
+            border-radius: 5px;
+            background-color: #d1e7dd;
+            color: #0f5132;
+            text-align: center;
+        }
+        .warning-message {
+            padding: 1rem;
+            border-radius: 5px;
+            background-color: #fff3cd;
+            color: #664d03;
+            text-align: center;
+        }
+        .error-message {
+            padding: 1rem;
+            border-radius: 5px;
+            background-color: #f8d7da;
+            color: #842029;
+            text-align: center;
+        }
+        .tool-container {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1rem;
+        }
+        .download-button {
+            width: 100%;
+            margin-top: 1rem;
+            text-align: center;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # Initialize session state
     if 'current_password' not in st.session_state:
         st.session_state.current_password = None
     if 'current_pdf_name' not in st.session_state:
         st.session_state.current_pdf_name = None
-    
-    # Create four columns for layout
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.header("Create Zip")
-        uploaded_files = st.file_uploader("Choose files", accept_multiple_files=True, key="zip_files")
+
+    # Main header with nice styling
+    st.markdown('<div class="main-header"><h1>📁 File Management System</h1></div>', unsafe_allow_html=True)
+
+    # Create two rows with two columns each for better spacing
+    row1_col1, row1_col2 = st.columns(2)
+    row2_col1, row2_col2 = st.columns(2)
+
+    # ZIP Creator
+    with row1_col1:
+        st.markdown('<div class="tool-container">', unsafe_allow_html=True)
+        st.markdown('<div class="sub-header"><h3>📦 Create ZIP</h3></div>', unsafe_allow_html=True)
+        
+        uploaded_files = st.file_uploader(
+            "Choose files to zip",
+            accept_multiple_files=True,
+            key="zip_files"
+        )
         
         if uploaded_files:
-            st.write(f"Uploaded {len(uploaded_files)} files:")
+            st.markdown("**Selected files:**")
             for file in uploaded_files:
-                st.write(f"- {file.name}")
+                st.markdown(f"• {file.name}")
         
-        folder_name = st.text_input("Enter folder name", "my_folder")
+        folder_name = st.text_input("📁 Enter folder name", "my_folder")
         
-        if st.button("Create Folder and Zip"):
+        if st.button("🔒 Create ZIP", use_container_width=True):
             if uploaded_files:
                 try:
-                    # Create temporary directory
                     os.makedirs(folder_name, exist_ok=True)
                     
-                    # Save uploaded files to the folder
                     for file in uploaded_files:
                         file_path = os.path.join(folder_name, file.name)
                         with open(file_path, "wb") as f:
                             f.write(file.getbuffer())
                     
-                    # Create zip file
                     zip_path = f"{folder_name}.zip"
                     with zipfile.ZipFile(zip_path, 'w') as zipf:
                         for root, dirs, files in os.walk(folder_name):
@@ -131,14 +192,16 @@ def create_file_management_tab():
                                 arcname = os.path.relpath(file_path, folder_name)
                                 zipf.write(file_path, arcname)
                     
-                    # Provide download button for zip
                     with open(zip_path, "rb") as f:
+                        st.markdown('<div class="download-button">', unsafe_allow_html=True)
                         st.download_button(
-                            label="Download ZIP file",
+                            label="⬇️ Download ZIP",
                             data=f,
                             file_name=zip_path,
-                            mime="application/zip"
+                            mime="application/zip",
+                            use_container_width=True
                         )
+                        st.markdown('</div>', unsafe_allow_html=True)
                     
                     # Cleanup
                     for file in os.listdir(folder_name):
@@ -146,109 +209,107 @@ def create_file_management_tab():
                     os.rmdir(folder_name)
                     os.remove(zip_path)
                     
-                    st.success("Folder created and zipped successfully!")
-                
+                    st.markdown('<div class="success-message">✅ ZIP created successfully!</div>', unsafe_allow_html=True)
                 except Exception as e:
-                    st.error(f"An error occurred: {str(e)}")
+                    st.markdown(f'<div class="error-message">❌ Error: {str(e)}</div>', unsafe_allow_html=True)
             else:
-                st.warning("Please upload files first!")
+                st.markdown('<div class="warning-message">⚠️ Please upload files first!</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    with col2:
-        st.header("Unzip Files")
+    # ZIP Extractor
+    with row1_col2:
+        st.markdown('<div class="tool-container">', unsafe_allow_html=True)
+        st.markdown('<div class="sub-header"><h3>📤 Extract ZIP</h3></div>', unsafe_allow_html=True)
+        
         uploaded_zip = st.file_uploader("Upload ZIP file", type=['zip'], key="unzip_file")
         
         if uploaded_zip:
-            if st.button("Extract ZIP"):
+            if st.button("📂 Extract Files", use_container_width=True):
                 try:
-                    # Create a BytesIO object from the uploaded file
                     zip_bytes = BytesIO(uploaded_zip.read())
                     
-                    # Create a ZipFile object
                     with zipfile.ZipFile(zip_bytes, 'r') as zip_ref:
-                        # Get list of files in the zip
                         file_list = zip_ref.namelist()
                         
-                        # Create a BytesIO object for each file
+                        st.markdown("**Extracted files:**")
                         for file_name in file_list:
                             with zip_ref.open(file_name) as file:
                                 file_bytes = BytesIO(file.read())
-                                # Create download button for each file
                                 st.download_button(
-                                    label=f"Download {file_name}",
+                                    label=f"⬇️ {file_name}",
                                     data=file_bytes,
                                     file_name=file_name,
-                                    mime="application/octet-stream"
+                                    mime="application/octet-stream",
+                                    use_container_width=True
                                 )
                     
-                    st.success("ZIP file extracted successfully!")
-                
+                    st.markdown('<div class="success-message">✅ Files extracted successfully!</div>', unsafe_allow_html=True)
                 except Exception as e:
-                    st.error(f"An error occurred: {str(e)}")
-    
-    with col3:
-        st.header("Password Protect PDF")
+                    st.markdown(f'<div class="error-message">❌ Error: {str(e)}</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # PDF Password Protector
+    with row2_col1:
+        st.markdown('<div class="tool-container">', unsafe_allow_html=True)
+        st.markdown('<div class="sub-header"><h3>🔒 Protect PDF</h3></div>', unsafe_allow_html=True)
+        
         pdf_file = st.file_uploader("Choose PDF file", type=['pdf'], key="pdf_file")
         
         if pdf_file:
-            # Check if this is a new PDF file
             if pdf_file.name != st.session_state.current_pdf_name:
                 st.session_state.current_pdf_name = pdf_file.name
-                # Only generate new password for new PDF
                 if st.session_state.get('password_option', '') == "Generate Random 4-digit Password":
                     st.session_state.current_password = str(random.randint(1000, 9999))
             
-            # Password option selection
             password_option = st.radio(
                 "Password Option",
                 ["Generate Random 4-digit Password", "Enter Custom Password"],
-                key="password_option"
+                key="password_option",
+                horizontal=True
             )
             
             if password_option == "Generate Random 4-digit Password":
                 if not st.session_state.current_password:
                     st.session_state.current_password = str(random.randint(1000, 9999))
-                st.info(f"Generated Password: {st.session_state.current_password}")
+                st.info(f"🔑 Generated Password: **{st.session_state.current_password}**")
                 password = st.session_state.current_password
             else:
-                password = st.text_input("Enter password", type="password")
+                password = st.text_input("🔑 Enter password", type="password")
                 st.session_state.current_password = password
             
-            if st.button("Protect PDF"):
+            if st.button("🔒 Protect PDF", use_container_width=True):
                 try:
-                    # Read the PDF
                     pdf_reader = PyPDF2.PdfReader(pdf_file)
                     pdf_writer = PyPDF2.PdfWriter()
                     
-                    # Add all pages to the writer
                     for page in pdf_reader.pages:
                         pdf_writer.add_page(page)
                     
-                    # Encrypt the PDF
                     pdf_writer.encrypt(password)
                     
-                    # Save to BytesIO object
                     output_pdf = BytesIO()
                     pdf_writer.write(output_pdf)
                     output_pdf.seek(0)
                     
-                    # Provide download button
                     st.download_button(
-                        label="Download Protected PDF",
+                        label="⬇️ Download Protected PDF",
                         data=output_pdf,
                         file_name=f"protected_{pdf_file.name}",
-                        mime="application/pdf"
+                        mime="application/pdf",
+                        use_container_width=True
                     )
                     
-                    st.success("PDF protected successfully!")
+                    st.markdown('<div class="success-message">✅ PDF protected successfully!</div>', unsafe_allow_html=True)
                     if password_option == "Generate Random 4-digit Password":
-                        st.info("Make sure to save the password!")
-        
+                        st.info("📝 Make sure to save the password!")
                 except Exception as e:
-                    st.error(f"An error occurred: {str(e)}")
+                    st.markdown(f'<div class="error-message">❌ Error: {str(e)}</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    with col4:
-        st.header("PDF Table Extractor")
-        st.write("Extract tables from PDF files and convert them to Excel.")
+    # PDF Table Extractor
+    with row2_col2:
+        st.markdown('<div class="tool-container">', unsafe_allow_html=True)
+        st.markdown('<div class="sub-header"><h3>📊 Extract Tables from PDF</h3></div>', unsafe_allow_html=True)
         
         uploaded_file = st.file_uploader("Upload PDF file", type=['pdf'], key="table_pdf")
         
@@ -257,7 +318,6 @@ def create_file_management_tab():
                 doc = fitz.open(stream=uploaded_file.read(), filetype="pdf")
                 tables_found = []
                 
-                # Scan PDF for tables
                 for page_num in range(len(doc)):
                     page = doc[page_num]
                     tables = page.find_tables()
@@ -268,17 +328,15 @@ def create_file_management_tab():
                         } for table in tables.tables])
                 
                 if tables_found:
-                    st.write(f"Found {len(tables_found)} tables in the PDF")
+                    st.markdown(f"📋 Found **{len(tables_found)}** tables in the PDF")
                     
-                    # Let user select which tables to extract
                     selected_tables = st.multiselect(
                         "Select tables to extract",
                         options=range(len(tables_found)),
                         format_func=lambda x: f"Table {x+1} (Page {tables_found[x]['page']})"
                     )
                     
-                    if selected_tables and st.button("Extract Selected Tables"):
-                        # Create Excel file with multiple sheets
+                    if selected_tables and st.button("📥 Extract Selected Tables", use_container_width=True):
                         output = BytesIO()
                         with pd.ExcelWriter(output, engine='openpyxl') as writer:
                             for i in selected_tables:
@@ -290,19 +348,227 @@ def create_file_management_tab():
                                     index=False
                                 )
                         
-                        # Provide download button
                         st.download_button(
-                            label="Download Excel File",
+                            label="⬇️ Download Excel File",
                             data=output.getvalue(),
                             file_name="extracted_tables.xlsx",
-                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.document"
+                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.document",
+                            use_container_width=True
                         )
-                        st.success("Tables extracted successfully!")
+                        st.markdown('<div class="success-message">✅ Tables extracted successfully!</div>', unsafe_allow_html=True)
                 else:
-                    st.warning("No tables found in the PDF")
+                    st.markdown('<div class="warning-message">⚠️ No tables found in the PDF</div>', unsafe_allow_html=True)
             
             except Exception as e:
-                st.error(f"An error occurred: {str(e)}")
+                st.markdown(f'<div class="error-message">❌ Error: {str(e)}</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+def create_privacy_section():
+    st.markdown("""
+        <style>
+        .privacy-header {
+            text-align: center;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+        }
+        .section-card {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1.5rem;
+        }
+        .section-header {
+            color: #4a5568;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .value-card {
+            background-color: #f7fafc;
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid #4299e1;
+            margin-bottom: 1rem;
+        }
+        .highlight-text {
+            color: #2b6cb0;
+            font-weight: bold;
+        }
+        .feature-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .feature-item {
+            padding: 0.5rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # Main Privacy Header
+    st.markdown("""
+        <div class="privacy-header">
+            <h1>🔒 Data Privacy & Terms of Service</h1>
+            <p>Your privacy and security are our top priorities</p>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # About Our App
+    st.markdown("""
+        <div class="section-card">
+            <h2 class="section-header">📱 About Our File Management System</h2>
+            <p>Our application is designed to provide secure, efficient, and user-friendly file management solutions. 
+            We understand the importance of your data and have built this system with privacy and security at its core.</p>
+            
+            <h3>🎯 Our Core Values</h3>
+            <div class="value-card">
+                <p><span class="highlight-text">Privacy First:</span> Your data privacy is non-negotiable.</p>
+            </div>
+            <div class="value-card">
+                <p><span class="highlight-text">Transparency:</span> We're clear about how our system works.</p>
+            </div>
+            <div class="value-card">
+                <p><span class="highlight-text">Security:</span> Industry-standard security measures protect your files.</p>
+            </div>
+            <div class="value-card">
+                <p><span class="highlight-text">User Control:</span> You maintain complete control over your files.</p>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # Data Privacy Commitments
+    st.markdown("""
+        <div class="section-card">
+            <h2 class="section-header">🛡️ Our Data Privacy Commitments</h2>
+            <ul class="feature-list">
+                <li class="feature-item">
+                    ✨ <strong>No Data Storage:</strong> We do not store any of your uploaded files or processed data on our servers
+                </li>
+                <li class="feature-item">
+                    ✨ <strong>Temporary Processing:</strong> Files are only held in temporary memory during processing and are immediately deleted afterward
+                </li>
+                <li class="feature-item">
+                    ✨ <strong>No Data Collection:</strong> We don't collect personal information or tracking data
+                </li>
+                <li class="feature-item">
+                    ✨ <strong>Secure Processing:</strong> All file processing happens locally in your browser session
+                </li>
+                <li class="feature-item">
+                    ✨ <strong>No Third-Party Sharing:</strong> Your data is never shared with third parties
+                </li>
+            </ul>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # Features and Security
+    st.markdown("""
+        <div class="section-card">
+            <h2 class="section-header">🔐 Security Features</h2>
+            <ul class="feature-list">
+                <li class="feature-item">
+                    🛠️ <strong>Secure File Processing:</strong> All file operations are performed in-memory
+                </li>
+                <li class="feature-item">
+                    🛠️ <strong>Client-Side Processing:</strong> Files are processed locally on your device
+                </li>
+                <li class="feature-item">
+                    🛠️ <strong>Industry-Standard Encryption:</strong> For PDF password protection
+                </li>
+                <li class="feature-item">
+                    🛠️ <strong>Secure Downloads:</strong> Direct file downloads without server storage
+                </li>
+            </ul>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # Terms of Service
+    st.markdown("""
+        <div class="section-card">
+            <h2 class="section-header">📜 Terms of Service</h2>
+            <h4>Usage Agreement</h4>
+            <p>By using our File Management System, you agree to:</p>
+            <ul class="feature-list">
+                <li class="feature-item">
+                    📋 Use the service for legal purposes only
+                </li>
+                <li class="feature-item">
+                    📋 Not attempt to circumvent any security features
+                </li>
+                <li class="feature-item">
+                    📋 Accept responsibility for the files you process
+                </li>
+                <li class="feature-item">
+                    📋 Understand that we provide no warranty for the service
+                </li>
+            </ul>
+            
+            <h4>Limitations of Liability</h4>
+            <p>We strive to provide a reliable service but cannot guarantee:</p>
+            <ul class="feature-list">
+                <li class="feature-item">
+                    ⚠️ Uninterrupted service availability
+                </li>
+                <li class="feature-item">
+                    ⚠️ Perfect accuracy in table extraction
+                </li>
+                <li class="feature-item">
+                    ⚠️ Compatibility with all file formats
+                </li>
+            </ul>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # Acceptable Use
+    st.markdown("""
+        <div class="section-card">
+            <h2 class="section-header">✅ Acceptable Use Policy</h2>
+            <p>To maintain the security and reliability of our service, we require users to:</p>
+            <ul class="feature-list">
+                <li class="feature-item">
+                    ✔️ Only upload files you have the right to process
+                </li>
+                <li class="feature-item">
+                    ✔️ Respect file size limitations
+                </li>
+                <li class="feature-item">
+                    ✔️ Not attempt to upload malicious files
+                </li>
+                <li class="feature-item">
+                    ✔️ Use the service in a manner that doesn't disrupt other users
+                </li>
+            </ul>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # Contact Information
+    st.markdown("""
+        <div class="section-card">
+            <h2 class="section-header">📞 Contact & Support</h2>
+            <p>If you have any questions about our privacy policy or terms of service, please contact us:</p>
+            <ul class="feature-list">
+                <li class="feature-item">
+                    📧 Email: support@filemanager.com
+                </li>
+                <li class="feature-item">
+                    🌐 Website: www.filemanager.com/support
+                </li>
+                <li class="feature-item">
+                    ⏰ Response Time: Within 24 hours
+                </li>
+            </ul>
+        </div>
+    """, unsafe_allow_html=True)
+
+def integrate_privacy_section():
+    # Add this to your main app's sidebar or as a separate page
+    st.sidebar.markdown("---")
+    if st.sidebar.button("📜 View Privacy Policy & Terms"):
+        create_privacy_section()
 def process_pdf(input_pdf, operations):
     from PyPDF2 import PdfReader, PdfWriter
     from io import BytesIO
@@ -797,7 +1063,7 @@ def front_page_creator():
                     st.info("Please try adjusting your settings or contact support if the problem persists.")
 def excel_editor_and_analyzer():
     st.title("🧩 Data Central")
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(["Excel Editor","File Converter","Data Analyzer","Front Page Creator","File Management"])
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Excel Editor","File Converter","Data Analyzer","Front Page Creator","File Management","Terms & Conditions"])
     with tab1:
         excel_editor()
     with tab2:
@@ -808,6 +1074,8 @@ def excel_editor_and_analyzer():
         front_page_creator()
     with tab5:
         create_file_management_tab()
+    with tab6:
+        integrate_privacy_section()
 def file_converter():
     st.header("🔄 Universal File Converter")
     st.markdown("""
