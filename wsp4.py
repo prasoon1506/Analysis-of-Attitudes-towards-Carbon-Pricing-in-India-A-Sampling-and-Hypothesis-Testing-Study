@@ -92,12 +92,18 @@ import zipfile
 def create_file_management_tab():
     st.title("File Management System")
     
-    # Create two columns for better layout
-    col1, col2 = st.columns(2)
+    # Initialize session state for password
+    if 'current_password' not in st.session_state:
+        st.session_state.current_password = None
+    if 'current_pdf_name' not in st.session_state:
+        st.session_state.current_pdf_name = None
+    
+    # Create three columns for layout
+    col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.header("Upload Files")
-        uploaded_files = st.file_uploader("Choose files", accept_multiple_files=True)
+        st.header("Create Zip")
+        uploaded_files = st.file_uploader("Choose files", accept_multiple_files=True, key="zip_files")
         
         if uploaded_files:
             st.write(f"Uploaded {len(uploaded_files)} files:")
@@ -148,23 +154,66 @@ def create_file_management_tab():
                     st.error(f"An error occurred: {str(e)}")
             else:
                 st.warning("Please upload files first!")
-    
+
     with col2:
+        st.header("Unzip Files")
+        uploaded_zip = st.file_uploader("Upload ZIP file", type=['zip'], key="unzip_file")
+        
+        if uploaded_zip:
+            if st.button("Extract ZIP"):
+                try:
+                    # Create a BytesIO object from the uploaded file
+                    zip_bytes = BytesIO(uploaded_zip.read())
+                    
+                    # Create a ZipFile object
+                    with zipfile.ZipFile(zip_bytes, 'r') as zip_ref:
+                        # Get list of files in the zip
+                        file_list = zip_ref.namelist()
+                        
+                        # Create a BytesIO object for each file
+                        for file_name in file_list:
+                            with zip_ref.open(file_name) as file:
+                                file_bytes = BytesIO(file.read())
+                                # Create download button for each file
+                                st.download_button(
+                                    label=f"Download {file_name}",
+                                    data=file_bytes,
+                                    file_name=file_name,
+                                    mime="application/octet-stream"
+                                )
+                    
+                    st.success("ZIP file extracted successfully!")
+                
+                except Exception as e:
+                    st.error(f"An error occurred: {str(e)}")
+    
+    with col3:
         st.header("Password Protect PDF")
-        pdf_file = st.file_uploader("Choose PDF file", type=['pdf'])
+        pdf_file = st.file_uploader("Choose PDF file", type=['pdf'], key="pdf_file")
         
         if pdf_file:
-            # Option to generate random password or enter custom
+            # Check if this is a new PDF file
+            if pdf_file.name != st.session_state.current_pdf_name:
+                st.session_state.current_pdf_name = pdf_file.name
+                # Only generate new password for new PDF
+                if st.session_state.get('password_option', '') == "Generate Random 4-digit Password":
+                    st.session_state.current_password = str(random.randint(1000, 9999))
+            
+            # Password option selection
             password_option = st.radio(
                 "Password Option",
-                ["Generate Random 4-digit Password", "Enter Custom Password"]
+                ["Generate Random 4-digit Password", "Enter Custom Password"],
+                key="password_option"
             )
             
             if password_option == "Generate Random 4-digit Password":
-                password = str(random.randint(1000, 9999))
-                st.info(f"Generated Password: {password}")
+                if not st.session_state.current_password:
+                    st.session_state.current_password = str(random.randint(1000, 9999))
+                st.info(f"Generated Password: {st.session_state.current_password}")
+                password = st.session_state.current_password
             else:
                 password = st.text_input("Enter password", type="password")
+                st.session_state.current_password = password
             
             if st.button("Protect PDF"):
                 try:
