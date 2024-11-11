@@ -303,7 +303,7 @@ def create_file_management_tab():
                 except Exception as e:
                     st.error(f"An error occurred: {str(e)}")
     with col4:
-        pdf_table_extractor()
+        pdf_table_extractor(self)
 def process_pdf(input_pdf, operations):
     from PyPDF2 import PdfReader, PdfWriter
     from io import BytesIO
