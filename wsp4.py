@@ -90,7 +90,6 @@ def load_lottie_url(url: str):
     return r.json()
 import zipfile
 def create_file_management_tab():
-    # Custom CSS for better styling
     st.markdown("""
         <style>
         .main-header {
@@ -421,7 +420,7 @@ def create_privacy_section():
     # About Our App
     st.markdown("""
         <div class="section-card">
-            <h2 class="section-header">📱 About Our File Management System</h2>
+            <h2 class="section-header">📱 About Our Data Central</h2>
             <p>Our application is designed to provide secure, efficient, and user-friendly file management solutions. 
             We understand the importance of your data and have built this system with privacy and security at its core.</p>
             
@@ -552,10 +551,7 @@ def create_privacy_section():
             <p>If you have any questions about our privacy policy or terms of service, please contact us:</p>
             <ul class="feature-list">
                 <li class="feature-item">
-                    📧 Email: support@filemanager.com
-                </li>
-                <li class="feature-item">
-                    🌐 Website: www.filemanager.com/support
+                    📧 Email: prasoon.bajpai@lc.jkmail.com
                 </li>
                 <li class="feature-item">
                     ⏰ Response Time: Within 24 hours
