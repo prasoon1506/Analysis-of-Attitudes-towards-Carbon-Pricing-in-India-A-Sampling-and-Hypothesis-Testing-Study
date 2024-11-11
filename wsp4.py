@@ -692,7 +692,7 @@ def front_page_creator():
                     st.info("Please try adjusting your settings or contact support if the problem persists.")
 def excel_editor_and_analyzer():
     st.title("🧩 Data Central")
-    tab1, tab2, tab3, tab4 = st.tabs(["Excel Editor","File Converter","Data Analyzer","Front Page Creator","File Management"])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["Excel Editor","File Converter","Data Analyzer","Front Page Creator","File Management"])
     with tab1:
         excel_editor()
     with tab2:
