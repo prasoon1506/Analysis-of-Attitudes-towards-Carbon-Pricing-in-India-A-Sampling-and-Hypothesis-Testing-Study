@@ -89,17 +89,72 @@ def load_lottie_url(url: str):
         return None
     return r.json()
 import zipfile
+def pdf_table_extractor(self):
+        st.header("PDF Table Extractor")
+        st.write("Extract tables from PDF files and convert them to Excel while maintaining formatting.")
+        
+        uploaded_file = st.file_uploader("Upload PDF file", type=['pdf'])
+        
+        if uploaded_file:
+            try:
+                doc = fitz.open(stream=uploaded_file.read(), filetype="pdf")
+                tables_found = []
+                
+                # Scan PDF for tables
+                for page_num in range(len(doc)):
+                    page = doc[page_num]
+                    tables = page.find_tables()
+                    if tables.tables:
+                        tables_found.extend([{
+                            'page': page_num + 1,
+                            'table': table
+                        } for table in tables.tables])
+                
+                if tables_found:
+                    st.write(f"Found {len(tables_found)} tables in the PDF")
+                    
+                    # Let user select which tables to extract
+                    selected_tables = st.multiselect(
+                        "Select tables to extract",
+                        options=range(len(tables_found)),
+                        format_func=lambda x: f"Table {x+1} (Page {tables_found[x]['page']})"
+                    )
+                    
+                    if selected_tables and st.button("Extract Selected Tables"):
+                        # Create Excel file with multiple sheets
+                        output = BytesIO()
+                        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                            for i in selected_tables:
+                                table = tables_found[i]['table']
+                                df = pd.DataFrame(table.extract())
+                                df.to_excel(
+                                    writer,
+                                    sheet_name=f"Table_{i+1}_Page_{tables_found[i]['page']}",
+                                    index=False
+                                )
+                        
+                        # Provide download button
+                        st.download_button(
+                            label="Download Excel File",
+                            data=output.getvalue(),
+                            file_name="extracted_tables.xlsx",
+                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.document"
+                        )
+                        st.success("Tables extracted successfully!")
+                else:
+                    st.warning("No tables found in the PDF")
+            
+            except Exception as e:
+                st.error(f"An error occurred: {str(e)}")
 def create_file_management_tab():
     st.title("File Management System")
-    
-    # Initialize session state for password
     if 'current_password' not in st.session_state:
         st.session_state.current_password = None
     if 'current_pdf_name' not in st.session_state:
         st.session_state.current_pdf_name = None
     
     # Create three columns for layout
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3,col4 = st.columns(4)
     
     with col1:
         st.header("Create Zip")
@@ -244,7 +299,9 @@ def create_file_management_tab():
                     st.success("PDF protected successfully!")
                     if password_option == "Generate Random 4-digit Password":
                         st.info("Make sure to save the password!")
-                
+    with col4:
+        pdf_table_extractor()
+        
                 except Exception as e:
                     st.error(f"An error occurred: {str(e)}")
 def process_pdf(input_pdf, operations):
