@@ -1075,7 +1075,7 @@ def excel_editor_and_analyzer():
     with tab5:
         create_file_management_tab()
     with tab6:
-        integrate_privacy_section()
+        create_privacy_section()
 def file_converter():
     st.header("🔄 Universal File Converter")
     st.markdown("""
