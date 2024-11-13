@@ -6142,6 +6142,145 @@ def discount():
         st.markdown("</div>", unsafe_allow_html=True)
  if __name__ == "__main__":
     main()
+def sfdc():
+ import streamlit as st
+ import pandas as pd
+ import matplotlib.pyplot as plt
+ import io
+ import sys
+ import traceback
+ import json
+ import os
+
+ def save_uploaded_file(uploaded_file):
+    """Save uploaded file and return its path"""
+    if not os.path.exists('temp'):
+        os.makedirs('temp')
+    file_path = os.path.join('temp', uploaded_file.name)
+    with open(file_path, 'wb') as f:
+        f.write(uploaded_file.getbuffer())
+    return file_path
+
+ def save_code(code_name, code_content):
+    """Save code to JSON file"""
+    if not os.path.exists('saved_codes'):
+        os.makedirs('saved_codes')
+    
+    saved_codes = {}
+    try:
+        with open('saved_codes/codes.json', 'r') as f:
+            saved_codes = json.load(f)
+    except FileNotFoundError:
+        pass
+    
+    saved_codes[code_name] = code_content
+    
+    with open('saved_codes/codes.json', 'w') as f:
+        json.dump(saved_codes, f)
+
+ def load_saved_codes():
+    """Load saved codes from JSON file"""
+    try:
+        with open('saved_codes/codes.json', 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {}
+
+ def main():
+    st.title("Python Code Executor")
+    
+    # File upload
+    uploaded_file = st.file_uploader("Upload your dataset", type=['csv', 'xlsx'])
+    
+    if uploaded_file is not None:
+        try:
+            # Read the dataset
+            if uploaded_file.name.endswith('.csv'):
+                df = pd.read_csv(uploaded_file)
+            else:
+                df = pd.read_excel(uploaded_file)
+            
+            st.success("Dataset loaded successfully!")
+            
+            # Show data preview
+            with st.expander("Preview Data"):
+                st.dataframe(df.head())
+            
+            # Code execution section
+            st.header("Code Execution")
+            
+            # Save code section
+            save_code_name = st.text_input("Save code as (optional):")
+            
+            # Load saved codes
+            saved_codes = load_saved_codes()
+            if saved_codes:
+                selected_code = st.selectbox(
+                    "Load saved code",
+                    [""] + list(saved_codes.keys())
+                )
+                if selected_code:
+                    initial_code = saved_codes[selected_code]
+                else:
+                    initial_code = ""
+            else:
+                initial_code = ""
+            
+            # Code input
+            code = st.text_area("Enter your Python code:", initial_code, height=300)
+            
+            # Save code button
+            if save_code_name and st.button("Save Code"):
+                save_code(save_code_name, code)
+                st.success(f"Code saved as '{save_code_name}'")
+            
+            # Execute code button
+            if st.button("Execute Code"):
+                try:
+                    # Capture stdout
+                    stdout = io.StringIO()
+                    sys.stdout = stdout
+                    
+                    # Create local namespace with DataFrame
+                    local_dict = {'df': df, 'pd': pd, 'plt': plt}
+                    
+                    # Execute the code
+                    exec(code, local_dict)
+                    
+                    # Restore stdout
+                    sys.stdout = sys.__stdout__
+                    
+                    # Show output
+                    output = stdout.getvalue()
+                    if output:
+                        st.subheader("Output:")
+                        st.text(output)
+                    
+                    # Show any matplotlib figures
+                    if plt.get_fignums():
+                        st.subheader("Plots:")
+                        for fig in plt.get_fignums():
+                            st.pyplot(plt.figure(fig))
+                        plt.close('all')
+                    
+                    # If df was modified, show preview
+                    if 'df' in local_dict and not local_dict['df'].equals(df):
+                        st.subheader("Modified DataFrame Preview:")
+                        st.dataframe(local_dict['df'].head())
+                    
+                    st.success("Code executed successfully!")
+                    
+                except Exception as e:
+                    st.error(f"Error executing code:\n{traceback.format_exc()}")
+        
+        except Exception as e:
+            st.error(f"Error reading file: {str(e)}")
+    
+    else:
+        st.info("Please upload a dataset to begin.")
+
+ if __name__ == "__main__":
+    main()
 def load_visit_data():
     try:
         with open('visit_data.json', 'r') as f:
@@ -6271,7 +6410,7 @@ def main():
     elif selected == "Analysis Dashboards":
         analysis_menu = option_menu(
             menu_title="Analysis Dashboards",
-            options=["WSP Analysis", "Sales Dashboard","Sales Review Report","Market Share Analysis","Discount Analysis", "Product-Mix", "Segment-Mix","Geo-Mix"],
+            options=["WSP Analysis", "Sales Dashboard","Sales Review Report","Market Share Analysis","Discount Analysis", "Product-Mix", "Segment-Mix","Geo-Mix","SFDC"],
             icons=["clipboard-data", "cash","bar-chart", "arrow-up-right", "shuffle", "globe"],
             orientation="horizontal",)
         if analysis_menu == "WSP Analysis":
@@ -6290,6 +6429,8 @@ def main():
             green()
         elif analysis_menu == "Discount Analysis":
             discount()
+        elif analysis_menu =="SFDC":
+            sfdc()
     elif selected == "Predictions":
         prediction_menu = option_menu(
             menu_title="Predictions",
