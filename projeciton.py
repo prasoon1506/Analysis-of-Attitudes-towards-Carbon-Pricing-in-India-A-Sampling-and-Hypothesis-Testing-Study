@@ -32,8 +32,6 @@ class WeightOptimizer:
         for month in ['Apr', 'May', 'June', 'July', 'Aug', 'Sep']:
             features[f'sales_{month}'] = df[f'Monthly Achievement({month})']
         
-        # Add previous year data
-        features['prev_aug'] = df['Total Aug 2023']
         features['prev_sep'] = df['Total Sep 2023']
         features['prev_oct'] = df['Total Oct 2023']
         
@@ -48,10 +46,8 @@ class WeightOptimizer:
         months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep']
         for i in range(1, len(months)):
             features[f'growth_{months[i]}'] = features[f'sales_{months[i]}'] / features[f'sales_{months[i-1]}']
-        
-        features['yoy_aug_growth'] = features['sales_Aug'] / features['prev_aug']
         features['yoy_sep_growth'] = features['sales_Sep'] / features['prev_sep']
-        features['yoy_weighted_growth'] = features['yoy_aug_growth'] * 0.4 + features['yoy_sep_growth'] * 0.6
+        features['yoy_weighted_growth'] = + features['yoy_sep_growth'] * 1
         
         features['target_achievement_rate'] = features['sales_Sep'] / features['month_target_Sep']
         features['actual_oct'] = df['Monthly Achievement(Oct)']
