@@ -2,12 +2,14 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_absolute_percentage_error
-import json
-from pathlib import Path
-import plotly.express as px
-import plotly.graph_objects as go
+from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import mean_absolute_percentage_error, mean_absolute_error
 import warnings
+import json
+from itertools import product
+from pathlib import Path
+import plotly.graph_objects as go
+import plotly.express as px
 
 warnings.filterwarnings('ignore')
 
@@ -19,310 +21,333 @@ class WeightOptimizer:
         """Generate combinations of weights that sum to 1"""
         weights = np.arange(0, 1.01, step)
         combinations = []
-        for combo in product(weights, repeat=num_weights):
-            if abs(sum(combo) - 1.0) < 0.01:
-                combinations.append(combo)
+        
+        for w in product(weights, repeat=num_weights):
+            if abs(sum(w) - 1.0) < 0.01:
+                combinations.append(w)
+                
         return combinations
-
-    def prepare_features_for_october(self, df):
-        """Prepare features for October prediction"""
-        features = pd.DataFrame()
-        
-        # Extract monthly sales up to September
-        for month in ['Apr', 'May', 'June', 'July', 'Aug', 'Sep']:
-            features[f'sales_{month}'] = df[f'Monthly Achievement({month})']
-        
-        features['prev_sep'] = df['Total Sep 2023']
-        features['prev_oct'] = df['Total Oct 2023']
-        
-        # Add target information
-        for month in ['Apr', 'May', 'June', 'July', 'Aug', 'Sep']:
-            features[f'month_target_{month}'] = df[f'Month Tgt ({month})']
-            features[f'ags_target_{month}'] = df[f'AGS Tgt ({month})']
-        
-        features['avg_monthly_sales'] = features[[f'sales_{m}' for m in ['Apr', 'May', 'June', 'July', 'Aug', 'Sep']]].mean(axis=1)
-        
-        # Calculate month-over-month growth rates
-        months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep']
-        for i in range(1, len(months)):
-            features[f'growth_{months[i]}'] = features[f'sales_{months[i]}'] / features[f'sales_{months[i-1]}']
-        features['yoy_sep_growth'] = features['sales_Sep'] / features['prev_sep']
-        features['yoy_weighted_growth'] = + features['yoy_sep_growth'] * 1
-        
-        features['target_achievement_rate'] = features['sales_Sep'] / features['month_target_Sep']
-        features['actual_oct'] = df['Monthly Achievement(Oct)']
-        
-        return features
-
-    def predict_october(self, features, growth_weights, method_weights):
-        """Generate October prediction using the given weights"""
-        # Random Forest prediction
-        rf_model = RandomForestRegressor(n_estimators=100, random_state=42)
-        feature_cols = [col for col in features.columns if col not in 
-                       ['avg_monthly_sales', 'yoy_aug_growth', 'yoy_sep_growth', 'yoy_weighted_growth',
-                        'target_achievement_rate', 'actual_oct'] and not col.startswith('growth_')]
-        
-        rf_model.fit(features[feature_cols], features['sales_Sep'])
-        rf_prediction = rf_model.predict(features[feature_cols])
-        
-        # YoY prediction
-        yoy_prediction = features['prev_oct'] * features['yoy_weighted_growth']
-        
-        # Trend prediction
-        weighted_growth = sum(features[month] * weight 
-                            for month, weight in growth_weights.items()) / sum(growth_weights.values())
-        trend_prediction = features['sales_Sep'] * weighted_growth
-        
-        # Target-based prediction
-        target_based_prediction = features['avg_monthly_sales'] * features['target_achievement_rate']
-        
-        # Combine predictions
-        final_prediction = (
-            method_weights['rf'] * rf_prediction +
-            method_weights['yoy'] * yoy_prediction +
-            method_weights['trend'] * trend_prediction +
-            method_weights['target'] * target_based_prediction
-        )
-        
-        return final_prediction
-
+    
+    def calculate_prediction_error(self, actual, predicted):
+        """Calculate error metrics"""
+        mape = mean_absolute_percentage_error([actual], [predicted])
+        mae = mean_absolute_error([actual], [predicted])
+        return mape, mae
+    
     def find_optimal_weights(self, df, zone, brand):
-        """Find optimal weights for a given zone and brand"""
-        df_filtered = df[(df['Zone'] == zone) & (df['Brand'] == brand)]
-        if len(df_filtered) == 0:
+        """Find optimal weights for a specific zone and brand"""
+        features = prepare_features_for_october(df)
+        filtered_data = df[(df['Zone'] == zone) & (df['Brand'] == brand)]
+        
+        if len(filtered_data) == 0:
             return None
             
-        features = self.prepare_features_for_october(df_filtered)
-        growth_weight_combos = self.generate_weight_combinations(5, step=0.2)
-        method_weight_combos = self.generate_weight_combinations(4, step=0.2)
+        actual_october = filtered_data['Monthly Achievement(Oct)'].iloc[0]
         
-        best_mape = float('inf')
+        # Generate weight combinations for 5 growth rates (May through September)
+        growth_combinations = self.generate_weight_combinations(5, step=0.2)
+        method_combinations = self.generate_weight_combinations(4, step=0.2)
+        
+        best_error = float('inf')
         best_weights = None
         
-        for growth_combo in growth_weight_combos:
-            growth_weights = {
-                'growth_May': growth_combo[0],
-                'growth_June': growth_combo[1],
-                'growth_July': growth_combo[2],
-                'growth_Aug': growth_combo[3],
-                'growth_Sep': growth_combo[4]
+        for growth_weights in growth_combinations:
+            growth_dict = {
+                'growth_May': growth_weights[0],
+                'growth_June': growth_weights[1],
+                'growth_July': growth_weights[2],
+                'growth_Aug': growth_weights[3],
+                'growth_Sep': growth_weights[4],
+                'growth_Oct': 1.0  # Oct/Sep growth will be used directly
             }
             
-            for method_combo in method_weight_combos:
-                method_weights = {
-                    'rf': method_combo[0],
-                    'yoy': method_combo[1],
-                    'trend': method_combo[2],
-                    'target': method_combo[3]
+            for method_weights in method_combinations:
+                method_dict = {
+                    'rf': method_weights[0],
+                    'yoy': method_weights[1],
+                    'trend': method_weights[2],
+                    'target': method_weights[3]
                 }
                 
-                prediction = self.predict_october(features, growth_weights, method_weights)
-                mape = mean_absolute_percentage_error(features['actual_oct'], prediction)
+                prediction = predict_october_sales(df, zone, brand, growth_dict, method_dict)
                 
-                if mape < best_mape:
-                    best_mape = mape
-                    best_weights = {
-                        'growth_weights': growth_weights,
-                        'method_weights': method_weights,
-                        'mape': mape
-                    }
+                if prediction is not None:
+                    predicted_value = prediction['Final_Prediction'].iloc[0]
+                    mape, mae = self.calculate_prediction_error(actual_october, predicted_value)
+                    
+                    if mape < best_error:
+                        best_error = mape
+                        best_weights = {
+                            'growth_weights': growth_dict,
+                            'method_weights': method_dict,
+                            'mape': mape,
+                            'mae': mae
+                        }
         
         return best_weights
+    
+    def optimize_all_combinations(self, df):
+        """Find optimal weights for all zone-brand combinations"""
+        for zone in df['Zone'].unique():
+            for brand in df[df['Zone'] == zone]['Brand'].unique():
+                best_weights = self.find_optimal_weights(df, zone, brand)
+                if best_weights is not None:
+                    self.optimal_weights[f"{zone}_{brand}"] = best_weights
+        
+        self.save_weights()
+    
+    def save_weights(self):
+        """Save optimal weights to a JSON file"""
+        with open('optimal_weights.json', 'w') as f:
+            json.dump(self.optimal_weights, f)
+    
+    def load_weights(self):
+        """Load optimal weights from JSON file"""
+        try:
+            with open('optimal_weights.json', 'r') as f:
+                self.optimal_weights = json.load(f)
+        except FileNotFoundError:
+            self.optimal_weights = {}
+
+def prepare_features_for_prediction(df, include_october=True):
+    """Prepare features for prediction"""
+    features = pd.DataFrame()
+    
+    # Extract monthly sales
+    months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep']
+    if include_october:
+        months.append('Oct')
+        
+    for month in months:
+        features[f'sales_{month}'] = df[f'Monthly Achievement({month})']
+    
+    # Add previous year data
+    features['prev_sep'] = df['Total Sep 2023']
+    features['prev_oct'] = df['Total Oct 2023']
+    features['prev_nov'] = df['Total Nov 2023']
+    
+    # Add target information
+    for month in months:
+        features[f'month_target_{month}'] = df[f'Month Tgt ({month})']
+        features[f'ags_target_{month}'] = df[f'AGS Tgt ({month})']
+    
+    # Calculate additional features
+    features['avg_monthly_sales'] = features[[f'sales_{m}' for m in months]].mean(axis=1)
+    
+    # Calculate month-over-month growth rates
+    for i in range(1, len(months)):
+        features[f'growth_{months[i]}'] = features[f'sales_{months[i]}'] / features[f'sales_{months[i-1]}']
+    
+    # Calculate YoY growth rates
+    if include_october:
+        features['yoy_oct_growth'] = features['sales_Oct'] / features['prev_oct']
+    features['yoy_sep_growth'] = features['sales_Sep'] / features['prev_sep']
+    
+    # Target achievement rates
+    if include_october:
+        features['target_achievement_rate'] = features['sales_Oct'] / features['month_target_Oct']
+    else:
+        features['target_achievement_rate'] = features['sales_Sep'] / features['month_target_Sep']
+    
+    return features
+
+def predict_november_sales(df, zone, brand, growth_weights, method_weights):
+    """Predict November sales using multiple methods and weighted averaging"""
+    # Filter data for selected zone and brand
+    data = df[(df['Zone'] == zone) & (df['Brand'] == brand)].copy()
+    
+    if len(data) == 0:
+        return None
+    
+    features = prepare_features_for_prediction(data, include_october=True)
+    
+    # Calculate weighted growth rate
+    weighted_growth = sum(
+        growth_weights[f'growth_{month}'] * features[f'growth_{month}'].iloc[0]
+        for month in ['May', 'June', 'July', 'Aug', 'Sep', 'Oct']
+    )
+    
+    # Method 1: Random Forest prediction
+    rf_model = RandomForestRegressor(n_estimators=100, random_state=42)
+    X = features.drop(['yoy_oct_growth', 'target_achievement_rate'], axis=1)
+    y = data['Monthly Achievement(Oct)']
+    rf_model.fit(X, y)
+    rf_prediction = rf_model.predict(X)[0] * weighted_growth
+    
+    # Method 2: Year-over-Year growth
+    yoy_prediction = data['Total Nov 2023'].iloc[0] * features['yoy_oct_growth'].iloc[0]
+    
+    # Method 3: Trend-based prediction
+    trend_prediction = data['Monthly Achievement(Oct)'].iloc[0] * weighted_growth
+    
+    # Method 4: Target-based prediction
+    target_prediction = data['Month Tgt (Nov)'].iloc[0] * features['target_achievement_rate'].iloc[0]
+    
+    # Combine predictions using method weights
+    final_prediction = (
+        method_weights['rf'] * rf_prediction +
+        method_weights['yoy'] * yoy_prediction +
+        method_weights['trend'] * trend_prediction +
+        method_weights['target'] * target_prediction
+    )
+    
+    # Create results DataFrame
+    results = pd.DataFrame({
+        'Method': ['Random Forest', 'Year-over-Year', 'Trend-based', 'Target-based', 'Final Prediction'],
+        'Prediction': [rf_prediction, yoy_prediction, trend_prediction, target_prediction, final_prediction]
+    })
+    
+    return results
+
+def create_sales_history_plot(df, zone, brand):
+    """Create a line plot of historical sales data"""
+    data = df[(df['Zone'] == zone) & (df['Brand'] == brand)].copy()
+    
+    if len(data) == 0:
+        return None
+        
+    months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']
+    sales_data = {month: data[f'Monthly Achievement({month})'].iloc[0] for month in months}
+    
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=list(sales_data.keys()),
+        y=list(sales_data.values()),
+        mode='lines+markers',
+        name='Actual Sales'
+    ))
+    
+    fig.update_layout(
+        title=f'Historical Sales Data for {brand} in {zone}',
+        xaxis_title='Month',
+        yaxis_title='Sales Amount',
+        template='plotly_white'
+    )
+    
+    return fig
 
 def main():
-    st.set_page_config(page_title="Sales Forecasting Model", layout="wide")
+    st.set_page_config(page_title="Sales Forecasting App", layout="wide")
     
-    # Add custom CSS
+    st.title("Sales Forecasting Model")
     st.markdown("""
-        <style>
-        .stSlider p {
-            font-size: 1.1rem;
-            color: #4A4A4A;
-        }
-        .block-container {
-            padding-top: 2rem;
-        }
-        </style>
-    """, unsafe_allow_html=True)
+    This app predicts November sales based on historical data and various prediction methods.
+    Upload your Excel file and configure the weights to generate predictions.
+    """)
     
-    # Header
-    st.title("🎯 Sales Forecasting Model")
-    st.markdown("---")
-    
-    # Initialize session state
-    if 'optimizer' not in st.session_state:
-        st.session_state.optimizer = WeightOptimizer()
+    # Initialize weight optimizer
+    weight_optimizer = WeightOptimizer()
+    weight_optimizer.load_weights()
     
     # File upload
     uploaded_file = st.file_uploader("Upload Excel File", type=['xlsx'])
     
     if uploaded_file is not None:
-        try:
-            df = pd.read_excel(uploaded_file)
+        df = pd.read_excel(uploaded_file)
+        
+        # Sidebar for controls
+        st.sidebar.header("Controls")
+        
+        # Calibration section
+        st.sidebar.subheader("Weight Calibration")
+        if st.sidebar.button("Calibrate Weights"):
+            with st.spinner("Calibrating weights for all zone-brand combinations..."):
+                weight_optimizer.optimize_all_combinations(df)
+            st.success("Calibration complete!")
+        
+        # Zone and Brand selection
+        zones = sorted(df['Zone'].unique())
+        brands = sorted(df['Brand'].unique())
+        
+        selected_zone = st.sidebar.selectbox("Select Zone", zones)
+        selected_brand = st.sidebar.selectbox("Select Brand", brands)
+        
+        # Option to use recommended weights
+        use_recommended = st.sidebar.checkbox("Use Recommended Weights")
+        
+        # Weight configuration
+        st.sidebar.subheader("Configure Weights")
+        
+        # Initialize weights
+        growth_weights = {}
+        method_weights = {}
+        
+        # Load recommended weights if available and selected
+        if use_recommended:
+            key = f"{selected_zone}_{selected_brand}"
+            if key in weight_optimizer.optimal_weights:
+                recommended = weight_optimizer.optimal_weights[key]
+                growth_weights = recommended['growth_weights']
+                method_weights = recommended['method_weights']
+            else:
+                st.warning("No recommended weights available for this combination.")
+                use_recommended = False
+        
+        # Growth weight sliders
+        st.sidebar.subheader("Growth Weights")
+        if not use_recommended:
+            growth_weights = {
+                'growth_May': st.sidebar.slider("May/Apr Weight", 0.0, 1.0, 0.1, 0.05),
+                'growth_June': st.sidebar.slider("June/May Weight", 0.0, 1.0, 0.15, 0.05),
+                'growth_July': st.sidebar.slider("July/June Weight", 0.0, 1.0, 0.2, 0.05),
+                'growth_Aug': st.sidebar.slider("Aug/July Weight", 0.0, 1.0, 0.25, 0.05),
+                'growth_Sep': st.sidebar.slider("Sep/Aug Weight", 0.0, 1.0, 0.3, 0.05),
+                'growth_Oct': 1.0  # Fixed weight for Oct/Sep
+            }
+        
+        # Method weight sliders
+        st.sidebar.subheader("Method Weights")
+        if not use_recommended:
+            method_weights = {
+                'rf': st.sidebar.slider("Random Forest Weight", 0.0, 1.0, 0.4, 0.05),
+                'yoy': st.sidebar.slider("Year-over-Year Weight", 0.0, 1.0, 0.1, 0.05),
+                'trend': st.sidebar.slider("Trend Weight", 0.0, 1.0, 0.4, 0.05),
+                'target': st.sidebar.slider("Target Weight", 0.0, 1.0, 0.1, 0.05)
+            }
+        
+        # Validate weights
+        growth_sum = sum(list(growth_weights.values())[:-1])  # Exclude Oct/Sep weight
+        method_sum = sum(method_weights.values())
+        
+        # Main content area
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.subheader("Historical Sales Data")
+            fig = create_sales_history_plot(df, selected_zone, selected_brand)
+            if fig is not None:
+                st.plotly_chart(fig)
+        
+        with col2:
+            st.subheader("November Sales Prediction")
             
-            # Sidebar for controls
-            with st.sidebar:
-                st.header("Control Panel")
+            if abs(growth_sum - 1.0) > 0.01:
+                st.error("Growth weights (May through September) must sum to 1.0")
+            elif abs(method_sum - 1.0) > 0.01:
+                st.error("Method weights must sum to 1.0")
+            else:
+                predictions = predict_november_sales(
+                    df, selected_zone, selected_brand,
+                    growth_weights, method_weights
+                )
                 
-                # Zone and Brand selection
-                zones = sorted(df['Zone'].unique())
-                selected_zone = st.selectbox("Select Zone", zones)
-                
-                brands = sorted(df[df['Zone'] == selected_zone]['Brand'].unique())
-                selected_brand = st.selectbox("Select Brand", brands)
-                
-                # Weight optimization
-                st.subheader("Weight Optimization")
-                use_recommended = st.checkbox("Use Recommended Weights")
-                
-                # Initialize default weights
-                default_growth_weights = {
-                    'growth_May': 0.05,
-                    'growth_June': 0.1,
-                    'growth_July': 0.15,
-                    'growth_Aug': 0.2,
-                    'growth_Sep': 0.25,
-                    'growth_Oct': 0.25
-                }
-                
-                default_method_weights = {
-                    'rf': 0.4,
-                    'yoy': 0.1,
-                    'trend': 0.4,
-                    'target': 0.1
-                }
-                
-                # Update weights if recommended
-                if use_recommended:
-                    key = f"{selected_zone}_{selected_brand}"
-                    if key in st.session_state.optimizer.optimal_weights:
-                        weights = st.session_state.optimizer.optimal_weights[key]
-                        default_growth_weights.update(weights['growth_weights'])
-                        default_method_weights.update(weights['method_weights'])
-                        st.success(f"Optimal MAPE: {weights['mape']:.2%}")
-            
-            # Main content area
-            col1, col2 = st.columns([1, 1])
-            
-            with col1:
-                st.subheader("Growth Weights")
-                growth_weights = {}
-                for month, default_value in default_growth_weights.items():
-                    growth_weights[month] = st.slider(
-                        f"{month.replace('growth_', '')} Growth Weight",
-                        0.0, 1.0, default_value, 0.05,
-                        key=f"growth_{month}"
-                    )
-                
-                # Validate growth weights
-                total_growth = sum(growth_weights.values())
-                if abs(total_growth - 1.0) > 0.01:
-                    st.warning(f"Growth weights sum to {total_growth:.2f}. Please adjust to sum to 1.0")
-            
-            with col2:
-                st.subheader("Method Weights")
-                method_weights = {}
-                method_names = {
-                    'rf': 'Random Forest',
-                    'yoy': 'Year over Year',
-                    'trend': 'Trend Based',
-                    'target': 'Target Based'
-                }
-                
-                for method, default_value in default_method_weights.items():
-                    method_weights[method] = st.slider(
-                        f"{method_names[method]} Weight",
-                        0.0, 1.0, default_value, 0.05,
-                        key=f"method_{method}"
-                    )
-                
-                # Validate method weights
-                total_method = sum(method_weights.values())
-                if abs(total_method - 1.0) > 0.01:
-                    st.warning(f"Method weights sum to {total_method:.2f}. Please adjust to sum to 1.0")
-            
-            # Generate predictions when weights are valid
-            if abs(total_growth - 1.0) <= 0.01 and abs(total_method - 1.0) <= 0.01:
-                if st.button("Generate Predictions", type="primary"):
-                    # Generate predictions logic here
-                    features = st.session_state.optimizer.prepare_features_for_october(
-                        df[(df['Zone'] == selected_zone) & (df['Brand'] == selected_brand)]
-                    )
+                if predictions is not None:
+                    # Format predictions
+                    predictions['Prediction'] = predictions['Prediction'].round(2)
+                    predictions['Prediction'] = predictions['Prediction'].apply(lambda x: f"₹{x:,.2f}")
                     
-                    predictions = st.session_state.optimizer.predict_october(
-                        features, growth_weights, method_weights
-                    )
+                    # Display predictions
+                    st.dataframe(predictions.set_index('Method'))
                     
-                    # Display results
-                    st.markdown("---")
-                    st.subheader("Prediction Results")
-                    
-                    # Summary metrics
-                    col1, col2, col3 = st.columns(3)
-                    with col1:
-                        st.metric("Average Prediction", f"₹{predictions.mean():,.2f}")
-                    with col2:
-                        st.metric("Minimum Prediction", f"₹{predictions.min():,.2f}")
-                    with col3:
-                        st.metric("Maximum Prediction", f"₹{predictions.max():,.2f}")
-                    
-                    # Visualization
-                    st.subheader("Prediction Visualization")
-                    fig = go.Figure()
-                    
-                    fig.add_trace(go.Scatter(
-                        y=features['actual_oct'],
-                        name="Actual October Sales",
-                        mode="markers",
-                        marker=dict(size=10, color="blue")
-                    ))
-                    
-                    fig.add_trace(go.Scatter(
-                        y=predictions,
-                        name="Predicted Sales",
-                        mode="markers",
-                        marker=dict(size=10, color="red")
-                    ))
-                    
-                    fig.update_layout(
-                        title="Actual vs Predicted Sales",
-                        xaxis_title="Store Index",
-                        yaxis_title="Sales (₹)",
-                        showlegend=True
-                    )
-                    
-                    st.plotly_chart(fig, use_container_width=True)
-                    
-                    # Display detailed predictions
-                    comparison_df = pd.DataFrame({
-                        'Actual_October': features['actual_oct'],
-                        'Predicted_October': predictions,
-                        'Difference': features['actual_oct'] - predictions,
-                        'Percentage_Difference': ((features['actual_oct'] - predictions) / features['actual_oct']) * 100
-                    })
-                    
-                    st.dataframe(
-                        comparison_df.style.format({
-                            'Actual_October': '₹{:,.2f}',
-                            'Predicted_October': '₹{:,.2f}',
-                            'Difference': '₹{:,.2f}',
-                            'Percentage_Difference': '{:,.2f}%'
-                        })
-                    )
-                    
-        except Exception as e:
-            st.error(f"An error occurred: {str(e)}")
-    
-    else:
-        # Display instructions when no file is uploaded
-        st.info("Please upload an Excel file to begin the analysis.")
-        st.markdown("""
-        ### Instructions:
-        1. Upload your Excel file using the button above
-        2. Select your Zone and Brand from the sidebar
-        3. Adjust the weights or use recommended weights
-        4. Click 'Generate Predictions' to see the results
-        """)
+                    # Display historical error metrics if using recommended weights
+                    if use_recommended:
+                        key = f"{selected_zone}_{selected_brand}"
+                        if key in weight_optimizer.optimal_weights:
+                            st.subheader("Historical Error Metrics (October Validation)")
+                            metrics = weight_optimizer.optimal_weights[key]
+                            col1, col2 = st.columns(2)
+                            col1.metric("MAPE", f"{metrics['mape']:.2%}")
+                            col2.metric("MAE", f"₹{metrics['mae']:,.2f}")
 
 if __name__ == "__main__":
     main()
