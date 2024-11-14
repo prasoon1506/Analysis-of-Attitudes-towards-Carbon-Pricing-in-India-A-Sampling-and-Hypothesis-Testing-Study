@@ -38,10 +38,10 @@ def prepare_features_for_optimization(df, target_month='Oct'):
     # Define months based on target
     if target_month == 'Oct':
         training_months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep']
-        prev_year_months = ['Sep 2023', 'Oct 2023']
+        prev_year_months = ['Sep', 'Oct']
     else:  # For November predictions
         training_months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']
-        prev_year_months = ['Sep 2023', 'Oct 2023', 'Nov 2023']
+        prev_year_months = ['Sep', 'Oct', 'Nov']
     
     # Extract monthly sales
     for month in training_months:
@@ -49,7 +49,7 @@ def prepare_features_for_optimization(df, target_month='Oct'):
     
     # Add previous year sales
     for month in prev_year_months:
-        features[f'prev_{month.lower().replace(" ", "_")}'] = df[f'Total {month}']
+        features[f'prev_{month.lower()}'] = df[f'Total {month} 2023']
     
     # Add target information
     for month in training_months:
@@ -66,11 +66,11 @@ def prepare_features_for_optimization(df, target_month='Oct'):
         )
     
     if target_month == 'Oct':
-        features['yoy_sep_growth'] = features['sales_Sep'] / features['prev_sep_2023']
+        features['yoy_sep_growth'] = features['sales_Sep'] / features['prev_sep']
         features['target_achievement_rate'] = features['sales_Sep'] / features['month_target_Sep']
     else:
-        features['yoy_sep_growth'] = features['sales_Sep'] / features['prev_sep_2023']
-        features['yoy_oct_growth'] = features['sales_Oct'] / features['prev_oct_2023']
+        features['yoy_sep_growth'] = features['sales_Sep'] / features['prev_sep']
+        features['yoy_oct_growth'] = features['sales_Oct'] / features['prev_oct']
         features['yoy_weighted_growth'] = (features['yoy_sep_growth'] * 0.4 + features['yoy_oct_growth'] * 0.6)
         features['target_achievement_rate'] = features['sales_Oct'] / features['month_target_Oct']
     
@@ -96,9 +96,9 @@ def generate_predictions_for_optimization(features, df, growth_weights, target_m
     
     # YoY Prediction
     if target_month == 'Oct':
-        yoy_prediction = df['prev_oct_2023'] * features['yoy_sep_growth']
+        yoy_prediction = df['Total Oct 2023'] * features['yoy_sep_growth']
     else:
-        yoy_prediction = df['prev_nov_2023'] * features['yoy_weighted_growth']
+        yoy_prediction = df['Total Nov 2023'] * features['yoy_weighted_growth']
     
     # Trend Prediction
     if target_month == 'Oct':
@@ -111,7 +111,6 @@ def generate_predictions_for_optimization(features, df, growth_weights, target_m
     target_based_prediction = features['avg_monthly_sales'] * features['target_achievement_rate']
     
     return rf_prediction, yoy_prediction, trend_prediction, target_based_prediction
-
 def objective_function(weights, *args):
     """
     Objective function for optimization
