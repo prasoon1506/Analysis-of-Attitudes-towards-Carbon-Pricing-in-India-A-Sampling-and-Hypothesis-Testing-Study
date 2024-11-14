@@ -150,11 +150,120 @@ def create_prediction_charts(predictions):
     ))
     
     return fig_methods, fig_gauge
-
 def main():
-                            st.set_page_config(page_title="Sales Forecasting Model", layout="wide")
+    st.set_page_config(page_title="Sales Forecasting Model", layout="wide")
     
-                            # Display detailed predictions table
+    # Add custom CSS
+    st.markdown("""
+        <style>
+        .stApp {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .stButton button {
+            width: 100%;
+        }
+        .stAlert {
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+    
+    st.title("📈 Sales Forecasting Model")
+    
+    # File upload
+    uploaded_file = st.file_uploader("Upload Excel File", type=['xlsx'])
+    
+    if uploaded_file is not None:
+        try:
+            df = read_excel_skip_hidden(uploaded_file)
+            
+            # Create two columns for zone and brand selection
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.subheader("Zone Selection")
+                zones = sorted(df['Zone'].unique())
+                selected_zone = st.selectbox('Select Zone', zones)
+            
+            with col2:
+                st.subheader("Brand Selection")
+                brands = sorted(df[df['Zone'] == selected_zone]['Brand'].unique())
+                selected_brand = st.selectbox('Select Brand', brands)
+            
+            # Create tabs for weights configuration
+            tab1, tab2 = st.tabs(["Growth Weights", "Method Weights"])
+            
+            with tab1:
+                st.subheader("Configure Growth Weights")
+                growth_weights = {}
+                default_growth_weights = {
+                    'growth_May': 0.05, 'growth_June': 0.1, 'growth_July': 0.15,
+                    'growth_Aug': 0.2, 'growth_Sep': 0.25, 'growth_Oct': 0.25
+                }
+                
+                for month, default_weight in default_growth_weights.items():
+                    growth_weights[month] = st.slider(
+                        f"{month.replace('growth_', '')} Growth Weight",
+                        0.0, 1.0, default_weight, 0.05
+                    )
+                
+                if abs(sum(growth_weights.values()) - 1.0) > 0.01:
+                    st.warning("⚠️ Growth weights should sum to 1")
+            
+            with tab2:
+                st.subheader("Configure Method Weights")
+                method_weights = {}
+                default_method_weights = {
+                    'rf': 0.4, 'yoy': 0.1, 'trend': 0.4, 'target': 0.1
+                }
+                
+                for method, default_weight in default_method_weights.items():
+                    method_weights[method] = st.slider(
+                        f"{method.upper()} Weight",
+                        0.0, 1.0, default_weight, 0.05
+                    )
+                
+                if abs(sum(method_weights.values()) - 1.0) > 0.01:
+                    st.warning("⚠️ Method weights should sum to 1")
+            
+            # Generate predictions button
+            if st.button("Generate Predictions", type="primary"):
+                if abs(sum(growth_weights.values()) - 1.0) > 0.01 or abs(sum(method_weights.values()) - 1.0) > 0.01:
+                    st.error("Please adjust weights to sum to 1 before generating predictions")
+                else:
+                    with st.spinner("Generating predictions..."):
+                        predictions = predict_november_sales(
+                            df, selected_zone, selected_brand,
+                            growth_weights, method_weights
+                        )
+                        
+                        if predictions is not None:
+                            # Create visualization columns
+                            chart_col1, chart_col2 = st.columns(2)
+                            
+                            # Generate and display charts
+                            fig_methods, fig_gauge = create_prediction_charts(predictions)
+                            
+                            with chart_col1:
+                                st.plotly_chart(fig_methods, use_container_width=True)
+                            
+                            with chart_col2:
+                                st.plotly_chart(fig_gauge, use_container_width=True)
+                            
+                            # Display metrics
+                            st.subheader("Summary Metrics")
+                            metric_col1, metric_col2, metric_col3 = st.columns(3)
+                            
+                            with metric_col1:
+                                st.metric("Average Prediction", f"₹{predictions['Final_Prediction'].mean():,.2f}")
+                            
+                            with metric_col2:
+                                st.metric("Minimum Prediction", f"₹{predictions['Final_Prediction'].min():,.2f}")
+                            
+                            with metric_col3:
+                                st.metric("Maximum Prediction", f"₹{predictions['Final_Prediction'].max():,.2f}")
                             st.subheader("Detailed Predictions")
                             
                             # Create a styled dataframe with proper formatting
@@ -182,3 +291,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+                           
