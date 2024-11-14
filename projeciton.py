@@ -326,8 +326,68 @@ def main():
                 
                 if abs(sum(method_weights.values()) - 1.0) > 0.01:
                     st.warning("⚠️ Method weights should sum to 1")
-            
-            # [Rest of the main function remains the same...]
+            if st.button("Generate Predictions", type="primary"):
+                if abs(sum(growth_weights.values()) - 1.0) > 0.01 or abs(sum(method_weights.values()) - 1.0) > 0.01:
+                    st.error("Please adjust weights to sum to 1 before generating predictions")
+                else:
+                    with st.spinner("Generating predictions..."):
+                        predictions = predict_november_sales(
+                            df, selected_zone, selected_brand,
+                            growth_weights, method_weights
+                        )
+                        
+                        if predictions is not None:
+                            # Create visualization columns
+                            chart_col1, chart_col2 = st.columns(2)
+                            
+                            # Generate and display charts
+                            fig_methods, fig_gauge = create_prediction_charts(predictions)
+                            
+                            with chart_col1:
+                                st.plotly_chart(fig_methods, use_container_width=True)
+                            
+                            with chart_col2:
+                                st.plotly_chart(fig_gauge, use_container_width=True)
+                            
+                            # Display metrics
+                            st.subheader("Summary Metrics")
+                            metric_col1, metric_col2, metric_col3 = st.columns(3)
+                            
+                            with metric_col1:
+                                st.metric("Average Prediction", f"₹{predictions['Final_Prediction'].mean():,.2f}")
+                            
+                            with metric_col2:
+                                st.metric("Minimum Prediction", f"₹{predictions['Final_Prediction'].min():,.2f}")
+                            
+                            with metric_col3:
+                                st.metric("Maximum Prediction", f"₹{predictions['Final_Prediction'].max():,.2f}")
+                            
+                            st.subheader("Detailed Predictions")
+                            
+                            # Create a styled dataframe with proper formatting
+                            styled_predictions = predictions.copy()
+                            
+                            # Format only numeric columns
+                            numeric_cols = predictions.select_dtypes(include=['float64', 'int64']).columns
+                            for col in numeric_cols:
+                                styled_predictions[col] = styled_predictions[col].map('{:,.2f}'.format)
+                            
+                            st.dataframe(styled_predictions)
+                            
+                            # Add download button for predictions
+                            csv = predictions.to_csv(index=False)
+                            st.download_button(
+                                label="Download Predictions as CSV",
+                                data=csv,
+                                file_name="sales_predictions.csv",
+                                mime="text/csv"
+                            )
+        
+        except Exception as e:
+            st.error(f"An error occurred: {str(e)}")
+            st.info("Please make sure you've uploaded a valid Excel file with the correct format")
+
+
 
 if __name__ == "__main__":
     main()
