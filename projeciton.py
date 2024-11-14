@@ -230,7 +230,7 @@ def main():
             # Define default growth weights
             default_growth_weights = {
                 'growth_May': 0.05, 'growth_June': 0.1, 'growth_July': 0.15,
-                'growth_Aug': 0.2, 'growth_Sep': 0.25, 'growth_Oct': 0.25
+                'growth_Aug': 0.2, 'growth_Sep': 0.25
             }
             
             # Generate optimal weights for all combinations
