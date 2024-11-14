@@ -25,43 +25,6 @@ def read_excel_skip_hidden(uploaded_file):
         skiprows=hidden_rows
     )
     return df
-
-def prepare_features(df):
-    """
-    Prepare features for the prediction model
-    """
-    features = pd.DataFrame()
-    
-    # Extract current year monthly sales (Apr to Oct)
-    for month in ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']:
-        features[f'sales_{month}'] = df[f'Monthly Achievement({month})']
-    
-    # Add previous year September, October and November sales
-    features['prev_sep'] = df['Total Sep 2023']
-    features['prev_oct'] = df['Total Oct 2023']
-    features['prev_nov'] = df['Total Nov 2023']
-    
-    # Add target information
-    for month in ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']:
-        features[f'month_target_{month}'] = df[f'Month Tgt ({month})']
-        features[f'ags_target_{month}'] = df[f'AGS Tgt ({month})']
-    
-    # Calculate additional features
-    features['avg_monthly_sales'] = features[[f'sales_{m}' for m in ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']]].mean(axis=1)
-    
-    # Calculate month-over-month growth rates
-    months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']
-    for i in range(1, len(months)):
-        features[f'growth_{months[i]}'] = features[f'sales_{months[i]}'] / features[f'sales_{months[i-1]}']
-    
-    # Calculate YoY growth rates
-    features['yoy_sep_growth'] = features['sales_Sep'] / features['prev_sep']
-    features['yoy_oct_growth'] = features['sales_Oct'] / features['prev_oct']
-    features['yoy_weighted_growth'] = (features['yoy_sep_growth'] * 0.4 + features['yoy_oct_growth'] * 0.6)
-    features['target_achievement_rate'] = features['sales_Oct'] / features['month_target_Oct']
-    
-    return features
-
 def calculate_trend_prediction(features, growth_weights):
     weighted_growth = sum(features[month] * weight 
                         for month, weight in growth_weights.items()) / sum(growth_weights.values())
