@@ -152,9 +152,7 @@ def create_prediction_charts(predictions):
     return fig_methods, fig_gauge
 
 def main():
-    st.set_page_config(page_title="Sales Forecasting Model", layout="wide")
-    
-    # [Previous code remains the same until the predictions display part]
+                            st.set_page_config(page_title="Sales Forecasting Model", layout="wide")
     
                             # Display detailed predictions table
                             st.subheader("Detailed Predictions")
