@@ -5227,7 +5227,7 @@ def market_share():
                 adjusted.append((vol, original_y, label_y, color, x_pos))
                 group_volumes.append(vol)
                 group_positions.append(label_y)
-            if len(group) > 1:
+            if len(group) >= 1:
                 group_info[x_pos] = {'total_volume': sum(group_volumes),'top_y': max(group_positions),'bottom_y': min(group_positions)}
         return adjusted, group_info
      def adjust_label_positions(positions, y_max, min_gap=12):
@@ -5322,13 +5322,13 @@ def market_share():
             ax1.plot([x_pos, mid_x, len(share_df)-0.15], [line_y, label_y, label_y],color=color, linestyle='--', alpha=1, linewidth=1)
         else:
             ax1.plot([x_pos, len(share_df)-0.15], [line_y, line_y],color=color, linestyle='--', alpha=1, linewidth=1)
-        label = f'{vol:,.2f} MT'
+        label = f'{vol:,.2f} lakh MT'
         ax2.text(0.98, label_y, label,
                 transform=ax1.get_yaxis_transform(),va='center', ha='left',color=color,fontsize=11,fontweight='bold',bbox=dict(facecolor='white',edgecolor='none',alpha=1,pad=1))
      for x_pos, info in group_info.items():
         brace_x = 1.095 
         mid_y = draw_curly_brace(ax2, brace_x, info['top_y'], info['bottom_y'])
-        total_label = f'Total: {info["total_volume"]:,.2f} MT'
+        total_label = f'Total: {info["total_volume"]:,.2f} lakh MT'
         ax2.text(brace_x, mid_y, total_label,transform=ax1.get_yaxis_transform(),va='center', ha='left',color='#2c3e50',fontsize=11,fontweight='bold',bbox=dict(facecolor='white',edgecolor='#bdc3c7',boxstyle='round,pad=0.5',alpha=0.9))
      plt.subplots_adjust(right=0.75)
      x_labels = [f'₹{interval.left:.0f}-{interval.right:.0f}'for interval in share_df.index]
@@ -5342,10 +5342,10 @@ def market_share():
      legend = ax1.legend(legend_labels,bbox_to_anchor=(1.28, 0.8),loc='upper left',fontsize=9,frameon=True,facecolor='white',edgecolor='brown',title='Companies',title_fontsize=10,borderpad=1)
      legend.get_frame().set_alpha(1)
      ax2.set_yticks([])
-     plt.figtext(0.45, 0.925,f'Total Market Size: {total_market_size:,.2f} MT',ha='center', va='center',bbox=dict(facecolor='#f8f9fa',edgecolor='#bdc3c7',boxstyle='round,pad=0.7',alpha=1),fontsize=11,fontweight='bold',color='#2c3e50')
+     plt.figtext(0.45, 0.925,f'Total Market Size: {total_market_size:,.2f} lakh MT',ha='center', va='center',bbox=dict(facecolor='#f8f9fa',edgecolor='#bdc3c7',boxstyle='round,pad=0.7',alpha=1),fontsize=11,fontweight='bold',color='#2c3e50')
      if not companies_without_price.empty:
         company_info = companies_without_price.apply(
-            lambda row: f"{row['Company']} ({row['Share']:.1f}%, {row['Volume']:,.2f} MT)", 
+            lambda row: f"{row['Company']} ({row['Share']:.1f}%, {row['Volume']:,.2f} lakh MT)", 
             axis=1
         ).tolist()
         if len(company_info) == 1:
@@ -5357,7 +5357,7 @@ def market_share():
             note = f"Note: Price not reported for {', '.join(first_companies)}, and {last_company}."
         total_missing_share = companies_without_price['Share'].sum()
         total_missing_volume = companies_without_price['Volume'].sum()
-        summary = f"\nTotal market share and volume without price data: {total_missing_share:.1f}% ({total_missing_volume:,.2f} MT)"
+        summary = f"\nTotal market share and volume without price data: {total_missing_share:.1f}% ({total_missing_volume:,.2f} lakh MT)"
         note += summary
         plt.figtext(0.1, 0.001, note,ha='left', va='bottom',fontsize=10,color='#2c3e50',style='italic',bbox=dict(facecolor='#f8f9fa',edgecolor='#bdc3c7',boxstyle='round,pad=0.5',alpha=0.9))
      plt.tight_layout()
