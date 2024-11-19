@@ -5322,13 +5322,13 @@ def market_share():
             ax1.plot([x_pos, mid_x, len(share_df)-0.15], [line_y, label_y, label_y],color=color, linestyle='--', alpha=1, linewidth=1)
         else:
             ax1.plot([x_pos, len(share_df)-0.15], [line_y, line_y],color=color, linestyle='--', alpha=1, linewidth=1)
-        label = f'{vol:,.0f} MT'
+        label = f'{vol:,.2f} MT'
         ax2.text(0.98, label_y, label,
                 transform=ax1.get_yaxis_transform(),va='center', ha='left',color=color,fontsize=11,fontweight='bold',bbox=dict(facecolor='white',edgecolor='none',alpha=1,pad=1))
      for x_pos, info in group_info.items():
         brace_x = 1.095 
         mid_y = draw_curly_brace(ax2, brace_x, info['top_y'], info['bottom_y'])
-        total_label = f'Total: {info["total_volume"]:,.0f} MT'
+        total_label = f'Total: {info["total_volume"]:,.2f} MT'
         ax2.text(brace_x, mid_y, total_label,transform=ax1.get_yaxis_transform(),va='center', ha='left',color='#2c3e50',fontsize=11,fontweight='bold',bbox=dict(facecolor='white',edgecolor='#bdc3c7',boxstyle='round,pad=0.5',alpha=0.9))
      plt.subplots_adjust(right=0.75)
      x_labels = [f'₹{interval.left:.0f}-{interval.right:.0f}'for interval in share_df.index]
