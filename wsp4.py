@@ -9,6 +9,7 @@ from io import BytesIO
 import datetime
 import time
 import random
+from reportlab.pdfgen import canvas
 import secrets
 import requests
 import tempfile
