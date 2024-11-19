@@ -5342,10 +5342,10 @@ def market_share():
      legend = ax1.legend(legend_labels,bbox_to_anchor=(1.28, 0.8),loc='upper left',fontsize=9,frameon=True,facecolor='white',edgecolor='brown',title='Companies',title_fontsize=10,borderpad=1)
      legend.get_frame().set_alpha(1)
      ax2.set_yticks([])
-     plt.figtext(0.45, 0.925,f'Total Market Size: {total_market_size:,.0f} MT',ha='center', va='center',bbox=dict(facecolor='#f8f9fa',edgecolor='#bdc3c7',boxstyle='round,pad=0.7',alpha=1),fontsize=11,fontweight='bold',color='#2c3e50')
+     plt.figtext(0.45, 0.925,f'Total Market Size: {total_market_size:,.2f} MT',ha='center', va='center',bbox=dict(facecolor='#f8f9fa',edgecolor='#bdc3c7',boxstyle='round,pad=0.7',alpha=1),fontsize=11,fontweight='bold',color='#2c3e50')
      if not companies_without_price.empty:
         company_info = companies_without_price.apply(
-            lambda row: f"{row['Company']} ({row['Share']:.1f}%, {row['Volume']:,.0f} MT)", 
+            lambda row: f"{row['Company']} ({row['Share']:.1f}%, {row['Volume']:,.2f} MT)", 
             axis=1
         ).tolist()
         if len(company_info) == 1:
@@ -5357,7 +5357,7 @@ def market_share():
             note = f"Note: Price not reported for {', '.join(first_companies)}, and {last_company}."
         total_missing_share = companies_without_price['Share'].sum()
         total_missing_volume = companies_without_price['Volume'].sum()
-        summary = f"\nTotal market share and volume without price data: {total_missing_share:.1f}% ({total_missing_volume:,.0f} MT)"
+        summary = f"\nTotal market share and volume without price data: {total_missing_share:.1f}% ({total_missing_volume:,.2f} MT)"
         note += summary
         plt.figtext(0.1, 0.001, note,ha='left', va='bottom',fontsize=10,color='#2c3e50',style='italic',bbox=dict(facecolor='#f8f9fa',edgecolor='#bdc3c7',boxstyle='round,pad=0.5',alpha=0.9))
      plt.tight_layout()
