@@ -72,7 +72,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch, cm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.pdfgen.canvas import canvas
+from reportlab.pdfgen.canvas import Canvas
 from reportlab.platypus import (SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak, Flowable, Frame, Indenter, Image as ReportLabImage)
 from reportlab.graphics import renderPDF
 from reportlab.graphics.shapes import Drawing, Line, String, Rect
