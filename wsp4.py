@@ -13,6 +13,7 @@ import tempfile
 import warnings
 import hashlib
 import shutil
+import canvas
 import plotly.subplots as sp
 import matplotlib.image as mpimg
 from datetime import datetime
