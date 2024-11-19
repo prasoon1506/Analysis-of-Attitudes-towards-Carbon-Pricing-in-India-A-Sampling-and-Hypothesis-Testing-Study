@@ -5,13 +5,6 @@ from io import BytesIO
 import re
 import json
 import math
-from reportlab.pdfgen import Canvas
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4, LETTER, LEGAL
-from reportlab.lib.units import cm, inch
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.lib.utils import ImageReader
 from io import BytesIO
 import datetime
 import time
