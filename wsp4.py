@@ -5324,7 +5324,7 @@ def market_share():
         if not positions:
             return positions
         positions = sorted(positions, key=lambda x: x[1])  
-        adjusted_positions = [positions[0]]  # Keep first position as is
+        adjusted_positions = [positions[0]]  
         for vol, y_pos, color, x_pos in positions[1:]:
             prev_y = adjusted_positions[-1][1]
             if check_overlap(y_pos, prev_y):
@@ -5354,7 +5354,7 @@ def market_share():
      company_colors = {}
      for i, company in enumerate(sorted_companies):
         if company == 'JK Lakshmi':
-            company_colors[company] = '#FF6B6B'  # Bright coral color for JK Lakshmi
+            company_colors[company] = '#FF6B6B'
         else:
             company_colors[company] = get_company_color(company)
      share_df = share_df[sorted_companies]
@@ -5441,13 +5441,7 @@ def market_share():
      plt.title(f'{month.capitalize()}',fontsize=14,pad=15,color='#34495e',y=1.11)
      ax1.set_xlabel('WSP Price Range (₹)',fontsize=11,labelpad=15,color='#2c3e50')
      ax1.set_ylabel('Market Share (%)',fontsize=11,labelpad=10,color='#2c3e50')
-     legend_labels = []
-     for company in sorted_companies:
-        if company == 'JK Lakshmi':
-            label = f'★ {company} (WSP: ₹{company_wsps[company]:.0f}) ★'
-        else:
-            label = f'{company} (WSP: ₹{company_wsps[company]:.0f})'
-        legend_labels.append(label)
+     legend_labels = [f'{company} (WSP: ₹{company_wsps[company]:.0f})'for company in sorted_companies]
 
      legend = ax1.legend(legend_labels,
                        bbox_to_anchor=(1.28, 0.8),
