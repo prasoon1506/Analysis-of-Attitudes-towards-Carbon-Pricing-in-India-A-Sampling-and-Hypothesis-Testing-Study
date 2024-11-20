@@ -5195,7 +5195,7 @@ def market_share():
      fig = create_share_plot(df, month)
     
     # Add state name on the side
-     plt.figtext(0.09, 1.05, state_name, 
+     plt.figtext(0.09, 1.00, state_name, 
                 rotation=0, 
                 fontsize=14, 
                 fontweight='bold', 
