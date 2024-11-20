@@ -86,7 +86,7 @@ import streamlit.components.v1 as components
 from streamlit_lottie import st_lottie
 from streamlit_option_menu import option_menu
 from streamlit_cookies_manager import EncryptedCookieManager
-def pro:
+def pro():
  from openpyxl import load_workbook
  from sklearn.ensemble import RandomForestRegressor
  import calendar
