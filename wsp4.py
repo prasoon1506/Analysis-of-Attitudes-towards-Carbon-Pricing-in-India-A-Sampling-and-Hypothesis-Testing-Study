@@ -5191,6 +5191,55 @@ def market_share():
      sorted_months = sorted(months, key=lambda x: month_order[x])
      return sorted_months
     @st.cache_data
+    def create_share_plot_with_state(df, month, state_name):
+    # Copy of the original create_share_plot function with state name addition
+    fig = create_share_plot(df, month)
+    
+    # Add state name on the side
+    plt.figtext(0.02, 0.5, state_name, 
+                rotation=90, 
+                fontsize=14, 
+                fontweight='bold', 
+                color='#2c3e50',
+                ha='center',
+                va='center',
+                bbox=dict(facecolor='#f8f9fa',
+                         edgecolor='#bdc3c7',
+                         boxstyle='round,pad=0.5',
+                         alpha=0.9))
+    
+    # Adjust layout to accommodate state name
+    plt.subplots_adjust(left=0.1, right=0.82, bottom=0.2, top=0.88)
+    return fig
+
+def create_all_states_report(state_dfs, selected_months):
+    figs = []
+    
+    # Create title page
+    fig, ax = plt.subplots(figsize=(11.7, 8.3))  # A4 size
+    ax.axis('off')
+    ax.text(0.5, 0.6, 'Market Share Analysis - All States', 
+            horizontalalignment='center',
+            fontsize=24,
+            fontweight='bold')
+    ax.text(0.5, 0.5, f'Months: {", ".join(selected_months)}',
+            horizontalalignment='center',
+            fontsize=20)
+    current_date = datetime.now().strftime("%d %B %Y")
+    ax.text(0.5, 0.4, f'Generated on: {current_date}',
+            horizontalalignment='center',
+            fontsize=16)
+    fig.patch.set_facecolor('#ffffff')
+    figs.append(fig)
+    
+    # Create market share plots for each state and month
+    for state_name, df in state_dfs.items():
+        for month in selected_months:
+            fig = create_share_plot_with_state(df, month, state_name)
+            figs.append(fig)
+            plt.close(fig)
+    
+    return figs
     def create_share_plot(df, month):
      from matplotlib.lines import Line2D
      def draw_curly_brace(ax, x, y1, y2):
@@ -5445,21 +5494,59 @@ def market_share():
     def main():
      if 'computed_figures' not in st.session_state:
         st.session_state.computed_figures = {}
+        
      create_dashboard_header()
      col1, col2 = st.columns([1, 4])
+    
      with col1:
         st.markdown("### 🎯 Analysis Controls")
-        uploaded_file = st.file_uploader("Upload Excel File",type=['xlsx', 'xls'],help="Upload your market share data file")
+        uploaded_file = st.file_uploader("Upload Excel File",
+                                       type=['xlsx', 'xls'],
+                                       help="Upload your market share data file")
+        
         if uploaded_file:
             state_dfs, states = load_and_process_data(uploaded_file)
             st.markdown("### 🎯 Settings")
-            selected_state = st.selectbox("Select State",states,index=0,help="Choose the state for analysis")
-            available_months = get_available_months(state_dfs[selected_state])
-            selected_months = st.multiselect("Select Months",available_months,default=[available_months[0]],help="Choose months for comparison")
+            selected_state = st.selectbox("Select State",
+                                        states,
+                                        index=0,
+                                        help="Choose the state for analysis")
+            
+            # Get available months from first state (assuming all states have same months)
+            available_months = get_available_months(state_dfs[list(state_dfs.keys())[0]])
+            selected_months = st.multiselect("Select Months",
+                                           available_months,
+                                           default=[available_months[0]],
+                                           help="Choose months for comparison")
+            
+            # Add "Download All States Report" button
+            if selected_months:
+                all_states_pdf_buf = io.BytesIO()
+                with st.spinner("Generating report for all states..."):
+                    figs = create_all_states_report(state_dfs, selected_months)
+                    with PdfPages(all_states_pdf_buf) as pdf:
+                        for fig in figs:
+                            pdf.savefig(fig, bbox_inches='tight')
+                            plt.close(fig)
+                
+                all_states_pdf_buf.seek(0)
+                st.download_button(
+                    label="📊 Download All States Report",
+                    data=all_states_pdf_buf,
+                    file_name=f'market_share_all_states_{"-".join(selected_months)}.pdf',
+                    mime='application/pdf',
+                    help="Download a PDF report containing market share graphs for all states"
+                )
+            
             all_companies = state_dfs[selected_state]['Company'].unique()
-            default_companies = ['JK Lakshmi', 'Ultratech', 'Ambuja','Wonder', 'Shree', 'JK Cement (N)']
+            default_companies = ['JK Lakshmi', 'Ultratech', 'Ambuja', 'Wonder', 'Shree', 'JK Cement (N)']
             available_defaults = [company for company in default_companies if company in all_companies]
-            selected_companies = st.multiselect("Select Companies for Trend Analysis",all_companies,default=available_defaults,help="Choose companies to show in the trend line graph")
+            selected_companies = st.multiselect("Select Companies for Trend Analysis",
+                                              all_companies,
+                                              default=available_defaults,
+                                              help="Choose companies to show in the trend line graph")
+    
+    
      with col2:
         if uploaded_file and selected_companies:
             st.markdown("### Market Share Trends")
