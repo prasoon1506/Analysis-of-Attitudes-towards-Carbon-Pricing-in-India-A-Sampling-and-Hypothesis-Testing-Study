@@ -5441,9 +5441,23 @@ def market_share():
      plt.title(f'{month.capitalize()}',fontsize=14,pad=15,color='#34495e',y=1.11)
      ax1.set_xlabel('WSP Price Range (₹)',fontsize=11,labelpad=15,color='#2c3e50')
      ax1.set_ylabel('Market Share (%)',fontsize=11,labelpad=10,color='#2c3e50')
-     legend_labels = [f'{company} (WSP: ₹{company_wsps[company]:.0f})'for company in sorted_companies]
+     legend_elements = []
+     for company in sorted_companies:
+        marker = patches.Rectangle((0, 0), 1, 1, facecolor=company_colors[company])
+        if company == 'JK Lakshmi':
+            marker.set_hatch('///')
+            marker.set_edgecolor('#FF4136')
+            marker.set_linewidth(1.5)
+        else:
+            marker.set_edgecolor('white')
+            marker.set_linewidth(0.5)
+        legend_elements.append(marker)
 
-     legend = ax1.legend(legend_labels,
+     legend_labels = [f'{company} (WSP: ₹{company_wsps[company]:.0f})'
+                    for company in sorted_companies]
+
+     legend = ax1.legend(legend_elements,
+                       legend_labels,
                        bbox_to_anchor=(1.28, 0.8),
                        loc='upper left',
                        fontsize=9,
@@ -5453,14 +5467,14 @@ def market_share():
                        title='Companies',
                        title_fontsize=10,
                        borderpad=1)
-    
-     # Modify the legend entry for JK Lakshmi
+
+    # Modify the legend entry for JK Lakshmi
      legend_texts = legend.get_texts()
      for text in legend_texts:
         if 'JK Lakshmi' in text.get_text():
             text.set_color('#FF6B6B')
             text.set_fontweight('bold')
-    
+
      legend.get_frame().set_alpha(1)
      ax2.set_yticks([])
      plt.figtext(0.45, 0.925,f'Total Market Size: {total_market_size:,.2f} lakh MT',ha='center', va='center',bbox=dict(facecolor='#f8f9fa',edgecolor='#bdc3c7',boxstyle='round,pad=0.7',alpha=1),fontsize=11,fontweight='bold',color='#2c3e50')
