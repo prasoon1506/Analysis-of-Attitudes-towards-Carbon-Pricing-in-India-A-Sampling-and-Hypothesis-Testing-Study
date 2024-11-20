@@ -5192,11 +5192,10 @@ def market_share():
      return sorted_months
     @st.cache_data
     def create_share_plot_with_state(df, month, state_name):
-    # Copy of the original create_share_plot function with state name addition
-    fig = create_share_plot(df, month)
+     fig = create_share_plot(df, month)
     
     # Add state name on the side
-    plt.figtext(0.02, 0.5, state_name, 
+     plt.figtext(0.02, 0.5, state_name, 
                 rotation=90, 
                 fontsize=14, 
                 fontweight='bold', 
@@ -5209,37 +5208,37 @@ def market_share():
                          alpha=0.9))
     
     # Adjust layout to accommodate state name
-    plt.subplots_adjust(left=0.1, right=0.82, bottom=0.2, top=0.88)
-    return fig
+     plt.subplots_adjust(left=0.1, right=0.82, bottom=0.2, top=0.88)
+     return fig
 
-def create_all_states_report(state_dfs, selected_months):
-    figs = []
+    def create_all_states_report(state_dfs, selected_months):
+     figs = []
     
-    # Create title page
-    fig, ax = plt.subplots(figsize=(11.7, 8.3))  # A4 size
-    ax.axis('off')
-    ax.text(0.5, 0.6, 'Market Share Analysis - All States', 
+     # Create title page
+     fig, ax = plt.subplots(figsize=(11.7, 8.3))  # A4 size
+     ax.axis('off')
+     ax.text(0.5, 0.6, 'Market Share Analysis - All States', 
             horizontalalignment='center',
             fontsize=24,
             fontweight='bold')
-    ax.text(0.5, 0.5, f'Months: {", ".join(selected_months)}',
+     ax.text(0.5, 0.5, f'Months: {", ".join(selected_months)}',
             horizontalalignment='center',
             fontsize=20)
-    current_date = datetime.now().strftime("%d %B %Y")
-    ax.text(0.5, 0.4, f'Generated on: {current_date}',
+     current_date = datetime.now().strftime("%d %B %Y")
+     ax.text(0.5, 0.4, f'Generated on: {current_date}',
             horizontalalignment='center',
             fontsize=16)
-    fig.patch.set_facecolor('#ffffff')
-    figs.append(fig)
+     fig.patch.set_facecolor('#ffffff')
+     figs.append(fig)
     
     # Create market share plots for each state and month
-    for state_name, df in state_dfs.items():
+     for state_name, df in state_dfs.items():
         for month in selected_months:
             fig = create_share_plot_with_state(df, month, state_name)
             figs.append(fig)
             plt.close(fig)
     
-    return figs
+     return figs
     def create_share_plot(df, month):
      from matplotlib.lines import Line2D
      def draw_curly_brace(ax, x, y1, y2):
