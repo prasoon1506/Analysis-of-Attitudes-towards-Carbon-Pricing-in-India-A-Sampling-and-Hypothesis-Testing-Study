@@ -5241,6 +5241,19 @@ def market_share():
      return figs
     def create_share_plot(df, month):
      from matplotlib.lines import Line2D
+     from matplotlib.patches import PathPatch
+     from matplotlib.path import Path
+     import matplotlib.patches as patches
+
+     def create_stripe_pattern(spacing=5):
+        return patches.PathPatch(
+            Path([
+                (0., 0.), (1., 0.),  # bottom edge
+                (1., 1.), (0., 1.),  # top edge
+                (0., 0.)],  # closing edge
+                [Path.MOVETO] + [Path.LINETO] * 3 + [Path.CLOSEPOLY]),
+            transform=None, clip_on=True,
+            facecolor='none', edgecolor='none', alpha=1.)
      def draw_curly_brace(ax, x, y1, y2):
         mid_y = (y1 + y2) / 2
         width = 0.03
@@ -5340,27 +5353,63 @@ def market_share():
      sorted_companies = sorted(company_wsps.keys(), key=lambda x: company_wsps[x], reverse=True)
      company_colors = {}
      for i, company in enumerate(sorted_companies):
-         company_colors[company] = get_company_color(company)
-     share_df = share_df[sorted_companies]
-     volume_df = volume_df[sorted_companies]
+        if company == 'JK Lakshmi':
+            company_colors[company] = '#FF6B6B'  # Bright coral color for JK Lakshmi
+        else:
+            company_colors[company] = get_company_color(company)
+
      fig, ax1 = plt.subplots(figsize=(14, 9), dpi=120)
      ax2 = ax1.twinx()
      bottom = np.zeros(len(share_df))
      volume_positions = []
-     total_shares = share_df.sum(axis=1)
-     total_volumes = volume_df.sum(axis=1)
+     pattern = create_stripe_pattern()
      for company in sorted_companies:
-         values = share_df[company].values
-         ax1.bar(range(len(share_df)), values, bottom=bottom,label=company,color=company_colors[company],alpha=0.95,edgecolor='white',linewidth=0.5)
-         for i, v in enumerate(values):
-             if v > 0:
-                 center = bottom[i] + v/2
-                 if v > 0.2:
-                     ax1.text(i, center, f'{v:.1f}%',ha='center', va='center', fontsize=8,color='white',fontweight='bold')
-                 vol = volume_df.loc[share_df.index[i], company]
-                 if vol > 0:
-                     volume_positions.append((vol, center, company_colors[company], i))
-         bottom += values
+        values = share_df[company].values
+        bar_container = ax1.bar(range(len(share_df)), 
+                              values, 
+                              bottom=bottom,
+                              label=company,
+                              color=company_colors[company],
+                              alpha=0.95,
+                              edgecolor='white',
+                              linewidth=0.5)
+        if company == 'JK Lakshmi':
+            for bar in bar_container:
+                # Add a subtle glow effect
+                x, y = bar.get_xy()
+                w, h = bar.get_width(), bar.get_height()
+                glow = patches.Rectangle((x, y), w, h,
+                                      facecolor='none',
+                                      edgecolor='#FFD700',  # Gold edge
+                                      linewidth=2,
+                                      alpha=0.6)
+                ax1.add_patch(glow)
+                
+                # Add diagonal stripes
+                bar.set_hatch('///')
+                
+                # Add extra edge highlight
+                edge = patches.Rectangle((x, y), w, h,
+                                      facecolor='none',
+                                      edgecolor='#FF4136',  # Bright red edge
+                                      linewidth=1.5)
+                ax1.add_patch(edge)
+
+        for i, v in enumerate(values):
+            if v > 0:
+                center = bottom[i] + v/2
+                if v > 0.2:
+                    text_color = 'white' if company != 'JK Lakshmi' else '#000000'
+                    ax1.text(i, center, f'{v:.1f}%',
+                            ha='center', va='center',
+                            fontsize=8,
+                            color=text_color,
+                            fontweight='bold',
+                            zorder=10)
+                vol = volume_df.loc[share_df.index[i], company]
+                if vol > 0:
+                    volume_positions.append((vol, center, company_colors[company], i))
+        bottom += values
      max_total_share = total_shares.max()
      y_max = max_total_share * 1.15  # Add 15% padding
      ax1.set_ylim(0, y_max)
@@ -5389,8 +5438,32 @@ def market_share():
      plt.title(f'{month.capitalize()}',fontsize=14,pad=15,color='#34495e',y=1.11)
      ax1.set_xlabel('WSP Price Range (₹)',fontsize=11,labelpad=15,color='#2c3e50')
      ax1.set_ylabel('Market Share (%)',fontsize=11,labelpad=10,color='#2c3e50')
-     legend_labels = [f'{company} (WSP: ₹{company_wsps[company]:.0f})'for company in sorted_companies]
-     legend = ax1.legend(legend_labels,bbox_to_anchor=(1.28, 0.8),loc='upper left',fontsize=9,frameon=True,facecolor='white',edgecolor='brown',title='Companies',title_fontsize=10,borderpad=1)
+     legend_labels = []
+     for company in sorted_companies:
+        if company == 'JK Lakshmi':
+            label = f'★ {company} (WSP: ₹{company_wsps[company]:.0f}) ★'
+        else:
+            label = f'{company} (WSP: ₹{company_wsps[company]:.0f})'
+        legend_labels.append(label)
+
+     legend = ax1.legend(legend_labels,
+                       bbox_to_anchor=(1.28, 0.8),
+                       loc='upper left',
+                       fontsize=9,
+                       frameon=True,
+                       facecolor='white',
+                       edgecolor='brown',
+                       title='Companies',
+                       title_fontsize=10,
+                       borderpad=1)
+    
+     # Modify the legend entry for JK Lakshmi
+     legend_texts = legend.get_texts()
+     for text in legend_texts:
+        if 'JK Lakshmi' in text.get_text():
+            text.set_color('#FF6B6B')
+            text.set_fontweight('bold')
+    
      legend.get_frame().set_alpha(1)
      ax2.set_yticks([])
      plt.figtext(0.45, 0.925,f'Total Market Size: {total_market_size:,.2f} lakh MT',ha='center', va='center',bbox=dict(facecolor='#f8f9fa',edgecolor='#bdc3c7',boxstyle='round,pad=0.7',alpha=1),fontsize=11,fontweight='bold',color='#2c3e50')
