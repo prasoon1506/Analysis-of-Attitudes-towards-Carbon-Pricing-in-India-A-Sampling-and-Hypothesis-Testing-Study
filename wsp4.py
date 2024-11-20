@@ -5409,7 +5409,7 @@ def market_share():
                 vol = volume_df.loc[share_df.index[i], company]
                 if vol > 0:
                     volume_positions.append((vol, center, company_colors[company], i))
-         bottom += values
+      bottom += values
      max_total_share = total_shares.max()
      y_max = max_total_share * 1.15  # Add 15% padding
      ax1.set_ylim(0, y_max)
