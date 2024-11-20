@@ -5195,8 +5195,8 @@ def market_share():
      fig = create_share_plot(df, month)
     
     # Add state name on the side
-     plt.figtext(0.02, 1.06, state_name, 
-                rotation=90, 
+     plt.figtext(0.09, 1.05, state_name, 
+                rotation=0, 
                 fontsize=14, 
                 fontweight='bold', 
                 color='#2c3e50',
@@ -5213,24 +5213,7 @@ def market_share():
 
     def create_all_states_report(state_dfs, selected_months):
      figs = []
-    
-     # Create title page
-     fig, ax = plt.subplots(figsize=(11.7, 8.3))  # A4 size
-     ax.axis('off')
-     ax.text(0.5, 0.6, 'Market Share Analysis - All States', 
-            horizontalalignment='center',
-            fontsize=24,
-            fontweight='bold')
-     ax.text(0.5, 0.5, f'Months: {", ".join(selected_months)}',
-            horizontalalignment='center',
-            fontsize=20)
-     current_date = datetime.now().strftime("%d %B %Y")
-     ax.text(0.5, 0.4, f'Generated on: {current_date}',
-            horizontalalignment='center',
-            fontsize=16)
-     fig.patch.set_facecolor('#ffffff')
-     figs.append(fig)
-    
+     
     # Create market share plots for each state and month
      for state_name, df in state_dfs.items():
         for month in selected_months:
