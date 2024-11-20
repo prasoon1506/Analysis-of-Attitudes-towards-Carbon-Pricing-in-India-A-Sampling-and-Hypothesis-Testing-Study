@@ -86,6 +86,388 @@ import streamlit.components.v1 as components
 from streamlit_lottie import st_lottie
 from streamlit_option_menu import option_menu
 from streamlit_cookies_manager import EncryptedCookieManager
+def pro:
+ from openpyxl import load_workbook
+ from sklearn.ensemble import RandomForestRegressor
+ import calendar
+ import warnings
+ warnings.filterwarnings('ignore')
+
+ def read_excel_skip_hidden(uploaded_file):
+    # Create a temporary file to work with openpyxl
+    with open("temp.xlsx", "wb") as f:
+        f.write(uploaded_file.getvalue())
+    
+    wb = load_workbook(filename="temp.xlsx")
+    ws = wb.active
+    hidden_rows = [i + 1 for i in range(ws.max_row) if ws.row_dimensions[i + 1].hidden]
+    df = pd.read_excel(uploaded_file, skiprows=hidden_rows)
+    return df
+
+ def prepare_features(df, current_month_data=None):
+    features = pd.DataFrame()
+    for month in ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']:
+        features[f'sales_{month}'] = df[f'Monthly Achievement({month})']
+    
+    features['prev_sep'] = df['Total Sep 2023']
+    features['prev_oct'] = df['Total Oct 2023']
+    features['prev_nov'] = df['Total Nov 2023']
+    
+    for month in ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']:
+        features[f'month_target_{month}'] = df[f'Month Tgt ({month})']
+        features[f'monthly_achievement_rate_{month}'] = (features[f'sales_{month}'] / features[f'month_target_{month}'])
+        features[f'ags_target_{month}'] = df[f'AGS Tgt ({month})']
+        features[f'ags_achievement_rate_{month}'] = (features[f'sales_{month}'] / features[f'ags_target_{month}'])
+    
+    features['month_target_nov'] = df['Month Tgt (Nov)']
+    features['ags_target_nov'] = df['AGS Tgt (Nov)']
+    
+    # Calculate averages and weighted metrics
+    features['avg_monthly_achievement_rate'] = features[[f'monthly_achievement_rate_{m}' 
+        for m in ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']]].mean(axis=1)
+    features['avg_ags_achievement_rate'] = features[[f'ags_achievement_rate_{m}' 
+        for m in ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']]].mean(axis=1)
+    
+    weights = np.array([0.05, 0.1, 0.1, 0.15, 0.2, 0.2, 0.2])
+    features['weighted_monthly_achievement_rate'] = np.average(
+        features[[f'monthly_achievement_rate_{m}' for m in ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']]],
+        weights=weights, axis=1)
+    features['weighted_ags_achievement_rate'] = np.average(
+        features[[f'ags_achievement_rate_{m}' for m in ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']]],
+        weights=weights, axis=1)
+    
+    features['avg_monthly_sales'] = features[[f'sales_{m}' for m in ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']]].mean(axis=1)
+    
+    # Calculate growth rates
+    months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']
+    for i in range(1, len(months)):
+        features[f'growth_{months[i]}'] = features[f'sales_{months[i]}'] / features[f'sales_{months[i-1]}']
+    
+    features['yoy_sep_growth'] = features['sales_Sep'] / features['prev_sep']
+    features['yoy_oct_growth'] = features['sales_Oct'] / features['prev_oct']
+    
+    if current_month_data:
+        features['current_month_yoy_growth'] = current_month_data['current_year'] / current_month_data['previous_year']
+        features['projected_full_month'] = (current_month_data['current_year'] / current_month_data['days_passed']) * current_month_data['total_days']
+        features['current_month_daily_rate'] = current_month_data['current_year'] / current_month_data['days_passed']
+        features['yoy_weighted_growth'] = (features['yoy_sep_growth'] * 0.3 + 
+                                         features['yoy_oct_growth'] * 0.4 + 
+                                         features['current_month_yoy_growth'] * 0.3)
+    else:
+        features['yoy_weighted_growth'] = (features['yoy_sep_growth'] * 0.4 + features['yoy_oct_growth'] * 0.6)
+    
+    features['target_achievement_rate'] = features['sales_Oct'] / features['month_target_Oct']
+    return features
+
+ def display_historical_data(df_filtered, current_month_data=None):
+    if current_month_data:
+        historical_data = pd.DataFrame({
+            'Period': ['October 2023', 'November 2023', 'October 2024', 
+                      f'November 2024 (First {current_month_data["days_passed"]} days)',
+                      f'November 2023 (First {current_month_data["days_passed"]} days)'],
+            'Sales': [df_filtered['Total Oct 2023'].iloc[0],
+                     df_filtered['Total Nov 2023'].iloc[0],
+                     df_filtered['Monthly Achievement(Oct)'].iloc[0],
+                     current_month_data['current_year'],
+                     current_month_data['previous_year']]
+        })
+        
+        historical_data['Growth'] = [
+            'Base',
+            f"{(historical_data['Sales'][1] / historical_data['Sales'][0] - 1) * 100:.1f}% MoM",
+            f"{(historical_data['Sales'][2] / historical_data['Sales'][0] - 1) * 100:.1f}% YoY",
+            f"Current Progress ({(current_month_data['current_year'] / current_month_data['previous_year'] - 1) * 100:.1f}% YoY)",
+            'Previous Year Baseline'
+        ]
+    else:
+        historical_data = pd.DataFrame({
+            'Period': ['October 2023', 'November 2023', 'October 2024'],
+            'Sales': [df_filtered['Total Oct 2023'].iloc[0],
+                     df_filtered['Total Nov 2023'].iloc[0],
+                     df_filtered['Monthly Achievement(Oct)'].iloc[0]]
+        })
+        historical_data['Growth'] = [
+            'Base',
+            f"{(historical_data['Sales'][1] / historical_data['Sales'][0] - 1) * 100:.1f}% MoM",
+            f"{(historical_data['Sales'][2] / historical_data['Sales'][0] - 1) * 100:.1f}% YoY"
+        ]
+    return historical_data
+
+ def calculate_trend_prediction(features, growth_weights, current_month_data=None):
+    if current_month_data:
+        adjusted_weights = {k: v * 0.7 for k, v in growth_weights.items()}
+        adjusted_weights['current_month'] = 0.3
+        base_weighted_growth = sum(features[month] * weight 
+                                 for month, weight in adjusted_weights.items() 
+                                 if month != 'current_month') / sum(adjusted_weights.values())
+        current_month_growth = features['current_month_yoy_growth'].iloc[0]
+        weighted_growth = (base_weighted_growth * 0.7 + current_month_growth * 0.3)
+    else:
+        weighted_growth = sum(features[month] * weight 
+                            for month, weight in growth_weights.items()) / sum(growth_weights.values())
+    return features['sales_Oct'] * weighted_growth
+
+ def predict_november_sales(df, selected_zone, selected_brand, growth_weights, method_weights, current_month_data=None):
+    df_filtered = df[(df['Zone'] == selected_zone) & (df['Brand'] == selected_brand)]
+    
+    if len(df_filtered) == 0:
+        st.error("No data available for the selected combination of Zone and Brand")
+        return None, None
+    
+    features = prepare_features(df_filtered, current_month_data)
+    historical_data = display_historical_data(df_filtered, current_month_data)
+    
+    exclude_columns = ['month_target_nov', 'ags_target_nov',
+                      'avg_monthly_achievement_rate', 'avg_ags_achievement_rate',
+                      'weighted_monthly_achievement_rate', 'weighted_ags_achievement_rate',
+                      'avg_monthly_sales', 'yoy_sep_growth', 'yoy_oct_growth',
+                      'yoy_weighted_growth']
+    
+    feature_cols = [col for col in features.columns if col not in exclude_columns]
+    
+    # Random Forest models
+    rf_model_monthly = RandomForestRegressor(n_estimators=100, random_state=42)
+    rf_model_ags = RandomForestRegressor(n_estimators=100, random_state=42)
+    
+    rf_model_monthly.fit(features[feature_cols], 
+                        features['month_target_nov'] * features['weighted_monthly_achievement_rate'])
+    rf_model_ags.fit(features[feature_cols], 
+                    features['ags_target_nov'] * features['weighted_ags_achievement_rate'])
+    
+    rf_prediction_monthly = rf_model_monthly.predict(features[feature_cols])
+    rf_prediction_ags = rf_model_ags.predict(features[feature_cols])
+    rf_prediction = (rf_prediction_monthly + rf_prediction_ags) / 2
+    
+    # Other predictions
+    yoy_prediction = features['prev_nov'] * features['yoy_weighted_growth']
+    trend_prediction = calculate_trend_prediction(features, growth_weights, current_month_data)
+    
+    if current_month_data:
+        target_based_prediction = (features['avg_monthly_sales'] * 
+                                 features['target_achievement_rate'] * 
+                                 (1 + (features['current_month_yoy_growth'] - 1) * 0.3))
+    else:
+        target_based_prediction = features['avg_monthly_sales'] * features['target_achievement_rate']
+    
+    final_prediction = (method_weights['rf'] * rf_prediction +
+                       method_weights['yoy'] * yoy_prediction +
+                       method_weights['trend'] * trend_prediction +
+                       method_weights['target'] * target_based_prediction)
+    
+    predictions = pd.DataFrame({
+        'Zone': df_filtered['Zone'],
+        'Brand': df_filtered['Brand'],
+        'RF_Prediction': rf_prediction,
+        'YoY_Prediction': yoy_prediction,
+        'Trend_Prediction': trend_prediction,
+        'Target_Based_Prediction': target_based_prediction,
+        'Final_Prediction': final_prediction
+    })
+    
+    return predictions, historical_data
+
+ def main():
+    st.set_page_config(page_title="Sales Forecasting Model", layout="wide")
+    
+    # Add custom CSS
+    st.markdown("""
+        <style>
+        .stApp {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .metric-card {
+            background-color: #f0f2f6;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #0066cc;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+    
+    st.title("Sales Forecasting Model")
+    
+    uploaded_file = st.file_uploader("Upload Excel File", type=['xlsx'])
+    
+    if uploaded_file:
+        df = read_excel_skip_hidden(uploaded_file)
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            zones = sorted(df['Zone'].unique())
+            selected_zone = st.selectbox('Select Zone:', zones)
+        
+        with col2:
+            brands = sorted(df[df['Zone'] == selected_zone]['Brand'].unique())
+            selected_brand = st.selectbox('Select Brand:', brands)
+        
+        st.subheader("Current Month Analysis (Optional)")
+        use_current_month = st.checkbox("Include current month data")
+        
+        current_month_data = None
+        if use_current_month:
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                days_passed = st.number_input("Days passed:", min_value=1, max_value=31, value=1)
+            with col2:
+                current_year_sales = st.number_input("Current year sales:", min_value=0.0, value=0.0)
+            with col3:
+                previous_year_sales = st.number_input("Previous year sales:", min_value=0.0, value=0.0)
+            
+            if days_passed > 0 and current_year_sales > 0 and previous_year_sales > 0:
+                total_days = calendar.monthrange(2024, 11)[1]
+                current_month_data = {
+                    'days_passed': days_passed,
+                    'total_days': total_days,
+                    'current_year': current_year_sales,
+                    'previous_year': previous_year_sales
+                }
+        
+        st.subheader("Growth Weights")
+        col1, col2 = st.columns(2)
+        growth_weights = {}
+        
+        with col1:
+            growth_weights['growth_May'] = st.slider('May/Apr:', 0.0, 1.0, 0.05, 0.05)
+            growth_weights['growth_June'] = st.slider('June/May:', 0.0, 1.0, 0.10, 0.05)
+            growth_weights['growth_July'] = st.slider('July/June:', 0.0, 1.0, 0.15, 0.05)
+        
+        with col2:
+            growth_weights['growth_Aug'] = st.slider('Aug/July:', 0.0, 1.0, 0.20, 0.05)
+            growth_weights['growth_Sep'] = st.slider('Sep/Aug:', 0.0, 1.0, 0.25, 0.05)
+            growth_weights['growth_Oct'] = st.slider('Oct/Sep:', 0.0, 1.0, 0.25, 0.05)
+        
+        st.subheader("Method Weights")
+        col1, col2 = st.columns(2)
+        method_weights = {}
+        
+        with col1:
+            method_weights['rf'] = st.slider('Random Forest:', 0.0, 1.0, 0.4, 0.05)
+            method_weights['yoy'] = st.slider('Year over Year:', 0.0, 1.0, 0.1, 0.05)
+        
+        with col2:
+            method_weights['trend'] = st.slider('Trend:', 0.0, 1.0, 0.4, 0.05)
+            method_weights['target'] = st.slider('Target:', 0.0, 1.0, 0.1, 0.05)
+        
+        # Validate weights
+        if abs(sum(growth_weights.values()) - 1.0) > 0.01:
+            st.error("Growth weights should sum to 1")
+        elif abs(sum(method_weights.values()) - 1.0) > 0.01:
+            st.error("Method weights should sum to 1")
+        else:
+            predictions, historical_data = predict_november_sales(
+                df, selected_zone, selected_brand, growth_weights, method_weights, current_month_data
+            )
+            
+            if predictions is not None and historical_data is not None:
+                # Display historical data
+                st.subheader("Historical Sales Data")
+                st.dataframe(
+                    historical_data.style.format({'Sales': '₹{:,.2f}'})
+                )
+                
+                # Display predictions
+                st.subheader("November 2024 Predictions")
+                st.dataframe(
+                    predictions.style.format({
+                        'RF_Prediction': '₹{:,.2f}',
+                        'YoY_Prediction': '₹{:,.2f}',
+                        'Trend_Prediction': '₹{:,.2f}',
+                        'Target_Based_Prediction': '₹{:,.2f}',
+                        'Final_Prediction': '₹{:,.2f}'
+                    })
+                )
+                
+                # Summary metrics
+                st.subheader("Summary Metrics")
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.metric("Average Prediction", f"₹{predictions['Final_Prediction'].mean():,.2f}")
+                
+                if current_month_data:
+                    current_performance = (current_month_data['current_year'] / current_month_data['previous_year'] - 1) * 100
+                    last_year_nov = df[(df['Zone'] == selected_zone) & 
+                                     (df['Brand'] == selected_brand)]['Total Nov 2023'].iloc[0]
+                    nov_target = df[(df['Zone'] == selected_zone) & 
+                                  (df['Brand'] == selected_brand)]['Month Tgt (Nov)'].iloc[0]
+                    growth_multiplier = current_month_data['current_year'] / current_month_data['previous_year']
+                    projected_full_month = last_year_nov * growth_multiplier
+                    
+                    # Current Month Analysis
+                    st.subheader("Current Month Analysis")
+                    col1, col2, col3 = st.columns(3)
+                    
+                    with col1:
+                        st.metric("Days Completed", 
+                                 f"{current_month_data['days_passed']} / {current_month_data['total_days']}")
+                    with col2:
+                        st.metric("Current Performance vs Last Year", 
+                                 f"{current_performance:,.1f}%")
+                    with col3:
+                        st.metric("Current Year Daily Rate", 
+                                 f"₹{(current_month_data['current_year'] / current_month_data['days_passed']):,.2f}")
+                    
+                    # Additional metrics in expandable section
+                    with st.expander("Detailed Analysis"):
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            st.metric("Previous Year Daily Rate", 
+                                     f"₹{(current_month_data['previous_year'] / current_month_data['days_passed']):,.2f}")
+                            st.metric("Projected Full Month", 
+                                     f"₹{projected_full_month:,.2f}")
+                        with col2:
+                            st.metric("Last Year November Total", 
+                                     f"₹{last_year_nov:,.2f}")
+                        
+                        remaining_days = current_month_data['total_days'] - current_month_data['days_passed']
+                        if remaining_days > 0:
+                            st.subheader("Target Analysis")
+                            current_daily = current_month_data['current_year'] / current_month_data['days_passed']
+                            required_additional_prediction = predictions['Final_Prediction'].iloc[0] - current_month_data['current_year']
+                            required_daily_prediction = required_additional_prediction / remaining_days
+                            required_additional_target = nov_target - current_month_data['current_year']
+                            required_daily_target = required_additional_target / remaining_days
+                            
+                            col1, col2 = st.columns(2)
+                            with col1:
+                                st.markdown("**For Predicted Amount:**")
+                                st.metric("Required Daily Rate", 
+                                         f"₹{required_daily_prediction:,.2f}")
+                                st.metric("Required Growth in Daily Rate", 
+                                         f"{((required_daily_prediction/current_daily) - 1) * 100:,.1f}%")
+                            
+                            with col2:
+                                st.markdown("**For Monthly Target:**")
+                                st.metric("Target Amount", 
+                                         f"₹{nov_target:,.2f}")
+                                st.metric("Required Daily Rate", 
+                                         f"₹{required_daily_target:,.2f}")
+                            
+                            # Target Achievement Analysis
+                            st.subheader("Target Achievement Analysis")
+                            target_achievement_projected = (projected_full_month / nov_target) * 100
+                            col1, col2 = st.columns(2)
+                            with col1:
+                                st.metric("Projected Achievement at Current Rate", 
+                                         f"{target_achievement_projected:.1f}%")
+                            
+                            shortfall_or_excess = projected_full_month - nov_target
+                            with col2:
+                                if shortfall_or_excess < 0:
+                                    st.metric("Projected Shortfall", 
+                                            f"₹{abs(shortfall_or_excess):,.2f}")
+                                else:
+                                    st.metric("Projected Excess", 
+                                            f"₹{shortfall_or_excess:,.2f}")
+
+ if __name__ == "__main__":
+    main()
 def load_lottie_url(url: str):
     r = requests.get(url)
     if r.status_code != 200:
@@ -6450,13 +6832,15 @@ def main():
     elif selected == "Predictions":
         prediction_menu = option_menu(
             menu_title="Predictions",
-            options=["WSP Projection","Sales Projection"],
+            options=["WSP Projection","Sales Projection(Old Model)","Sales Projection(New Model)"],
             icons=["bar-chart", "graph-up-arrow"],
             orientation="horizontal",)
         if prediction_menu == "WSP Projection":
             descriptive_statistics_and_prediction()
-        elif prediction_menu == "Sales Projection":
+        elif prediction_menu == "Sales Projection(Old Model)":
             projection()
+        elif prediction_menu == "Sales Projection(New Model)":
+            pro()
     elif selected == "Settings":
         st.title("Settings")
         st.markdown('<div class="settings-container">', unsafe_allow_html=True)
