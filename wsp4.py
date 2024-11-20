@@ -5357,11 +5357,14 @@ def market_share():
             company_colors[company] = '#FF6B6B'  # Bright coral color for JK Lakshmi
         else:
             company_colors[company] = get_company_color(company)
-
+     share_df = share_df[sorted_companies]
+     volume_df = volume_df[sorted_companies]
      fig, ax1 = plt.subplots(figsize=(14, 9), dpi=120)
      ax2 = ax1.twinx()
      bottom = np.zeros(len(share_df))
      volume_positions = []
+     total_shares = share_df.sum(axis=1)
+     total_volumes = volume_df.sum(axis=1)
      pattern = create_stripe_pattern()
      for company in sorted_companies:
         values = share_df[company].values
@@ -5409,7 +5412,7 @@ def market_share():
                 vol = volume_df.loc[share_df.index[i], company]
                 if vol > 0:
                     volume_positions.append((vol, center, company_colors[company], i))
-      bottom += values
+        bottom += values
      max_total_share = total_shares.max()
      y_max = max_total_share * 1.15  # Add 15% padding
      ax1.set_ylim(0, y_max)
