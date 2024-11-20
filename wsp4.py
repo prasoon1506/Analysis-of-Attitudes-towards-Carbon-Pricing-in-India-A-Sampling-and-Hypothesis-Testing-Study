@@ -267,7 +267,6 @@ def pro():
     return predictions, historical_data
 
  def main():
-    st.set_page_config(page_title="Sales Forecasting Model", layout="wide")
     
     # Add custom CSS
     st.markdown("""
