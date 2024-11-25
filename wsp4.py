@@ -14,7 +14,7 @@ import secrets
 import requests
 import tempfile
 import warnings
-import ImageReader
+from PIL import ImageReader
 import hashlib
 import shutil
 import plotly.subplots as sp
