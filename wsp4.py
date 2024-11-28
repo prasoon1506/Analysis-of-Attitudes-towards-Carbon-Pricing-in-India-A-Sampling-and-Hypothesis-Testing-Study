@@ -173,10 +173,9 @@ def geo():
     b64 = base64.b64encode(excel_file).decode()
     href = f'<a href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64}" download="Channel_Non_Total_{filename}">Download Channel Non-Total Sheets</a>'
     return href
-
  def analyze_sheets(processed_files):
     """
-    Provides an advanced analyzer for processed sheets
+    Provides an advanced analyzer for processed sheets with cascading filters
     """
     st.header("🔍 Advanced Sheet Analyzer")
     
@@ -196,7 +195,7 @@ def geo():
             # Get the dataframe
             df = file_sheets[selected_sheet]
             
-            # Ensure we have at least 4 columns
+            # Ensure we have at least 5 columns
             if len(df.columns) < 5:
                 st.warning("This sheet does not have enough columns for analysis.")
                 return
@@ -204,27 +203,36 @@ def geo():
             # Get first 4 column names
             first_four_cols = df.columns[:4]
             
-            # Create multiselect for each of the first 4 columns
+            # Create cascading multiselect for each of the first 4 columns
             column_filters = {}
-            for col in first_four_cols:
-                # Get unique values for the column
-                unique_values = df[col].dropna().unique()
+            filtered_df = df.copy()
+            
+            for i, col in enumerate(first_four_cols):
+                # Determine unique values based on previous selections
+                if i == 0:
+                    unique_values = filtered_df[col].dropna().unique()
+                else:
+                    # Create filter mask for previous columns
+                    filter_mask = pd.Series([True] * len(filtered_df), index=filtered_df.index)
+                    for prev_col, prev_values in column_filters.items():
+                        if prev_values:
+                            filter_mask &= filtered_df[prev_col].isin(prev_values)
+                    
+                    # Get unique values for current column based on previous filters
+                    unique_values = filtered_df[filter_mask][col].dropna().unique()
+                
+                # Multiselect for current column
                 column_filters[col] = st.multiselect(
                     f"Select values for {col}", 
                     list(unique_values)
                 )
+                
+                # If values selected for this column, apply filter
+                if column_filters[col]:
+                    filtered_df = filtered_df[filtered_df[col].isin(column_filters[col])]
             
-            # Button to apply filters
+            # Button to apply filters (now redundant, but kept for consistency)
             if st.button("Apply Filters"):
-                # Create filter mask
-                filter_mask = pd.Series([True] * len(df), index=df.index)
-                for col, values in column_filters.items():
-                    if values:  # If any values selected for this column
-                        filter_mask &= df[col].isin(values)
-                
-                # Filter dataframe
-                filtered_df = df[filter_mask]
-                
                 # Display results
                 if len(filtered_df) > 0:
                     st.success(f"Found {len(filtered_df)} rows matching the selected filters")
