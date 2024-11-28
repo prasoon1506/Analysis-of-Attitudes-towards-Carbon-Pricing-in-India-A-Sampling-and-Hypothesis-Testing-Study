@@ -96,6 +96,7 @@ def geo():
  import pandas as pd
  import base64
  import io
+ import itertools
 
  def fill_second_column(df):
     processed_df = df.copy()
@@ -120,6 +121,7 @@ def geo():
     return processed_df
 
  def process_excel_file(uploaded_file):
+    try:
         # Read the Excel file
         xls = pd.ExcelFile(uploaded_file)
         sheet_names = xls.sheet_names
@@ -172,7 +174,94 @@ def geo():
     href = f'<a href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64}" download="Channel_Non_Total_{filename}">Download Channel Non-Total Sheets</a>'
     return href
 
+ def analyze_sheets(processed_files):
+    """
+    Provides an advanced analyzer for processed sheets
+    """
+    st.header("🔍 Advanced Sheet Analyzer")
+    
+    # Select file to analyze
+    selected_file = st.selectbox("Select a processed file", 
+                                 list(processed_files.keys()))
+    
+    if selected_file:
+        # Get sheets for the selected file
+        file_sheets = processed_files[selected_file]
+        
+        # Select sheet to analyze
+        selected_sheet = st.selectbox("Select a sheet", 
+                                      list(file_sheets.keys()))
+        
+        if selected_sheet:
+            # Get the dataframe
+            df = file_sheets[selected_sheet]
+            
+            # Ensure we have at least 4 columns
+            if len(df.columns) < 5:
+                st.warning("This sheet does not have enough columns for analysis.")
+                return
+            
+            # Get first 4 column names
+            first_four_cols = df.columns[:4]
+            
+            # Create multiselect for each of the first 4 columns
+            column_filters = {}
+            for col in first_four_cols:
+                # Get unique values for the column
+                unique_values = df[col].dropna().unique()
+                column_filters[col] = st.multiselect(
+                    f"Select values for {col}", 
+                    list(unique_values)
+                )
+            
+            # Button to apply filters
+            if st.button("Apply Filters"):
+                # Create filter mask
+                filter_mask = pd.Series([True] * len(df), index=df.index)
+                for col, values in column_filters.items():
+                    if values:  # If any values selected for this column
+                        filter_mask &= df[col].isin(values)
+                
+                # Filter dataframe
+                filtered_df = df[filter_mask]
+                
+                # Display results
+                if len(filtered_df) > 0:
+                    st.success(f"Found {len(filtered_df)} rows matching the selected filters")
+                    
+                    # Allow user to select which columns to display from 5th column onwards
+                    display_cols = st.multiselect(
+                        "Select columns to display (from 5th column onwards)", 
+                        list(df.columns[4:]),
+                        default=list(df.columns[4:])
+                    )
+                    
+                    # Combine first 4 columns with selected display columns
+                    cols_to_show = list(first_four_cols) + display_cols
+                    
+                    # Display filtered dataframe
+                    st.dataframe(filtered_df[cols_to_show])
+                    
+                    # Download option for filtered data
+                    if st.download_button(
+                        label="Download Filtered Data",
+                        data=filtered_df[cols_to_show].to_csv(index=False),
+                        file_name=f"{selected_file}_{selected_sheet}_filtered.csv",
+                        mime='text/csv'
+                    ):
+                        st.success("Filtered data downloaded successfully!")
+                else:
+                    st.warning("No rows found matching the selected filters")
+
  def main():
+    # Set page configuration
+    st.set_page_config(
+        page_title="Excel Channel Non-Total Sheet Processor", 
+        page_icon="📊", 
+        layout="wide"
+    )
+
+    # Custom CSS for styling
     st.markdown("""
     <style>
     .big-font {
@@ -191,7 +280,7 @@ def geo():
     st.title("📊 Advanced Excel Channel Non-Total Sheet Processor")
     st.markdown("""
     <div class="big-font">
-    Upload, Process, and Customize Your Channel Non-Total Sheets
+    Upload, Process, Analyze, and Customize Your Channel Non-Total Sheets
     </div>
     """, unsafe_allow_html=True)
 
@@ -220,45 +309,56 @@ def geo():
                 except Exception as e:
                     st.error(f"Error processing {uploaded_file.name}: {str(e)}")
 
-    # Display and manage processed files
-    if st.session_state.processed_files:
-        st.header("📁 Processed Files")
-        
-        # Tabs for each processed file
-        file_tabs = st.tabs(list(st.session_state.processed_files.keys()))
-        
-        for i, (filename, file_dfs) in enumerate(st.session_state.processed_files.items()):
-            with file_tabs[i]:
-                # Sheet selection for deletion
-                st.subheader(f"Sheets in {filename}")
-                
-                # Create a copy of sheets to allow modification
-                current_sheets = list(file_dfs.keys())
-                
-                # Multi-select for sheet deletion
-                sheets_to_keep = st.multiselect(
-                    f"Select sheets to KEEP from {filename}", 
-                    current_sheets, 
-                    default=current_sheets
-                )
-                
-                # Filter out sheets not selected
-                filtered_dfs = {sheet: df for sheet, df in file_dfs.items() if sheet in sheets_to_keep}
-                
-                # Display preview of selected sheets
-                for sheet_name, df in filtered_dfs.items():
-                    with st.expander(f"Sheet: {sheet_name}"):
-                        st.dataframe(df)
-                
-                # Download button for filtered sheets
-                if st.button(f"Download Processed Sheets for {filename}"):
-                    download_link = get_download_link(filtered_dfs, filename)
-                    st.markdown(download_link, unsafe_allow_html=True)
-                
-                # Option to remove the entire file from processed files
-                if st.button(f"Remove {filename} from Processed Files"):
-                    del st.session_state.processed_files[filename]
-                    st.experimental_rerun()
+    # Tabs for different functionalities
+    tab1, tab2 = st.tabs(["File Processing", "Sheet Analyzer"])
+
+    with tab1:
+        # Display and manage processed files
+        if st.session_state.processed_files:
+            st.header("📁 Processed Files")
+            
+            # Tabs for each processed file
+            file_tabs = st.tabs(list(st.session_state.processed_files.keys()))
+            
+            for i, (filename, file_dfs) in enumerate(st.session_state.processed_files.items()):
+                with file_tabs[i]:
+                    # Sheet selection for deletion
+                    st.subheader(f"Sheets in {filename}")
+                    
+                    # Create a copy of sheets to allow modification
+                    current_sheets = list(file_dfs.keys())
+                    
+                    # Multi-select for sheet deletion
+                    sheets_to_keep = st.multiselect(
+                        f"Select sheets to KEEP from {filename}", 
+                        current_sheets, 
+                        default=current_sheets
+                    )
+                    
+                    # Filter out sheets not selected
+                    filtered_dfs = {sheet: df for sheet, df in file_dfs.items() if sheet in sheets_to_keep}
+                    
+                    # Display preview of selected sheets
+                    for sheet_name, df in filtered_dfs.items():
+                        with st.expander(f"Sheet: {sheet_name}"):
+                            st.dataframe(df)
+                    
+                    # Download button for filtered sheets
+                    if st.button(f"Download Processed Sheets for {filename}"):
+                        download_link = get_download_link(filtered_dfs, filename)
+                        st.markdown(download_link, unsafe_allow_html=True)
+                    
+                    # Option to remove the entire file from processed files
+                    if st.button(f"Remove {filename} from Processed Files"):
+                        del st.session_state.processed_files[filename]
+                        st.experimental_rerun()
+
+    with tab2:
+        # Sheet Analyzer
+        if st.session_state.processed_files:
+            analyze_sheets(st.session_state.processed_files)
+        else:
+            st.info("Please upload and process files first to use the analyzer.")
 
     # Additional information
     st.markdown("---")
@@ -268,7 +368,10 @@ def geo():
     2. Automatically process Channel Non-Total sheets
     3. Preview sheets for each file
     4. Select which sheets to keep
-    5. Download customized processed sheets
+    5. Use the Sheet Analyzer to:
+       - Filter rows based on first 4 columns
+       - Select specific columns to display
+       - Download filtered data
     """)
 
  if __name__ == "__main__":
