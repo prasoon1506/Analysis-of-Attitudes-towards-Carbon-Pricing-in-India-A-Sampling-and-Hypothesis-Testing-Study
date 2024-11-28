@@ -92,6 +92,11 @@ import pandas as pd
 import base64
 import io
 def geo():
+ import streamlit as st
+ import pandas as pd
+ import base64
+ import io
+
  def fill_second_column(df):
     processed_df = df.copy()
     first_col = processed_df.columns[0]
@@ -115,7 +120,7 @@ def geo():
     return processed_df
 
  def process_excel_file(uploaded_file):
-    
+    try:
         # Read the Excel file
         xls = pd.ExcelFile(uploaded_file)
         sheet_names = xls.sheet_names
@@ -169,6 +174,12 @@ def geo():
     return href
 
  def main():
+    # Set page configuration
+    st.set_page_config(
+        page_title="Excel Channel Non-Total Sheet Processor", 
+        page_icon="📊", 
+        layout="wide"
+    )
 
     # Custom CSS for styling
     st.markdown("""
@@ -186,12 +197,16 @@ def geo():
     """, unsafe_allow_html=True)
 
     # Title and description
-    st.title("📊 Excel Channel Non-Total Sheet Processor")
+    st.title("📊 Advanced Excel Channel Non-Total Sheet Processor")
     st.markdown("""
     <div class="big-font">
-    Upload your Excel files and extract Channel Non-Total sheets with ease!
+    Upload, Process, and Customize Your Channel Non-Total Sheets
     </div>
     """, unsafe_allow_html=True)
+
+    # Initialize session state for processed files if not exists
+    if 'processed_files' not in st.session_state:
+        st.session_state.processed_files = {}
 
     # File uploader
     uploaded_files = st.file_uploader(
@@ -202,37 +217,67 @@ def geo():
 
     # Process files when uploaded
     if uploaded_files:
-        st.markdown("### 📁 Processed Files", unsafe_allow_html=True)
-        
         for uploaded_file in uploaded_files:
-            with st.expander(f"📊 {uploaded_file.name}", expanded=True):
+            # Check if file is not already processed
+            if uploaded_file.name not in st.session_state.processed_files:
                 try:
                     # Process the file
                     channel_non_total_dfs = process_excel_file(uploaded_file)
                     
-                    # Display sheet information
-                    st.markdown(f"**Sheets Processed:** {len(channel_non_total_dfs)}")
-                    
-                    # Preview of sheets
-                    for sheet_name, df in channel_non_total_dfs.items():
-                        st.markdown(f"#### Sheet: {sheet_name}")
-                        st.dataframe(df.head())
-                    
-                    # Download link
-                    download_link = get_download_link(channel_non_total_dfs, uploaded_file.name)
-                    st.markdown(download_link, unsafe_allow_html=True)
-                
+                    # Store processed files in session state
+                    st.session_state.processed_files[uploaded_file.name] = channel_non_total_dfs
                 except Exception as e:
                     st.error(f"Error processing {uploaded_file.name}: {str(e)}")
+
+    # Display and manage processed files
+    if st.session_state.processed_files:
+        st.header("📁 Processed Files")
+        
+        # Tabs for each processed file
+        file_tabs = st.tabs(list(st.session_state.processed_files.keys()))
+        
+        for i, (filename, file_dfs) in enumerate(st.session_state.processed_files.items()):
+            with file_tabs[i]:
+                # Sheet selection for deletion
+                st.subheader(f"Sheets in {filename}")
+                
+                # Create a copy of sheets to allow modification
+                current_sheets = list(file_dfs.keys())
+                
+                # Multi-select for sheet deletion
+                sheets_to_keep = st.multiselect(
+                    f"Select sheets to KEEP from {filename}", 
+                    current_sheets, 
+                    default=current_sheets
+                )
+                
+                # Filter out sheets not selected
+                filtered_dfs = {sheet: df for sheet, df in file_dfs.items() if sheet in sheets_to_keep}
+                
+                # Display preview of selected sheets
+                for sheet_name, df in filtered_dfs.items():
+                    with st.expander(f"Sheet: {sheet_name}"):
+                        st.dataframe(df)
+                
+                # Download button for filtered sheets
+                if st.button(f"Download Processed Sheets for {filename}"):
+                    download_link = get_download_link(filtered_dfs, filename)
+                    st.markdown(download_link, unsafe_allow_html=True)
+                
+                # Option to remove the entire file from processed files
+                if st.button(f"Remove {filename} from Processed Files"):
+                    del st.session_state.processed_files[filename]
+                    st.experimental_rerun()
 
     # Additional information
     st.markdown("---")
     st.markdown("""
     ### 🤔 How to Use
     1. Upload one or more Excel files
-    2. The app will process each file automatically
-    3. View a preview of Channel Non-Total sheets
-    4. Download processed sheets for each file
+    2. Automatically process Channel Non-Total sheets
+    3. Preview sheets for each file
+    4. Select which sheets to keep
+    5. Download customized processed sheets
     """)
 
  if __name__ == "__main__":
