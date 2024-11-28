@@ -173,14 +173,6 @@ def geo():
     return href
 
  def main():
-    # Set page configuration
-    st.set_page_config(
-        page_title="Excel Channel Non-Total Sheet Processor", 
-        page_icon="📊", 
-        layout="wide"
-    )
-
-    # Custom CSS for styling
     st.markdown("""
     <style>
     .big-font {
