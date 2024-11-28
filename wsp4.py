@@ -121,7 +121,7 @@ def geo():
     return processed_df
 
  def process_excel_file(uploaded_file):
-    try:
+    
         # Read the Excel file
         xls = pd.ExcelFile(uploaded_file)
         sheet_names = xls.sheet_names
@@ -254,12 +254,6 @@ def geo():
                     st.warning("No rows found matching the selected filters")
 
  def main():
-    # Set page configuration
-    st.set_page_config(
-        page_title="Excel Channel Non-Total Sheet Processor", 
-        page_icon="📊", 
-        layout="wide"
-    )
 
     # Custom CSS for styling
     st.markdown("""
