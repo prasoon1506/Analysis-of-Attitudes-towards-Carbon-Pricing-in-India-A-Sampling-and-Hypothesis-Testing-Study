@@ -115,7 +115,7 @@ def geo():
     return processed_df
 
  def process_excel_file(uploaded_file):
-    try:
+    
         # Read the Excel file
         xls = pd.ExcelFile(uploaded_file)
         sheet_names = xls.sheet_names
