@@ -121,7 +121,6 @@ def geo():
     return processed_df
 
  def process_excel_file(uploaded_file):
-    
         # Read the Excel file
         xls = pd.ExcelFile(uploaded_file)
         sheet_names = xls.sheet_names
@@ -173,93 +172,116 @@ def geo():
     b64 = base64.b64encode(excel_file).decode()
     href = f'<a href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64}" download="Channel_Non_Total_{filename}">Download Channel Non-Total Sheets</a>'
     return href
- def analyze_sheets(processed_files):
+
+ def cross_month_analyze_sheets(processed_files):
     """
-    Provides an advanced analyzer for processed sheets with cascading filters
+    Provides an advanced analyzer for cross-month sheet comparison
     """
-    st.header("🔍 Advanced Sheet Analyzer")
+    st.header("🔍 Cross-Month Sheet Analyzer")
     
-    # Select file to analyze
-    selected_file = st.selectbox("Select a processed file", 
-                                 list(processed_files.keys()))
+    # Get list of all months/files
+    all_months = list(processed_files.keys())
     
-    if selected_file:
-        # Get sheets for the selected file
-        file_sheets = processed_files[selected_file]
+    # Select files to compare
+    st.subheader("Select Files to Compare")
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        month1 = st.selectbox("Select First Month", all_months)
+    
+    with col2:
+        # Exclude the first selected month from second selection
+        remaining_months = [m for m in all_months if m != month1]
+        month2 = st.selectbox("Select Second Month", remaining_months)
+    
+    # Get sheets for both selected months
+    month1_sheets = list(processed_files[month1].keys())
+    month2_sheets = list(processed_files[month2].keys())
+    
+    # Find common sheets
+    common_sheets = list(set(month1_sheets) & set(month2_sheets))
+    
+    if not common_sheets:
+        st.warning("No common sheets found between the selected months.")
+        return
+    
+    # Select a common sheet to analyze
+    selected_sheet = st.selectbox("Select a Common Sheet to Analyze", common_sheets)
+    
+    # Get dataframes for the selected sheet
+    df1 = processed_files[month1][selected_sheet]
+    df2 = processed_files[month2][selected_sheet]
+    
+    # Ensure we have at least 5 columns
+    if len(df1.columns) < 5 or len(df2.columns) < 5:
+        st.warning("Selected sheets do not have enough columns for analysis.")
+        return
+    
+    # Get first 4 column names (assume they are the same for both dataframes)
+    first_four_cols = df1.columns[:4]
+    
+    # Create cascading multiselect for each of the first 4 columns
+    column_filters = {}
+    filtered_dfs = {month1: df1.copy(), month2: df2.copy()}
+    
+    for i, col in enumerate(first_four_cols):
+        # Determine unique values across both months
+        unique_values = pd.concat([
+            filtered_dfs[month1][col], 
+            filtered_dfs[month2][col]
+        ]).dropna().unique()
         
-        # Select sheet to analyze
-        selected_sheet = st.selectbox("Select a sheet", 
-                                      list(file_sheets.keys()))
+        # Multiselect for current column
+        column_filters[col] = st.multiselect(
+            f"Select values for {col}", 
+            list(unique_values)
+        )
         
-        if selected_sheet:
-            # Get the dataframe
-            df = file_sheets[selected_sheet]
+        # Apply filters to both months' dataframes
+        for month in [month1, month2]:
+            if column_filters[col]:
+                filtered_dfs[month] = filtered_dfs[month][filtered_dfs[month][col].isin(column_filters[col])]
+    
+    # Button to apply filters
+    if st.button("Compare Filtered Data"):
+        # Merge filtered dataframes side by side
+        if len(filtered_dfs[month1]) > 0 and len(filtered_dfs[month2]) > 0:
+            st.success(f"Found {len(filtered_dfs[month1])} rows for {month1} and {len(filtered_dfs[month2])} rows for {month2}")
             
-            # Ensure we have at least 5 columns
-            if len(df.columns) < 5:
-                st.warning("This sheet does not have enough columns for analysis.")
-                return
+            # Allow user to select which columns to display from 5th column onwards
+            display_cols = st.multiselect(
+                "Select columns to display (from 5th column onwards)", 
+                list(df1.columns[4:]),
+                default=list(df1.columns[4:])
+            )
             
-            # Get first 4 column names
-            first_four_cols = df.columns[:4]
+            # Combine first 4 columns with selected display columns
+            cols_to_show = list(first_four_cols) + display_cols
             
-            # Create cascading multiselect for each of the first 4 columns
-            column_filters = {}
-            filtered_df = df.copy()
+            # Create a side-by-side comparison dataframe
+            comparison_df = pd.DataFrame()
             
-            for i, col in enumerate(first_four_cols):
-                # Determine unique values based on previous selections
-                if i == 0:
-                    unique_values = filtered_df[col].dropna().unique()
-                else:
-                    # Create filter mask for previous columns
-                    filter_mask = pd.Series([True] * len(filtered_df), index=filtered_df.index)
-                    for prev_col, prev_values in column_filters.items():
-                        if prev_values:
-                            filter_mask &= filtered_df[prev_col].isin(prev_values)
-                    
-                    # Get unique values for current column based on previous filters
-                    unique_values = filtered_df[filter_mask][col].dropna().unique()
-                
-                # Multiselect for current column
-                column_filters[col] = st.multiselect(
-                    f"Select values for {col}", 
-                    list(unique_values)
-                )
-                
-                # If values selected for this column, apply filter
-                if column_filters[col]:
-                    filtered_df = filtered_df[filtered_df[col].isin(column_filters[col])]
+            # Add columns from first month
+            for col in cols_to_show:
+                comparison_df[f"{month1}_{col}"] = filtered_dfs[month1][col].reset_index(drop=True)
             
-            # Button to apply filters (now redundant, but kept for consistency)
-            if st.button("Apply Filters"):
-                # Display results
-                if len(filtered_df) > 0:
-                    st.success(f"Found {len(filtered_df)} rows matching the selected filters")
-                    
-                    # Allow user to select which columns to display from 5th column onwards
-                    display_cols = st.multiselect(
-                        "Select columns to display (from 5th column onwards)", 
-                        list(df.columns[4:]),
-                        default=list(df.columns[4:])
-                    )
-                    
-                    # Combine first 4 columns with selected display columns
-                    cols_to_show = list(first_four_cols) + display_cols
-                    
-                    # Display filtered dataframe
-                    st.dataframe(filtered_df[cols_to_show])
-                    
-                    # Download option for filtered data
-                    if st.download_button(
-                        label="Download Filtered Data",
-                        data=filtered_df[cols_to_show].to_csv(index=False),
-                        file_name=f"{selected_file}_{selected_sheet}_filtered.csv",
-                        mime='text/csv'
-                    ):
-                        st.success("Filtered data downloaded successfully!")
-                else:
-                    st.warning("No rows found matching the selected filters")
+            # Add columns from second month
+            for col in cols_to_show:
+                comparison_df[f"{month2}_{col}"] = filtered_dfs[month2][col].reset_index(drop=True)
+            
+            # Display comparison dataframe
+            st.dataframe(comparison_df)
+            
+            # Download option for comparison data
+            if st.download_button(
+                label="Download Comparison Data",
+                data=comparison_df.to_csv(index=False),
+                file_name=f"{month1}_{month2}_{selected_sheet}_comparison.csv",
+                mime='text/csv'
+            ):
+                st.success("Comparison data downloaded successfully!")
+        else:
+            st.warning("No matching rows found after filtering")
 
  def main():
 
@@ -279,40 +301,58 @@ def geo():
     """, unsafe_allow_html=True)
 
     # Title and description
-    st.title("📊 Advanced Excel Channel Non-Total Sheet Processor")
+    st.title("📊 Multi-Month Excel Channel Non-Total Sheet Processor")
     st.markdown("""
     <div class="big-font">
-    Upload, Process, Analyze, and Customize Your Channel Non-Total Sheets
+    Upload, Process, Analyze, and Compare Sheets Across Multiple Months
     </div>
     """, unsafe_allow_html=True)
+
+    # Prompt for number of months
+    num_months = st.number_input(
+        "How many months of files do you want to process?", 
+        min_value=1, 
+        max_value=12, 
+        value=1
+    )
 
     # Initialize session state for processed files if not exists
     if 'processed_files' not in st.session_state:
         st.session_state.processed_files = {}
 
-    # File uploader
-    uploaded_files = st.file_uploader(
-        "Choose Excel files", 
-        type=['xlsx', 'xls'], 
-        accept_multiple_files=True
-    )
+    # Create tabs dynamically based on number of months
+    tabs = st.tabs([f"Month {i+1}" for i in range(num_months)])
 
-    # Process files when uploaded
-    if uploaded_files:
-        for uploaded_file in uploaded_files:
-            # Check if file is not already processed
-            if uploaded_file.name not in st.session_state.processed_files:
-                try:
-                    # Process the file
-                    channel_non_total_dfs = process_excel_file(uploaded_file)
+    # Process files for each month
+    for i in range(num_months):
+        with tabs[i]:
+            # File uploader for each month
+            uploaded_files = st.file_uploader(
+                f"Choose Excel files for Month {i+1}", 
+                type=['xlsx', 'xls'], 
+                accept_multiple_files=True,
+                key=f"file_uploader_{i}"
+            )
+
+            # Process files when uploaded
+            if uploaded_files:
+                for uploaded_file in uploaded_files:
+                    # Use month number in filename to differentiate
+                    month_filename = f"Month {i+1} - {uploaded_file.name}"
                     
-                    # Store processed files in session state
-                    st.session_state.processed_files[uploaded_file.name] = channel_non_total_dfs
-                except Exception as e:
-                    st.error(f"Error processing {uploaded_file.name}: {str(e)}")
+                    # Check if file is not already processed
+                    if month_filename not in st.session_state.processed_files:
+                        try:
+                            # Process the file
+                            channel_non_total_dfs = process_excel_file(uploaded_file)
+                            
+                            # Store processed files in session state
+                            st.session_state.processed_files[month_filename] = channel_non_total_dfs
+                        except Exception as e:
+                            st.error(f"Error processing {month_filename}: {str(e)}")
 
     # Tabs for different functionalities
-    tab1, tab2 = st.tabs(["File Processing", "Sheet Analyzer"])
+    tab1, tab2 = st.tabs(["File Processing", "Cross-Month Analyzer"])
 
     with tab1:
         # Display and manage processed files
@@ -356,24 +396,25 @@ def geo():
                         st.experimental_rerun()
 
     with tab2:
-        # Sheet Analyzer
-        if st.session_state.processed_files:
-            analyze_sheets(st.session_state.processed_files)
+        # Cross-Month Sheet Analyzer
+        if len(st.session_state.processed_files) > 1:
+            cross_month_analyze_sheets(st.session_state.processed_files)
         else:
-            st.info("Please upload and process files first to use the analyzer.")
+            st.info("Please upload and process files from at least two months to use the cross-month analyzer.")
 
     # Additional information
     st.markdown("---")
     st.markdown("""
     ### 🤔 How to Use
-    1. Upload one or more Excel files
-    2. Automatically process Channel Non-Total sheets
-    3. Preview sheets for each file
-    4. Select which sheets to keep
-    5. Use the Sheet Analyzer to:
-       - Filter rows based on first 4 columns
-       - Select specific columns to display
-       - Download filtered data
+    1. Select number of months to process
+    2. Upload Excel files for each month
+    3. Automatically process Channel Non-Total sheets
+    4. Preview sheets for each file
+    5. Use the Cross-Month Analyzer to:
+       - Select files from different months
+       - Find common sheets
+       - Apply filters across both months
+       - Compare rows side by side
     """)
 
  if __name__ == "__main__":
