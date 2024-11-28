@@ -87,6 +87,162 @@ import streamlit.components.v1 as components
 from streamlit_lottie import st_lottie
 from streamlit_option_menu import option_menu
 from streamlit_cookies_manager import EncryptedCookieManager
+import streamlit as st
+import pandas as pd
+import base64
+import io
+def geo():
+ def fill_second_column(df):
+    processed_df = df.copy()
+    first_col = processed_df.columns[0]
+    second_col = processed_df.columns[1]
+    processed_df[first_col] = processed_df[first_col].ffill()
+    first_col_mask = processed_df[first_col].notna()
+    processed_df.loc[first_col_mask, second_col] = processed_df.loc[first_col_mask, second_col].ffill()
+    return processed_df
+
+ def fill_third_column_comprehensively(df):
+    processed_df = df.copy()
+    
+    if len(processed_df.columns) < 3:
+        return processed_df
+    
+    third_col = processed_df.columns[2]
+    
+    processed_df[third_col] = processed_df[third_col].ffill()
+    processed_df[third_col] = processed_df[third_col].bfill()
+    
+    return processed_df
+
+ def process_excel_file(uploaded_file):
+    try:
+        # Read the Excel file
+        xls = pd.ExcelFile(uploaded_file)
+        sheet_names = xls.sheet_names
+
+        # Dictionary to store Channel Non-Total dataframes
+        channel_non_total_dfs = {}
+
+        # Process each sheet in the file
+        for sheet_name in sheet_names:
+            # Read sheet, skipping first 3 rows and using 4th row as header
+            df = pd.read_excel(uploaded_file, sheet_name=sheet_name, header=3)
+
+            # Remove rows containing TRADE or NON TRADE
+            df = df[
+                ~df.iloc[:, 0].astype(str).str.lower().str.contains(r'trade|non trade')
+            ]
+
+            # Process Non-Total dataframe
+            non_total_df = df[~df.iloc[:, 0].astype(str).str.contains("Total", case=False, na=False)]
+            non_total_df = fill_second_column(non_total_df)
+            
+            # Further split non-total dataframe into Channel Non-Total
+            if len(non_total_df.columns) > 1:
+                channel_non_total_df = non_total_df[~non_total_df.iloc[:, 1].astype(str).str.contains("Total", case=False, na=False)]
+            else:
+                channel_non_total_df = non_total_df
+            
+            # Fill the third column comprehensively
+            if len(channel_non_total_df.columns) >= 3:
+                channel_non_total_df = fill_third_column_comprehensively(channel_non_total_df)
+            
+            # Store Channel Non-Total dataframe
+            channel_non_total_dfs[sheet_name] = channel_non_total_df
+
+        return channel_non_total_dfs
+
+ def get_download_link(df_dict, filename):
+    # Create an in-memory Excel writer
+    output_buffer = io.BytesIO()
+    with pd.ExcelWriter(output_buffer, engine='openpyxl') as writer:
+        for sheet_name, df in df_dict.items():
+            df.to_excel(writer, sheet_name=sheet_name, index=False)
+    
+    # Get the Excel file content
+    output_buffer.seek(0)
+    excel_file = output_buffer.read()
+    
+    # Create download link
+    b64 = base64.b64encode(excel_file).decode()
+    href = f'<a href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64}" download="Channel_Non_Total_{filename}">Download Channel Non-Total Sheets</a>'
+    return href
+
+ def main():
+    # Set page configuration
+    st.set_page_config(
+        page_title="Excel Channel Non-Total Sheet Processor", 
+        page_icon="📊", 
+        layout="wide"
+    )
+
+    # Custom CSS for styling
+    st.markdown("""
+    <style>
+    .big-font {
+        font-size:20px !important;
+        font-weight: bold;
+    }
+    .highlight {
+        background-color: #f0f2f6;
+        padding: 20px;
+        border-radius: 10px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # Title and description
+    st.title("📊 Excel Channel Non-Total Sheet Processor")
+    st.markdown("""
+    <div class="big-font">
+    Upload your Excel files and extract Channel Non-Total sheets with ease!
+    </div>
+    """, unsafe_allow_html=True)
+
+    # File uploader
+    uploaded_files = st.file_uploader(
+        "Choose Excel files", 
+        type=['xlsx', 'xls'], 
+        accept_multiple_files=True
+    )
+
+    # Process files when uploaded
+    if uploaded_files:
+        st.markdown("### 📁 Processed Files", unsafe_allow_html=True)
+        
+        for uploaded_file in uploaded_files:
+            with st.expander(f"📊 {uploaded_file.name}", expanded=True):
+                try:
+                    # Process the file
+                    channel_non_total_dfs = process_excel_file(uploaded_file)
+                    
+                    # Display sheet information
+                    st.markdown(f"**Sheets Processed:** {len(channel_non_total_dfs)}")
+                    
+                    # Preview of sheets
+                    for sheet_name, df in channel_non_total_dfs.items():
+                        st.markdown(f"#### Sheet: {sheet_name}")
+                        st.dataframe(df.head())
+                    
+                    # Download link
+                    download_link = get_download_link(channel_non_total_dfs, uploaded_file.name)
+                    st.markdown(download_link, unsafe_allow_html=True)
+                
+                except Exception as e:
+                    st.error(f"Error processing {uploaded_file.name}: {str(e)}")
+
+    # Additional information
+    st.markdown("---")
+    st.markdown("""
+    ### 🤔 How to Use
+    1. Upload one or more Excel files
+    2. The app will process each file automatically
+    3. View a preview of Channel Non-Total sheets
+    4. Download processed sheets for each file
+    """)
+
+ if __name__ == "__main__":
+    main()
 def pro():
  from openpyxl import load_workbook
  from sklearn.ensemble import RandomForestRegressor
@@ -6800,13 +6956,15 @@ def main():
     elif selected == "Data Management":
         data_management_menu = option_menu(
             menu_title="Data Management",
-            options=["Editor", "File Manager"],
+            options=["Editor", "File Manager","Anil Maheswari EBITDA Data Processor"],
             icons=["pencil-square", "folder"],
             orientation="horizontal",)
         if data_management_menu == "Editor":
             excel_editor_and_analyzer()
         elif data_management_menu == "File Manager":
             folder_menu()
+        elif data_management_menu =="Anil Maheswari EBITDA Data Processor":
+            geo()
     elif selected == "Analysis Dashboards":
         analysis_menu = option_menu(
             menu_title="Analysis Dashboards",
