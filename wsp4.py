@@ -3662,7 +3662,7 @@ def create_visualization(region_data, region, brand, months):
     monthly_achievement_nov = region_data['Monthly Achievement(Nov)'].iloc[-1]
     total_nov_current = region_data['Monthly Achievement(Nov)'].iloc[-1]
     total_nov_last = region_data['Total Nov 2023'].iloc[-1]
-    ax3.text(0.2, 1, f'October {current_year} Sales Comparison to November 2023:-', fontsize=16, fontweight='bold', ha='center', va='center')
+    ax3.text(0.2, 1, f'November {current_year} Sales Comparison to November 2023:-', fontsize=16, fontweight='bold', ha='center', va='center')
     def get_arrow(value):
         return '↑' if value > 0 else '↓' if value < 0 else '→'
     def get_color(value):
