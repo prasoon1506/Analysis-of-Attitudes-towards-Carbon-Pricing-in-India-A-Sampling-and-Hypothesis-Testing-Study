@@ -92,12 +92,7 @@ import pandas as pd
 import base64
 import io
 def geo():
- import streamlit as st
- import pandas as pd
- import base64
- import io
  import itertools
-
  def fill_second_column(df):
     processed_df = df.copy()
     first_col = processed_df.columns[0]
@@ -106,186 +101,88 @@ def geo():
     first_col_mask = processed_df[first_col].notna()
     processed_df.loc[first_col_mask, second_col] = processed_df.loc[first_col_mask, second_col].ffill()
     return processed_df
-
  def fill_third_column_comprehensively(df):
     processed_df = df.copy()
-    
     if len(processed_df.columns) < 3:
         return processed_df
-    
     third_col = processed_df.columns[2]
-    
     processed_df[third_col] = processed_df[third_col].ffill()
     processed_df[third_col] = processed_df[third_col].bfill()
-    
     return processed_df
-
  def process_excel_file(uploaded_file):
-        # Read the Excel file
         xls = pd.ExcelFile(uploaded_file)
         sheet_names = xls.sheet_names
-
-        # Dictionary to store Channel Non-Total dataframes
         channel_non_total_dfs = {}
-
-        # Process each sheet in the file
         for sheet_name in sheet_names:
-            # Read sheet, skipping first 3 rows and using 4th row as header
             df = pd.read_excel(uploaded_file, sheet_name=sheet_name, header=3)
-
-            # Remove rows containing TRADE or NON TRADE
-            df = df[
-                ~df.iloc[:, 0].astype(str).str.lower().str.contains(r'trade|non trade')
-            ]
-
-            # Process Non-Total dataframe
+            df = df[~df.iloc[:, 0].astype(str).str.lower().str.contains(r'trade|non trade')]
             non_total_df = df[~df.iloc[:, 0].astype(str).str.contains("Total", case=False, na=False)]
             non_total_df = fill_second_column(non_total_df)
-            
-            # Further split non-total dataframe into Channel Non-Total
             if len(non_total_df.columns) > 1:
                 channel_non_total_df = non_total_df[~non_total_df.iloc[:, 1].astype(str).str.contains("Total", case=False, na=False)]
             else:
                 channel_non_total_df = non_total_df
-            
-            # Fill the third column comprehensively
             if len(channel_non_total_df.columns) >= 3:
                 channel_non_total_df = fill_third_column_comprehensively(channel_non_total_df)
-            
-            # Store Channel Non-Total dataframe
             channel_non_total_dfs[sheet_name] = channel_non_total_df
-
         return channel_non_total_dfs
-
  def get_download_link(df_dict, filename):
-    # Create an in-memory Excel writer
     output_buffer = io.BytesIO()
     with pd.ExcelWriter(output_buffer, engine='openpyxl') as writer:
         for sheet_name, df in df_dict.items():
             df.to_excel(writer, sheet_name=sheet_name, index=False)
-    
-    # Get the Excel file content
     output_buffer.seek(0)
     excel_file = output_buffer.read()
-    
-    # Create download link
     b64 = base64.b64encode(excel_file).decode()
     href = f'<a href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64}" download="Channel_Non_Total_{filename}">Download Channel Non-Total Sheets</a>'
     return href
-
  def cross_month_analyze_sheets(processed_files):
-    """
-    Provides an advanced analyzer for cross-month sheet comparison
-    """
     st.header("🔍 Cross-Month Sheet Analyzer")
-    
-    # Get list of all months/files
     all_months = list(processed_files.keys())
-    
-    # Select files to compare
     st.subheader("Select Files to Compare")
     col1, col2 = st.columns(2)
-    
     with col1:
         month1 = st.selectbox("Select First Month", all_months)
-    
     with col2:
-        # Exclude the first selected month from second selection
         remaining_months = [m for m in all_months if m != month1]
         month2 = st.selectbox("Select Second Month", remaining_months)
-    
-    # Get sheets for both selected months
     month1_sheets = list(processed_files[month1].keys())
     month2_sheets = list(processed_files[month2].keys())
-    
-    # Find common sheets
     common_sheets = list(set(month1_sheets) & set(month2_sheets))
-    
     if not common_sheets:
         st.warning("No common sheets found between the selected months.")
         return
-    
-    # Select a common sheet to analyze
     selected_sheet = st.selectbox("Select a Common Sheet to Analyze", common_sheets)
-    
-    # Get dataframes for the selected sheet
     df1 = processed_files[month1][selected_sheet]
     df2 = processed_files[month2][selected_sheet]
-    
-    # Ensure we have at least 5 columns
     if len(df1.columns) < 5 or len(df2.columns) < 5:
         st.warning("Selected sheets do not have enough columns for analysis.")
         return
-    
-    # Get first 4 column names (assume they are the same for both dataframes)
     first_four_cols = df1.columns[:4]
-    
-    # Create cascading multiselect for each of the first 4 columns
     column_filters = {}
     filtered_dfs = {month1: df1.copy(), month2: df2.copy()}
-    
     for i, col in enumerate(first_four_cols):
-        # Determine unique values across both months
-        unique_values = pd.concat([
-            filtered_dfs[month1][col], 
-            filtered_dfs[month2][col]
-        ]).dropna().unique()
-        
-        # Multiselect for current column
-        column_filters[col] = st.multiselect(
-            f"Select values for {col}", 
-            list(unique_values)
-        )
-        
-        # Apply filters to both months' dataframes
+        unique_values = pd.concat([filtered_dfs[month1][col],filtered_dfs[month2][col]]).dropna().unique()
+        column_filters[col] = st.multiselect(f"Select values for {col}", list(unique_values))
         for month in [month1, month2]:
             if column_filters[col]:
                 filtered_dfs[month] = filtered_dfs[month][filtered_dfs[month][col].isin(column_filters[col])]
-    
-    # Button to apply filters
     if st.button("Compare Filtered Data"):
-        # Merge filtered dataframes side by side
         if len(filtered_dfs[month1]) > 0 and len(filtered_dfs[month2]) > 0:
             st.success(f"Found {len(filtered_dfs[month1])} rows for {month1} and {len(filtered_dfs[month2])} rows for {month2}")
-            
-            # Allow user to select which columns to display from 5th column onwards
-            display_cols = st.multiselect(
-                "Select columns to display (from 5th column onwards)", 
-                list(df1.columns[4:]),
-                default=list(df1.columns[4:])
-            )
-            
-            # Combine first 4 columns with selected display columns
+            display_cols = st.multiselect("Select columns to display (from 5th column onwards)", list(df1.columns[4:]),default=list(df1.columns[4:]))
             cols_to_show = list(first_four_cols) + display_cols
-            
-            # Create a side-by-side comparison dataframe
             comparison_df = pd.DataFrame()
-            
-            # Add columns from first month
             for col in cols_to_show:
                 comparison_df[f"{month1}_{col}"] = filtered_dfs[month1][col].reset_index(drop=True)
-            
-            # Add columns from second month
             for col in cols_to_show:
                 comparison_df[f"{month2}_{col}"] = filtered_dfs[month2][col].reset_index(drop=True)
-            
-            # Display comparison dataframe
             st.dataframe(comparison_df)
-            
-            # Download option for comparison data
-            if st.download_button(
-                label="Download Comparison Data",
-                data=comparison_df.to_csv(index=False),
-                file_name=f"{month1}_{month2}_{selected_sheet}_comparison.csv",
-                mime='text/csv'
-            ):
+            if st.download_button(label="Download Comparison Data",data=comparison_df.to_csv(index=False),file_name=f"{month1}_{month2}_{selected_sheet}_comparison.csv",mime='text/csv'):
                 st.success("Comparison data downloaded successfully!")
         else:
             st.warning("No matching rows found after filtering")
-
  def main():
-
-    # Custom CSS for styling
     st.markdown("""
     <style>
     .big-font {
@@ -299,45 +196,21 @@ def geo():
     }
     </style>
     """, unsafe_allow_html=True)
-
-    # Title and description
     st.title("📊 Multi-Month Excel Channel Non-Total Sheet Processor")
     st.markdown("""
     <div class="big-font">
     Upload, Process, Analyze, and Compare Sheets Across Multiple Months
     </div>
     """, unsafe_allow_html=True)
-
-    # Prompt for number of months
-    num_months = st.number_input(
-        "How many months of files do you want to process?", 
-        min_value=1, 
-        max_value=12, 
-        value=1
-    )
-
-    # Initialize session state for processed files if not exists
+    num_months = st.number_input("How many months of files do you want to process?", min_value=1, max_value=12, value=1)
     if 'processed_files' not in st.session_state:
         st.session_state.processed_files = {}
-
-    # Create tabs dynamically based on number of months
     tabs = st.tabs([f"Month {i+1}" for i in range(num_months)])
-
-    # Process files for each month
     for i in range(num_months):
         with tabs[i]:
-            # File uploader for each month
-            uploaded_files = st.file_uploader(
-                f"Choose Excel files for Month {i+1}", 
-                type=['xlsx', 'xls'], 
-                accept_multiple_files=True,
-                key=f"file_uploader_{i}"
-            )
-
-            # Process files when uploaded
+            uploaded_files = st.file_uploader(f"Choose Excel files for Month {i+1}", type=['xlsx', 'xls'], accept_multiple_files=True,key=f"file_uploader_{i}")
             if uploaded_files:
                 for uploaded_file in uploaded_files:
-                    # Use month number in filename to differentiate
                     month_filename = f"Month {i+1} - {uploaded_file.name}"
                     
                     # Check if file is not already processed
