@@ -100,6 +100,54 @@ import re
 def price_input():
  import warnings
  warnings.filterwarnings('ignore', category=DeprecationWarning)
+ def parse_date(date_str):
+    """
+    Robust date parsing function to handle various date formats
+    """
+    if pd.isna(date_str):
+        return None
+    
+    # Try multiple date parsing formats
+    date_formats = [
+        '%d/%m/%Y',    # DD/MM/YYYY
+        '%m/%d/%Y',    # MM/DD/YYYY
+        '%Y-%m-%d',    # YYYY-MM-DD
+        '%d-%m-%Y',    # DD-MM-YYYY
+        '%d.%m.%Y',    # DD.MM.YYYY
+    ]
+    
+    # Convert to string if it's not already
+    date_str = str(date_str).strip()
+    
+    for fmt in date_formats:
+        try:
+            return datetime.strptime(date_str, fmt)
+        except ValueError:
+            continue
+    
+    # If no format works, try pandas to_datetime
+    try:
+        return pd.to_datetime(date_str)
+    except:
+        st.warning(f"Could not parse date: {date_str}")
+        return None
+ def preprocess_dataframe(df):
+    """
+    Preprocess the dataframe to ensure data quality
+    """
+    # Remove any rows with missing critical data
+    df = df.dropna(subset=['Owner: Full Name', 'Brand: Name', 'checkin date'])
+    
+    # Convert Visit Date to datetime
+    df['checkin date'] = df['checkin date'].apply(parse_date)
+    
+    # Remove rows where date parsing failed
+    df = df.dropna(subset=['checkin date'])
+    
+    # Convert Visit Date back to string in desired format
+    df['checkin ate'] = df['checkin date'].dt.strftime('%d/%m/%Y')
+    
+    return df
  def local_css(file_name):
     with open(file_name) as f:
         st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
@@ -170,8 +218,8 @@ def price_input():
         
         for brand in sorted(owner_data['Brand: Name'].unique()):
             brand_data = owner_data[owner_data['Brand: Name'] == brand]
-            unique_dates = sorted(list(set([datetime.strptime(date, '%d/%m/%Y') for date in brand_data['checkin date']])))
-            
+            unique_dates = sorted(list(set([parse_date(date) for date in brand_data['checkin date']])))
+
             if not unique_dates:
                 continue
             
@@ -279,10 +327,7 @@ def price_input():
         for brand in matched_brands:
             brand_data = owner_data[owner_data['Brand: Name'] == brand]
             if len(brand_data) > 0:
-                unique_dates = sorted(list(set([
-                    datetime.strptime(date, '%d/%m/%Y') 
-                    for date in brand_data['checkin date']])))
-                
+                unique_dates = sorted(list(set([parse_date(date) for date in brand_data['checkin date']])))
                 if unique_dates:
                     row_data[brand] = len(unique_dates)
                     if row_data[brand] > 0:
