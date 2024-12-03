@@ -417,8 +417,8 @@ def price_input():
             
             # Sidebar for Owner Selection
             st.sidebar.header('🔍 Select Owners')
-            owners = sorted(df['Owner: Full Name'].unique())
-            
+
+            owners = sorted(df['Owner: Full Name'].astype(str).unique().tolist())
             selected_owners = st.sidebar.multiselect(
                 "Choose Regional Heads",
                 options=owners,
