@@ -91,6 +91,343 @@ import streamlit as st
 import pandas as pd
 import base64
 import io
+from openpyxl import Workbook
+from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
+from datetime import datetime
+from openpyxl.formatting.rule import ColorScaleRule
+import statistics
+import re
+def price_input():
+ import warnings
+ warnings.filterwarnings('ignore', category=DeprecationWarning)
+ def local_css(file_name):
+    with open(file_name) as f:
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+ st.markdown("""
+<style>
+    .reportview-container {
+        background-color: #f0f2f6;
+    }
+    .sidebar .sidebar-content {
+        background-color: #ffffff;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .stButton>button {
+        background-color: #1F4E78;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        transition: background-color 0.3s ease;
+    }
+    .stButton>button:hover {
+        background-color: #2C6BA3;
+    }
+    .stMultiSelect, .stSelectbox {
+        width: 100%;
+    }
+    h1, h2, h3 {
+        color: #1F4E78;
+    }
+</style>
+ """, unsafe_allow_html=True)
+
+ def normalize_brand_name(brand):
+    if pd.isna(brand): 
+        return ""
+    return str(brand).lower().strip()
+
+ def create_price_report(df, selected_owners):
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Price Reports"
+    
+    header_fill = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
+    header_font = Font(color="FFFFFF", bold=True)
+    border = Border(left=Side(style='thin'),right=Side(style='thin'),top=Side(style='thin'),bottom=Side(style='thin'))
+    
+    ws.column_dimensions['A'].width = 30
+    ws.column_dimensions['B'].width = 30  
+    ws.column_dimensions['C'].width = 15  
+    ws.column_dimensions['D'].width = 15  
+    ws.column_dimensions['E'].width = 15  
+    ws.column_dimensions['F'].width = 50  
+    
+    headers = ["Regional Head", "Brand Name", "Total Reports", "First Report", "Last Report", "Report Dates"]
+    for col, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col)
+        cell.value = header
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.border = border
+        cell.alignment = Alignment(horizontal='center')
+    
+    current_row = 2
+    for owner in sorted(selected_owners):
+        owner_data = df[df['Owner: Full Name'] == owner]
+        if len(owner_data) == 0:
+            continue
+        
+        for brand in sorted(owner_data['Brand: Name'].unique()):
+            brand_data = owner_data[owner_data['Brand: Name'] == brand]
+            unique_dates = sorted(list(set([datetime.strptime(date, '%d/%m/%Y') for date in brand_data['Visit Date']])))
+            
+            if not unique_dates:
+                continue
+            
+            ws.cell(row=current_row, column=1, value=owner)
+            ws.cell(row=current_row, column=2, value=brand)
+            ws.cell(row=current_row, column=3, value=len(unique_dates))
+            ws.cell(row=current_row, column=4, value=unique_dates[0].strftime('%d/%m/%Y'))
+            ws.cell(row=current_row, column=5, value=unique_dates[-1].strftime('%d/%m/%Y'))
+            ws.cell(row=current_row, column=6, value=", ".join(d.strftime('%d/%m/%Y') for d in unique_dates))
+            
+            for col in range(1, 7):
+                cell = ws.cell(row=current_row, column=col)
+                cell.border = border
+                cell.alignment = Alignment(horizontal='left' if col in [1, 2, 6] else 'center')
+            
+            current_row += 1
+    
+    ws.auto_filter.ref = f"A1:F{current_row-1}"
+    filename = f"price_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+    wb.save(filename)
+    return filename
+
+ def create_price_report1(df, selected_owners):
+    df = df.dropna(subset=['Brand: Name'])
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Price Reports"
+    
+    TARGET_BRANDS = ['jk', 'wonder', 'shree', 'platinum', 'ambuja', 'ultratech']
+    
+    COLORS = {
+        'header_bg': "1F4E78",
+        'header_text': "FFFFFF",
+        'alt_row': "F5F9FF",
+        'border_color': "C5D9F1",
+        'low_visits': "FF0000",
+        'high_visits': "00FF00"
+    }
+    
+    header_fill = PatternFill(start_color=COLORS['header_bg'], end_color=COLORS['header_bg'], fill_type="solid")
+    alt_row_fill = PatternFill(start_color=COLORS['alt_row'], end_color=COLORS['alt_row'], fill_type="solid")
+    header_font = Font(name='Calibri', size=11, color=COLORS['header_text'], bold=True)
+    normal_font = Font(name='Calibri', size=10)
+    border = Border(
+        left=Side(style='thin', color=COLORS['border_color']),
+        right=Side(style='thin', color=COLORS['border_color']),
+        top=Side(style='thin', color=COLORS['border_color']),
+        bottom=Side(style='thin', color=COLORS['border_color'])
+    )
+    
+    all_brands = df['Brand: Name'].unique()
+    matched_brands = []
+    for brand in all_brands:
+        normalized = normalize_brand_name(brand)
+        if any(target in normalized for target in TARGET_BRANDS):
+            matched_brands.append(brand)
+    matched_brands.sort()
+    
+    total_columns = 3 + len(matched_brands) + 1
+    column_letter_end = chr(64 + total_columns)
+    
+    ws.merge_cells(f'A1:{column_letter_end}1')
+    title_cell = ws['A1']
+    title_cell.value = "Regional Price Report"
+    title_cell.font = Font(name='Calibri', size=16, bold=True, color=COLORS['header_bg'])
+    title_cell.alignment = Alignment(horizontal='center', vertical='center')
+    
+    timestamp_cell = ws['A2']
+    timestamp_cell.value = f"Generated on: {datetime.now().strftime('%d %B %Y, %H:%M')}"
+    timestamp_cell.font = Font(name='Calibri', size=9, italic=True)
+    ws.merge_cells(f'A2:{column_letter_end}2')
+    
+    ws.insert_rows(3)
+    
+    headers = ["Regional Head", "First Report", "Last Report"]
+    headers.extend(matched_brands)
+    headers.append("Total Visits")
+    
+    for col in range(1, len(headers) + 1):
+        if col == 1:  ws.column_dimensions[chr(64 + col)].width = 30
+        elif col in [2, 3]: ws.column_dimensions[chr(64 + col)].width = 15
+        else: ws.column_dimensions[chr(64 + col)].width = 12
+    
+    header_row = 4
+    for col, header in enumerate(headers, 1):
+        cell = ws.cell(row=header_row, column=col)
+        cell.value = header
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.border = border
+        cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+    
+    current_row = header_row + 1
+    all_visit_counts = []
+    
+    for owner in sorted(selected_owners):
+        owner_data = df[df['Owner: Full Name'] == owner]
+        if len(owner_data) == 0:
+            continue
+        
+        row_data = {brand: 0 for brand in matched_brands}
+        first_report_date = None
+        last_report_date = None
+        
+        for brand in matched_brands:
+            brand_data = owner_data[owner_data['Brand: Name'] == brand]
+            if len(brand_data) > 0:
+                unique_dates = sorted(list(set([
+                    datetime.strptime(date, '%d/%m/%Y') 
+                    for date in brand_data['Visit Date']])))
+                
+                if unique_dates:
+                    row_data[brand] = len(unique_dates)
+                    if row_data[brand] > 0:
+                        all_visit_counts.append(len(unique_dates))
+                    
+                    if first_report_date is None or unique_dates[0] < first_report_date:
+                        first_report_date = unique_dates[0]
+                    
+                    if last_report_date is None or unique_dates[-1] > last_report_date:
+                        last_report_date = unique_dates[-1]
+        
+        total_visits = sum(row_data.values())
+        
+        if total_visits > 0:
+            if current_row % 2 == 0:
+                for col in range(1, len(headers) + 1):
+                    ws.cell(row=current_row, column=col).fill = alt_row_fill
+            
+            ws.cell(row=current_row, column=1, value=owner)
+            ws.cell(row=current_row, column=2, value=first_report_date.strftime('%d/%m/%Y') if first_report_date else "N/A")
+            ws.cell(row=current_row, column=3, value=last_report_date.strftime('%d/%m/%Y') if last_report_date else "N/A")
+            
+            for col, brand in enumerate(matched_brands, 4):
+                cell = ws.cell(row=current_row, column=col, value=row_data[brand])
+                cell.alignment = Alignment(horizontal='center')
+            
+            ws.cell(row=current_row, column=len(headers), value=total_visits)
+            
+            for col in range(1, len(headers) + 1):
+                cell = ws.cell(row=current_row, column=col)
+                cell.border = border
+                cell.font = normal_font
+            
+            current_row += 1
+    
+    median_visits = statistics.median(all_visit_counts) if all_visit_counts else 0
+    
+    brand_cols_start = 4
+    brand_cols_end = len(headers) - 1
+    
+    for row in range(header_row + 1, current_row):
+        for col in range(brand_cols_start, brand_cols_end + 1):
+            cell = ws.cell(row=row, column=col)
+            if cell.value and cell.value < median_visits:
+                cell.font = Font(color="FF0000", bold=True)
+    
+    for col in range(brand_cols_start, brand_cols_end + 1):
+        color_scale = ColorScaleRule(
+            start_type='min', start_color='FF0000',
+            mid_type='percentile', mid_value=50, mid_color='FFFF00',
+            end_type='max', end_color='00FF00'
+        )
+        col_letter = chr(64 + col)
+        ws.conditional_formatting.add(f'{col_letter}{header_row+1}:{col_letter}{current_row-1}', color_scale)
+    
+    ws.auto_filter.ref = f"A{header_row}:{column_letter_end}{header_row}"
+    ws.freeze_panes = ws[f'A{header_row+1}']
+    
+    filename = f"price_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+    wb.save(filename)
+    return filename
+ def main():
+    st.title('📊 Price Report Generator')
+    
+    st.markdown("""
+    ### Upload Your Excel File
+    Please upload an Excel file containing the following columns:
+    - `Owner: Full Name`
+    - `Brand: Name`
+    - `Visit Date`
+    """)
+    
+    # File Uploader
+    uploaded_file = st.file_uploader(
+        "Choose an Excel file", 
+        type=['xlsx', 'xls'], 
+        help="Upload your price report Excel file"
+    )
+    
+    if uploaded_file is not None:
+        try:
+            # Read the uploaded file
+            df = pd.read_excel(uploaded_file)
+            
+            # Validate the dataframe
+            required_columns = ['Owner: Full Name', 'Brand: Name', 'Visit Date']
+            if not all(col in df.columns for col in required_columns):
+                st.error("Invalid file format. Please ensure your file contains the required columns.")
+                return
+            
+            # Sidebar for Owner Selection
+            st.sidebar.header('🔍 Select Owners')
+            owners = sorted(df['Owner: Full Name'].unique())
+            
+            selected_owners = st.sidebar.multiselect(
+                "Choose Regional Heads",
+                options=owners,
+                default=owners[:5],  # Select first 5 by default
+                help="Select the regional heads for your report"
+            )
+            
+            st.sidebar.markdown("---")
+            
+            # Report Type Selection
+            report_type = st.sidebar.radio(
+                "Choose Report Type",
+                ["Date-Based Report", "Owner-Based Report"],
+                help="Select the type of report you want to generate"
+            )
+            
+            # Generate Report Button
+            if st.sidebar.button('🚀 Generate Report', type='primary'):
+                if not selected_owners:
+                    st.warning("Please select at least one owner.")
+                else:
+                    with st.spinner('Generating Report...'):
+                        try:
+                            if report_type == "Date-Based Report":
+                                filename = create_price_report(df, selected_owners)
+                                st.success(f"Date-Based Report Generated: {filename}")
+                                with open(filename, 'rb') as file:
+                                    st.download_button(
+                                        label="Download Date-Based Report",
+                                        data=file,
+                                        file_name=filename,
+                                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                                    )
+                            else:
+                                filename = create_price_report1(df, selected_owners)
+                                st.success(f"Owner-Based Report Generated: {filename}")
+                                with open(filename, 'rb') as file:
+                                    st.download_button(
+                                        label="Download Owner-Based Report",
+                                        data=file,
+                                        file_name=filename,
+                                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                                    )
+                        except Exception as e:
+                            st.error(f"An error occurred: {e}")
+        
+        except Exception as e:
+            st.error(f"Error processing the file: {e}")
+
+ if __name__ == "__main__":
+    main()
 def geo():
  import itertools
  def fill_second_column(df):
@@ -7017,7 +7354,7 @@ def main():
     elif selected == "Analysis Dashboards":
         analysis_menu = option_menu(
             menu_title="Analysis Dashboards",
-            options=["WSP Analysis", "Sales Dashboard","Sales Review Report","Market Share Analysis","Discount Analysis", "Product-Mix", "Segment-Mix","Geo-Mix"],
+            options=["WSP Analysis", "Sales Dashboard","Sales Review Report","Market Share Analysis","Discount Analysis", "Product-Mix", "Segment-Mix","Geo-Mix","Price Input"],
             icons=["clipboard-data", "cash","bar-chart", "arrow-up-right", "shuffle", "globe"],
             orientation="horizontal",)
         if analysis_menu == "WSP Analysis":
@@ -7036,6 +7373,8 @@ def main():
             green()
         elif analysis_menu == "Discount Analysis":
             discount()
+        elif analysis_menu == "Price Input":
+            price_input()
     elif selected == "Predictions":
         prediction_menu = option_menu(
             menu_title="Predictions",
