@@ -170,7 +170,7 @@ def price_input():
         
         for brand in sorted(owner_data['Brand: Name'].unique()):
             brand_data = owner_data[owner_data['Brand: Name'] == brand]
-            unique_dates = sorted(list(set([datetime.strptime(date, '%d/%m/%Y') for date in brand_data['Visit Date']])))
+            unique_dates = sorted(list(set([datetime.strptime(date, '%d/%m/%Y') for date in brand_data['checkin date']])))
             
             if not unique_dates:
                 continue
@@ -281,7 +281,7 @@ def price_input():
             if len(brand_data) > 0:
                 unique_dates = sorted(list(set([
                     datetime.strptime(date, '%d/%m/%Y') 
-                    for date in brand_data['Visit Date']])))
+                    for date in brand_data['checkin date']])))
                 
                 if unique_dates:
                     row_data[brand] = len(unique_dates)
@@ -368,7 +368,7 @@ def price_input():
             df = pd.read_excel(uploaded_file)
             
             # Validate the dataframe
-            required_columns = ['Owner: Full Name', 'Brand: Name', 'Visit Date']
+            required_columns = ['Owner: Full Name', 'Brand: Name', 'checkin date']
             if not all(col in df.columns for col in required_columns):
                 st.error("Invalid file format. Please ensure your file contains the required columns.")
                 return
