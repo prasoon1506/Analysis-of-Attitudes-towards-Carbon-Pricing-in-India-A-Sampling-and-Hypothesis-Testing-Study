@@ -101,9 +101,6 @@ def price_input():
  import warnings
  warnings.filterwarnings('ignore', category=DeprecationWarning)
  def parse_date(date_str):
-    """
-    Robust date parsing function to handle various date formats
-    """
     if pd.isna(date_str):
         return None
     
@@ -397,7 +394,7 @@ def price_input():
     Please upload an Excel file containing the following columns:
     - `Owner: Full Name`
     - `Brand: Name`
-    - `Visit Date`
+    - `checkin date`
     """)
     
     # File Uploader
