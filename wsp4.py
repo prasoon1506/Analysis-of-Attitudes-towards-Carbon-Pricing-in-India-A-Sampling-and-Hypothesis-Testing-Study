@@ -440,7 +440,6 @@ def price():
     df = df.reset_index(drop=True)
     return df
  def main():
-    st.set_page_config(page_title="Price Tracker", layout="wide", page_icon="💰")
     st.title("📊 Price Tracker Analysis Tool")
     st.markdown("""
     ### Welcome to the Price Tracker Analysis Tool
