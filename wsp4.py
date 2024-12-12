@@ -7941,7 +7941,7 @@ def main():
         elif data_management_menu =="Anil Maheswari EBITDA Data Processor":
             geo()
     elif selected == "Price Analysis":
-        analysis_menu1 = option_menu(menu_title ="Price Analysis",options=["WSP Analysis","Discount Analysis","Price Trend","Price Input Tracker"],icons=["clipboard-data","cash","shuffle","globe"],orientation="horizontal",)
+        analysis_menu1 = option_menu(menu_title ="Price Analysis",options=["WSP Analysis","Discount Analysis","Price Trend","Price Input"],icons=["clipboard-data","cash","shuffle","globe"],orientation="horizontal",)
         if analysis_menu1 == "WSP Analysis":
             wsp_analysis_dashboard()
         elif analysis_menu1 == "Discount Analysis":
