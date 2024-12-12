@@ -338,7 +338,7 @@ def price():
                 st.error(f"Could not read WSP file: {e}")
                 return None
     return None
-def save_regional_price_trend_report(df):
+ def save_regional_price_trend_report(df):
     wsp_df = get_wsp_data()
     competitive_brands_wsp_df = get_competitive_brands_wsp_data()
     return generate_regional_price_trend_report(df, wsp_df,competitive_brands_wsp_df)
