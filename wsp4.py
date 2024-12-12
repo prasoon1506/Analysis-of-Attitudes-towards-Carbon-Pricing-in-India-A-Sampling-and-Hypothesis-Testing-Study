@@ -7958,7 +7958,7 @@ def main():
             icons=["clipboard-data", "cash","bar-chart", "arrow-up-right", "shuffle", "globe"],
             orientation="horizontal",)
         
-        elif analysis_menu == "Sales Dashboard":
+        if analysis_menu == "Sales Dashboard":
             sales_dashboard()
         elif analysis_menu == "Sales Review Report":
             sales_review_report_generator()
