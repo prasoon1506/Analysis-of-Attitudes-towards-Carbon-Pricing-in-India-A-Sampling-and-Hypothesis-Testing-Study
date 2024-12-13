@@ -5,7 +5,6 @@ from io import BytesIO
 import re
 import json
 import math
-from io import BytesIO
 import datetime
 import time
 import random
@@ -34,6 +33,7 @@ import matplotlib.ticker as mticker
 from matplotlib.path import Path
 from matplotlib.patches import PathPatch, Rectangle
 from matplotlib.backends.backend_pdf import PdfPages
+from matplotlib.lines import Line2D
 import seaborn as sns
 import plotly.express as px
 import plotly.graph_objects as go
@@ -223,9 +223,7 @@ def price():
         return
     region_wsp = wsp_df[wsp_df['Region(District)'] == region]
     if region_wsp.empty:
-        story.append(Paragraph(f"No WSP data available for {region}" + 
-                                (f" - {brand_name}" if brand_name else ""), 
-                                normal_style))
+        story.append(Paragraph(f"No WSP data available for {region}" + (f" - {brand_name}" if brand_name else ""), normal_style))
         story.append(Spacer(1, 0))
         return
     wsp_columns = ['Week-1 Nov', 'Week-2 Nov', 'Week-3 Nov', 'Week-4 Nov', 'Week-1 Dec']
@@ -443,7 +441,6 @@ def price():
     st.title("📊 Price Tracker Analysis Tool")
     st.markdown("""
     ### Welcome to the Price Tracker Analysis Tool
-    
     **Instructions:**
     1. Upload your Excel price tracking file
     2. Choose whether the file needs initial editing
@@ -485,8 +482,7 @@ def price():
                             mom_change = net_input - last_net_value
                             st.write(f"Calculated MoM Change for {selected_region}: {mom_change}")
                             remarks_input = st.text_area(f"Enter Remarks for {selected_region} (Optional)",key=f"remarks_{selected_region}")
-                            new_row = {'Region(District)': selected_region,'Date': parse_date(date_input).strftime('%d-%b %Y'),'Inv.': inv_input,'RD': rd_input,'STS': sts_input,
-                                'Reglr': reglr_input,'Net': net_input,'MoM Change': mom_change,'Remarks': remarks_input}
+                            new_row = {'Region(District)': selected_region,'Date': parse_date(date_input).strftime('%d-%b %Y'),'Inv.': inv_input,'RD': rd_input,'STS': sts_input,'Reglr': reglr_input,'Net': net_input,'MoM Change': mom_change,'Remarks': remarks_input}
                             data_entries.append(new_row)
                             st.markdown("---")
                         if st.button("Add New Rows to Dataframe"):
@@ -600,28 +596,14 @@ def price():
                 remarks_df = remarks_df.sort_values('Date', ascending=False)
                 if not remarks_df.empty:
                         for _, row in remarks_df.iterrows():
-                            st.markdown(f"""
-                            <div style="background-color:#f0f2f6; 
-                                        border-left: 5px solid #4a4a4a; 
-                                        padding: 10px; 
-                                        margin-bottom: 10px; 
-                                        border-radius: 5px;">
-                                <strong>{row['Date'].strftime('%d-%b %Y')}</strong>: 
-                                {row['Remarks']}
-                            </div>
-                            """, unsafe_allow_html=True)
+                            st.markdown(f"""<div style="background-color:#f0f2f6;border-left: 5px solid #4a4a4a;padding: 10px;margin-bottom: 10px;border-radius: 5px;"><strong>{row['Date'].strftime('%d-%b %Y')}</strong>: {row['Remarks']}</div>""", unsafe_allow_html=True)
                 else:
                         st.info("No remarks found for this region.")
             st.markdown("## 📥 Download Options")
             download_options = st.radio("Download File From:", ["Entire Dataframe", "Specific Month", "Regional Price Trend Report"], horizontal=True)
             if download_options == "Regional Price Trend Report":
                 output = save_regional_price_trend_report(df)
-                st.download_button(
-        label="Download Regional Price Trend Report (PDF)",
-        data=output,
-        file_name="regional_price_trend_report.pdf",
-        mime="application/pdf"
-    )
+                st.download_button(label="Download Regional Price Trend Report (PDF)",data=output,file_name="regional_price_trend_report.pdf",mime="application/pdf")
             start_date = None
             if download_options == "Specific Month":
                 col1, col2 = st.columns(2)
@@ -650,47 +632,23 @@ def price_input():
  def parse_date(date_str):
     if pd.isna(date_str):
         return None
-    
-    # Try multiple date parsing formats
-    date_formats = [
-        '%d/%m/%Y',    # DD/MM/YYYY
-        '%m/%d/%Y',    # MM/DD/YYYY
-        '%Y-%m-%d',    # YYYY-MM-DD
-        '%d-%m-%Y',    # DD-MM-YYYY
-        '%d.%m.%Y',    # DD.MM.YYYY
-    ]
-    
-    # Convert to string if it's not already
+    date_formats = ['%d/%m/%Y','%m/%d/%Y','%Y-%m-%d','%d-%m-%Y','%d.%m.%Y',]
     date_str = str(date_str).strip()
-    
     for fmt in date_formats:
         try:
             return datetime.strptime(date_str, fmt)
         except ValueError:
             continue
-    
-    # If no format works, try pandas to_datetime
     try:
         return pd.to_datetime(date_str)
     except:
         st.warning(f"Could not parse date: {date_str}")
         return None
  def preprocess_dataframe(df):
-    """
-    Preprocess the dataframe to ensure data quality
-    """
-    # Remove any rows with missing critical data
     df = df.dropna(subset=['Owner: Full Name', 'Brand: Name', 'checkin date'])
-    
-    # Convert Visit Date to datetime
     df['checkin date'] = df['checkin date'].apply(parse_date)
-    
-    # Remove rows where date parsing failed
     df = df.dropna(subset=['checkin date'])
-    
-    # Convert Visit Date back to string in desired format
     df['checkin ate'] = df['checkin date'].dt.strftime('%d/%m/%Y')
-    
     return df
  def local_css(file_name):
     with open(file_name) as f:
@@ -723,28 +681,23 @@ def price_input():
     }
 </style>
  """, unsafe_allow_html=True)
-
  def normalize_brand_name(brand):
     if pd.isna(brand): 
         return ""
     return str(brand).lower().strip()
-
  def create_price_report(df, selected_owners):
     wb = Workbook()
     ws = wb.active
     ws.title = "Price Reports"
-    
     header_fill = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
     header_font = Font(color="FFFFFF", bold=True)
     border = Border(left=Side(style='thin'),right=Side(style='thin'),top=Side(style='thin'),bottom=Side(style='thin'))
-    
     ws.column_dimensions['A'].width = 30
     ws.column_dimensions['B'].width = 30  
     ws.column_dimensions['C'].width = 15  
     ws.column_dimensions['D'].width = 15  
     ws.column_dimensions['E'].width = 15  
     ws.column_dimensions['F'].width = 50  
-    
     headers = ["Regional Head", "Brand Name", "Total Reports", "First Report", "Last Report", "Report Dates"]
     for col, header in enumerate(headers, 1):
         cell = ws.cell(row=1, column=col)
@@ -753,67 +706,43 @@ def price_input():
         cell.fill = header_fill
         cell.border = border
         cell.alignment = Alignment(horizontal='center')
-    
     current_row = 2
     for owner in sorted(selected_owners):
         owner_data = df[df['Owner: Full Name'] == owner]
         if len(owner_data) == 0:
             continue
-        
         for brand in sorted(owner_data['Brand: Name'].unique()):
             brand_data = owner_data[owner_data['Brand: Name'] == brand]
             unique_dates = sorted(list(set([parse_date(date) for date in brand_data['checkin date']])))
-
             if not unique_dates:
                 continue
-            
             ws.cell(row=current_row, column=1, value=owner)
             ws.cell(row=current_row, column=2, value=brand)
             ws.cell(row=current_row, column=3, value=len(unique_dates))
             ws.cell(row=current_row, column=4, value=unique_dates[0].strftime('%d/%m/%Y'))
             ws.cell(row=current_row, column=5, value=unique_dates[-1].strftime('%d/%m/%Y'))
             ws.cell(row=current_row, column=6, value=", ".join(d.strftime('%d/%m/%Y') for d in unique_dates))
-            
             for col in range(1, 7):
                 cell = ws.cell(row=current_row, column=col)
                 cell.border = border
                 cell.alignment = Alignment(horizontal='left' if col in [1, 2, 6] else 'center')
-            
             current_row += 1
-    
     ws.auto_filter.ref = f"A1:F{current_row-1}"
     filename = f"price_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
     wb.save(filename)
     return filename
-
  def create_price_report1(df, selected_owners):
     df = df.dropna(subset=['Brand: Name'])
     wb = Workbook()
     ws = wb.active
     ws.title = "Price Reports"
-    
     TARGET_BRANDS = ['jk', 'wonder', 'shree', 'platinum', 'ambuja', 'ultratech']
-    
-    COLORS = {
-        'header_bg': "1F4E78",
-        'header_text': "FFFFFF",
-        'alt_row': "F5F9FF",
-        'border_color': "C5D9F1",
-        'low_visits': "FF0000",
-        'high_visits': "00FF00"
-    }
-    
+    COLORS = {'header_bg': "1F4E78",'header_text': "FFFFFF",'alt_row': "F5F9FF",'border_color': "C5D9F1",'low_visits': "FF0000",'high_visits': "00FF00"}
     header_fill = PatternFill(start_color=COLORS['header_bg'], end_color=COLORS['header_bg'], fill_type="solid")
     alt_row_fill = PatternFill(start_color=COLORS['alt_row'], end_color=COLORS['alt_row'], fill_type="solid")
     header_font = Font(name='Calibri', size=11, color=COLORS['header_text'], bold=True)
     normal_font = Font(name='Calibri', size=10)
-    border = Border(
-        left=Side(style='thin', color=COLORS['border_color']),
-        right=Side(style='thin', color=COLORS['border_color']),
-        top=Side(style='thin', color=COLORS['border_color']),
-        bottom=Side(style='thin', color=COLORS['border_color'])
-    )
-    
+    border = Border(left=Side(style='thin', color=COLORS['border_color']),right=Side(style='thin', color=COLORS['border_color']),top=Side(style='thin', color=COLORS['border_color']),bottom=Side(style='thin', color=COLORS['border_color']))
     all_brands = df['Brand: Name'].unique()
     matched_brands = []
     for brand in all_brands:
@@ -821,32 +750,25 @@ def price_input():
         if any(target in normalized for target in TARGET_BRANDS):
             matched_brands.append(brand)
     matched_brands.sort()
-    
     total_columns = 3 + len(matched_brands) + 1
     column_letter_end = chr(64 + total_columns)
-    
     ws.merge_cells(f'A1:{column_letter_end}1')
     title_cell = ws['A1']
     title_cell.value = "Regional Price Report"
     title_cell.font = Font(name='Calibri', size=16, bold=True, color=COLORS['header_bg'])
     title_cell.alignment = Alignment(horizontal='center', vertical='center')
-    
     timestamp_cell = ws['A2']
     timestamp_cell.value = f"Generated on: {datetime.now().strftime('%d %B %Y, %H:%M')}"
     timestamp_cell.font = Font(name='Calibri', size=9, italic=True)
     ws.merge_cells(f'A2:{column_letter_end}2')
-    
     ws.insert_rows(3)
-    
     headers = ["Regional Head", "First Report", "Last Report"]
     headers.extend(matched_brands)
     headers.append("Total Visits")
-    
     for col in range(1, len(headers) + 1):
         if col == 1:  ws.column_dimensions[chr(64 + col)].width = 30
         elif col in [2, 3]: ws.column_dimensions[chr(64 + col)].width = 15
         else: ws.column_dimensions[chr(64 + col)].width = 12
-    
     header_row = 4
     for col, header in enumerate(headers, 1):
         cell = ws.cell(row=header_row, column=col)
@@ -855,19 +777,15 @@ def price_input():
         cell.fill = header_fill
         cell.border = border
         cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
-    
     current_row = header_row + 1
     all_visit_counts = []
-    
     for owner in sorted(selected_owners):
         owner_data = df[df['Owner: Full Name'] == owner]
         if len(owner_data) == 0:
             continue
-        
         row_data = {brand: 0 for brand in matched_brands}
         first_report_date = None
         last_report_date = None
-        
         for brand in matched_brands:
             brand_data = owner_data[owner_data['Brand: Name'] == brand]
             if len(brand_data) > 0:
@@ -876,51 +794,37 @@ def price_input():
                     row_data[brand] = len(unique_dates)
                     if row_data[brand] > 0:
                         all_visit_counts.append(len(unique_dates))
-                    
                     if first_report_date is None or unique_dates[0] < first_report_date:
                         first_report_date = unique_dates[0]
-                    
                     if last_report_date is None or unique_dates[-1] > last_report_date:
                         last_report_date = unique_dates[-1]
-        
         total_visits = sum(row_data.values())
-        
         if total_visits > 0:
             if current_row % 2 == 0:
                 for col in range(1, len(headers) + 1):
                     ws.cell(row=current_row, column=col).fill = alt_row_fill
-            
             ws.cell(row=current_row, column=1, value=owner)
             ws.cell(row=current_row, column=2, value=first_report_date.strftime('%d/%m/%Y') if first_report_date else "N/A")
             ws.cell(row=current_row, column=3, value=last_report_date.strftime('%d/%m/%Y') if last_report_date else "N/A")
-            
             for col, brand in enumerate(matched_brands, 4):
                 cell = ws.cell(row=current_row, column=col, value=row_data[brand])
                 cell.alignment = Alignment(horizontal='center')
-            
             ws.cell(row=current_row, column=len(headers), value=total_visits)
-            
             for col in range(1, len(headers) + 1):
                 cell = ws.cell(row=current_row, column=col)
                 cell.border = border
                 cell.font = normal_font
-            
             current_row += 1
-    
     median_visits = statistics.median(all_visit_counts) if all_visit_counts else 0
-    
     brand_cols_start = 4
     brand_cols_end = len(headers) - 1
-    
     for row in range(header_row + 1, current_row):
         for col in range(brand_cols_start, brand_cols_end + 1):
             cell = ws.cell(row=row, column=col)
             if cell.value and cell.value < median_visits:
                 cell.font = Font(color="FF0000", bold=True)
-    
     for col in range(brand_cols_start, brand_cols_end + 1):
-        color_scale = ColorScaleRule(
-            start_type='min', start_color='FF0000',
+        color_scale = ColorScaleRule(start_type='min', start_color='FF0000',
             mid_type='percentile', mid_value=50, mid_color='FFFF00',
             end_type='max', end_color='00FF00'
         )
@@ -6706,50 +6610,20 @@ def market_share():
     @st.cache_data
     def create_share_plot_with_state(df, month, state_name):
      fig = create_share_plot(df, month)
-    
-    # Add state name on the side
-     plt.figtext(0.15, 0.90, state_name, 
-                rotation=0, 
-                fontsize=14, 
-                fontweight='bold', 
-                color='#2c3e50',
-                ha='center',
-                va='center',
-                bbox=dict(facecolor='#f8f9fa',
-                         edgecolor='#bdc3c7',
-                         boxstyle='round,pad=0.5',
-                         alpha=0.9))
-    
-    # Adjust layout to accommodate state name
+     plt.figtext(0.15, 0.90,state_name,rotation=0,fontsize=14,fontweight='bold',color='#2c3e50',ha='center',va='center',bbox=dict(facecolor='#f8f9fa',edgecolor='#bdc3c7',boxstyle='round,pad=0.5',alpha=0.9))
      plt.subplots_adjust(left=0.1, right=0.82, bottom=0.2, top=0.88)
      return fig
-
     def create_all_states_report(state_dfs, selected_months):
      figs = []
-     
-    # Create market share plots for each state and month
      for state_name, df in state_dfs.items():
         for month in selected_months:
             fig = create_share_plot_with_state(df, month, state_name)
             figs.append(fig)
             plt.close(fig)
-    
      return figs
     def create_share_plot(df, month):
-     from matplotlib.lines import Line2D
-     from matplotlib.patches import PathPatch
-     from matplotlib.path import Path
-     import matplotlib.patches as patches
-
      def create_stripe_pattern(spacing=5):
-        return patches.PathPatch(
-            Path([
-                (0., 0.), (1., 0.),  # bottom edge
-                (1., 1.), (0., 1.),  # top edge
-                (0., 0.)],  # closing edge
-                [Path.MOVETO] + [Path.LINETO] * 3 + [Path.CLOSEPOLY]),
-            transform=None, clip_on=True,
-            facecolor='none', edgecolor='none', alpha=1.)
+        return patches.PathPatch(Path([(0., 0.), (1., 0.),(1., 1.), (0., 1.),(0., 0.)],[Path.MOVETO] + [Path.LINETO] * 3 + [Path.CLOSEPOLY]),transform=None, clip_on=True,facecolor='none', edgecolor='none', alpha=1.)
      def draw_curly_brace(ax, x, y1, y2):
         mid_y = (y1 + y2) / 2
         width = 0.03
@@ -6864,47 +6738,22 @@ def market_share():
      pattern = create_stripe_pattern()
      for company in sorted_companies:
         values = share_df[company].values
-        bar_container = ax1.bar(range(len(share_df)), 
-                              values, 
-                              bottom=bottom,
-                              label=company,
-                              color=company_colors[company],
-                              alpha=0.95,
-                              edgecolor='white',
-                              linewidth=0.5)
+        bar_container = ax1.bar(range(len(share_df)),values,bottom=bottom,label=company,color=company_colors[company],alpha=0.95,edgecolor='white',linewidth=0.5)
         if company == 'JK Lakshmi':
             for bar in bar_container:
-                # Add a subtle glow effect
                 x, y = bar.get_xy()
                 w, h = bar.get_width(), bar.get_height()
-                glow = patches.Rectangle((x, y), w, h,
-                                      facecolor='none',
-                                      edgecolor='#FFD700',  
-                                      linewidth=2,
-                                      alpha=0.6)
+                glow = patches.Rectangle((x, y), w, h,facecolor='none',edgecolor='#FFD700',linewidth=2,alpha=0.6)
                 ax1.add_patch(glow)
-                
-                # Add diagonal stripes
                 bar.set_hatch('///')
-                
-                # Add extra edge highlight
-                edge = patches.Rectangle((x, y), w, h,
-                                      facecolor='none',
-                                      edgecolor='#FF4136',  # Bright red edge
-                                      linewidth=1.5)
+                edge = patches.Rectangle((x, y), w, h,facecolor='none',edgecolor='#FF4136',linewidth=1.5)
                 ax1.add_patch(edge)
-
         for i, v in enumerate(values):
             if v > 0:
                 center = bottom[i] + v/2
                 if v > 0.2:
                     text_color = 'white' if company != 'JK Lakshmi' else '#000000'
-                    ax1.text(i, center, f'{v:.1f}%',
-                            ha='center', va='center',
-                            fontsize=8,
-                            color=text_color,
-                            fontweight='bold',
-                            zorder=10)
+                    ax1.text(i, center, f'{v:.1f}%',ha='center', va='center',fontsize=8,color=text_color,fontweight='bold',zorder=10)
                 vol = volume_df.loc[share_df.index[i], company]
                 if vol > 0:
                     volume_positions.append((vol, center, company_colors[company], i))
@@ -6948,37 +6797,18 @@ def market_share():
             marker.set_edgecolor('white')
             marker.set_linewidth(0.5)
         legend_elements.append(marker)
-
-     legend_labels = [f'{company} (WSP: ₹{company_wsps[company]:.0f})'
-                    for company in sorted_companies]
-
-     legend = ax1.legend(legend_elements,
-                       legend_labels,
-                       bbox_to_anchor=(1.28, 0.8),
-                       loc='upper left',
-                       fontsize=9,
-                       frameon=True,
-                       facecolor='white',
-                       edgecolor='brown',
-                       title='Companies',
-                       title_fontsize=10,
-                       borderpad=1)
-
-    # Modify the legend entry for JK Lakshmi
+     legend_labels = [f'{company} (WSP: ₹{company_wsps[company]:.0f})'for company in sorted_companies]
+     legend = ax1.legend(legend_elements,legend_labels,bbox_to_anchor=(1.28, 0.8),loc='upper left',fontsize=9,frameon=True,facecolor='white',edgecolor='brown',title='Companies',title_fontsize=10,borderpad=1)
      legend_texts = legend.get_texts()
      for text in legend_texts:
         if 'JK Lakshmi' in text.get_text():
             text.set_color('#FF6B6B')
             text.set_fontweight('bold')
-
      legend.get_frame().set_alpha(1)
      ax2.set_yticks([])
      plt.figtext(0.45, 0.925,f'Total Market Size: {total_market_size:,.2f} lakh MT',ha='center', va='center',bbox=dict(facecolor='#f8f9fa',edgecolor='#bdc3c7',boxstyle='round,pad=0.7',alpha=1),fontsize=11,fontweight='bold',color='#2c3e50')
      if not companies_without_price.empty:
-        company_info = companies_without_price.apply(
-            lambda row: f"{row['Company']} ({row['Share']:.1f}%, {row['Volume']:,.2f} lakh MT)", 
-            axis=1
-        ).tolist()
+        company_info = companies_without_price.apply(lambda row: f"{row['Company']} ({row['Share']:.1f}%, {row['Volume']:,.2f} lakh MT)",axis=1).tolist()
         if len(company_info) == 1:
             note = f"Note: Price not reported for {company_info[0]}."
         elif len(company_info) == 2:
@@ -7032,8 +6862,7 @@ def market_share():
             arrow_symbol = '↑' if change > 0 else '↓'
             ax.annotate(f'{arrow_symbol}{abs(change):.1f}%',(mid_x, mid_y),xytext=(0, 0 if i % 2 == 0 else 0),textcoords='offset points',ha='center',va='center',color=arrow_color,fontsize=8,bbox=dict(facecolor='white', edgecolor='none',alpha=0.7,pad=0.5))
         change_symbol = '↑' if total_change > 0 else '↓'
-        legend_labels.append(
-            f"{company} (Avg: {avg_share:.1f}% | Total Change: {change_symbol}{abs(total_change):.1f}%)")
+        legend_labels.append(f"{company} (Avg: {avg_share:.1f}% | Total Change: {change_symbol}{abs(total_change):.1f}%)")
      plt.title(f'Market Share Trends Over Time - {state_name}', fontsize=20, pad=20, fontweight='bold')
      plt.xlabel('Months', fontsize=12, fontweight='bold')
      plt.ylabel('Market Share (%)', fontsize=12, fontweight='bold')
@@ -7054,15 +6883,7 @@ def market_share():
      fig.patch.set_facecolor('#ffffff')
      return fig
     def create_dashboard_header():
-        st.markdown("""
-            <div style='padding: 1.5rem; background: linear-gradient(90deg, #2563eb 0%, #3b82f6 100%); 
-                        border-radius: 1rem; margin-bottom: 2rem; color: white;'>
-                <h1 style='color: brown; margin: 0; border: none;'>Market Share Analysis Dashboard</h1>
-                <p style='margin: 0.5rem 0 0 0; opacity: 0.9;'>
-                    Comprehensive market analysis and visualization tool
-                </p>
-            </div>
-        """, unsafe_allow_html=True)
+        st.markdown("""<div style='padding: 1.5rem; background: linear-gradient(90deg, #2563eb 0%, #3b82f6 100%);border-radius: 1rem; margin-bottom: 2rem; color: white;'><h1 style='color: brown; margin: 0; border: none;'>Market Share Analysis Dashboard</h1><p style='margin: 0.5rem 0 0 0; opacity: 0.9;'>Comprehensive market analysis and visualization tool</p></div>""", unsafe_allow_html=True)
     def create_metric_card(title, value, delta=None, help_text=None):
             st.metric(label=title,value=value,delta=delta,help=help_text)
     def export_to_pdf(figs, filename):
@@ -7073,32 +6894,17 @@ def market_share():
     def main():
      if 'computed_figures' not in st.session_state:
         st.session_state.computed_figures = {}
-        
      create_dashboard_header()
      col1, col2 = st.columns([1, 4])
-    
      with col1:
         st.markdown("### 🎯 Analysis Controls")
-        uploaded_file = st.file_uploader("Upload Excel File",
-                                       type=['xlsx', 'xls'],
-                                       help="Upload your market share data file")
-        
+        uploaded_file = st.file_uploader("Upload Excel File",type=['xlsx', 'xls'],help="Upload your market share data file")
         if uploaded_file:
             state_dfs, states = load_and_process_data(uploaded_file)
             st.markdown("### 🎯 Settings")
-            selected_state = st.selectbox("Select State",
-                                        states,
-                                        index=0,
-                                        help="Choose the state for analysis")
-            
-            # Get available months from first state (assuming all states have same months)
+            selected_state = st.selectbox("Select State",states,index=0,help="Choose the state for analysis")
             available_months = get_available_months(state_dfs[list(state_dfs.keys())[0]])
-            selected_months = st.multiselect("Select Months",
-                                           available_months,
-                                           default=[available_months[0]],
-                                           help="Choose months for comparison")
-            
-            # Add "Download All States Report" button
+            selected_months = st.multiselect("Select Months",available_months,default=[available_months[0]],help="Choose months for comparison")
             if selected_months:
                 all_states_pdf_buf = io.BytesIO()
                 with st.spinner("Generating report for all states..."):
@@ -7107,25 +6913,12 @@ def market_share():
                         for fig in figs:
                             pdf.savefig(fig, bbox_inches='tight')
                             plt.close(fig)
-                
                 all_states_pdf_buf.seek(0)
-                st.download_button(
-                    label="📊 Download All States Report",
-                    data=all_states_pdf_buf,
-                    file_name=f'market_share_all_states_{"-".join(selected_months)}.pdf',
-                    mime='application/pdf',
-                    help="Download a PDF report containing market share graphs for all states"
-                )
-            
+                st.download_button(label="📊 Download All States Report",data=all_states_pdf_buf,file_name=f'market_share_all_states_{"-".join(selected_months)}.pdf',mime='application/pdf',help="Download a PDF report containing market share graphs for all states")
             all_companies = state_dfs[selected_state]['Company'].unique()
             default_companies = ['JK Lakshmi', 'Ultratech', 'Ambuja', 'Wonder', 'Shree', 'JK Cement (N)']
             available_defaults = [company for company in default_companies if company in all_companies]
-            selected_companies = st.multiselect("Select Companies for Trend Analysis",
-                                              all_companies,
-                                              default=available_defaults,
-                                              help="Choose companies to show in the trend line graph")
-    
-    
+            selected_companies = st.multiselect("Select Companies for Trend Analysis",all_companies,default=available_defaults,help="Choose companies to show in the trend line graph")
      with col2:
         if uploaded_file and selected_companies:
             st.markdown("### Market Share Trends")
@@ -7426,9 +7219,7 @@ def discount():
     def create_monthly_page(self, month_data, month_name):
         elements = []
         elements.append(Paragraph(month_name, self.styles['MonthHeader']))
-        elements.append(Paragraph(
-            f"Total Quantity: {month_data['quantity']:,.2f} MT",
-            self.styles['QuantityInfo']))
+        elements.append(Paragraph(f"Total Quantity: {month_data['quantity']:,.2f} MT",self.styles['QuantityInfo']))
         table_data = [['Discount Type', 'Approved Rate', 'Actual Rate', 'Difference', 'Total Impact']]
         valid_discounts = []
         for discount_name, values in month_data['discounts'].items():
@@ -7446,25 +7237,18 @@ def discount():
             row = [discount['name'],f"Rs.{discount['approved']:,.2f}",f"Rs.{discount['actual']:,.2f}",diff_text,impact_text]
             table_data.append(row)
         if len(table_data) > 1:
-            # Create table
             table = Table(table_data, colWidths=[2.2*inch, 1.3*inch, 1.3*inch, 1.1*inch, 1.3*inch])
-            style = TableStyle([('BACKGROUND', (0, 0), (-1, 0), HexColor('#f1f5f9')),('TEXTCOLOR', (0, 0), (-1, 0), HexColor('#334155')),('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),('FONTSIZE', (0, 0), (-1, 0), 10),('BOTTOMPADDING', (0, 0), (-1, 0), 12),('TOPPADDING', (0, 0), (-1, 0), 12),('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-                ('FONTSIZE', (0, 1), (-1, -1), 9),('GRID', (0, 0), (-1, -1), 1, HexColor('#e2e8f0')),('ALIGN', (1, 1), (-1, -1), 'RIGHT'),('ALIGN', (0, 0), (0, -1), 'LEFT'),('BOTTOMPADDING', (0, 1), (-1, -1), 8),('TOPPADDING', (0, 1), (-1, -1), 8),])
+            style = TableStyle([('BACKGROUND', (0, 0), (-1, 0), HexColor('#f1f5f9')),('TEXTCOLOR', (0, 0), (-1, 0), HexColor('#334155')),('ALIGN', (0, 0), (-1, -1), 'CENTER'),('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),('FONTSIZE', (0, 0), (-1, 0), 10),('BOTTOMPADDING', (0, 0), (-1, 0), 12),('TOPPADDING', (0, 0), (-1, 0), 12),('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),('FONTSIZE', (0, 1), (-1, -1), 9),('GRID', (0, 0), (-1, -1), 1, HexColor('#e2e8f0')),('ALIGN', (1, 1), (-1, -1), 'RIGHT'),('ALIGN', (0, 0), (0, -1), 'LEFT'),('BOTTOMPADDING', (0, 1), (-1, -1), 8),('TOPPADDING', (0, 1), (-1, -1), 8),])
             for i in range(1, len(table_data)):
-                if '↓' in table_data[i][3]:  # Savings
+                if '↓' in table_data[i][3]: 
                     style.add('TEXTCOLOR', (3, i), (4, i), HexColor('#10b981'))
                 else:  # Excess
                     style.add('TEXTCOLOR', (3, i), (4, i), HexColor('#ef4444'))
             table.setStyle(style)
             elements.append(table)
         else:
-            elements.append(Paragraph(
-                "No valid discount data available for this month",
-                self.styles['Normal']))
-        elements.append(Paragraph(
-            "This report currently presents data for Q1 2024. The forthcoming update will incorporate comprehensive data for Q2 2024, providing a more extensive analysis of discount trends.",
-            self.styles['FooterNote']))
+            elements.append(Paragraph("No valid discount data available for this month",self.styles['Normal']))
+        elements.append(Paragraph("This report currently presents data for Q1 2024. The forthcoming update will incorporate comprehensive data for Q2 2024, providing a more extensive analysis of discount trends.",self.styles['FooterNote']))
         return elements
     def get_highest_discount_data(self, data):
         months = []
@@ -7485,12 +7269,8 @@ def discount():
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(buffer,pagesize=A4,rightMargin=36,leftMargin=36,topMargin=36,bottomMargin=36,title=f"Discount Report - {state}") 
         story = []
-        story.append(Paragraph(
-            f"Discount Analysis Report<br/>{state}",
-            ParagraphStyle('Title',parent=self.styles['Title'],fontSize=24,spaceAfter=30,alignment=1)))
-        story.append(Paragraph(
-            f"Generated on {datetime.now().strftime('%B %d, %Y')}",
-            ParagraphStyle('Date',parent=self.styles['Normal'],alignment=1,fontSize=12,textColor=HexColor('#64748b'))))
+        story.append(Paragraph(f"Discount Analysis Report<br/>{state}",ParagraphStyle('Title',parent=self.styles['Title'],fontSize=24,spaceAfter=30,alignment=1)))
+        story.append(Paragraph(f"Generated on {datetime.now().strftime('%B %d, %Y')}",ParagraphStyle('Date',parent=self.styles['Normal'],alignment=1,fontSize=12,textColor=HexColor('#64748b'))))
         story.append(Spacer(1, 20))
         story.append(HorizontalLine(540, 2))  # 540 points = 7.5 inches (standard page width minus margins)
         story.append(Spacer(1, 30))
@@ -7499,15 +7279,8 @@ def discount():
         chart_data = [list(zip(range(len(months)), approved_values)), list(zip(range(len(months)), actual_values))]
         drawing = LineChart(500, 300, chart_data, months)
         story.append(drawing)
-        story.append(Paragraph(
-            """<para alignment="center">
-                <font color="#3b82f6">--Approved Rate</font>  
-                <font color="#ef4444">--Actual Rate</font>
-            </para>""",
-            self.styles['ChartLegend']))
-        story.append(Paragraph(
-            "Find detailed month-wise analyses in the following pages, where each discount type is meticulously examined and presented in ascending order of approved rates.",
-            self.styles['TitlePageFooter']))
+        story.append(Paragraph("""<para alignment="center"><font color="#3b82f6">--Approved Rate</font>  <font color="#ef4444">--Actual Rate</font></para>""",self.styles['ChartLegend']))
+        story.append(Paragraph("Find detailed month-wise analyses in the following pages, where each discount type is meticulously examined and presented in ascending order of approved rates.",self.styles['TitlePageFooter']))
         story.append(PageBreak())
         for month, month_data in data.items():
             story.extend(self.create_monthly_page(month_data, month))
@@ -7546,38 +7319,10 @@ def discount():
     st.download_button(label="📄 Download Detailed Report",data=pdf_buffer,file_name=f"discount_report_{selected_state}_{datetime.now().strftime('%Y%m%d')}.pdf",mime="application/pdf",key=f"pdf_download_{selected_state}",help="Download a detailed PDF report for this state")
  class DiscountAnalytics:
     def __init__(self):
-        self.excluded_discounts = [
-            'Sub Total',
-            'TOTAL OF DP PAYOUT',
-            'TOTAL OF STS & RD',
-            'Other (Please specify',
-        ]
-        self.discount_mappings = {
-            'group1': {
-                'states': ['HP', 'JMU', 'PUN'],
-                'discounts': ['CASH DISCOUNT', 'ADVANCE CD & NIL OS']
-            },
-            'group2': {
-                'states': ['UP (W)'],
-                'discounts': ['CD', 'Adv CD']
-            }}
+        self.excluded_discounts = ['Sub Total','TOTAL OF DP PAYOUT','TOTAL OF STS & RD','Other (Please specify',]
+        self.discount_mappings = {'group1': {'states': ['HP', 'JMU', 'PUN'],'discounts': ['CASH DISCOUNT', 'ADVANCE CD & NIL OS']},'group2': {'states': ['UP (W)'],'discounts': ['CD', 'Adv CD']}}
         self.combined_discount_name = 'CD and Advance CD'
-        self.month_columns = {
-            'April': {
-                'quantity': 1,
-                'approved': 2,
-                'actual': 4
-            },
-            'May': {
-                'quantity': 8,
-                'approved': 9,
-                'actual': 11
-            },
-            'June': {
-                'quantity': 15,
-                'approved': 16,
-                'actual': 18
-            }}
+        self.month_columns = {'April': {'quantity': 1,'approved': 2,'actual': 4},'May': {'quantity': 8,'approved': 9,'actual': 11},'June': {'quantity': 15,'approved': 16,'actual': 18}}
         self.total_patterns = ['G. TOTAL', 'G.TOTAL', 'G. Total', 'G.Total', 'GRAND TOTAL',"G. Total (STD + STS)"]
         self.excluded_states = ['MP (JK)', 'MP (U)','East']
     def create_ticker(self, data):
@@ -7589,19 +7334,14 @@ def discount():
         if not df.empty:
             state_text = f"<span class='state-name'>📍 {state}</span>"
             month_text = f"<span class='month-name'>📅 {last_month}</span>"
-            state_group = next(
-                (group for group, config in self.discount_mappings.items()
-                 if state in config['states']),
-                None)
+            state_group = next((group for group, config in self.discount_mappings.items()if state in config['states']),None)
             discount_items = []
             if state_group:
                 relevant_discounts = self.discount_mappings[state_group]['discounts']
                 combined_data = self.get_combined_data(df, month_cols, state)
                 if combined_data:
                     actual = combined_data.get('actual', 0)
-                    discount_items.append(
-                        f"{self.combined_discount_name}: <span class='discount-value'>₹{actual:,.2f}</span>"
-                    )
+                    discount_items.append(f"{self.combined_discount_name}: <span class='discount-value'>₹{actual:,.2f}</span>")
                 for discount in self.get_discount_types(df, state):
                     if discount != self.combined_discount_name:
                         mask = df.iloc[:, 0].fillna('').astype(str).str.strip() == discount.strip()
@@ -7685,9 +7425,7 @@ def discount():
             mask = df.iloc[:, 0].fillna('').astype(str).str.strip() == selected_discount.strip()
             filtered_df = df[mask]
             if len(filtered_df) > 0:
-                monthly_data = {
-                    month: {'actual': filtered_df.iloc[0, cols['actual']],'approved': filtered_df.iloc[0, cols['approved']]}
-                    for month, cols in self.month_columns.items()}
+                monthly_data = {month: {'actual': filtered_df.iloc[0, cols['actual']],'approved': filtered_df.iloc[0, cols['approved']]}for month, cols in self.month_columns.items()}
         months = list(monthly_data.keys())
         actual_values = [data['actual'] for data in monthly_data.values()]
         approved_values = [data['approved'] for data in monthly_data.values()]
@@ -7720,9 +7458,7 @@ def discount():
             if any(d in first_col.values for d in relevant_discounts):
                 valid_discounts.append(self.combined_discount_name)
             for d in first_col.unique():
-                if (isinstance(d, str) and 
-                    d.strip() not in self.excluded_discounts and 
-                    d.strip() not in relevant_discounts):
+                if (isinstance(d, str) and d.strip() not in self.excluded_discounts and d.strip() not in relevant_discounts):
                     valid_discounts.append(d)
         else:
             valid_discounts = [
@@ -7811,7 +7547,6 @@ def discount():
         st.markdown("</div>", unsafe_allow_html=True)
  if __name__ == "__main__":
     main()
-
 def load_visit_data():
     try:
         with open('visit_data.json', 'r') as f:
