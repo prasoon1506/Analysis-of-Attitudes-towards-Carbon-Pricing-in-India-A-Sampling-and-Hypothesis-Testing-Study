@@ -1079,12 +1079,8 @@ def pro():
     features['avg_ags_achievement_rate'] = features[[f'ags_achievement_rate_{m}' 
         for m in ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']]].mean(axis=1)
     weights = np.array([0.05, 0.1, 0.1, 0.15, 0.2, 0.2, 0.2])
-    features['weighted_monthly_achievement_rate'] = np.average(
-        features[[f'monthly_achievement_rate_{m}' for m in ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']]],
-        weights=weights, axis=1)
-    features['weighted_ags_achievement_rate'] = np.average(
-        features[[f'ags_achievement_rate_{m}' for m in ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']]],
-        weights=weights, axis=1)
+    features['weighted_monthly_achievement_rate'] = np.average(features[[f'monthly_achievement_rate_{m}' for m in ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']]],weights=weights, axis=1)
+    features['weighted_ags_achievement_rate'] = np.average(features[[f'ags_achievement_rate_{m}' for m in ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']]],weights=weights, axis=1)
     features['avg_monthly_sales'] = features[[f'sales_{m}' for m in ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']]].mean(axis=1)
     months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']
     for i in range(1, len(months)):
@@ -7349,7 +7345,6 @@ def main():
             options=["Sales Dashboard","Sales Review Report","Market Share Analysis","Product-Mix", "Segment-Mix","Geo-Mix"],
             icons=["clipboard-data", "cash","bar-chart", "arrow-up-right", "shuffle", "globe"],
             orientation="horizontal",)
-        
         if analysis_menu == "Sales Dashboard":
             sales_dashboard()
         elif analysis_menu == "Sales Review Report":
@@ -7362,7 +7357,6 @@ def main():
             market_share()
         elif analysis_menu == "Geo-Mix":
             green()
-        
     elif selected == "Predictions":
         prediction_menu = option_menu(
             menu_title="Predictions",
