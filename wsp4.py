@@ -344,7 +344,7 @@ def price():
     doc = SimpleDocTemplate(buffer, pagesize=letter)
     styles = getSampleStyleSheet()
     title_style = styles['Heading1']
-    data = [df.columns.tolist()]  # Header row
+    data = [df.columns.tolist()]
     for _, row in df.iterrows():
         data.append([str(val) for val in row.tolist()])
     table = Table(data)
