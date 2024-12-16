@@ -123,6 +123,125 @@ from reportlab.lib import colors
 import streamlit as st
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, KeepTogether
 def price():
+ def calculate_effective_values(df, region, calculation_type='historical'):
+    """
+    Calculate effective NOD and Invoice based on sales distribution in different periods of the month.
+    
+    Parameters:
+    - df: Pandas DataFrame containing price data
+    - region: Region for which calculations are being made
+    - calculation_type: 'historical' or 'current'
+    
+    Returns:
+    - Dictionary with effective NOD and Invoice values
+    """
+    # Filter data for the specific region
+    region_df = df[df['Region(District)'] == region].copy()
+    region_df['Date'] = pd.to_datetime(region_df['Date'], format='%d-%b %Y')
+    
+    # Sort by date to ensure chronological order
+    region_df = region_df.sort_values('Date')
+    
+    if calculation_type == 'historical':
+        # For last month and month before
+        months_to_analyze = sorted(region_df['Date'].dt.to_period('M').unique())[-2:]
+    else:
+        # For current month
+        months_to_analyze = [region_df['Date'].dt.to_period('M').max()]
+    
+    effective_results = {}
+    
+    for month_period in months_to_analyze:
+        month_df = region_df[region_df['Date'].dt.to_period('M') == month_period]
+        
+        if month_df.empty:
+            continue
+        
+        # Get first and last day of the month
+        first_day = month_df['Date'].min().replace(day=1)
+        last_day = first_day + pd.offsets.MonthEnd(0)
+        month_length = (last_day - first_day).days + 1
+        
+        # Split month into three periods
+        first_period_end = first_day + pd.Timedelta(days=9)
+        mid_period_end = first_day + pd.Timedelta(days=19)
+        
+        # Weighting factors
+        first_period_weight = 0.2
+        mid_period_weight = 0.3
+        last_period_weight = 0.5
+        
+        # Identify price changes in each period
+        first_period_data = month_df[(month_df['Date'] >= first_day) & (month_df['Date'] <= first_period_end)]
+        mid_period_data = month_df[(month_df['Date'] > first_period_end) & (month_df['Date'] <= mid_period_end)]
+        last_period_data = month_df[(month_df['Date'] > mid_period_end) & (month_df['Date'] <= last_day)]
+        
+        def weighted_calculation(period_df, total_weight, total_days):
+            if period_df.empty:
+                return period_df.iloc[-1]['Net'] if not period_df.empty else 0, period_df.iloc[-1]['Inv.'] if not period_df.empty else 0
+            
+            if len(period_df) == 1:
+                return period_df.iloc[0]['Net'], period_df.iloc[0]['Inv.']
+            
+            # If multiple price changes in period, distribute weight proportionally
+            period_df = period_df.sort_values('Date')
+            daily_weights = []
+            prev_date = first_day
+            
+            for _, row in period_df.iterrows():
+                days_since_start = (row['Date'] - first_day).days + 1
+                daily_weights.append({
+                    'start_day': prev_date,
+                    'end_day': row['Date'],
+                    'net': row['Net'],
+                    'inv': row['Inv.']
+                })
+                prev_date = row['Date']
+            
+            if prev_date < first_period_end or prev_date < mid_period_end or prev_date < last_day:
+                daily_weights.append({
+                    'start_day': prev_date,
+                    'end_day': first_period_end if first_period_end <= last_day else last_day,
+                    'net': period_df.iloc[-1]['Net'],
+                    'inv': period_df.iloc[-1]['Inv.']
+                })
+            
+            # Calculate weighted averages
+            weighted_net = sum(
+                item['net'] * ((item['end_day'] - item['start_day']).days + 1) / total_days 
+                for item in daily_weights
+            )
+            weighted_inv = sum(
+                item['inv'] * ((item['end_day'] - item['start_day']).days + 1) / total_days 
+                for item in daily_weights
+            )
+            
+            return weighted_net, weighted_inv
+        
+        # Calculations
+        first_period_net, first_period_inv = weighted_calculation(first_period_data, first_period_weight, 10)
+        mid_period_net, mid_period_inv = weighted_calculation(mid_period_data, mid_period_weight, 10)
+        last_period_net, last_period_inv = weighted_calculation(last_period_data, last_period_weight, month_length - 20)
+        
+        # Combine weighted values
+        effective_nod = (
+            first_period_net * first_period_weight +
+            mid_period_net * mid_period_weight +
+            last_period_net * last_period_weight
+        )
+        
+        effective_inv = (
+            first_period_inv * first_period_weight +
+            mid_period_inv * mid_period_weight +
+            last_period_inv * last_period_weight
+        )
+        
+        effective_results[month_period] = {
+            'effective_nod': round(effective_nod, 2),
+            'effective_inv': round(effective_inv, 2)
+        }
+    
+    return effective_results
  def get_competitive_brands_wsp_data():
     include_competitive_brands = st.checkbox("Include Competitive Brands WSP Data")
     competitive_brands_wsp = {}
@@ -455,7 +574,7 @@ def price():
             if missing_columns:
                 st.error(f"Missing required columns: {', '.join(missing_columns)}")
                 st.stop()
-            col1, col2 = st.columns(2)
+            col1, col2 = st.columns([1,3])
             with col1:
                 st.subheader("🔄 Data Entry")
                 price_changed = st.radio("Do you want to add new data?", ["No", "Yes"])
@@ -598,6 +717,35 @@ def price():
                             st.markdown(f"""<div style="background-color:#f0f2f6;border-left: 5px solid #4a4a4a;padding: 10px;margin-bottom: 10px;border-radius: 5px;"><strong>{row['Date'].strftime('%d-%b %Y')}</strong>: {row['Remarks']}</div>""", unsafe_allow_html=True)
                 else:
                         st.info("No remarks found for this region.")
+                st.markdown("## 🔍 Effective NOD and Invoice Analysis")
+                show_effective_analysis = st.checkbox("Show Effective NOD and Invoice Analysis")
+                if show_effective_analysis:
+                   try:
+                     effective_values = calculate_effective_values(df, selected_region_analysis)
+                     st.markdown("### Effective NOD and Invoice Calculations")
+                     sorted_months = sorted(effective_values.keys(), reverse=True)
+                     for month in sorted_months:
+                        values = effective_values[month]
+                        st.markdown(f"#### {month.strftime('%B %Y')}")
+                        col1, col2 = st.columns(2)
+                        with col1:
+                          st.metric("Effective NOD", f"₹{values['effective_nod']:,.2f}")
+                        with col2:
+                          st.metric("Effective Invoice", f"₹{values['effective_inv']:,.2f}")
+                     current_month_estimate = calculate_effective_values(df, selected_region_analysis, 'current')
+                     if current_month_estimate:
+                       st.markdown("### Estimated Current Month")
+                       current_month = list(current_month_estimate.keys())[0]
+                       values = current_month_estimate[current_month]
+                       st.markdown(f"#### Estimated {current_month.strftime('%B %Y')}")
+                       col1, col2 = st.columns(2)
+                       with col1:
+                          st.metric("Estimated Effective NOD", f"₹{values['effective_nod']:,.2f}")
+                       with col2:
+                          st.metric("Estimated Effective Invoice", f"₹{values['effective_inv']:,.2f}")
+                       st.info("Note: Current month estimation assumes current prices remain consistent for the rest of the month.")
+                   except Exception as e:
+                       st.error(f"Error calculating effective values: {e}")
             st.markdown("## 📥 Download Options")
             download_options = st.radio("Download File From:", ["Entire Dataframe", "Specific Month", "Regional Price Trend Report"], horizontal=True)
             if download_options == "Regional Price Trend Report":
