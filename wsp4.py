@@ -88,7 +88,6 @@ from streamlit_lottie import st_lottie
 from streamlit_option_menu import option_menu
 from streamlit_cookies_manager import EncryptedCookieManager
 import streamlit as st
-import pandas as pd
 import base64
 import io
 from openpyxl import Workbook
@@ -101,7 +100,7 @@ import warnings
 import plotly.express as fx
 import plotly.graph_objs as go
 import plotly.io as pio
-import numpy as np
+import itertools
 from reportlab.platypus import HRFlowable
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
@@ -824,22 +823,16 @@ def price_input():
             if cell.value and cell.value < median_visits:
                 cell.font = Font(color="FF0000", bold=True)
     for col in range(brand_cols_start, brand_cols_end + 1):
-        color_scale = ColorScaleRule(start_type='min', start_color='FF0000',
-            mid_type='percentile', mid_value=50, mid_color='FFFF00',
-            end_type='max', end_color='00FF00'
-        )
+        color_scale = ColorScaleRule(start_type='min', start_color='FF0000',mid_type='percentile', mid_value=50, mid_color='FFFF00',end_type='max', end_color='00FF00')
         col_letter = chr(64 + col)
         ws.conditional_formatting.add(f'{col_letter}{header_row+1}:{col_letter}{current_row-1}', color_scale)
-    
     ws.auto_filter.ref = f"A{header_row}:{column_letter_end}{header_row}"
     ws.freeze_panes = ws[f'A{header_row+1}']
-    
     filename = f"price_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
     wb.save(filename)
     return filename
  def main():
     st.title('📊 Price Report Generator')
-    
     st.markdown("""
     ### Upload Your Excel File
     Please upload an Excel file containing the following columns:
@@ -847,46 +840,19 @@ def price_input():
     - `Brand: Name`
     - `checkin date`
     """)
-    
-    # File Uploader
-    uploaded_file = st.file_uploader(
-        "Choose an Excel file", 
-        type=['xlsx', 'xls'], 
-        help="Upload your price report Excel file"
-    )
-    
+    uploaded_file = st.file_uploader("Choose an Excel file",type=['xlsx', 'xls'],help="Upload your price report Excel file")
     if uploaded_file is not None:
         try:
-            # Read the uploaded file
             df = pd.read_excel(uploaded_file)
-            
-            # Validate the dataframe
             required_columns = ['Owner: Full Name', 'Brand: Name', 'checkin date']
             if not all(col in df.columns for col in required_columns):
                 st.error("Invalid file format. Please ensure your file contains the required columns.")
                 return
-            
-            # Sidebar for Owner Selection
             st.sidebar.header('🔍 Select Owners')
-
             owners = sorted(df['Owner: Full Name'].astype(str).unique().tolist())
-            selected_owners = st.sidebar.multiselect(
-                "Choose Regional Heads",
-                options=owners,
-                default=owners[:5],  # Select first 5 by default
-                help="Select the regional heads for your report"
-            )
-            
+            selected_owners = st.sidebar.multiselect("Choose Regional Heads",options=owners,default=owners[:5],help="Select the regional heads for your report")
             st.sidebar.markdown("---")
-            
-            # Report Type Selection
-            report_type = st.sidebar.radio(
-                "Choose Report Type",
-                ["Date-Based Report", "Owner-Based Report"],
-                help="Select the type of report you want to generate"
-            )
-            
-            # Generate Report Button
+            report_type = st.sidebar.radio("Choose Report Type",["Date-Based Report", "Owner-Based Report"],help="Select the type of report you want to generate")
             if st.sidebar.button('🚀 Generate Report', type='primary'):
                 if not selected_owners:
                     st.warning("Please select at least one owner.")
@@ -897,32 +863,19 @@ def price_input():
                                 filename = create_price_report(df, selected_owners)
                                 st.success(f"Date-Based Report Generated: {filename}")
                                 with open(filename, 'rb') as file:
-                                    st.download_button(
-                                        label="Download Date-Based Report",
-                                        data=file,
-                                        file_name=filename,
-                                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                                    )
+                                    st.download_button(label="Download Date-Based Report",data=file,file_name=filename,mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
                             else:
                                 filename = create_price_report1(df, selected_owners)
                                 st.success(f"Owner-Based Report Generated: {filename}")
                                 with open(filename, 'rb') as file:
-                                    st.download_button(
-                                        label="Download Owner-Based Report",
-                                        data=file,
-                                        file_name=filename,
-                                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                                    )
+                                    st.download_button(label="Download Owner-Based Report",data=file,file_name=filename,mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
                         except Exception as e:
                             st.error(f"An error occurred: {e}")
-        
         except Exception as e:
             st.error(f"Error processing the file: {e}")
-
  if __name__ == "__main__":
     main()
 def geo():
- import itertools
  def fill_second_column(df):
     processed_df = df.copy()
     first_col = processed_df.columns[0]
@@ -1053,59 +1006,31 @@ def geo():
                             st.session_state.processed_files[month_filename] = channel_non_total_dfs
                         except Exception as e:
                             st.error(f"Error processing {month_filename}: {str(e)}")
-
-    # Tabs for different functionalities
     tab1, tab2 = st.tabs(["File Processing", "Cross-Month Analyzer"])
-
     with tab1:
-        # Display and manage processed files
         if st.session_state.processed_files:
             st.header("📁 Processed Files")
-            
-            # Tabs for each processed file
             file_tabs = st.tabs(list(st.session_state.processed_files.keys()))
-            
             for i, (filename, file_dfs) in enumerate(st.session_state.processed_files.items()):
                 with file_tabs[i]:
-                    # Sheet selection for deletion
                     st.subheader(f"Sheets in {filename}")
-                    
-                    # Create a copy of sheets to allow modification
                     current_sheets = list(file_dfs.keys())
-                    
-                    # Multi-select for sheet deletion
-                    sheets_to_keep = st.multiselect(
-                        f"Select sheets to KEEP from {filename}", 
-                        current_sheets, 
-                        default=current_sheets
-                    )
-                    
-                    # Filter out sheets not selected
+                    sheets_to_keep = st.multiselect(f"Select sheets to KEEP from {filename}",current_sheets,default=current_sheets)
                     filtered_dfs = {sheet: df for sheet, df in file_dfs.items() if sheet in sheets_to_keep}
-                    
-                    # Display preview of selected sheets
                     for sheet_name, df in filtered_dfs.items():
                         with st.expander(f"Sheet: {sheet_name}"):
                             st.dataframe(df)
-                    
-                    # Download button for filtered sheets
                     if st.button(f"Download Processed Sheets for {filename}"):
                         download_link = get_download_link(filtered_dfs, filename)
                         st.markdown(download_link, unsafe_allow_html=True)
-                    
-                    # Option to remove the entire file from processed files
                     if st.button(f"Remove {filename} from Processed Files"):
                         del st.session_state.processed_files[filename]
                         st.experimental_rerun()
-
     with tab2:
-        # Cross-Month Sheet Analyzer
         if len(st.session_state.processed_files) > 1:
             cross_month_analyze_sheets(st.session_state.processed_files)
         else:
             st.info("Please upload and process files from at least two months to use the cross-month analyzer.")
-
-    # Additional information
     st.markdown("---")
     st.markdown("""
     ### 🤔 How to Use
@@ -1119,7 +1044,6 @@ def geo():
        - Apply filters across both months
        - Compare rows side by side
     """)
-
  if __name__ == "__main__":
     main()
 def pro():
@@ -1128,42 +1052,32 @@ def pro():
  import calendar
  import warnings
  warnings.filterwarnings('ignore')
-
  def read_excel_skip_hidden(uploaded_file):
-    # Create a temporary file to work with openpyxl
     with open("temp.xlsx", "wb") as f:
         f.write(uploaded_file.getvalue())
-    
     wb = load_workbook(filename="temp.xlsx")
     ws = wb.active
     hidden_rows = [i + 1 for i in range(ws.max_row) if ws.row_dimensions[i + 1].hidden]
     df = pd.read_excel(uploaded_file, skiprows=hidden_rows)
     return df
-
  def prepare_features(df, current_month_data=None):
     features = pd.DataFrame()
     for month in ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']:
         features[f'sales_{month}'] = df[f'Monthly Achievement({month})']
-    
     features['prev_sep'] = df['Total Sep 2023']
     features['prev_oct'] = df['Total Oct 2023']
     features['prev_nov'] = df['Total Nov 2023']
-    
     for month in ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']:
         features[f'month_target_{month}'] = df[f'Month Tgt ({month})']
         features[f'monthly_achievement_rate_{month}'] = (features[f'sales_{month}'] / features[f'month_target_{month}'])
         features[f'ags_target_{month}'] = df[f'AGS Tgt ({month})']
         features[f'ags_achievement_rate_{month}'] = (features[f'sales_{month}'] / features[f'ags_target_{month}'])
-    
     features['month_target_nov'] = df['Month Tgt (Nov)']
     features['ags_target_nov'] = df['AGS Tgt (Nov)']
-    
-    # Calculate averages and weighted metrics
     features['avg_monthly_achievement_rate'] = features[[f'monthly_achievement_rate_{m}' 
         for m in ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']]].mean(axis=1)
     features['avg_ags_achievement_rate'] = features[[f'ags_achievement_rate_{m}' 
         for m in ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']]].mean(axis=1)
-    
     weights = np.array([0.05, 0.1, 0.1, 0.15, 0.2, 0.2, 0.2])
     features['weighted_monthly_achievement_rate'] = np.average(
         features[[f'monthly_achievement_rate_{m}' for m in ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']]],
@@ -1171,140 +1085,65 @@ def pro():
     features['weighted_ags_achievement_rate'] = np.average(
         features[[f'ags_achievement_rate_{m}' for m in ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']]],
         weights=weights, axis=1)
-    
     features['avg_monthly_sales'] = features[[f'sales_{m}' for m in ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']]].mean(axis=1)
-    
-    # Calculate growth rates
     months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']
     for i in range(1, len(months)):
         features[f'growth_{months[i]}'] = features[f'sales_{months[i]}'] / features[f'sales_{months[i-1]}']
-    
     features['yoy_sep_growth'] = features['sales_Sep'] / features['prev_sep']
     features['yoy_oct_growth'] = features['sales_Oct'] / features['prev_oct']
-    
     if current_month_data:
         features['current_month_yoy_growth'] = current_month_data['current_year'] / current_month_data['previous_year']
         features['projected_full_month'] = (current_month_data['current_year'] / current_month_data['days_passed']) * current_month_data['total_days']
         features['current_month_daily_rate'] = current_month_data['current_year'] / current_month_data['days_passed']
-        features['yoy_weighted_growth'] = (features['yoy_sep_growth'] * 0.3 + 
-                                         features['yoy_oct_growth'] * 0.4 + 
-                                         features['current_month_yoy_growth'] * 0.3)
+        features['yoy_weighted_growth'] = (features['yoy_sep_growth'] * 0.3 + features['yoy_oct_growth'] * 0.4 + features['current_month_yoy_growth'] * 0.3)
     else:
         features['yoy_weighted_growth'] = (features['yoy_sep_growth'] * 0.4 + features['yoy_oct_growth'] * 0.6)
-    
     features['target_achievement_rate'] = features['sales_Oct'] / features['month_target_Oct']
     return features
-
  def display_historical_data(df_filtered, current_month_data=None):
     if current_month_data:
-        historical_data = pd.DataFrame({
-            'Period': ['October 2023', 'November 2023', 'October 2024', 
-                      f'November 2024 (First {current_month_data["days_passed"]} days)',
-                      f'November 2023 (First {current_month_data["days_passed"]} days)'],
-            'Sales': [df_filtered['Total Oct 2023'].iloc[0],
-                     df_filtered['Total Nov 2023'].iloc[0],
-                     df_filtered['Monthly Achievement(Oct)'].iloc[0],
-                     current_month_data['current_year'],
-                     current_month_data['previous_year']]
-        })
-        
-        historical_data['Growth'] = [
-            'Base',
-            f"{(historical_data['Sales'][1] / historical_data['Sales'][0] - 1) * 100:.1f}% MoM",
-            f"{(historical_data['Sales'][2] / historical_data['Sales'][0] - 1) * 100:.1f}% YoY",
-            f"Current Progress ({(current_month_data['current_year'] / current_month_data['previous_year'] - 1) * 100:.1f}% YoY)",
-            'Previous Year Baseline'
-        ]
+        historical_data = pd.DataFrame({'Period': ['October 2023', 'November 2023', 'October 2024', f'November 2024 (First {current_month_data["days_passed"]} days)',f'November 2023 (First {current_month_data["days_passed"]} days)'],'Sales': [df_filtered['Total Oct 2023'].iloc[0],df_filtered['Total Nov 2023'].iloc[0],df_filtered['Monthly Achievement(Oct)'].iloc[0],current_month_data['current_year'],current_month_data['previous_year']]})
+        historical_data['Growth'] = ['Base',f"{(historical_data['Sales'][1] / historical_data['Sales'][0] - 1) * 100:.1f}% MoM",f"{(historical_data['Sales'][2] / historical_data['Sales'][0] - 1) * 100:.1f}% YoY",f"Current Progress ({(current_month_data['current_year'] / current_month_data['previous_year'] - 1) * 100:.1f}% YoY)",'Previous Year Baseline']
     else:
-        historical_data = pd.DataFrame({
-            'Period': ['October 2023', 'November 2023', 'October 2024'],
-            'Sales': [df_filtered['Total Oct 2023'].iloc[0],
-                     df_filtered['Total Nov 2023'].iloc[0],
-                     df_filtered['Monthly Achievement(Oct)'].iloc[0]]
-        })
-        historical_data['Growth'] = [
-            'Base',
-            f"{(historical_data['Sales'][1] / historical_data['Sales'][0] - 1) * 100:.1f}% MoM",
-            f"{(historical_data['Sales'][2] / historical_data['Sales'][0] - 1) * 100:.1f}% YoY"
-        ]
+        historical_data = pd.DataFrame({'Period': ['October 2023', 'November 2023', 'October 2024'],'Sales': [df_filtered['Total Oct 2023'].iloc[0],df_filtered['Total Nov 2023'].iloc[0],df_filtered['Monthly Achievement(Oct)'].iloc[0]]})
+        historical_data['Growth'] = ['Base',f"{(historical_data['Sales'][1] / historical_data['Sales'][0] - 1) * 100:.1f}% MoM",f"{(historical_data['Sales'][2] / historical_data['Sales'][0] - 1) * 100:.1f}% YoY"]
     return historical_data
-
  def calculate_trend_prediction(features, growth_weights, current_month_data=None):
     if current_month_data:
         adjusted_weights = {k: v * 0.7 for k, v in growth_weights.items()}
         adjusted_weights['current_month'] = 0.3
-        base_weighted_growth = sum(features[month] * weight 
-                                 for month, weight in adjusted_weights.items() 
-                                 if month != 'current_month') / sum(adjusted_weights.values())
+        base_weighted_growth = sum(features[month] * weight for month, weight in adjusted_weights.items() if month != 'current_month') / sum(adjusted_weights.values())
         current_month_growth = features['current_month_yoy_growth'].iloc[0]
         weighted_growth = (base_weighted_growth * 0.7 + current_month_growth * 0.3)
     else:
-        weighted_growth = sum(features[month] * weight 
-                            for month, weight in growth_weights.items()) / sum(growth_weights.values())
+        weighted_growth = sum(features[month] * weight for month, weight in growth_weights.items()) / sum(growth_weights.values())
     return features['sales_Oct'] * weighted_growth
-
  def predict_november_sales(df, selected_zone, selected_brand, growth_weights, method_weights, current_month_data=None):
     df_filtered = df[(df['Zone'] == selected_zone) & (df['Brand'] == selected_brand)]
-    
     if len(df_filtered) == 0:
         st.error("No data available for the selected combination of Zone and Brand")
         return None, None
-    
     features = prepare_features(df_filtered, current_month_data)
     historical_data = display_historical_data(df_filtered, current_month_data)
-    
-    exclude_columns = ['month_target_nov', 'ags_target_nov',
-                      'avg_monthly_achievement_rate', 'avg_ags_achievement_rate',
-                      'weighted_monthly_achievement_rate', 'weighted_ags_achievement_rate',
-                      'avg_monthly_sales', 'yoy_sep_growth', 'yoy_oct_growth',
-                      'yoy_weighted_growth']
-    
+    exclude_columns = ['month_target_nov', 'ags_target_nov','avg_monthly_achievement_rate', 'avg_ags_achievement_rate','weighted_monthly_achievement_rate', 'weighted_ags_achievement_rate','avg_monthly_sales', 'yoy_sep_growth', 'yoy_oct_growth','yoy_weighted_growth']
     feature_cols = [col for col in features.columns if col not in exclude_columns]
-    
-    # Random Forest models
     rf_model_monthly = RandomForestRegressor(n_estimators=100, random_state=42)
     rf_model_ags = RandomForestRegressor(n_estimators=100, random_state=42)
-    
-    rf_model_monthly.fit(features[feature_cols], 
-                        features['month_target_nov'] * features['weighted_monthly_achievement_rate'])
-    rf_model_ags.fit(features[feature_cols], 
-                    features['ags_target_nov'] * features['weighted_ags_achievement_rate'])
-    
+    rf_model_monthly.fit(features[feature_cols],features['month_target_nov'] * features['weighted_monthly_achievement_rate'])
+    rf_model_ags.fit(features[feature_cols],features['ags_target_nov'] * features['weighted_ags_achievement_rate'])
     rf_prediction_monthly = rf_model_monthly.predict(features[feature_cols])
     rf_prediction_ags = rf_model_ags.predict(features[feature_cols])
     rf_prediction = (rf_prediction_monthly + rf_prediction_ags) / 2
-    
-    # Other predictions
     yoy_prediction = features['prev_nov'] * features['yoy_weighted_growth']
     trend_prediction = calculate_trend_prediction(features, growth_weights, current_month_data)
-    
     if current_month_data:
-        target_based_prediction = (features['avg_monthly_sales'] * 
-                                 features['target_achievement_rate'] * 
-                                 (1 + (features['current_month_yoy_growth'] - 1) * 0.3))
+        target_based_prediction = (features['avg_monthly_sales'] * features['target_achievement_rate'] * (1 + (features['current_month_yoy_growth'] - 1) * 0.3))
     else:
         target_based_prediction = features['avg_monthly_sales'] * features['target_achievement_rate']
-    
-    final_prediction = (method_weights['rf'] * rf_prediction +
-                       method_weights['yoy'] * yoy_prediction +
-                       method_weights['trend'] * trend_prediction +
-                       method_weights['target'] * target_based_prediction)
-    
-    predictions = pd.DataFrame({
-        'Zone': df_filtered['Zone'],
-        'Brand': df_filtered['Brand'],
-        'RF_Prediction': rf_prediction,
-        'YoY_Prediction': yoy_prediction,
-        'Trend_Prediction': trend_prediction,
-        'Target_Based_Prediction': target_based_prediction,
-        'Final_Prediction': final_prediction
-    })
-    
+    final_prediction = (method_weights['rf'] * rf_prediction +method_weights['yoy'] * yoy_prediction +method_weights['trend'] * trend_prediction +method_weights['target'] * target_based_prediction)
+    predictions = pd.DataFrame({'Zone': df_filtered['Zone'],'Brand': df_filtered['Brand'],'RF_Prediction': rf_prediction,'YoY_Prediction': yoy_prediction,'Trend_Prediction': trend_prediction,'Target_Based_Prediction': target_based_prediction,'Final_Prediction': final_prediction})
     return predictions, historical_data
-
  def main():
-    
-    # Add custom CSS
     st.markdown("""
         <style>
         .stApp {
@@ -1324,27 +1163,19 @@ def pro():
         }
         </style>
     """, unsafe_allow_html=True)
-    
     st.title("Sales Forecasting Model")
-    
     uploaded_file = st.file_uploader("Upload Excel File", type=['xlsx'])
-    
     if uploaded_file:
         df = read_excel_skip_hidden(uploaded_file)
-        
         col1, col2 = st.columns(2)
-        
         with col1:
             zones = sorted(df['Zone'].unique())
             selected_zone = st.selectbox('Select Zone:', zones)
-        
         with col2:
             brands = sorted(df[df['Zone'] == selected_zone]['Brand'].unique())
             selected_brand = st.selectbox('Select Brand:', brands)
-        
         st.subheader("Current Month Analysis (Optional)")
         use_current_month = st.checkbox("Include current month data")
-        
         current_month_data = None
         if use_current_month:
             col1, col2, col3 = st.columns(3)
@@ -1354,112 +1185,65 @@ def pro():
                 current_year_sales = st.number_input("Current year sales:", min_value=0.0, value=0.0)
             with col3:
                 previous_year_sales = st.number_input("Previous year sales:", min_value=0.0, value=0.0)
-            
             if days_passed > 0 and current_year_sales > 0 and previous_year_sales > 0:
                 total_days = calendar.monthrange(2024, 11)[1]
-                current_month_data = {
-                    'days_passed': days_passed,
-                    'total_days': total_days,
-                    'current_year': current_year_sales,
-                    'previous_year': previous_year_sales
-                }
-        
+                current_month_data = {'days_passed': days_passed,'total_days': total_days,'current_year': current_year_sales,'previous_year': previous_year_sales}
         st.subheader("Growth Weights")
         col1, col2 = st.columns(2)
         growth_weights = {}
-        
         with col1:
             growth_weights['growth_May'] = st.slider('May/Apr:', 0.0, 1.0, 0.05, 0.05)
             growth_weights['growth_June'] = st.slider('June/May:', 0.0, 1.0, 0.10, 0.05)
             growth_weights['growth_July'] = st.slider('July/June:', 0.0, 1.0, 0.15, 0.05)
-        
         with col2:
             growth_weights['growth_Aug'] = st.slider('Aug/July:', 0.0, 1.0, 0.20, 0.05)
             growth_weights['growth_Sep'] = st.slider('Sep/Aug:', 0.0, 1.0, 0.25, 0.05)
             growth_weights['growth_Oct'] = st.slider('Oct/Sep:', 0.0, 1.0, 0.25, 0.05)
-        
         st.subheader("Method Weights")
         col1, col2 = st.columns(2)
         method_weights = {}
-        
         with col1:
             method_weights['rf'] = st.slider('Random Forest:', 0.0, 1.0, 0.4, 0.05)
             method_weights['yoy'] = st.slider('Year over Year:', 0.0, 1.0, 0.1, 0.05)
-        
         with col2:
             method_weights['trend'] = st.slider('Trend:', 0.0, 1.0, 0.4, 0.05)
             method_weights['target'] = st.slider('Target:', 0.0, 1.0, 0.1, 0.05)
-        
-        # Validate weights
         if abs(sum(growth_weights.values()) - 1.0) > 0.01:
             st.error("Growth weights should sum to 1")
         elif abs(sum(method_weights.values()) - 1.0) > 0.01:
             st.error("Method weights should sum to 1")
         else:
-            predictions, historical_data = predict_november_sales(
-                df, selected_zone, selected_brand, growth_weights, method_weights, current_month_data
-            )
-            
+            predictions, historical_data = predict_november_sales(df, selected_zone, selected_brand, growth_weights, method_weights, current_month_data)
             if predictions is not None and historical_data is not None:
-                # Display historical data
                 st.subheader("Historical Sales Data")
-                st.dataframe(
-                    historical_data.style.format({'Sales': '₹{:,.2f}'})
-                )
-                
-                # Display predictions
+                st.dataframe(historical_data.style.format({'Sales': '₹{:,.2f}'}))
                 st.subheader("November 2024 Predictions")
-                st.dataframe(
-                    predictions.style.format({
-                        'RF_Prediction': '₹{:,.2f}',
-                        'YoY_Prediction': '₹{:,.2f}',
-                        'Trend_Prediction': '₹{:,.2f}',
-                        'Target_Based_Prediction': '₹{:,.2f}',
-                        'Final_Prediction': '₹{:,.2f}'
-                    })
-                )
-                
-                # Summary metrics
+                st.dataframe(predictions.style.format({'RF_Prediction': '₹{:,.2f}','YoY_Prediction': '₹{:,.2f}','Trend_Prediction': '₹{:,.2f}','Target_Based_Prediction': '₹{:,.2f}','Final_Prediction': '₹{:,.2f}'}))
                 st.subheader("Summary Metrics")
                 col1, col2 = st.columns(2)
                 with col1:
                     st.metric("Average Prediction", f"₹{predictions['Final_Prediction'].mean():,.2f}")
-                
                 if current_month_data:
                     current_performance = (current_month_data['current_year'] / current_month_data['previous_year'] - 1) * 100
-                    last_year_nov = df[(df['Zone'] == selected_zone) & 
-                                     (df['Brand'] == selected_brand)]['Total Nov 2023'].iloc[0]
-                    nov_target = df[(df['Zone'] == selected_zone) & 
-                                  (df['Brand'] == selected_brand)]['Month Tgt (Nov)'].iloc[0]
+                    last_year_nov = df[(df['Zone'] == selected_zone) & (df['Brand'] == selected_brand)]['Total Nov 2023'].iloc[0]
+                    nov_target = df[(df['Zone'] == selected_zone) & (df['Brand'] == selected_brand)]['Month Tgt (Nov)'].iloc[0]
                     growth_multiplier = current_month_data['current_year'] / current_month_data['previous_year']
                     projected_full_month = last_year_nov * growth_multiplier
-                    
-                    # Current Month Analysis
                     st.subheader("Current Month Analysis")
                     col1, col2, col3 = st.columns(3)
-                    
                     with col1:
-                        st.metric("Days Completed", 
-                                 f"{current_month_data['days_passed']} / {current_month_data['total_days']}")
+                        st.metric("Days Completed", f"{current_month_data['days_passed']} / {current_month_data['total_days']}")
                     with col2:
-                        st.metric("Current Performance vs Last Year", 
-                                 f"{current_performance:,.1f}%")
+                        st.metric("Current Performance vs Last Year", f"{current_performance:,.1f}%")
                     with col3:
-                        st.metric("Current Year Daily Rate", 
-                                 f"₹{(current_month_data['current_year'] / current_month_data['days_passed']):,.2f}")
-                    
-                    # Additional metrics in expandable section
+                        st.metric("Current Year Daily Rate", f"₹{(current_month_data['current_year'] / current_month_data['days_passed']):,.2f}")
                     with st.expander("Detailed Analysis"):
                         col1, col2 = st.columns(2)
                         with col1:
-                            st.metric("Previous Year Daily Rate", 
-                                     f"₹{(current_month_data['previous_year'] / current_month_data['days_passed']):,.2f}")
-                            st.metric("Projected Full Month", 
-                                     f"₹{projected_full_month:,.2f}")
+                            st.metric("Previous Year Daily Rate", f"₹{(current_month_data['previous_year'] / current_month_data['days_passed']):,.2f}")
+                            st.metric("Projected Full Month", f"₹{projected_full_month:,.2f}")
                         with col2:
-                            st.metric("Last Year November Total", 
-                                     f"₹{last_year_nov:,.2f}")
-                        
+                            st.metric("Last Year November Total", f"₹{last_year_nov:,.2f}")
                         remaining_days = current_month_data['total_days'] - current_month_data['days_passed']
                         if remaining_days > 0:
                             st.subheader("Target Analysis")
@@ -1468,39 +1252,26 @@ def pro():
                             required_daily_prediction = required_additional_prediction / remaining_days
                             required_additional_target = nov_target - current_month_data['current_year']
                             required_daily_target = required_additional_target / remaining_days
-                            
                             col1, col2 = st.columns(2)
                             with col1:
                                 st.markdown("**For Predicted Amount:**")
-                                st.metric("Required Daily Rate", 
-                                         f"₹{required_daily_prediction:,.2f}")
-                                st.metric("Required Growth in Daily Rate", 
-                                         f"{((required_daily_prediction/current_daily) - 1) * 100:,.1f}%")
-                            
+                                st.metric("Required Daily Rate",f"₹{required_daily_prediction:,.2f}")
+                                st.metric("Required Growth in Daily Rate",f"{((required_daily_prediction/current_daily) - 1) * 100:,.1f}%")
                             with col2:
                                 st.markdown("**For Monthly Target:**")
-                                st.metric("Target Amount", 
-                                         f"₹{nov_target:,.2f}")
-                                st.metric("Required Daily Rate", 
-                                         f"₹{required_daily_target:,.2f}")
-                            
-                            # Target Achievement Analysis
+                                st.metric("Target Amount",f"₹{nov_target:,.2f}")
+                                st.metric("Required Daily Rate",f"₹{required_daily_target:,.2f}")
                             st.subheader("Target Achievement Analysis")
                             target_achievement_projected = (projected_full_month / nov_target) * 100
                             col1, col2 = st.columns(2)
                             with col1:
-                                st.metric("Projected Achievement at Current Rate", 
-                                         f"{target_achievement_projected:.1f}%")
-                            
+                                st.metric("Projected Achievement at Current Rate",f"{target_achievement_projected:.1f}%")
                             shortfall_or_excess = projected_full_month - nov_target
                             with col2:
                                 if shortfall_or_excess < 0:
-                                    st.metric("Projected Shortfall", 
-                                            f"₹{abs(shortfall_or_excess):,.2f}")
+                                    st.metric("Projected Shortfall",f"₹{abs(shortfall_or_excess):,.2f}")
                                 else:
-                                    st.metric("Projected Excess", 
-                                            f"₹{shortfall_or_excess:,.2f}")
-
+                                    st.metric("Projected Excess",f"₹{shortfall_or_excess:,.2f}")
  if __name__ == "__main__":
     main()
 def load_lottie_url(url: str):
@@ -1561,48 +1332,30 @@ def create_file_management_tab():
         }
         </style>
     """, unsafe_allow_html=True)
-
-    # Initialize session state
     if 'current_password' not in st.session_state:
         st.session_state.current_password = None
     if 'current_pdf_name' not in st.session_state:
         st.session_state.current_pdf_name = None
-
-    # Main header with nice styling
     st.markdown('<div class="main-header"><h1>📁 File Management System</h1></div>', unsafe_allow_html=True)
-
-    # Create two rows with two columns each for better spacing
     row1_col1, row1_col2 = st.columns(2)
     row2_col1, row2_col2 = st.columns(2)
-
-    # ZIP Creator
     with row1_col1:
         st.markdown('<div class="tool-container">', unsafe_allow_html=True)
         st.markdown('<div class="sub-header"><h3>📦 Create ZIP</h3></div>', unsafe_allow_html=True)
-        
-        uploaded_files = st.file_uploader(
-            "Choose files to zip",
-            accept_multiple_files=True,
-            key="zip_files"
-        )
-        
+        uploaded_files = st.file_uploader("Choose files to zip",accept_multiple_files=True,key="zip_files")
         if uploaded_files:
             st.markdown("**Selected files:**")
             for file in uploaded_files:
                 st.markdown(f"• {file.name}")
-        
         folder_name = st.text_input("📁 Enter folder name", "my_folder")
-        
         if st.button("🔒 Create ZIP", use_container_width=True):
             if uploaded_files:
                 try:
                     os.makedirs(folder_name, exist_ok=True)
-                    
                     for file in uploaded_files:
                         file_path = os.path.join(folder_name, file.name)
                         with open(file_path, "wb") as f:
                             f.write(file.getbuffer())
-                    
                     zip_path = f"{folder_name}.zip"
                     with zipfile.ZipFile(zip_path, 'w') as zipf:
                         for root, dirs, files in os.walk(folder_name):
@@ -1610,83 +1363,49 @@ def create_file_management_tab():
                                 file_path = os.path.join(root, file)
                                 arcname = os.path.relpath(file_path, folder_name)
                                 zipf.write(file_path, arcname)
-                    
                     with open(zip_path, "rb") as f:
                         st.markdown('<div class="download-button">', unsafe_allow_html=True)
-                        st.download_button(
-                            label="⬇️ Download ZIP",
-                            data=f,
-                            file_name=zip_path,
-                            mime="application/zip",
-                            use_container_width=True
-                        )
+                        st.download_button(label="⬇️ Download ZIP",data=f,file_name=zip_path,mime="application/zip",use_container_width=True)
                         st.markdown('</div>', unsafe_allow_html=True)
-                    
-                    # Cleanup
                     for file in os.listdir(folder_name):
                         os.remove(os.path.join(folder_name, file))
                     os.rmdir(folder_name)
                     os.remove(zip_path)
-                    
                     st.markdown('<div class="success-message">✅ ZIP created successfully!</div>', unsafe_allow_html=True)
                 except Exception as e:
                     st.markdown(f'<div class="error-message">❌ Error: {str(e)}</div>', unsafe_allow_html=True)
             else:
                 st.markdown('<div class="warning-message">⚠️ Please upload files first!</div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
-
-    # ZIP Extractor
     with row1_col2:
         st.markdown('<div class="tool-container">', unsafe_allow_html=True)
         st.markdown('<div class="sub-header"><h3>📤 Extract ZIP</h3></div>', unsafe_allow_html=True)
-        
         uploaded_zip = st.file_uploader("Upload ZIP file", type=['zip'], key="unzip_file")
-        
         if uploaded_zip:
             if st.button("📂 Extract Files", use_container_width=True):
                 try:
                     zip_bytes = BytesIO(uploaded_zip.read())
-                    
                     with zipfile.ZipFile(zip_bytes, 'r') as zip_ref:
                         file_list = zip_ref.namelist()
-                        
                         st.markdown("**Extracted files:**")
                         for file_name in file_list:
                             with zip_ref.open(file_name) as file:
                                 file_bytes = BytesIO(file.read())
-                                st.download_button(
-                                    label=f"⬇️ {file_name}",
-                                    data=file_bytes,
-                                    file_name=file_name,
-                                    mime="application/octet-stream",
-                                    use_container_width=True
-                                )
-                    
+                                st.download_button(label=f"⬇️ {file_name}",data=file_bytes,file_name=file_name,mime="application/octet-stream",use_container_width=True)
                     st.markdown('<div class="success-message">✅ Files extracted successfully!</div>', unsafe_allow_html=True)
                 except Exception as e:
                     st.markdown(f'<div class="error-message">❌ Error: {str(e)}</div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
-
-    # PDF Password Protector
     with row2_col1:
         st.markdown('<div class="tool-container">', unsafe_allow_html=True)
         st.markdown('<div class="sub-header"><h3>🔒 Protect PDF</h3></div>', unsafe_allow_html=True)
-        
         pdf_file = st.file_uploader("Choose PDF file", type=['pdf'], key="pdf_file")
-        
         if pdf_file:
             if pdf_file.name != st.session_state.current_pdf_name:
                 st.session_state.current_pdf_name = pdf_file.name
                 if st.session_state.get('password_option', '') == "Generate Random 4-digit Password":
                     st.session_state.current_password = str(random.randint(1000, 9999))
-            
-            password_option = st.radio(
-                "Password Option",
-                ["Generate Random 4-digit Password", "Enter Custom Password"],
-                key="password_option",
-                horizontal=True
-            )
-            
+            password_option = st.radio("Password Option",["Generate Random 4-digit Password", "Enter Custom Password"],key="password_option",horizontal=True)
             if password_option == "Generate Random 4-digit Password":
                 if not st.session_state.current_password:
                     st.session_state.current_password = str(random.randint(1000, 9999))
@@ -1695,89 +1414,50 @@ def create_file_management_tab():
             else:
                 password = st.text_input("🔑 Enter password", type="password")
                 st.session_state.current_password = password
-            
             if st.button("🔒 Protect PDF", use_container_width=True):
                 try:
                     pdf_reader = PyPDF2.PdfReader(pdf_file)
                     pdf_writer = PyPDF2.PdfWriter()
-                    
                     for page in pdf_reader.pages:
                         pdf_writer.add_page(page)
-                    
                     pdf_writer.encrypt(password)
-                    
                     output_pdf = BytesIO()
                     pdf_writer.write(output_pdf)
                     output_pdf.seek(0)
-                    
-                    st.download_button(
-                        label="⬇️ Download Protected PDF",
-                        data=output_pdf,
-                        file_name=f"protected_{pdf_file.name}",
-                        mime="application/pdf",
-                        use_container_width=True
-                    )
-                    
+                    st.download_button(label="⬇️ Download Protected PDF",data=output_pdf,file_name=f"protected_{pdf_file.name}",mime="application/pdf",use_container_width=True)
                     st.markdown('<div class="success-message">✅ PDF protected successfully!</div>', unsafe_allow_html=True)
                     if password_option == "Generate Random 4-digit Password":
                         st.info("📝 Make sure to save the password!")
                 except Exception as e:
                     st.markdown(f'<div class="error-message">❌ Error: {str(e)}</div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
-
-    # PDF Table Extractor
     with row2_col2:
         st.markdown('<div class="tool-container">', unsafe_allow_html=True)
         st.markdown('<div class="sub-header"><h3>📊 Extract Tables from PDF</h3></div>', unsafe_allow_html=True)
-        
         uploaded_file = st.file_uploader("Upload PDF file", type=['pdf'], key="table_pdf")
-        
         if uploaded_file:
             try:
                 doc = fitz.open(stream=uploaded_file.read(), filetype="pdf")
                 tables_found = []
-                
                 for page_num in range(len(doc)):
                     page = doc[page_num]
                     tables = page.find_tables()
                     if tables.tables:
-                        tables_found.extend([{
-                            'page': page_num + 1,
-                            'table': table
-                        } for table in tables.tables])
-                
+                        tables_found.extend([{'page': page_num + 1,'table': table} for table in tables.tables])
                 if tables_found:
                     st.markdown(f"📋 Found **{len(tables_found)}** tables in the PDF")
-                    
-                    selected_tables = st.multiselect(
-                        "Select tables to extract",
-                        options=range(len(tables_found)),
-                        format_func=lambda x: f"Table {x+1} (Page {tables_found[x]['page']})"
-                    )
-                    
+                    selected_tables = st.multiselect("Select tables to extract",options=range(len(tables_found)),format_func=lambda x: f"Table {x+1} (Page {tables_found[x]['page']})")
                     if selected_tables and st.button("📥 Extract Selected Tables", use_container_width=True):
                         output = BytesIO()
                         with pd.ExcelWriter(output, engine='openpyxl') as writer:
                             for i in selected_tables:
                                 table = tables_found[i]['table']
                                 df = pd.DataFrame(table.extract())
-                                df.to_excel(
-                                    writer,
-                                    sheet_name=f"Table_{i+1}_Page_{tables_found[i]['page']}",
-                                    index=False
-                                )
-                        
-                        st.download_button(
-                            label="⬇️ Download Excel File",
-                            data=output.getvalue(),
-                            file_name="extracted_tables.xlsx",
-                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.document",
-                            use_container_width=True
-                        )
+                                df.to_excel(writer,sheet_name=f"Table_{i+1}_Page_{tables_found[i]['page']}",index=False)
+                        st.download_button(label="⬇️ Download Excel File",data=output.getvalue(),file_name="extracted_tables.xlsx",mime="application/vnd.openxmlformats-officedocument.spreadsheetml.document",use_container_width=True)
                         st.markdown('<div class="success-message">✅ Tables extracted successfully!</div>', unsafe_allow_html=True)
                 else:
                     st.markdown('<div class="warning-message">⚠️ No tables found in the PDF</div>', unsafe_allow_html=True)
-            
             except Exception as e:
                 st.markdown(f'<div class="error-message">❌ Error: {str(e)}</div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
@@ -1828,22 +1508,12 @@ def create_privacy_section():
         }
         </style>
     """, unsafe_allow_html=True)
-
-    # Main Privacy Header
-    st.markdown("""
-        <div class="privacy-header">
-            <h1>🔒 Data Privacy & Terms of Service</h1>
-            <p>Your privacy and security are our top priorities</p>
-        </div>
-    """, unsafe_allow_html=True)
-
-    # About Our App
+    st.markdown("""<div class="privacy-header"><h1>🔒 Data Privacy & Terms of Service</h1><p>Your privacy and security are our top priorities</p></div>""", unsafe_allow_html=True)
     st.markdown("""
         <div class="section-card">
             <h2 class="section-header">📱 About Our Data Central</h2>
             <p>Our application is designed to provide secure, efficient, and user-friendly file management solutions. 
             We understand the importance of your data and have built this system with privacy and security at its core.</p>
-            
             <h3>🎯 Our Core Values</h3>
             <div class="value-card">
                 <p><span class="highlight-text">Privacy First:</span> Your data privacy is non-negotiable.</p>
@@ -1859,8 +1529,6 @@ def create_privacy_section():
             </div>
         </div>
     """, unsafe_allow_html=True)
-
-    # Data Privacy Commitments
     st.markdown("""
         <div class="section-card">
             <h2 class="section-header">🛡️ Our Data Privacy Commitments</h2>
@@ -1883,8 +1551,6 @@ def create_privacy_section():
             </ul>
         </div>
     """, unsafe_allow_html=True)
-
-    # Features and Security
     st.markdown("""
         <div class="section-card">
             <h2 class="section-header">🔐 Security Features</h2>
@@ -1904,8 +1570,6 @@ def create_privacy_section():
             </ul>
         </div>
     """, unsafe_allow_html=True)
-
-    # Terms of Service
     st.markdown("""
         <div class="section-card">
             <h2 class="section-header">📜 Terms of Service</h2>
@@ -1925,7 +1589,6 @@ def create_privacy_section():
                     📋 Understand that we provide no warranty for the service
                 </li>
             </ul>
-            
             <h4>Limitations of Liability</h4>
             <p>We strive to provide a reliable service but cannot guarantee:</p>
             <ul class="feature-list">
@@ -1941,8 +1604,6 @@ def create_privacy_section():
             </ul>
         </div>
     """, unsafe_allow_html=True)
-
-    # Acceptable Use
     st.markdown("""
         <div class="section-card">
             <h2 class="section-header">✅ Acceptable Use Policy</h2>
@@ -1963,8 +1624,6 @@ def create_privacy_section():
             </ul>
         </div>
     """, unsafe_allow_html=True)
-
-    # Contact Information
     st.markdown("""
         <div class="section-card">
             <h2 class="section-header">📞 Contact & Support</h2>
@@ -1979,7 +1638,6 @@ def create_privacy_section():
             </ul>
         </div>
     """, unsafe_allow_html=True)
-
 def integrate_privacy_section():
     # Add this to your main app's sidebar or as a separate page
     st.sidebar.markdown("---")
