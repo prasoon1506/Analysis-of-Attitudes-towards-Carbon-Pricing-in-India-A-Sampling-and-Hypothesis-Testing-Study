@@ -626,7 +626,6 @@ def price():
  if __name__ == "__main__":
     main()
 def price_input():
- import warnings
  warnings.filterwarnings('ignore', category=DeprecationWarning)
  def parse_date(date_str):
     if pd.isna(date_str):
@@ -7045,9 +7044,7 @@ def discount():
             mask = df.iloc[:, 0].fillna('').astype(str).str.strip() == selected_discount.strip()
             filtered_df = df[mask]
             if len(filtered_df) > 0:
-                monthly_data = {
-                    month: {'actual': filtered_df.iloc[0, cols['actual']],'approved': filtered_df.iloc[0, cols['approved']],'quantity': filtered_df.iloc[0, cols['quantity']]}
-                    for month, cols in self.month_columns.items()}
+                monthly_data = {month: {'actual': filtered_df.iloc[0, cols['actual']],'approved': filtered_df.iloc[0, cols['approved']],'quantity': filtered_df.iloc[0, cols['quantity']]}for month, cols in self.month_columns.items()}
         for month, data in monthly_data.items():
             st.markdown(f"""
             <div style='text-align: center; margin-bottom: 10px;'>
@@ -7308,21 +7305,11 @@ def main():
     </div>
     """, unsafe_allow_html=True)
     with st.sidebar:
-        selected = option_menu(
-            menu_title="Main Menu",
-            options=["Home", "Data Management", "Sales Volume Analysis","Price Analysis", "Predictions", "Settings"],
-            icons=["house-fill", "database-fill-gear", "graph-up-arrow","lightbulb-fill","gear-fill"],
-            menu_icon="cast",
-            default_index=0,
-            styles={"container": {"padding": "0!important", "background-color": "transparent"},"icon": {"color": "orange", "font-size": "20px"}, "nav-link": {"font-size": "16px", "text-align": "left", "margin":"0px", "--hover-color": "#eee"},"nav-link-selected": {"background-color": "rgba(255, 255, 255, 0.2)"},})
+        selected = option_menu(menu_title="Main Menu",options=["Home", "Data Management", "Sales Volume Analysis","Price Analysis", "Predictions", "Settings"],icons=["house-fill", "database-fill-gear", "graph-up-arrow","lightbulb-fill","gear-fill"],menu_icon="cast",default_index=0,styles={"container": {"padding": "0!important", "background-color": "transparent"},"icon": {"color": "orange", "font-size": "20px"}, "nav-link": {"font-size": "16px", "text-align": "left", "margin":"0px", "--hover-color": "#eee"},"nav-link-selected": {"background-color": "rgba(255, 255, 255, 0.2)"},})
     if selected == "Home":
         Home()
     elif selected == "Data Management":
-        data_management_menu = option_menu(
-            menu_title="Data Management",
-            options=["Editor", "File Manager","Anil Maheswari EBITDA Data Processor"],
-            icons=["pencil-square", "folder"],
-            orientation="horizontal",)
+        data_management_menu = option_menu(menu_title="Data Management",options=["Editor", "File Manager","Anil Maheswari EBITDA Data Processor"],icons=["pencil-square", "folder"],orientation="horizontal",)
         if data_management_menu == "Editor":
             excel_editor_and_analyzer()
         elif data_management_menu == "File Manager":
@@ -7340,11 +7327,7 @@ def main():
         elif analysis_menu1 == "Price Input":
              price_input()
     elif selected == "Sales Volume Analysis":
-        analysis_menu = option_menu(
-            menu_title="Volume Analysis Dashboards",
-            options=["Sales Dashboard","Sales Review Report","Market Share Analysis","Product-Mix", "Segment-Mix","Geo-Mix"],
-            icons=["clipboard-data", "cash","bar-chart", "arrow-up-right", "shuffle", "globe"],
-            orientation="horizontal",)
+        analysis_menu = option_menu(menu_title="Volume Analysis Dashboards",options=["Sales Dashboard","Sales Review Report","Market Share Analysis","Product-Mix", "Segment-Mix","Geo-Mix"],icons=["clipboard-data", "cash","bar-chart", "arrow-up-right", "shuffle", "globe"],orientation="horizontal",)
         if analysis_menu == "Sales Dashboard":
             sales_dashboard()
         elif analysis_menu == "Sales Review Report":
@@ -7358,11 +7341,7 @@ def main():
         elif analysis_menu == "Geo-Mix":
             green()
     elif selected == "Predictions":
-        prediction_menu = option_menu(
-            menu_title="Predictions",
-            options=["WSP Projection","Sales Projection(Old Model)","Sales Projection(New Model)"],
-            icons=["bar-chart", "graph-up-arrow"],
-            orientation="horizontal",)
+        prediction_menu = option_menu(menu_title="Predictions",options=["WSP Projection","Sales Projection(Old Model)","Sales Projection(New Model)"],icons=["bar-chart", "graph-up-arrow"],orientation="horizontal",)
         if prediction_menu == "WSP Projection":
             descriptive_statistics_and_prediction()
         elif prediction_menu == "Sales Projection(Old Model)":
