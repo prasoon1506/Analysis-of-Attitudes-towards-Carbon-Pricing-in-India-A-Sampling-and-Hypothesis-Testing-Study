@@ -31,3 +31,4 @@ pypdf
 PyMuPDF
 Pillow
 distinctipy
+xlsxwriter
