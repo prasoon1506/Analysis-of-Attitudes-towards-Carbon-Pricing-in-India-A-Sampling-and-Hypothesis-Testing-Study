@@ -8,15 +8,7 @@ from collections import Counter
 import scipy.stats as stats
 import numpy as np
 import io
-
-# Set page config
-st.set_page_config(
-    page_title="Brand Price Analysis Report Generator",
-    page_icon="📊",
-    layout="wide"
-)
-
-# Custom styling
+st.set_page_config(page_title="Brand Price Analysis Report Generator",page_icon="📊",layout="wide")
 st.markdown("""
     <style>
     .main {
@@ -28,39 +20,20 @@ st.markdown("""
     }
     </style>
 """, unsafe_allow_html=True)
-
-# Title and description
 st.title("📊 Brand Price Analysis Report Generator")
-st.markdown("""
-    Generate detailed brand price analysis reports from your Excel data.
-    The report includes statistical analysis by region, brand, and month.
-""")
-
+st.markdown("""Generate detailed brand price analysis reports from your Excel data.The report includes statistical analysis by region, brand, and month.""")
 def safe_stats_calculation(data):
-    """Calculate statistics safely with error handling"""
     if len(data) == 0:
-        return {
-            'Median': 0,
-            'Mode': 0,
-            'Mode Frequency': 0,
-            'Q1': 0,
-            'Q3': 0,
-            'Min': 0,
-            'Max': 0,
-            'Skewness': 0
-        }
-    
+        return {'Median': 0,'Mode': 0,'Mode Frequency': 0,'Q1': 0,'Q3': 0,'Min': 0,'Max': 0,'Skewness': 0}
     try:
         mode_calc = Counter(data).most_common(1)[0]
         mode_value, mode_freq = mode_calc
     except IndexError:
         mode_value, mode_freq = 0, 0
-        
     try:
         skewness = float(stats.skew(data))
     except:
         skewness = 0
-        
     return {
         'Median': np.median(data),
         'Mode': mode_value,
