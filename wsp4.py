@@ -122,126 +122,177 @@ from reportlab.lib.enums import TA_CENTER, TA_LEFT
 from reportlab.lib import colors
 import streamlit as st
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, KeepTogether
+import warnings
+import plotly.express as fx
+import plotly.graph_objs as go
+import plotly.io as pio
+import numpy as np
+from reportlab.platypus import HRFlowable
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, PageBreak,Paragraph, Spacer
+from datetime import datetime as dt
+from reportlab.platypus import KeepTogether
+from reportlab.lib.units import inch
+from reportlab.graphics.shapes import Line
+from datetime import datetime, timedelta
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.lib.colors import green, red, black
+import calendar
+import pandas as pd
+import io
+from reportlab.lib.enums import TA_CENTER, TA_LEFT
+from reportlab.lib import colors
+import streamlit as st
+from openpyxl import Workbook
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, KeepTogether
 def price():
- def calculate_effective_values(df, region, calculation_type='historical'):
-    """
-    Calculate effective NOD and Invoice based on sales distribution in different periods of the month.
-    
-    Parameters:
-    - df: Pandas DataFrame containing price data
-    - region: Region for which calculations are being made
-    - calculation_type: 'historical' or 'current'
-    
-    Returns:
-    - Dictionary with effective NOD and Invoice values
-    """
-    # Filter data for the specific region
-    region_df = df[df['Region(District)'] == region].copy()
-    region_df['Date'] = pd.to_datetime(region_df['Date'], format='%d-%b %Y')
-    
-    # Sort by date to ensure chronological order
-    region_df = region_df.sort_values('Date')
-    
-    if calculation_type == 'historical':
-        # For last month and month before
-        months_to_analyze = sorted(region_df['Date'].dt.to_period('M').unique())[-2:]
-    else:
-        # For current month
-        months_to_analyze = [region_df['Date'].dt.to_period('M').max()]
-    
-    effective_results = {}
-    
-    for month_period in months_to_analyze:
-        month_df = region_df[region_df['Date'].dt.to_period('M') == month_period]
-        
-        if month_df.empty:
-            continue
-        
-        # Get first and last day of the month
-        first_day = month_df['Date'].min().replace(day=1)
-        last_day = first_day + pd.offsets.MonthEnd(0)
-        month_length = (last_day - first_day).days + 1
-        
-        # Split month into three periods
-        first_period_end = first_day + pd.Timedelta(days=9)
-        mid_period_end = first_day + pd.Timedelta(days=19)
-        
-        # Weighting factors
-        first_period_weight = 0.2
-        mid_period_weight = 0.3
-        last_period_weight = 0.5
-        
-        # Identify price changes in each period
-        first_period_data = month_df[(month_df['Date'] >= first_day) & (month_df['Date'] <= first_period_end)]
-        mid_period_data = month_df[(month_df['Date'] > first_period_end) & (month_df['Date'] <= mid_period_end)]
-        last_period_data = month_df[(month_df['Date'] > mid_period_end) & (month_df['Date'] <= last_day)]
-        
-        def weighted_calculation(period_df, total_weight, total_days):
-            if period_df.empty:
-                return period_df.iloc[-1]['Net'] if not period_df.empty else 0, period_df.iloc[-1]['Inv.'] if not period_df.empty else 0
-            
-            if len(period_df) == 1:
-                return period_df.iloc[0]['Net'], period_df.iloc[0]['Inv.']
-            
-            # If multiple price changes in period, distribute weight proportionally
-            period_df = period_df.sort_values('Date')
-            daily_weights = []
-            prev_date = first_day
-            
-            for _, row in period_df.iterrows():
-                days_since_start = (row['Date'] - first_day).days + 1
-                daily_weights.append({
-                    'start_day': prev_date,
-                    'end_day': row['Date'],
-                    'net': row['Net'],
-                    'inv': row['Inv.']
-                })
-                prev_date = row['Date']
-            
-            if prev_date < first_period_end or prev_date < mid_period_end or prev_date < last_day:
-                daily_weights.append({
-                    'start_day': prev_date,
-                    'end_day': first_period_end if first_period_end <= last_day else last_day,
-                    'net': period_df.iloc[-1]['Net'],
-                    'inv': period_df.iloc[-1]['Inv.']
-                })
-            
-            # Calculate weighted averages
-            weighted_net = sum(
-                item['net'] * ((item['end_day'] - item['start_day']).days + 1) / total_days 
-                for item in daily_weights
-            )
-            weighted_inv = sum(
-                item['inv'] * ((item['end_day'] - item['start_day']).days + 1) / total_days 
-                for item in daily_weights
-            )
-            
-            return weighted_net, weighted_inv
-        
-        # Calculations
-        first_period_net, first_period_inv = weighted_calculation(first_period_data, first_period_weight, 10)
-        mid_period_net, mid_period_inv = weighted_calculation(mid_period_data, mid_period_weight, 10)
-        last_period_net, last_period_inv = weighted_calculation(last_period_data, last_period_weight, month_length - 20)
-        
-        # Combine weighted values
-        effective_nod = (
-            first_period_net * first_period_weight +
-            mid_period_net * mid_period_weight +
-            last_period_net * last_period_weight
-        )
-        
-        effective_inv = (
-            first_period_inv * first_period_weight +
-            mid_period_inv * mid_period_weight +
-            last_period_inv * last_period_weight
-        )
-        
-        effective_results[month_period] = {
-            'effective_nod': round(effective_nod, 2),
-            'effective_inv': round(effective_inv, 2)
-        }
-    
-    return effective_results
+ def calculate_effective_invoice(df, region, month, year):
+    df['Date'] = pd.to_datetime(df['Date'])
+    month_start = pd.Timestamp(year=year, month=month, day=1)
+    prev_month_data = df[(df['Region(District)'] == region) & (df['Date'] < month_start)].sort_values('Date', ascending=False)
+    last_available_invoice = None
+    if not prev_month_data.empty:
+        last_available_invoice = prev_month_data.iloc[0]['Inv.']
+    month_data = df[(df['Region(District)'] == region) & (df['Date'].dt.month == month) & (df['Date'].dt.year == year)].copy()
+    if month_data.empty and last_available_invoice is not None:
+        month_data = pd.DataFrame([{'Date': month_start,'Inv.': last_available_invoice,'Region(District)': region}])
+    elif month_data.empty and last_available_invoice is None:
+        return None
+    month_data = month_data.sort_values('Date')
+    last_day = pd.Timestamp(year, month, 1) + pd.offsets.MonthEnd(1)
+    days_in_month = last_day.day
+    first_period = pd.date_range(start=f"{year}-{month:02d}-01", end=f"{year}-{month:02d}-10")
+    middle_period = pd.date_range(start=f"{year}-{month:02d}-11", end=f"{year}-{month:02d}-20")
+    last_period = pd.date_range(start=f"{year}-{month:02d}-21", end=f"{year}-{month:02d}-{days_in_month}")
+    def calculate_period_invoice(period_dates, data, weight):
+        if data[data['Date'] <= period_dates[-1]].empty and last_available_invoice is not None:
+            return last_available_invoice * weight
+        period_data = data[data['Date'].dt.date.isin(period_dates.date)]
+        if period_data.empty:
+            prev_data = data[data['Date'] < period_dates[0]]
+            if prev_data.empty and last_available_invoice is not None:
+                return last_available_invoice * weight
+            elif not prev_data.empty:
+                return prev_data.iloc[-1]['Inv.'] * weight
+            return 0
+        invoice_values = []
+        if period_data.iloc[0]['Date'].date() > period_dates[0].date():
+            prev_data = data[data['Date'] < period_dates[0]]
+            initial_invoice = last_available_invoice if prev_data.empty else prev_data.iloc[-1]['Inv.']
+            days_until_first_change = (period_data.iloc[0]['Date'].date() - period_dates[0].date()).days
+            if days_until_first_change > 0:
+                invoice_values.append((initial_invoice, days_until_first_change))
+        for idx, row in period_data.iterrows():
+            next_change = period_data[period_data['Date'] > row['Date']].iloc[0]['Date'] if not period_data[period_data['Date'] > row['Date']].empty else period_dates[-1]
+            days_effective = (min(next_change, period_dates[-1]).date() - row['Date'].date()).days + 1
+            invoice_values.append((row['Inv.'], days_effective))
+        total_days = sum(days for _, days in invoice_values)
+        weighted_invoice = sum(invoice * (days / total_days) for invoice, days in invoice_values)
+        return weighted_invoice * weight
+    first_period_invoice = calculate_period_invoice(first_period, month_data, 0.20)
+    middle_period_invoice = calculate_period_invoice(middle_period, month_data, 0.30)
+    last_period_invoice = calculate_period_invoice(last_period, month_data, 0.50)
+    effective_invoice = first_period_invoice + middle_period_invoice + last_period_invoice
+    return {'effective_invoice': round(effective_invoice, 2),'first_period_invoice': round(first_period_invoice / 0.20, 2) if first_period_invoice != 0 else 0,'middle_period_invoice': round(middle_period_invoice / 0.30, 2) if middle_period_invoice != 0 else 0,'last_period_invoice': round(last_period_invoice / 0.50, 2) if last_period_invoice != 0 else 0,'first_period_contribution': round(first_period_invoice, 2),'middle_period_contribution': round(middle_period_invoice, 2),'last_period_contribution': round(last_period_invoice, 2),'last_available_invoice': last_available_invoice}
+ def create_effective_invoice_analysis(story, df, region, current_date, styles):
+    normal_style = styles['Normal']
+    month_style = ParagraphStyle('MonthStyle',parent=styles['Heading3'],textColor=colors.green,spaceAfter=2)
+    metric_style = ParagraphStyle('MetricStyle',parent=styles['Normal'],fontSize=12,textColor=colors.brown,spaceAfter=2)
+    current_month = current_date.month
+    current_year = current_date.year
+    last_month = current_month - 1 if current_month > 1 else 12
+    last_month_year = current_year if current_month > 1 else current_year - 1
+    current_month_effective = calculate_effective_invoice(df, region, current_month, current_year)
+    last_month_effective = calculate_effective_invoice(df, region, last_month, last_month_year)
+    story.append(Paragraph("Effective Invoice Analysis:-", month_style))
+    table_data = [['Period', 'First 10 days (20%)', 'Middle 10 days (30%)', 'Last 10 days (50%)', 'Total Effective Invoice']]
+    if current_month_effective:
+        current_row = ['Current Month',f"Rs.{current_month_effective['first_period_invoice']:,.0f}\n(Cont: Rs.{current_month_effective['first_period_contribution']:,.0f})",f"Rs.{current_month_effective['middle_period_invoice']:,.0f}\n(Cont: Rs.{current_month_effective['middle_period_contribution']:,.0f})",f"Rs.{current_month_effective['last_period_invoice']:,.0f}\n(Cont: Rs.{current_month_effective['last_period_contribution']:,.0f})",f"Rs.{current_month_effective['effective_invoice']:,.2f}"]
+        table_data.append(current_row)
+    if last_month_effective:
+        last_row = ['Last Month',f"Rs.{last_month_effective['first_period_invoice']:,.0f}\n(Cont: Rs.{last_month_effective['first_period_contribution']:,.0f})",f"Rs.{last_month_effective['middle_period_invoice']:,.0f}\n(Cont: Rs.{last_month_effective['middle_period_contribution']:,.0f})",f"Rs.{last_month_effective['last_period_invoice']:,.0f}\n(Cont: Rs.{last_month_effective['last_period_contribution']:,.0f})",f"Rs.{last_month_effective['effective_invoice']:,.2f}"]
+        table_data.append(last_row)
+    if current_month_effective or last_month_effective:
+        t = Table(table_data, colWidths=[80, 110, 110, 110, 100])
+        t.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, 0), colors.grey),('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),('ALIGN', (0, 0), (-1, -1), 'CENTER'),('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),('FONTSIZE', (0, 0), (-1, 0), 9),('FONTSIZE', (0, 1), (-1, -1), 8),('GRID', (0, 0), (-1, -1), 1, colors.black),('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),('ALIGN', (0, 0), (-1, -1), 'CENTER'),('BACKGROUND', (0, 1), (-1, 1), colors.lightgrey),('LEFTPADDING', (0, 0), (-1, -1), 3),('RIGHTPADDING', (0, 0), (-1, -1), 3),('TOPPADDING', (0, 0), (-1, -1), 3),('BOTTOMPADDING', (0, 0), (-1, -1), 3),]))
+        story.append(t)
+        story.append(Spacer(1, 6))
+ def create_effective_nod_analysis(story, df, region, current_date, styles):
+    normal_style = styles['Normal']
+    month_style = ParagraphStyle('MonthStyle',parent=styles['Heading3'],textColor=colors.green,spaceAfter=2)
+    metric_style = ParagraphStyle('MetricStyle',parent=styles['Normal'],fontSize=12,textColor=colors.brown,spaceAfter=2)
+    current_month = current_date.month
+    current_year = current_date.year
+    last_month = current_month - 1 if current_month > 1 else 12
+    last_month_year = current_year if current_month > 1 else current_year - 1
+    current_month_effective = calculate_effective_nod(df, region, current_month, current_year)
+    last_month_effective = calculate_effective_nod(df, region, last_month, last_month_year)
+    story.append(Paragraph("Effective NOD Analysis:-", month_style))
+    table_data = [['Period', 'First 10 days (20%)', 'Middle 10 days (30%)', 'Last 10 days (50%)', 'Total Effective NOD']]
+    if current_month_effective:
+        current_row = ['Current Month',f"Rs.{current_month_effective['first_period_nod']:,.0f}\n(Cont: Rs.{current_month_effective['first_period_contribution']:,.0f})",f"Rs.{current_month_effective['middle_period_nod']:,.0f}\n(Cont: Rs.{current_month_effective['middle_period_contribution']:,.0f})",f"Rs.{current_month_effective['last_period_nod']:,.0f}\n(Cont: Rs.{current_month_effective['last_period_contribution']:,.0f})",f"Rs.{current_month_effective['effective_nod']:,.2f}"]
+        table_data.append(current_row)
+    if last_month_effective:
+        last_row = ['Last Month',f"Rs.{last_month_effective['first_period_nod']:,.0f}\n(Cont: Rs.{last_month_effective['first_period_contribution']:,.0f})",f"Rs.{last_month_effective['middle_period_nod']:,.0f}\n(Cont: Rs.{last_month_effective['middle_period_contribution']:,.0f})",f"Rs.{last_month_effective['last_period_nod']:,.0f}\n(Cont: Rs.{last_month_effective['last_period_contribution']:,.0f})",f"Rs.{last_month_effective['effective_nod']:,.2f}"]
+        table_data.append(last_row)
+    if current_month_effective or last_month_effective:
+        t = Table(table_data, colWidths=[80, 110, 110, 110, 100])
+        t.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, 0), colors.grey),('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),('ALIGN', (0, 0), (-1, -1), 'CENTER'),('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),('FONTSIZE', (0, 0), (-1, 0), 9),('FONTSIZE', (0, 1), (-1, -1), 8),('GRID', (0, 0), (-1, -1), 1, colors.black),('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),('ALIGN', (0, 0), (-1, -1), 'CENTER'),('BACKGROUND', (0, 1), (-1, 1), colors.lightgrey),('LEFTPADDING', (0, 0), (-1, -1), 3),('RIGHTPADDING', (0, 0), (-1, -1), 3),('TOPPADDING', (0, 0), (-1, -1), 3),('BOTTOMPADDING', (0, 0), (-1, -1), 3),]))
+        story.append(t)
+        story.append(Spacer(1, 6))
+ def calculate_effective_nod(df, region, month, year):
+    df['Date'] = pd.to_datetime(df['Date'])
+    month_start = pd.Timestamp(year=year, month=month, day=1)
+    prev_month_data = df[(df['Region(District)'] == region) & (df['Date'] < month_start)].sort_values('Date', ascending=False)
+    last_available_nod = None
+    if not prev_month_data.empty:
+        last_available_nod = prev_month_data.iloc[0]['Net']
+    month_data = df[(df['Region(District)'] == region) & (df['Date'].dt.month == month) & (df['Date'].dt.year == year)].copy()
+    if month_data.empty and last_available_nod is not None:
+        month_data = pd.DataFrame([{'Date': month_start,'Net': last_available_nod,'Region(District)': region}])
+    elif month_data.empty and last_available_nod is None:
+        return None
+    month_data = month_data.sort_values('Date')
+    last_day = pd.Timestamp(year, month, 1) + pd.offsets.MonthEnd(1)
+    days_in_month = last_day.day
+    first_period = pd.date_range(start=f"{year}-{month:02d}-01", end=f"{year}-{month:02d}-10")
+    middle_period = pd.date_range(start=f"{year}-{month:02d}-11", end=f"{year}-{month:02d}-20")
+    last_period = pd.date_range(start=f"{year}-{month:02d}-21", end=f"{year}-{month:02d}-{days_in_month}")
+    def calculate_period_nod(period_dates, data, weight):
+        if data[data['Date'] <= period_dates[-1]].empty and last_available_nod is not None:
+            return last_available_nod * weight
+        period_data = data[data['Date'].dt.date.isin(period_dates.date)]
+        if period_data.empty:
+            prev_data = data[data['Date'] < period_dates[0]]
+            if prev_data.empty and last_available_nod is not None:
+                return last_available_nod * weight
+            elif not prev_data.empty:
+                return prev_data.iloc[-1]['Net'] * weight
+            return 0
+        nod_values = []
+        current_period_start = period_dates[0]
+        if period_data.iloc[0]['Date'].date() > period_dates[0].date():
+            prev_data = data[data['Date'] < period_dates[0]]
+            initial_nod = last_available_nod if prev_data.empty else prev_data.iloc[-1]['Net']
+            days_until_first_change = (period_data.iloc[0]['Date'].date() - period_dates[0].date()).days
+            if days_until_first_change > 0:
+                nod_values.append((initial_nod, days_until_first_change))
+        for idx, row in period_data.iterrows():
+            next_change = period_data[period_data['Date'] > row['Date']].iloc[0]['Date'] if not period_data[period_data['Date'] > row['Date']].empty else period_dates[-1]
+            days_effective = (min(next_change, period_dates[-1]).date() - row['Date'].date()).days 
+            nod_values.append((row['Net'], days_effective))
+        total_days = sum(days for _, days in nod_values)
+        weighted_nod = sum(nod * (days / total_days) for nod, days in nod_values)
+        return weighted_nod * weight
+    first_period_nod = calculate_period_nod(first_period, month_data, 0.20)
+    middle_period_nod = calculate_period_nod(middle_period, month_data, 0.30)
+    last_period_nod = calculate_period_nod(last_period, month_data, 0.50)
+    effective_nod = first_period_nod + middle_period_nod + last_period_nod
+    return {'effective_nod': round(effective_nod, 2),'first_period_nod': round(first_period_nod / 0.20, 2) if first_period_nod != 0 else 0,'middle_period_nod': round(middle_period_nod / 0.30, 2) if middle_period_nod != 0 else 0,'last_period_nod': round(last_period_nod / 0.50, 2) if last_period_nod != 0 else 0,'first_period_contribution': round(first_period_nod, 2),'middle_period_contribution': round(middle_period_nod, 2),'last_period_contribution': round(last_period_nod, 2),'last_available_nod': last_available_nod}
  def get_competitive_brands_wsp_data():
     include_competitive_brands = st.checkbox("Include Competitive Brands WSP Data")
     competitive_brands_wsp = {}
@@ -275,16 +326,27 @@ def price():
     if not last_data_of_prev_month.empty:
         return last_data_of_prev_month.iloc[-1]
     return None
+ def get_start_data_point_current_month(df, reference_date):
+    nov_30_data = df[(df['Date'].dt.year == reference_date.year) & (df['Date'].dt.month == 11) & (df['Date'].dt.day == 30)]
+    if not nov_30_data.empty:
+        return nov_30_data.iloc[-1]
+    first_day_data = df[(df['Date'].dt.year == reference_date.year) & (df['Date'].dt.month == 12) & (df['Date'].dt.day == 1)]
+    if not first_day_data.empty:
+        return first_day_data.iloc[0]
+    nov_data = df[(df['Date'].dt.year == reference_date.year) & (df['Date'].dt.month == 11)]
+    if not nov_data.empty:
+        return nov_data.iloc[-1]
+    return None
  def create_comprehensive_metric_progression(story, region_df, current_date, last_month, metric_column, title, styles, is_secondary_metric=False):
     if is_secondary_metric:
-        month_style = ParagraphStyle(f'{title}MonthStyle',parent=styles['Normal'],textColor=colors.darkgreen,fontSize=12,spaceAfter=4)
-        normal_style = ParagraphStyle(f'{title}NormalStyle',parent=styles['Normal'],fontSize=12)
-        total_change_style = ParagraphStyle(f'{title}TotalChangeStyle',parent=styles['Normal'],fontSize=12,textColor=colors.brown,alignment=TA_LEFT,spaceAfter=4)
+        month_style = ParagraphStyle(f'{title}MonthStyle',parent=styles['Normal'],textColor=colors.darkgreen,fontSize=10,spaceAfter=2)
+        normal_style = ParagraphStyle(f'{title}NormalStyle',parent=styles['Normal'],fontSize=10)
+        total_change_style = ParagraphStyle(f'{title}TotalChangeStyle',parent=styles['Normal'],fontSize=12,textColor=colors.brown,alignment=TA_LEFT,spaceAfter=2)
     else:
-        month_style = ParagraphStyle('MonthStyle', parent=styles['Heading3'],textColor=colors.green,spaceAfter=6)
+        month_style = ParagraphStyle('MonthStyle', parent=styles['Heading3'],textColor=colors.green,spaceAfter=2)
         normal_style = styles['Normal']
-        large_price_style = ParagraphStyle('LargePriceStyle',parent=styles['Normal'],fontSize=13,spaceAfter=6)
-        total_change_style = ParagraphStyle('TotalChangeStyle',parent=styles['Normal'],fontSize=12,textColor=colors.brown,alignment=TA_LEFT,spaceAfter=14,fontName='Helvetica-Bold')
+        large_price_style = ParagraphStyle('LargePriceStyle',parent=styles['Normal'],fontSize=14,spaceAfter=2)
+        total_change_style = ParagraphStyle('TotalChangeStyle',parent=styles['Normal'],fontSize=12,textColor=colors.brown,alignment=TA_LEFT,spaceAfter=2,fontName='Helvetica-Bold')
     if not is_secondary_metric:
         story.append(Paragraph(f"{title} Progression from {last_month.strftime('%B %Y')} to {current_date.strftime('%B %Y')}:-", month_style))
     start_data_point = get_start_data_point(region_df, last_month)
@@ -292,6 +354,7 @@ def price():
         story.append(Paragraph("No data available for this period", normal_style))
         story.append(Spacer(1, 0 if is_secondary_metric else 0))
         return
+    current_month_start_data_point = get_start_data_point_current_month(region_df, current_date)
     progression_df = region_df[(region_df['Date'] >= start_data_point['Date']) & (region_df['Date'] <= current_date)].copy().sort_values('Date')
     if progression_df.empty:
         story.append(Paragraph("No data available for this period", normal_style))
@@ -312,31 +375,51 @@ def price():
                 else:
                     metric_progression_parts.append(f'<sup><font size="8">00</font></sup>→')
         full_progression = " ".join(metric_progression_parts)
-        date_progression_text = " ---- ".join(dates)
+        date_progression_text = " ----- ".join(dates)
         story.append(Paragraph(full_progression, large_price_style))
         story.append(Paragraph(date_progression_text, normal_style))
     if len(progression_df[metric_column]) > 1:
+        # Last month total change
         start_value = progression_df[metric_column].iloc[0]
         end_value = progression_df[metric_column].iloc[-1]
         total_change = end_value - start_value
+        current_month_change_text = "No current month data available"
+        if current_month_start_data_point is not None:
+            current_month_df = region_df[(region_df['Date'] >= current_month_start_data_point['Date']) & (region_df['Date'] <= current_date)]
+            if not current_month_df.empty:
+                current_month_start_value = current_month_start_data_point[metric_column]
+                current_month_end_value = current_month_df[metric_column].iloc[-1]
+                current_month_change = current_month_end_value - current_month_start_value
+                if is_secondary_metric:
+                    if current_month_change == 0:
+                        current_month_change_text = f"Net Change in {title} (Current Month): No Change"
+                    else:
+                        current_month_change_text = f"Net Change in {title} (Current Month): {current_month_change:+.0f} Rs."
+                else:
+                    if current_month_change == 0:
+                        current_month_change_text = f"Net Change in {title} (Current Month): 0 Rs."
+                    else:
+                        current_month_change_text = f"Net Change in {title} (Current Month): {current_month_change:+.0f} Rs."
         if is_secondary_metric:
             if total_change == 0:
-                total_change_text = f"{title}: No Change"
+                total_change_text = f"Net Change in {title} from 1st Nov.: No Change"
             else:
-                total_change_text = f"{title}: {total_change:+.0f} Rs."
+                total_change_text = f"Net Change in {title} from 1st Nov.: {total_change:+.0f} Rs."
             story.append(Paragraph(total_change_text, total_change_style))
+            story.append(Paragraph(current_month_change_text, total_change_style))
         else:
             if total_change == 0:
-                total_change_text = f"Net Change in {title}: 0 Rs."
+                total_change_text = f"Net Change in {title} from 1st Nov.: 0 Rs."
             else:
-                total_change_text = f"Net Change in {title}: {total_change:+.0f} Rs."
+                total_change_text = f"Net Change in {title} from 1st Nov.: {total_change:+.0f} Rs."
             story.append(Paragraph(total_change_text, total_change_style))
+            story.append(Paragraph(current_month_change_text, total_change_style))
     story.append(Spacer(1, 0 if is_secondary_metric else 0))
  def create_wsp_progression(story, wsp_df, region, styles, brand_name=None, is_last_brand=False, company_wsp_df=None):
     normal_style = styles['Normal']
-    month_style = ParagraphStyle('MonthStyle', parent=styles['Heading3'], textColor=colors.green, spaceAfter=6)
-    large_price_style = ParagraphStyle('LargePriceStyle', parent=styles['Normal'], fontSize=14, spaceAfter=6)
-    total_change_style = ParagraphStyle('TotalChangeStyle', parent=styles['Normal'], fontSize=12, textColor=colors.brown, alignment=TA_LEFT, spaceAfter=14, fontName='Helvetica-Bold')
+    month_style = ParagraphStyle('MonthStyle', parent=styles['Heading3'], textColor=colors.green, spaceAfter=2)
+    large_price_style = ParagraphStyle('LargePriceStyle', parent=styles['Normal'], fontSize=14, spaceAfter=2)
+    total_change_style = ParagraphStyle('TotalChangeStyle', parent=styles['Normal'], fontSize=12, textColor=colors.brown, alignment=TA_LEFT, spaceAfter=2, fontName='Helvetica-Bold')
     if wsp_df is None:
         return
     region_wsp = wsp_df[wsp_df['Region(District)'] == region]
@@ -344,9 +427,9 @@ def price():
         story.append(Paragraph(f"No WSP data available for {region}" + (f" - {brand_name}" if brand_name else ""), normal_style))
         story.append(Spacer(1, 0))
         return
-    wsp_columns = ['Week-1 Nov', 'Week-2 Nov', 'Week-3 Nov', 'Week-4 Nov', 'Week-1 Dec']
+    wsp_columns = ['Week-1 Nov', 'Week-2 Nov', 'Week-3 Nov', 'Week-4 Nov', 'Week-1 Dec','Week-2 Dec']
     metric_values = region_wsp[wsp_columns].values.flatten().tolist()
-    week_labels = ['W-1 Nov', 'W-2 Nov', 'W-3 Nov', 'W-4 Nov', 'W-1 Dec']
+    week_labels = ['W-1 Nov', 'W-2 Nov', 'W-3 Nov', 'W-4 Nov', 'W-1 Dec','W-2 Dec']
     header_text = f"WSP Progression from November to December 2024" + \
                   (f" - {brand_name}" if brand_name else "")
     story.append(Paragraph(header_text + ":-", month_style))
@@ -367,11 +450,17 @@ def price():
     story.append(Paragraph(week_progression_text, normal_style))
     if len(metric_values) > 1:
         total_change = float(metric_values[-1]) - float(metric_values[0])
+        current_month_change = float(metric_values[5]) - float(metric_values[3])
         if total_change == 0:
-            total_change_text = f"Net Change in WSP{' - ' + brand_name if brand_name else ''}: 0 Rs."
+            total_change_text = f"Net Change in WSP from W-1 Nov{' - ' + brand_name if brand_name else ''}: 0 Rs."
         else:
-            total_change_text = f"Net Change in WSP{' - ' + brand_name if brand_name else ''}: {total_change:+.0f} Rs."
+            total_change_text = f"Net Change in WSP from W-1 Nov{' - ' + brand_name if brand_name else ''}: {total_change:+.0f} Rs."
         story.append(Paragraph(total_change_text, total_change_style))
+        if current_month_change == 0:
+            current_month_change_text = f"Net Change in WSP (Current Month){' - ' + brand_name if brand_name else ''}: 0 Rs."
+        else:
+            current_month_change_text = f"Net Change in WSP (Current Month){' - ' + brand_name if brand_name else ''}: {current_month_change:+.0f} Rs."
+        story.append(Paragraph(current_month_change_text, total_change_style))
     if company_wsp_df is not None and brand_name is not None:
         company_region_wsp = company_wsp_df[company_wsp_df['Region(District)'] == region]
         if not company_region_wsp.empty and not region_wsp.empty:
@@ -382,50 +471,54 @@ def price():
             story.append(Paragraph(wsp_diff_text, total_change_style))
     story.append(Spacer(1, 0))
     if not is_last_brand:
-        story.append(HRFlowable(width="100%",thickness=1,lineCap='round',color=colors.black,spaceBefore=6,spaceAfter=6))
+        story.append(HRFlowable(width="100%",thickness=1,lineCap='round',color=colors.black,spaceBefore=2,spaceAfter=2))
  def save_regional_price_trend_report(df):
     company_wsp_df = get_wsp_data()
     competitive_brands_wsp = get_competitive_brands_wsp_data()
     return generate_regional_price_trend_report(df, company_wsp_df, competitive_brands_wsp)
  def generate_regional_price_trend_report(df, company_wsp_df=None, competitive_brands_wsp=None):
     try:
+        region_order = ['GJ (Ahmedabad)', 'GJ (Surat)','RJ(Jaipur)', 'RJ(Udaipur)','HY (Gurgaon)','PB (Bhatinda)','Delhi','CG (Raipur)','ORR (Khorda)', 'ORR (Sambalpur)', 'UP (Gaziabad)', 'M.P.(East)[Balaghat]', 'M.P.(West)[Indore]', 'M.H.(East)[Nagpur Urban]']
         required_columns = ['Date', 'Region(District)', 'Inv.', 'Net', 'RD', 'STS']
         for col in required_columns:
             if col not in df.columns:
                 raise ValueError(f"Missing required column: {col}")
         df['Date'] = pd.to_datetime(df['Date'], format='%d-%b %Y')
-        df = df.sort_values(['Region(District)', 'Date'])
+        df['region_order'] = df['Region(District)'].map({region: idx for idx, region in enumerate(region_order)})
+        df = df.sort_values(['region_order', 'Date'])
         buffer = io.BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=2, leftMargin=2, topMargin=5, bottomMargin=2)
+        doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=8, leftMargin=1, topMargin=5, bottomMargin=1)
         styles = getSampleStyleSheet()
         title_style = ParagraphStyle('TitleStyle',parent=styles['Title'],fontSize=20, textColor=colors.darkblue,alignment=TA_CENTER,spaceAfter=10)
-        region_style = ParagraphStyle('RegionStyle',parent=styles['Heading2'], textColor=colors.blue,spaceAfter=8,fontSize=14)
+        region_style = ParagraphStyle('RegionStyle',parent=styles['Heading2'], textColor=colors.blue,spaceAfter=3,fontSize=14)
         story = []
         story.append(Paragraph("Regional Price Trend Analysis Report", title_style))
-        story.append(Paragraph("Comprehensive Price Movement Insights", ParagraphStyle('SubtitleStyle', parent=styles['Normal'], fontSize=12, textColor=colors.red,alignment=TA_CENTER,spaceAfter=10)))
+        story.append(Paragraph("Comprehensive Price Movement Insights", ParagraphStyle('SubtitleStyle', parent=styles['Normal'], fontSize=12, textColor=colors.red,alignment=TA_CENTER,spaceAfter=3)))
         story.append(Spacer(1, 0))
         current_date = datetime.now()
         last_month = current_date.replace(day=1) - timedelta(days=1)
-        regions = df['Region(District)'].unique()
+        regions = [region for region in region_order if region in df['Region(District)'].unique()]
         for region in regions:
             region_story = []
             region_df = df[df['Region(District)'] == region].copy()
             region_story.append(Paragraph(f"{region}", region_style))
             region_story.append(Spacer(1, 1))
             create_comprehensive_metric_progression(region_story, region_df, current_date, last_month, 'Inv.', 'Invoice Price', styles)
+            create_effective_invoice_analysis(region_story, df, region, current_date, styles)
             create_comprehensive_metric_progression(region_story, region_df, current_date, last_month, 'RD', 'RD', styles, is_secondary_metric=True)
             create_comprehensive_metric_progression(region_story, region_df, current_date, last_month, 'STS', 'STS', styles, is_secondary_metric=True)
             create_comprehensive_metric_progression(region_story, region_df, current_date, last_month, 'Net', 'NOD', styles)
+            create_effective_nod_analysis(region_story, df, region, current_date, styles)
             brand_count = 1 if company_wsp_df is not None and not company_wsp_df.empty else 0
             if competitive_brands_wsp:
                 brand_count += len(competitive_brands_wsp)
             is_last_brand = (brand_count == 1)
             create_wsp_progression(region_story, company_wsp_df, region, styles, is_last_brand=is_last_brand, company_wsp_df=company_wsp_df)
             if competitive_brands_wsp:
-              brand_names = list(competitive_brands_wsp.keys())
-              for i, (brand, brand_wsp_df) in enumerate(competitive_brands_wsp.items()):
-                is_last_brand = (i == len(brand_names) - 1)
-                create_wsp_progression(region_story, brand_wsp_df, region, styles, brand_name=brand, is_last_brand=is_last_brand, company_wsp_df=company_wsp_df)
+                brand_names = list(competitive_brands_wsp.keys())
+                for i, (brand, brand_wsp_df) in enumerate(competitive_brands_wsp.items()):
+                    is_last_brand = (i == len(brand_names) - 1)
+                    create_wsp_progression(region_story, brand_wsp_df, region, styles, brand_name=brand, is_last_brand=is_last_brand, company_wsp_df=company_wsp_df)
             story.append(KeepTogether(region_story))
             story.append(Paragraph("<pagebreak/>", styles['Normal']))
         doc.build(story)
@@ -444,7 +537,7 @@ def price():
                     wsp_df = pd.read_csv(wsp_file)
                 else:
                     wsp_df = pd.read_excel(wsp_file)
-                required_columns = ['Region(District)', 'Week-1 Nov', 'Week-2 Nov', 'Week-3 Nov', 'Week-4 Nov', 'Week-1 Dec']
+                required_columns = ['Region(District)', 'Week-1 Nov', 'Week-2 Nov', 'Week-3 Nov', 'Week-4 Nov', 'Week-1 Dec','Week-2 Dec']
                 for col in required_columns:
                     if col not in wsp_df.columns:
                         st.error(f"Missing required WSP column: {col}")
@@ -463,7 +556,7 @@ def price():
     doc = SimpleDocTemplate(buffer, pagesize=letter)
     styles = getSampleStyleSheet()
     title_style = styles['Heading1']
-    data = [df.columns.tolist()]
+    data = [df.columns.tolist()]  # Header row
     for _, row in df.iterrows():
         data.append([str(val) for val in row.tolist()])
     table = Table(data)
@@ -474,9 +567,13 @@ def price():
     buffer.seek(0)
     return buffer
  def save_processed_dataframe(df, start_date=None, download_format='xlsx'):
+    region_order = ['GJ (Ahmedabad)', 'GJ (Surat)', 'RJ(Jaipur)', 'RJ(Udaipur)', 'HY (Gurgaon)', 'PB (Bhatinda)','Delhi','CG (Raipur)', 'ORR (Khorda)', 'ORR (Sambalpur)', 'UP (Gaziabad)', 'M.P.(East)[Balaghat]', 'M.P.(West)[Indore]', 'M.H.(East)[Nagpur Urban]']
     if 'processed_dataframe' in st.session_state:
         df = st.session_state['processed_dataframe']
     df_to_save = df.copy()
+    df_to_save['region_order'] = df_to_save['Region(District)'].map({region: idx for idx, region in enumerate(region_order)})
+    df_to_save = df_to_save.sort_values(['region_order', 'Date'])
+    df_to_save = df_to_save.drop(columns=['region_order'])
     if 'Date' in df_to_save.columns:
         df_to_save['Date'] = pd.to_datetime(df_to_save['Date'], format='%d-%b %Y')
         if start_date:
@@ -488,10 +585,12 @@ def price():
             df_to_save.to_excel(writer, sheet_name='Sheet1', index=False)
             workbook = writer.book
             worksheet = writer.sheets['Sheet1']
+            worksheet.repeat_rows(0)
+            worksheet.set_page_view()
             dark_blue = '#2C3E50'
             white = '#FFFFFF'
             light_gray = '#F2F2F2'
-            format_header = workbook.add_format({'bold': True, 'font_size': 14,'bg_color': dark_blue,'font_color': white,'align': 'center','valign': 'vcenter','border': 1,'border_color': '#000000'})
+            format_header = workbook.add_format({'bold': True, 'font_size': 14,'bg_color': dark_blue,'font_color': white,'align': 'center','valign': 'vcenter','border': 1,'border_color': '#000000','text_wrap': True})
             format_general = workbook.add_format({'font_size': 12,'valign': 'vcenter','align': 'center'})
             format_alternating = workbook.add_format({'font_size': 12,'bg_color': light_gray,'valign': 'vcenter','align': 'center'})
             worksheet.set_row(0, 30, format_header)
@@ -556,9 +655,11 @@ def price():
     df = df.reset_index(drop=True)
     return df
  def main():
+    st.set_page_config(page_title="Price Tracker", layout="wide", page_icon="💰")
     st.title("📊 Price Tracker Analysis Tool")
     st.markdown("""
     ### Welcome to the Price Tracker Analysis Tool
+    
     **Instructions:**
     1. Upload your Excel price tracking file
     2. Choose whether the file needs initial editing
@@ -709,6 +810,100 @@ def price():
                         else:
                             pdf_bytes = pio.to_image(fig, format='pdf')
                             st.download_button(label="Download Graph as PDF",data=pdf_bytes,file_name=f'{selected_region_analysis}_{graph_type}_trend.pdf',mime='application/pdf')
+                st.markdown("#### Effective NOD Analysis")
+                current_month = dt.now().month
+                current_year = dt.now().year
+                current_month_effective = calculate_effective_nod(df, selected_region_analysis, current_month, current_year)
+                last_month_effective = calculate_effective_nod(df, selected_region_analysis, current_month - 1 if current_month > 1 else 12,current_year if current_month > 1 else current_year - 1)
+                col_eff_1, col_eff_2 = st.columns(2)
+                with col_eff_1:
+                     st.markdown("##### Current Month Effective NOD(Estimated)")
+                     if current_month_effective:
+                       st.metric("Effective NOD", f"₹{current_month_effective['effective_nod']:,.2f}")
+                       with st.expander("View Breakdown"):
+                            st.markdown(f"""
+                        - First 10 days (20%): ₹{current_month_effective['first_period_nod']:,.2f}
+                          * Contribution: ₹{current_month_effective['first_period_contribution']:,.2f}
+                        - Middle 10 days (30%): ₹{current_month_effective['middle_period_nod']:,.2f}
+                            * Contribution: ₹{current_month_effective['middle_period_contribution']:,.2f}
+                        - Last 10 days (50%): ₹{current_month_effective['last_period_nod']:,.2f}
+                            * Contribution: ₹{current_month_effective['last_period_contribution']:,.2f}
+                        """)
+                     else:
+                        st.info("No data available for current month")
+                with col_eff_2:
+                     st.markdown("##### Last Month Effective NOD")
+                     if last_month_effective:
+                         st.metric("Effective NOD", f"₹{last_month_effective['effective_nod']:,.2f}")
+                         with st.expander("View Breakdown"):
+                             st.markdown(f"""
+                        - First 10 days (20%): ₹{last_month_effective['first_period_nod']:,.2f}
+                             * Contribution: ₹{last_month_effective['first_period_contribution']:,.2f}
+                        - Middle 10 days (30%): ₹{last_month_effective['middle_period_nod']:,.2f}
+                             * Contribution: ₹{last_month_effective['middle_period_contribution']:,.2f}
+                        - Last 10 days (50%): ₹{last_month_effective['last_period_nod']:,.2f}
+                             * Contribution: ₹{last_month_effective['last_period_contribution']:,.2f}
+                        """)
+                     else:
+                         st.info("No data available for last month")
+                if current_month_effective or last_month_effective:
+                   st.markdown("##### Effective NOD Composition")
+                   fig = go.Figure()
+                   if current_month_effective:
+                      current_month_name = dt.now().strftime('%B')
+                      fig.add_trace(go.Bar(name=current_month_name,x=['First 10 Days', 'Middle 10 Days', 'Last 10 Days'],y=[current_month_effective['first_period_contribution'],current_month_effective['middle_period_contribution'],current_month_effective['last_period_contribution']],text=[f"₹{val:,.0f}" for val in [current_month_effective['first_period_contribution'],current_month_effective['middle_period_contribution'],current_month_effective['last_period_contribution']]],textposition='auto',))
+                   if last_month_effective:
+                      last_month_name = (dt.now().replace(day=1) - timedelta(days=1)).strftime('%B')
+                      fig.add_trace(go.Bar(name=last_month_name,x=['First 10 Days', 'Middle 10 Days', 'Last 10 Days'],y=[last_month_effective['first_period_contribution'],last_month_effective['middle_period_contribution'],last_month_effective['last_period_contribution']],text=[f"₹{val:,.0f}" for val in [last_month_effective['first_period_contribution'],last_month_effective['middle_period_contribution'],last_month_effective['last_period_contribution']]],textposition='auto',))
+                   fig.update_layout(title='Effective NOD Composition by Period',xaxis_title='Period',yaxis_title='Contribution to Effective NOD (₹)',barmode='group',height=400)
+                   st.plotly_chart(fig, use_container_width=True)
+                st.markdown("#### Effective Invoice Analysis")
+                current_month = dt.now().month
+                current_year = dt.now().year
+                current_month_effective_invoice = calculate_effective_invoice(df, selected_region_analysis, current_month, current_year)
+                last_month_effective_invoice = calculate_effective_invoice(df, selected_region_analysis,current_month - 1 if current_month > 1 else 12,current_year if current_month > 1 else current_year - 1)
+                col_eff_inv_1, col_eff_inv_2 = st.columns(2)
+                with col_eff_inv_1:
+                  st.markdown("##### Current Month Effective Invoice(Estimated)")
+                  if current_month_effective_invoice:
+                   st.metric("Effective Invoice", f"₹{current_month_effective_invoice['effective_invoice']:,.2f}")
+                   with st.expander("View Breakdown"):
+                      st.markdown(f"""
+            - First 10 days (20%): ₹{current_month_effective_invoice['first_period_invoice']:,.2f}
+              * Contribution: ₹{current_month_effective_invoice['first_period_contribution']:,.2f}
+            - Middle 10 days (30%): ₹{current_month_effective_invoice['middle_period_invoice']:,.2f}
+              * Contribution: ₹{current_month_effective_invoice['middle_period_contribution']:,.2f}
+            - Last 10 days (50%): ₹{current_month_effective_invoice['last_period_invoice']:,.2f}
+              * Contribution: ₹{current_month_effective_invoice['last_period_contribution']:,.2f}
+            """)
+                  else:
+                     st.info("No data available for current month")
+                with col_eff_inv_2:
+                  st.markdown("##### Last Month Effective Invoice")
+                  if last_month_effective_invoice:
+                    st.metric("Effective Invoice", f"₹{last_month_effective_invoice['effective_invoice']:,.2f}")
+                    with st.expander("View Breakdown"):
+                         st.markdown(f"""
+            - First 10 days (20%): ₹{last_month_effective_invoice['first_period_invoice']:,.2f}
+              * Contribution: ₹{last_month_effective_invoice['first_period_contribution']:,.2f}
+            - Middle 10 days (30%): ₹{last_month_effective_invoice['middle_period_invoice']:,.2f}
+              * Contribution: ₹{last_month_effective_invoice['middle_period_contribution']:,.2f}
+            - Last 10 days (50%): ₹{last_month_effective_invoice['last_period_invoice']:,.2f}
+              * Contribution: ₹{last_month_effective_invoice['last_period_contribution']:,.2f}
+            """)
+                  else:
+                     st.info("No data available for last month")
+                if current_month_effective_invoice or last_month_effective_invoice:
+                   st.markdown("##### Effective Invoice Composition")
+                   fig = go.Figure()
+                   if current_month_effective_invoice:
+                      current_month_name = dt.now().strftime('%B')
+                      fig.add_trace(go.Bar(name=current_month_name,x=['First 10 Days', 'Middle 10 Days', 'Last 10 Days'],y=[current_month_effective_invoice['first_period_contribution'],current_month_effective_invoice['middle_period_contribution'],current_month_effective_invoice['last_period_contribution']],text=[f"₹{val:,.0f}" for val in [current_month_effective_invoice['first_period_contribution'],current_month_effective_invoice['middle_period_contribution'],current_month_effective_invoice['last_period_contribution']]],textposition='auto',))
+                   if last_month_effective_invoice:
+                      last_month_name = (dt.now().replace(day=1) - timedelta(days=1)).strftime('%B')
+                      fig.add_trace(go.Bar(name=last_month_name,x=['First 10 Days', 'Middle 10 Days', 'Last 10 Days'],y=[last_month_effective_invoice['first_period_contribution'],last_month_effective_invoice['middle_period_contribution'],last_month_effective_invoice['last_period_contribution']],text=[f"₹{val:,.0f}" for val in [last_month_effective_invoice['first_period_contribution'],last_month_effective_invoice['middle_period_contribution'],last_month_effective_invoice['last_period_contribution']]],textposition='auto',))
+                   fig.update_layout(title='Effective Invoice Composition by Period',xaxis_title='Period',yaxis_title='Contribution to Effective Invoice (₹)',barmode='group',height=400)
+                   st.plotly_chart(fig, use_container_width=True)
                 st.markdown("### Remarks")
                 remarks_df = region_analysis_df[['Date', 'Remarks']].dropna(subset=['Remarks'])
                 remarks_df = remarks_df.sort_values('Date', ascending=False)
@@ -717,41 +912,16 @@ def price():
                             st.markdown(f"""<div style="background-color:#f0f2f6;border-left: 5px solid #4a4a4a;padding: 10px;margin-bottom: 10px;border-radius: 5px;"><strong>{row['Date'].strftime('%d-%b %Y')}</strong>: {row['Remarks']}</div>""", unsafe_allow_html=True)
                 else:
                         st.info("No remarks found for this region.")
-                st.markdown("## 🔍 Effective NOD and Invoice Analysis")
-                show_effective_analysis = st.checkbox("Show Effective NOD and Invoice Analysis")
-                if show_effective_analysis:
-                   try:
-                     effective_values = calculate_effective_values(df, selected_region_analysis)
-                     st.markdown("### Effective NOD and Invoice Calculations")
-                     sorted_months = sorted(effective_values.keys(), reverse=True)
-                     for month in sorted_months:
-                        values = effective_values[month]
-                        st.markdown(f"#### {month.strftime('%B %Y')}")
-                        col1, col2 = st.columns(2)
-                        with col1:
-                          st.metric("Effective NOD", f"₹{values['effective_nod']:,.2f}")
-                        with col2:
-                          st.metric("Effective Invoice", f"₹{values['effective_inv']:,.2f}")
-                     current_month_estimate = calculate_effective_values(df, selected_region_analysis, 'current')
-                     if current_month_estimate:
-                       st.markdown("### Estimated Current Month")
-                       current_month = list(current_month_estimate.keys())[0]
-                       values = current_month_estimate[current_month]
-                       st.markdown(f"#### Estimated {current_month.strftime('%B %Y')}")
-                       col1, col2 = st.columns(2)
-                       with col1:
-                          st.metric("Estimated Effective NOD", f"₹{values['effective_nod']:,.2f}")
-                       with col2:
-                          st.metric("Estimated Effective Invoice", f"₹{values['effective_inv']:,.2f}")
-                       st.info("Note: Current month estimation assumes current prices remain consistent for the rest of the month.")
-                   except Exception as e:
-                       st.error(f"Error calculating effective values: {e}")
             st.markdown("## 📥 Download Options")
             download_options = st.radio("Download File From:", ["Entire Dataframe", "Specific Month", "Regional Price Trend Report"], horizontal=True)
-            if download_options == "Regional Price Trend Report":
-                output = save_regional_price_trend_report(df)
-                st.download_button(label="Download Regional Price Trend Report (PDF)",data=output,file_name="regional_price_trend_report.pdf",mime="application/pdf")
             start_date = None
+            if download_options =="Entire Dataframe":
+                if st.button("Download Processed File"):
+                 try:
+                    output = save_processed_dataframe(df, start_date, selected_format)
+                    st.download_button(label=f"Click to Download {download_format}",data=output,file_name=f'processed_price_tracker.{selected_format}',mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' if selected_format == 'xlsx' else 'application/pdf')
+                 except Exception as e:
+                    st.error(f"Error during download: {e}")
             if download_options == "Specific Month":
                 col1, col2 = st.columns(2)
                 with col1:
@@ -759,15 +929,18 @@ def price():
                 with col2:
                     year_input = st.number_input("Select Year", min_value=2000, max_value=2030, value=2024)
                 start_date = pd.to_datetime(f'01-{month_input[:3].lower()} {year_input}', format='%d-%b %Y')
-            download_format = st.selectbox("Select Download Format", ['Excel (.xlsx)', 'PDF (.pdf)'])
-            format_map = {'Excel (.xlsx)': 'xlsx', 'PDF (.pdf)': 'pdf'}
-            selected_format = format_map[download_format]
-            if st.button("Download Processed File"):
-                try:
+                download_format = st.selectbox("Select Download Format", ['Excel (.xlsx)', 'PDF (.pdf)'])
+                format_map = {'Excel (.xlsx)': 'xlsx', 'PDF (.pdf)': 'pdf'}
+                selected_format = format_map[download_format]
+                if st.button("Download Processed File"):
+                 try:
                     output = save_processed_dataframe(df, start_date, selected_format)
                     st.download_button(label=f"Click to Download {download_format}",data=output,file_name=f'processed_price_tracker.{selected_format}',mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' if selected_format == 'xlsx' else 'application/pdf')
-                except Exception as e:
+                 except Exception as e:
                     st.error(f"Error during download: {e}")
+            if download_options == "Regional Price Trend Report":
+                output = save_regional_price_trend_report(df)
+                st.download_button(label="Download Regional Price Trend Report (PDF)",data=output,file_name="regional_price_trend_report.pdf",mime="application/pdf")
         except Exception as e:
             st.error(f"An error occurred: {e}")
             st.exception(e)
