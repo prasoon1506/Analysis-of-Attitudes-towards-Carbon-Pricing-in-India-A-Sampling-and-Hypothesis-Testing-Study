@@ -394,9 +394,9 @@ def price():
         story.append(Paragraph(f"No WSP data available for {region}" + (f" - {brand_name}" if brand_name else ""), normal_style))
         story.append(Spacer(1, 0))
         return
-    wsp_columns = ['Week-1 Nov', 'Week-2 Nov', 'Week-3 Nov', 'Week-4 Nov', 'Week-1 Dec','Week-2 Dec']
+    wsp_columns = ['D1-3', 'D4-6', 'D7-9', 'D10-12', 'D13-15','D16-18']
     metric_values = region_wsp[wsp_columns].values.flatten().tolist()
-    week_labels = ['W-1 Nov', 'W-2 Nov', 'W-3 Nov', 'W-4 Nov', 'W-1 Dec','W-2 Dec']
+    week_labels = ['D1-3', 'D4-6', 'D7-9', 'D10-12', 'D13-15','D16-18']
     header_text = f"WSP Progression from November to December 2024" + \
                   (f" - {brand_name}" if brand_name else "")
     story.append(Paragraph(header_text + ":-", month_style))
@@ -417,17 +417,12 @@ def price():
     story.append(Paragraph(week_progression_text, normal_style))
     if len(metric_values) > 1:
         total_change = float(metric_values[-1]) - float(metric_values[0])
-        current_month_change = float(metric_values[5]) - float(metric_values[3])
         if total_change == 0:
-            total_change_text = f"Net Change in WSP from W-1 Nov{' - ' + brand_name if brand_name else ''}: 0 Rs."
+            total_change_text = f"Net Change in WSP{' - ' + brand_name if brand_name else ''}: 0 Rs."
         else:
-            total_change_text = f"Net Change in WSP from W-1 Nov{' - ' + brand_name if brand_name else ''}: {total_change:+.0f} Rs."
+            total_change_text = f"Net Change in WSP{' - ' + brand_name if brand_name else ''}: {total_change:+.0f} Rs."
         story.append(Paragraph(total_change_text, total_change_style))
-        if current_month_change == 0:
-            current_month_change_text = f"Net Change in WSP (Current Month){' - ' + brand_name if brand_name else ''}: 0 Rs."
-        else:
-            current_month_change_text = f"Net Change in WSP (Current Month){' - ' + brand_name if brand_name else ''}: {current_month_change:+.0f} Rs."
-        story.append(Paragraph(current_month_change_text, total_change_style))
+        story.append(Paragraph(total_change_style))
     if company_wsp_df is not None and brand_name is not None:
         company_region_wsp = company_wsp_df[company_wsp_df['Region(District)'] == region]
         if not company_region_wsp.empty and not region_wsp.empty:
@@ -4152,18 +4147,14 @@ def create_visualization(region_data, region, brand, months):
     ax_region.text(0.5, 0.5, f'{region} ({brand})', fontsize=28, fontweight='bold', ha='center', va='center')
     ax_current = fig.add_subplot(gs[1, :])
     ax_current.axis('off')
-    overall_nov = region_data['Monthly Achievement(Nov)'].iloc[-1]
-    trade_nov = region_data['Trade Nov'].iloc[-1]
-    non_trade_nov = overall_nov - trade_nov
-    table_data_left = [['AGS Target', f"{region_data['AGS Tgt (Nov)'].iloc[-1]:.0f}"],['Plan', f"{region_data['Month Tgt (Nov)'].iloc[-1]:.0f}"],['Trade Target', f"{region_data['Trade Tgt (Nov)'].iloc[-1]:.0f}"],['Non-Trade Target', f"{region_data['Non-Trade Tgt (Nov)'].iloc[-1]:.0f}"]]
-    table_data_right = [[f"{overall_nov:.0f}"],[f"{trade_nov:.0f}"],[f"{non_trade_nov:.0f}"]]
+    overall_dec = region_data['Monthly Achievement(Dec)'].iloc[-1]
+    trade_dec = region_data['Trade Nov'].iloc[-1]
+    non_trade_dec = overall_dec - trade_dec
+    table_data_left = [['AGS Target', f"{region_data['AGS Tgt (Dec)'].iloc[-1]:.0f}"],['Plan', f"{region_data['Month Tgt (Dec)'].iloc[-1]:.0f}"],['Trade Target', f"{region_data['Trade Tgt (Dec)'].iloc[-1]:.0f}"],['Non-Trade Target', f"{region_data['Non-Trade Tgt (Dec)'].iloc[-1]:.0f}"]]
+    table_data_right = [[f"{overall_dec:.0f}"],[f"{trade_dec:.0f}"],[f"{non_trade_dec:.0f}"]]
     ax_current.text(0.225, 0.9, 'Targets', fontsize=12, fontweight='bold', ha='center')
     ax_current.text(0.35, 0.9, 'Achievement', fontsize=12, fontweight='bold', ha='center')
-    table_left = ax_current.table(
-    cellText=table_data_left,
-    cellLoc='center',
-    loc='center',
-    bbox=[0, 0.0, 0.3, 0.8]) 
+    table_left = ax_current.table(cellText=table_data_left,cellLoc='center',loc='center',bbox=[0, 0.0, 0.3, 0.8]) 
     table_left.auto_set_font_size(False)
     table_left.set_fontsize(12)
     table_left.scale(1.2, 1.8)
@@ -4179,18 +4170,18 @@ def create_visualization(region_data, region, brand, months):
     cellLoc='center',
     loc='center',
     bbox=[0.3, 0.0, 0.1, 0.8])  
-    cell = table_right.add_cell(0, 0,1, 2, text=f"{overall_nov:.0f}",facecolor='#E8F6F3')
+    cell = table_right.add_cell(0, 0,1, 2, text=f"{overall_dec:.0f}",facecolor='#E8F6F3')
     cell.set_text_props(fontweight='bold')
     cell.set_text_props(fontweight='bold')
-    cell = table_right.add_cell(1, 0, 1, 1,text=f"{trade_nov:.0f}",facecolor='#E8F6F3')
+    cell = table_right.add_cell(1, 0, 1, 1,text=f"{trade_dec:.0f}",facecolor='#E8F6F3')
     cell.set_text_props(fontweight='bold')
-    cell = table_right.add_cell(2, 0, 1, 1,text=f"{non_trade_nov:.0f}",facecolor='#E8F6F3')
+    cell = table_right.add_cell(2, 0, 1, 1,text=f"{non_trade_dec:.0f}",facecolor='#E8F6F3')
     cell.set_text_props(fontweight='bold')
     table_right.auto_set_font_size(False)
     table_right.set_fontsize(13)
     table_right.scale(1.2, 1.8)
     ax_current.text(0.2, 1.0, 'Novemeber 2024 Performance Metrics', fontsize=16, fontweight='bold', ha='center', va='bottom')
-    detailed_metrics = [('Trade', region_data['Trade Nov'].iloc[-1], region_data['Monthly Achievement(Nov)'].iloc[-1], 'Channel'),('Green', region_data['Green Nov'].iloc[-1], region_data['Monthly Achievement(Nov)'].iloc[-1], 'Region'),('Yellow', region_data['Yellow Nov'].iloc[-1], region_data['Monthly Achievement(Nov)'].iloc[-1], 'Region'),('Red', region_data['Red Nov'].iloc[-1], region_data['Monthly Achievement(Nov)'].iloc[-1], 'Region'),('Premium', region_data['Premium Nov'].iloc[-1], region_data['Monthly Achievement(Nov)'].iloc[-1], 'Product'),('Blended', region_data['Blended Nov'].iloc[-1], region_data['Monthly Achievement(Nov)'].iloc[-1], 'Product')]
+    detailed_metrics = [('Trade', region_data['Trade Dec'].iloc[-1], region_data['Monthly Achievement(Dec)'].iloc[-1], 'Channel'),('Green', region_data['Green Dec'].iloc[-1], region_data['Monthly Achievement(Dec)'].iloc[-1], 'Region'),('Yellow', region_data['Yellow Dec'].iloc[-1], region_data['Monthly Achievement(Dec)'].iloc[-1], 'Region'),('Red', region_data['Red Dec'].iloc[-1], region_data['Monthly Achievement(Dec)'].iloc[-1], 'Region'),('Premium', region_data['Premium Dec'].iloc[-1], region_data['Monthly Achievement(Dec)'].iloc[-1], 'Product'),('Blended', region_data['Blended Dec'].iloc[-1], region_data['Monthly Achievement(Dec)'].iloc[-1], 'Product')]
     colors = ['blue', 'green', '#CDC50A', 'red', 'darkmagenta', 'saddlebrown']
     trade_box = patches.Rectangle((0.45, 0.74), 0.55, 0.125,facecolor='#F0F0F0',edgecolor='black',alpha=1,transform=ax_current.transAxes)
     ax_current.add_patch(trade_box)
@@ -4214,10 +4205,10 @@ def create_visualization(region_data, region, brand, months):
     ax_current.text(0.50, 0.90, 'Sales Breakown', fontsize=16, fontweight='bold', ha='center', va='bottom')
     ax_table = fig.add_subplot(gs[2, :])
     ax_table.axis('off')
-    ax_table.set_title(f"Quarterly Requirement for Decemeber 2024", fontsize=18, fontweight='bold')
+    ax_table.set_title(f"Q-3 2024 vs Q-3 2025", fontsize=18, fontweight='bold')
     table_data = [['Overall\nRequirement', 'Trade Channel\nRequirement', 'Premium Product\nRequirement','Blended Product\nRequirement'],
-                [f"{region_data['Q3 2023 Total'].iloc[-1]-region_data['Monthly Achievement(Oct)'].iloc[-1]-region_data['Monthly Achievement(Nov)'].iloc[-1]:.0f}", f"{region_data['Q3 2023 Trade'].iloc[-1]-region_data['Trade Oct'].iloc[-1]-region_data['Trade Nov'].iloc[-1]:.0f}",f"{region_data['Q3 2023 Premium'].iloc[-1]-region_data['Premium Oct'].iloc[-1]-region_data['Premium Nov'].iloc[-1]:.0f}", 
-                 f"{region_data['Q3 2023 Blended '].iloc[-1]-region_data['Blended Oct'].iloc[-1]-region_data['Blended Nov'].iloc[-1]:.0f}"],]
+                [f"{region_data['Q3 2023 Total'].iloc[-1]-region_data['Monthly Achievement(Oct)'].iloc[-1]-region_data['Monthly Achievement(Nov)'].iloc[-1]-region_data['Monthly Achievement(Dec)'].iloc[-1]:.0f}", f"{region_data['Q3 2023 Trade'].iloc[-1]-region_data['Trade Oct'].iloc[-1]-region_data['Trade Nov'].iloc[-1]-region_data['Trade Dec'].iloc[-1]:.0f}",f"{region_data['Q3 2023 Premium'].iloc[-1]-region_data['Premium Oct'].iloc[-1]-region_data['Premium Nov'].iloc[-1]-region_data['Premium Dec'].iloc[-1]:.0f}", 
+                 f"{region_data['Q3 2023 Blended '].iloc[-1]-region_data['Blended Oct'].iloc[-1]-region_data['Blended Nov'].iloc[-1]-region_data['Blended Dec'].iloc[-1]:.0f}"],]
     table = ax_table.table(cellText=table_data[1:], colLabels=table_data[0], cellLoc='center', loc='center')
     table.auto_set_font_size(False)
     table.set_fontsize(12)
