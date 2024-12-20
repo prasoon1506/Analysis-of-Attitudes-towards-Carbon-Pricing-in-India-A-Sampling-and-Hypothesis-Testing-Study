@@ -396,7 +396,7 @@ def price():
         return
     wsp_columns = ['D1-3', 'D4-6', 'D7-9', 'D10-12', 'D13-15','D16-18']
     metric_values = region_wsp[wsp_columns].values.flatten().tolist()
-    week_labels = ['D1-3', 'D4-6', 'D7-9', 'D10-12', 'D13-15','D16-18']
+    week_labels = ['1-3 Dec', '4-6 Dec', '7-9 Dec', '10-12 Dec', '13-15 Dec','16-18 Dec']
     header_text = f"WSP Progression from November to December 2024" + \
                   (f" - {brand_name}" if brand_name else "")
     story.append(Paragraph(header_text + ":-", month_style))
@@ -412,7 +412,7 @@ def price():
             else:
                 metric_progression_parts.append(f'<sup><font size="8">00</font></sup>→')
     full_progression = " ".join(metric_progression_parts)
-    week_progression_text = " ------- ".join(week_labels)
+    week_progression_text = " -- ".join(week_labels)
     story.append(Paragraph(full_progression, large_price_style))
     story.append(Paragraph(week_progression_text, normal_style))
     if len(metric_values) > 1:
