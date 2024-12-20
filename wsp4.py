@@ -938,34 +938,7 @@ def price_input():
  def local_css(file_name):
     with open(file_name) as f:
         st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
- st.markdown("""
-<style>
-    .reportview-container {
-        background-color: #f0f2f6;
-    }
-    .sidebar .sidebar-content {
-        background-color: #ffffff;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    .stButton>button {
-        background-color: #1F4E78;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 5px;
-        transition: background-color 0.3s ease;
-    }
-    .stButton>button:hover {
-        background-color: #2C6BA3;
-    }
-    .stMultiSelect, .stSelectbox {
-        width: 100%;
-    }
-    h1, h2, h3 {
-        color: #1F4E78;
-    }
-</style>
- """, unsafe_allow_html=True)
+ st.markdown("""<style>.reportview-container {background-color: #f0f2f6;}.sidebar .sidebar-content {background-color: #ffffff;box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);}.stButton>button {background-color: #1F4E78;color: white;border: none;padding: 10px 20px;border-radius: 5px;transition: background-color 0.3s ease;}.stButton>button:hover {background-color: #2C6BA3;}.stMultiSelect, .stSelectbox {width: 100%;}h1, h2, h3 {color: #1F4E78;}</style>""", unsafe_allow_html=True)
  def normalize_brand_name(brand):
     if pd.isna(brand): 
         return ""
