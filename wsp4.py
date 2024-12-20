@@ -94,19 +94,10 @@ from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
 from datetime import datetime
 from openpyxl.formatting.rule import ColorScaleRule
-import statistics
-import re
-import warnings
-import plotly.express as fx
-import plotly.graph_objs as go
-import plotly.io as pio
 import itertools
-from reportlab.platypus import HRFlowable
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, PageBreak,Paragraph, Spacer
 from datetime import datetime as dt
-from reportlab.platypus import KeepTogether
 from reportlab.lib.units import inch
 from reportlab.graphics.shapes import Line
 from datetime import datetime, timedelta
@@ -116,39 +107,15 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.lib.colors import green, red, black
 import calendar
-import pandas as pd
-import io
 from reportlab.lib.enums import TA_CENTER, TA_LEFT
 from reportlab.lib import colors
-import streamlit as st
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, KeepTogether
 import warnings
+import statistics
 import plotly.express as fx
 import plotly.graph_objs as go
 import plotly.io as pio
-import numpy as np
-from reportlab.platypus import HRFlowable
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, PageBreak,Paragraph, Spacer
-from datetime import datetime as dt
-from reportlab.platypus import KeepTogether
-from reportlab.lib.units import inch
-from reportlab.graphics.shapes import Line
-from datetime import datetime, timedelta
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import inch
-from reportlab.lib.colors import green, red, black
-import calendar
-import pandas as pd
-import io
-from reportlab.lib.enums import TA_CENTER, TA_LEFT
-from reportlab.lib import colors
-import streamlit as st
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, PageBreak,Paragraph, Spacer, KeepTogether,HRFlowable
 from openpyxl import Workbook
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, KeepTogether
 def price():
  def calculate_effective_invoice(df, region, month, year):
     df['Date'] = pd.to_datetime(df['Date'])
@@ -7551,79 +7518,14 @@ def update_visit_count():
     save_visit_data(visit_data)
     return visit_data['total_visits'], visit_data['daily_visits'][today]
 def main():
-    st.markdown("""
-    <style>
-    .sidebar .sidebar-content {
-        background-image: linear-gradient(180deg, #2e7bcf 25%, #4527A0 100%);
-        color: white;
-    }
-    .sidebar-text {
-        color: white !important;
-    }
-    .stButton>button {
-        width: 100%;
-        border-radius: 20px;
-        background-color: #4CAF50;
-        color: white;
-        border: none;
-        padding: 10px;
-        font-weight: bold;
-        transition: all 0.3s ease;
-    }
-    .stButton>button:hover {
-        background-color: #45a049;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-    .stProgress .st-bo {
-        background-color: #4CAF50;
-    }
-    .stProgress .st-bp {
-        background-color: #E0E0E0;
-    }
-    .settings-container {
-        background-color: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        padding: 20px;
-        border-radius: 10px;
-        margin-top: 20px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    .visit-counter {
-        background-color: rgba(255, 228, 225, 0.7);
-        border-radius: 10px;
-        padding: 15px;
-        margin-top: 20px;
-        text-align: center;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-    .visit-counter h3 {
-        color: #FFD700;
-        font-size: 18px;
-        margin-bottom: 10px;
-    }
-    .visit-counter p {
-        color: #8B4513;
-        font-size: 14px;
-        margin: 5px 0;
-    }
-    .user-info {
-        background-color: rgba(255, 255, 255, 0.1);
-        border-radius: 10px;
-        padding: 10px;
-        margin-bottom: 20px;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+    st.markdown("""<style>.sidebar .sidebar-content {background-image: linear-gradient(180deg, #2e7bcf 25%, #4527A0 100%);color: white;}.sidebar-text {color: white !important;}.stButton>button {width: 100%;border-radius: 20px;background-color: #4CAF50;color: white;border: none;padding: 10px;font-weight: bold;transition: all 0.3s ease;}
+    .stButton>button:hover {background-color: #45a049;box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);}.stProgress .st-bo {background-color: #4CAF50;}.stProgress .st-bp {background-color: #E0E0E0;}.settings-container {background-color: rgba(255, 255, 255, 0.1);backdrop-filter: blur(10px);padding: 20px;border-radius: 10px;margin-top: 20px;box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);}
+    .visit-counter {background-color: rgba(255, 228, 225, 0.7);border-radius: 10px;padding: 15px;margin-top: 20px;text-align: center;box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);}
+    .visit-counter h3 {color: #FFD700;font-size: 18px;margin-bottom: 10px;}.visit-counter p {color: #8B4513;font-size: 14px;margin: 5px 0;}.user-info {background-color: rgba(255, 255, 255, 0.1);border-radius: 10px;padding: 10px;margin-bottom: 20px;}</style>""", unsafe_allow_html=True)
     st.sidebar.title("Analytics Dashboard")
     if 'username' not in st.session_state:
         st.session_state.username = "Guest"
-    st.sidebar.markdown(f"""
-    <div class="user-info">
-        <i class="fas fa-user"></i> Logged in as: {st.session_state.username}
-        <br>
-        <small>Last login: {datetime.now().strftime('%Y-%m-%d %H:%M')}</small>
-    </div>
-    """, unsafe_allow_html=True)
+    st.sidebar.markdown(f"""<div class="user-info"><i class="fas fa-user"></i> Logged in as: {st.session_state.username}<br><small>Last login: {datetime.now().strftime('%Y-%m-%d %H:%M')}</small></div>""", unsafe_allow_html=True)
     with st.sidebar:
         selected = option_menu(menu_title="Main Menu",options=["Home", "Data Management", "Sales Volume Analysis","Price Analysis", "Predictions", "Settings"],icons=["house-fill", "database-fill-gear", "graph-up-arrow","lightbulb-fill","gear-fill"],menu_icon="cast",default_index=0,styles={"container": {"padding": "0!important", "background-color": "transparent"},"icon": {"color": "orange", "font-size": "20px"}, "nav-link": {"font-size": "16px", "text-align": "left", "margin":"0px", "--hover-color": "#eee"},"nav-link-selected": {"background-color": "rgba(255, 255, 255, 0.2)"},})
     if selected == "Home":
