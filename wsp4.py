@@ -422,15 +422,15 @@ def price():
         else:
             total_change_text = f"Net Change in WSP{' - ' + brand_name if brand_name else ''}: {total_change:+.0f} Rs."
         story.append(Paragraph(total_change_text, total_change_style))
-        story.append(Paragraph(total_change_style))
-    #if company_wsp_df is not None and brand_name is not None:
-        #company_region_wsp = company_wsp_df[company_wsp_df['Region(District)'] == region]
-        #if not company_region_wsp.empty and not region_wsp.empty:
-            #company_w1_dec_wsp = company_region_wsp['D1-3'].values[0]
-            #competitive_w1_dec_wsp = region_wsp['D1-3'].values[0]
-            #wsp_difference = company_w1_dec_wsp - competitive_w1_dec_wsp
-            #wsp_diff_text = f"Difference in WSP between JKLC and {brand_name} on W-1 December is {wsp_difference:+.0f} Rs."
-            #story.append(Paragraph(wsp_diff_text, total_change_style))
+        #story.append(Paragraph(total_change_style))
+    if company_wsp_df is not None and brand_name is not None:
+        company_region_wsp = company_wsp_df[company_wsp_df['Region(District)'] == region]
+        if not company_region_wsp.empty and not region_wsp.empty:
+            company_w1_dec_wsp = company_region_wsp['D1-3'].values[0]
+            competitive_w1_dec_wsp = region_wsp['D1-3'].values[0]
+            wsp_difference = company_w1_dec_wsp - competitive_w1_dec_wsp
+            wsp_diff_text = f"Difference in WSP between JKLC and {brand_name} on W-1 December is {wsp_difference:+.0f} Rs."
+            story.append(Paragraph(wsp_diff_text, total_change_style))
     story.append(Spacer(1, 0))
     if not is_last_brand:
         story.append(HRFlowable(width="100%",thickness=1,lineCap='round',color=colors.black,spaceBefore=2,spaceAfter=2))
