@@ -426,8 +426,8 @@ def price():
     if company_wsp_df is not None and brand_name is not None:
         company_region_wsp = company_wsp_df[company_wsp_df['Region(District)'] == region]
         if not company_region_wsp.empty and not region_wsp.empty:
-            company_w1_dec_wsp = company_region_wsp['Week-1 Dec'].values[0]
-            competitive_w1_dec_wsp = region_wsp['Week-1 Dec'].values[0]
+            company_w1_dec_wsp = company_region_wsp['D1-3'].values[0]
+            competitive_w1_dec_wsp = region_wsp['D1-3'].values[0]
             wsp_difference = company_w1_dec_wsp - competitive_w1_dec_wsp
             wsp_diff_text = f"Difference in WSP between JKLC and {brand_name} on W-1 December is {wsp_difference:+.0f} Rs."
             story.append(Paragraph(wsp_diff_text, total_change_style))
