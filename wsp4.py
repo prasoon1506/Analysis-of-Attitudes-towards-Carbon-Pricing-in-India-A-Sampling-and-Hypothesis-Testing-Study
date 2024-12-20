@@ -499,7 +499,7 @@ def price():
                     wsp_df = pd.read_csv(wsp_file)
                 else:
                     wsp_df = pd.read_excel(wsp_file)
-                required_columns = ['Region(District)', 'Week-1 Nov', 'Week-2 Nov', 'Week-3 Nov', 'Week-4 Nov', 'Week-1 Dec','Week-2 Dec']
+                required_columns = ['Region(District)', 'D1-3', 'D4-6', 'D7-9', 'D10-12', 'D13-15','D16-18']
                 for col in required_columns:
                     if col not in wsp_df.columns:
                         st.error(f"Missing required WSP column: {col}")
