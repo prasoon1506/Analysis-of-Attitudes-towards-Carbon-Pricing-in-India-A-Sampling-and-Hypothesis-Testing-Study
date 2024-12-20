@@ -466,11 +466,11 @@ def price():
             region_story.append(Paragraph(f"{region}", region_style))
             region_story.append(Spacer(1, 1))
             create_comprehensive_metric_progression(region_story, region_df, current_date, last_month, 'Inv.', 'Invoice Price', styles)
-            create_effective_invoice_analysis(region_story, df, region, current_date, styles)
+            #create_effective_invoice_analysis(region_story, df, region, current_date, styles)
             create_comprehensive_metric_progression(region_story, region_df, current_date, last_month, 'RD', 'RD', styles, is_secondary_metric=True)
             create_comprehensive_metric_progression(region_story, region_df, current_date, last_month, 'STS', 'STS', styles, is_secondary_metric=True)
             create_comprehensive_metric_progression(region_story, region_df, current_date, last_month, 'Net', 'NOD', styles)
-            create_effective_nod_analysis(region_story, df, region, current_date, styles)
+            #create_effective_nod_analysis(region_story, df, region, current_date, styles)
             brand_count = 1 if company_wsp_df is not None and not company_wsp_df.empty else 0
             if competitive_brands_wsp:
                 brand_count += len(competitive_brands_wsp)
