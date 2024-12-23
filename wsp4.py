@@ -7558,26 +7558,6 @@ def main():
     if st.sidebar.button("Submit Feedback", key="submit_feedback"):
         st.sidebar.success("Thank you for your valuable feedback!")
     total_visits, daily_visits = update_visit_count()
-    st.sidebar.markdown(f"""
-    <div class="visit-counter">
-        <h3>📊 Visit Statistics</h3>
-        <p>Total Visits: <span class="count">{total_visits}</span></p>
-        <p>Visits Today: <span class="count">{daily_visits}</span></p>
-    </div>
-    <script>
-        const countElements = document.querySelectorAll('.count');
-        countElements.forEach(element => {{
-            const target = parseInt(element.innerText);
-            let count = 0;
-            const timer = setInterval(() => {{
-                element.innerText = count;
-                if (count === target) {{
-                    clearInterval(timer);
-                }}
-                count++;
-            }}, 20);
-        }});
-    </script>
-    """, unsafe_allow_html=True)
+    st.sidebar.markdown(f"""<div class="visit-counter"><h3>📊 Visit Statistics</h3><p>Total Visits: <span class="count">{total_visits}</span></p><p>Visits Today: <span class="count">{daily_visits}</span></p></div><script>const countElements = document.querySelectorAll('.count');countElements.forEach(element => {{const target = parseInt(element.innerText);let count = 0;const timer = setInterval(() => {{element.innerText = count;if (count === target) {{clearInterval(timer);}}count++;}}, 20);}});</script>""", unsafe_allow_html=True)
 if __name__ == "__main__":
     main()
