@@ -3327,7 +3327,7 @@ def create_prediction_pdf(prediction_data, district):
     doc.build(elements)
     buffer.seek(0)
     return buffer
-st.set_page_config(page_title="WSP Analysis",page_icon="🔬", layout="wide")
+#st.set_page_config(page_title="WSP Analysis",page_icon="🔬", layout="wide")
 st.markdown("""
 <style>
     .stApp {
