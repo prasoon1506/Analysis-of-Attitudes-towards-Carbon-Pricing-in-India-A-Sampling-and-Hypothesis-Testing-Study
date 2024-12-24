@@ -4384,14 +4384,14 @@ def create_visualization(region_data, region, brand, months):
         if pct_change > 0:
             arrow_style = 'fancy,head_length=4,head_width=6'
             arrow_color = 'green'
-            start_x = x + 0.15
+            start_x = x + 0.13
             end_x = x + width * 0.49
             start_y = y + 0.31
             end_y = y + 0.31
         else:
             arrow_style = 'fancy,head_length=4,head_width=6'
             arrow_color = 'red'
-            start_x = x + 0.15
+            start_x = x + 0.13
             end_x = x + width * 0.49
             start_y = y + 0.31
             end_y = y + 0.31
@@ -4400,14 +4400,14 @@ def create_visualization(region_data, region, brand, months):
         if trade_pct_change > 0:
             arrow_style = 'fancy,head_length=4,head_width=6'
             arrow_color = 'green'
-            start_x = x + 0.15
+            start_x = x + 0.13
             end_x = x + width * 0.49
             start_y = y + 0.11
             end_y = y + 0.11
         else:
             arrow_style = 'fancy,head_length=4,head_width=6'
             arrow_color = 'red'
-            start_x = x + 0.15
+            start_x = x + 0.13
             end_x = x + width * 0.49
             start_y = y + 0.11
             end_y = y + 0.11
@@ -4419,8 +4419,8 @@ def create_visualization(region_data, region, brand, months):
     q2_data = {'total_2023': region_data['Q2 2023 Total'].iloc[-1],'total_2024': region_data['Q2 2024 Total'].iloc[-1],'trade_2023': region_data['Q2 2023 Trade'].iloc[-1],'trade_2024': region_data['Q2 2024 Trade'].iloc[-1]}
     q3_data = {'total_2023': region_data['Q3 2023 Total'].iloc[-1],'total_2024': region_data['Q3 2024 Total'].iloc[-1],'trade_2023': region_data['Q3 2023 Trade'].iloc[-1],'trade_2024': region_data['Q3 2024 Trade'].iloc[-1]}
     create_modern_quarterly_box(ax_comparison, 0.00, box_y, 0.35, box_height, q1_data, "Q1")
-    create_modern_quarterly_box(ax_comparison, 0.30, box_y, 0.35, box_height, q2_data, "Q2")
-    create_modern_quarterly_box(ax_comparison, 0.60, box_y, 0.35, box_height, q3_data, "Q3")
+    create_modern_quarterly_box(ax_comparison, 0.35, box_y, 0.35, box_height, q2_data, "Q2")
+    create_modern_quarterly_box(ax_comparison, 0.70, box_y, 0.35, box_height, q3_data, "Q3")
     ax_comparison.set_xlim(0, 1)
     ax_comparison.set_ylim(0, 1)
     plt.tight_layout()
