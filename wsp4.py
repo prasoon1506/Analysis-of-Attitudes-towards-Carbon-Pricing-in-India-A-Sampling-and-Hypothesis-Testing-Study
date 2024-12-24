@@ -4146,7 +4146,7 @@ def create_visualization(region_data, region, brand, months):
     ax_region.text(0.5, 0.5, f'{region} ({brand})', fontsize=28, fontweight='bold', ha='center', va='center')
     ax_current = fig.add_subplot(gs[1, :])
     ax_current.axis('off')
-    overall_dec = region_data['Monthly Achievement (Dec)'].iloc[-1]
+    overall_dec = region_data['Monthly Achievement(Dec)'].iloc[-1]
     trade_dec = region_data['Trade Nov'].iloc[-1]
     non_trade_dec = overall_dec - trade_dec
     table_data_left = [['AGS Target', f"{region_data['AGS Tgt (Dec)'].iloc[-1]:.0f}"],['Plan', f"{region_data['Month Tgt (Dec)'].iloc[-1]:.0f}"],['Trade Target', f"{region_data['Trade Tgt (Dec)'].iloc[-1]:.0f}"],['Non-Trade Target', f"{region_data['Non-Trade Tgt (Dec)'].iloc[-1]:.0f}"]]
