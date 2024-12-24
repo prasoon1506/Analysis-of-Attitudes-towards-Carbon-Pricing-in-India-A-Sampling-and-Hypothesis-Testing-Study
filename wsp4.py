@@ -4140,7 +4140,6 @@ def load_lottie_url(url: str):
 def create_visualization(region_data, region, brand, months):
     fig = plt.figure(figsize=(20, 34))
     gs = fig.add_gridspec(8, 3, height_ratios=[0.5,1, 1, 3, 2.25, 2, 2, 2])
-    # Region and Brand Title
     ax_region = fig.add_subplot(gs[0, :])
     ax_region.axis('off')
     ax_region.text(0.5, 0.5, f'{region} ({brand})', fontsize=28, fontweight='bold', ha='center', va='center')
@@ -4164,11 +4163,7 @@ def create_visualization(region_data, region, brand, months):
       cell = table_left[i, 1]
       cell.set_facecolor('#F7F9F9')
       cell.set_text_props(fontweight='bold')
-    table_right = ax_current.table(
-    cellText=table_data_right,
-    cellLoc='center',
-    loc='center',
-    bbox=[0.3, 0.0, 0.1, 0.8])  
+    table_right = ax_current.table(cellText=table_data_right,cellLoc='center',loc='center',bbox=[0.3, 0.0, 0.1, 0.8])  
     cell = table_right.add_cell(0, 0,1, 2, text=f"{overall_dec:.0f}",facecolor='#E8F6F3')
     cell.set_text_props(fontweight='bold')
     cell.set_text_props(fontweight='bold')
@@ -4179,7 +4174,7 @@ def create_visualization(region_data, region, brand, months):
     table_right.auto_set_font_size(False)
     table_right.set_fontsize(13)
     table_right.scale(1.2, 1.8)
-    ax_current.text(0.2, 1.0, 'Novemeber 2024 Performance Metrics', fontsize=16, fontweight='bold', ha='center', va='bottom')
+    ax_current.text(0.2, 1.0, 'December 2024 Performance Metrics', fontsize=16, fontweight='bold', ha='center', va='bottom')
     detailed_metrics = [('Trade', region_data['Trade Dec'].iloc[-1], region_data['Monthly Achievement(Dec)'].iloc[-1], 'Channel'),('Green', region_data['Green Dec'].iloc[-1], region_data['Monthly Achievement(Dec)'].iloc[-1], 'Region'),('Yellow', region_data['Yellow Dec'].iloc[-1], region_data['Monthly Achievement(Dec)'].iloc[-1], 'Region'),('Red', region_data['Red Dec'].iloc[-1], region_data['Monthly Achievement(Dec)'].iloc[-1], 'Region'),('Premium', region_data['Premium Dec'].iloc[-1], region_data['Monthly Achievement(Dec)'].iloc[-1], 'Product'),('Blended', region_data['Blended Dec'].iloc[-1], region_data['Monthly Achievement(Dec)'].iloc[-1], 'Product')]
     colors = ['blue', 'green', '#CDC50A', 'red', 'darkmagenta', 'saddlebrown']
     trade_box = patches.Rectangle((0.45, 0.74), 0.55, 0.125,facecolor='#F0F0F0',edgecolor='black',alpha=1,transform=ax_current.transAxes)
