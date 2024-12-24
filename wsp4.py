@@ -87,7 +87,6 @@ import streamlit.components.v1 as components
 from streamlit_lottie import st_lottie
 from streamlit_option_menu import option_menu
 from streamlit_cookies_manager import EncryptedCookieManager
-import streamlit as st
 import base64
 import io
 from openpyxl import Workbook
@@ -4205,7 +4204,7 @@ def create_visualization(region_data, region, brand, months):
     ax_current.text(0.50, 0.90, 'Sales Breakown', fontsize=16, fontweight='bold', ha='center', va='bottom')
     ax_table = fig.add_subplot(gs[2, :])
     ax_table.axis('off')
-    ax_table.set_title(f"Q-3 2024 vs Q-3 2025", fontsize=18, fontweight='bold')
+    ax_table.set_title(f"Q-3 FY2024 vs Q-3 FY2025", fontsize=18, fontweight='bold')
     table_data = [['Overall\nRequirement', 'Trade Channel\nRequirement', 'Premium Product\nRequirement','Blended Product\nRequirement'],
                 [f"{region_data['Q3 2023 Total'].iloc[-1]-region_data['Monthly Achievement(Oct)'].iloc[-1]-region_data['Monthly Achievement(Nov)'].iloc[-1]-region_data['Monthly Achievement(Dec)'].iloc[-1]:.0f}", f"{region_data['Q3 2023 Trade'].iloc[-1]-region_data['Trade Oct'].iloc[-1]-region_data['Trade Nov'].iloc[-1]-region_data['Trade Dec'].iloc[-1]:.0f}",f"{region_data['Q3 2023 Premium'].iloc[-1]-region_data['Premium Oct'].iloc[-1]-region_data['Premium Nov'].iloc[-1]-region_data['Premium Dec'].iloc[-1]:.0f}", 
                  f"{region_data['Q3 2023 Blended '].iloc[-1]-region_data['Blended Oct'].iloc[-1]-region_data['Blended Nov'].iloc[-1]-region_data['Blended Dec'].iloc[-1]:.0f}"],]
@@ -4265,23 +4264,23 @@ def create_visualization(region_data, region, brand, months):
     ax3.axis('off')
     current_year = 2024
     last_year = 2023
-    channel_data = [('Trade', region_data['Trade Nov'].iloc[-1], region_data['Trade Nov 2023'].iloc[-1],'Channel'),('Premium', region_data['Premium Nov'].iloc[-1], region_data['Premium Nov 2023'].iloc[-1],'Product'),('Blended', region_data['Blended Nov'].iloc[-1], region_data['Blended Nov 2023'].iloc[-1],'Product')]
-    monthly_achievement_nov = region_data['Monthly Achievement(Nov)'].iloc[-1]
-    total_nov_current = region_data['Monthly Achievement(Nov)'].iloc[-1]
-    total_nov_last = region_data['Total Nov 2023'].iloc[-1]
-    ax3.text(0.2, 1, f'November {current_year} Sales Comparison to November 2023:-', fontsize=16, fontweight='bold', ha='center', va='center')
+    channel_data = [('Trade', region_data['Trade Dec'].iloc[-1], region_data['Trade Dec 2023'].iloc[-1],'Channel'),('Premium', region_data['Premium Dec'].iloc[-1], region_data['Premium Dec 2023'].iloc[-1],'Product'),('Blended', region_data['Blended Dec'].iloc[-1], region_data['Blended Dec 2023'].iloc[-1],'Product')]
+    monthly_achievement_dec = region_data['Monthly Achievement(Dec)'].iloc[-1]
+    total_dec_current = region_data['Monthly Achievement(Dec)'].iloc[-1]
+    total_dec_last = region_data['Total Dec 2023'].iloc[-1]
+    ax3.text(0.2, 1, f'December {current_year} Sales Comparison to December 2023:-', fontsize=16, fontweight='bold', ha='center', va='center')
     def get_arrow(value):
         return '↑' if value > 0 else '↓' if value < 0 else '→'
     def get_color(value):
         return 'green' if value > 0 else 'red' if value < 0 else 'black'
-    total_change = ((total_nov_current - total_nov_last) / total_nov_last) * 100
+    total_change = ((total_dec_current - total_dec_last) / total_dec_last) * 100
     arrow = get_arrow(total_change)
     color = get_color(total_change)
-    ax3.text(0.21, 0.9, f"November 2024: {total_nov_current:.0f}", fontsize=14, fontweight='bold', ha='center')
-    ax3.text(0.22, 0.85, f"vs November 2023: {total_nov_last:.0f} ({total_change:.1f}% {arrow})", fontsize=12, color=color, ha='center')
+    ax3.text(0.21, 0.9, f"December 2024: {total_dec_current:.0f}", fontsize=14, fontweight='bold', ha='center')
+    ax3.text(0.22, 0.85, f"vs December 2023: {total_dec_last:.0f} ({total_change:.1f}% {arrow})", fontsize=12, color=color, ha='center')
     for i, (channel, value_current, value_last,x) in enumerate(channel_data):
-        percentage = (value_current / monthly_achievement_nov) * 100
-        percentage_last_year = (value_last / total_nov_last) * 100
+        percentage = (value_current / monthly_achievement_dec) * 100
+        percentage_last_year = (value_last / total_dec_last) * 100
         change = ((value_current - value_last) / value_last) * 100
         arrow = get_arrow(change)
         color = get_color(change)
@@ -4290,23 +4289,20 @@ def create_visualization(region_data, region, brand, months):
         ax3.text(0.28, y_pos, f"{value_current:.0f}", fontsize=14)
         ax3.text(0.15, y_pos-0.05, f"vs Last Year: {value_last:.0f}", fontsize=12)
         ax3.text(0.28, y_pos-0.05, f"({change:.1f}% {arrow})", fontsize=12, color=color)
-        # Add the share percentage comparison
-        ax3.text(0.12, y_pos-0.1, 
-                f"•{channel} {x} has share of {percentage_last_year:.1f}% in Nov. last year as compared to {percentage:.1f}% in Nov. this year.",
-                fontsize=11, color='darkcyan')
+        ax3.text(0.12, y_pos-0.1, f"•{channel} {x} has share of {percentage_last_year:.1f}% in Dec. last year as compared to {percentage:.1f}% in Dec. this year.",fontsize=11, color='darkcyan')
     ax4 = fig.add_subplot(gs[5, 2])
     ax4.axis('off')
-    channel_data1 = [('Trade', region_data['Trade Nov'].iloc[-1], region_data['Trade Oct'].iloc[-1],'Channel'),('Premium', region_data['Premium Nov'].iloc[-1], region_data['Premium Oct'].iloc[-1],'Product'),('Blended', region_data['Blended Nov'].iloc[-1], region_data['Blended Oct'].iloc[-1],'Product')]
-    total_oct_current = region_data['Total Oct'].iloc[-1]
-    ax4.text(0.35, 1, f'November {current_year} Sales Comparison to October 2024:-', fontsize=16, fontweight='bold', ha='center', va='center')
-    total_change = ((total_nov_current - total_oct_current) / total_oct_current) * 100
+    channel_data1 = [('Trade', region_data['Trade Dec'].iloc[-1], region_data['Trade Nov'].iloc[-1],'Channel'),('Premium', region_data['Premium Dec'].iloc[-1], region_data['Premium Nov'].iloc[-1],'Product'),('Blended', region_data['Blended Dec'].iloc[-1], region_data['Blended Nov'].iloc[-1],'Product')]
+    total_nov_current = region_data['Total Nov'].iloc[-1]
+    ax4.text(0.35, 1, f'December {current_year} Sales Comparison to November 2024:-', fontsize=16, fontweight='bold', ha='center', va='center')
+    total_change = ((total_dec_current - total_nov_current) / total_nov_current) * 100
     arrow = get_arrow(total_change)
     color = get_color(total_change)
-    ax4.text(0.36, 0.9, f"November 2024: {total_nov_current:.0f}", fontsize=14, fontweight='bold', ha='center')
-    ax4.text(0.37, 0.85, f"vs October 2024: {total_oct_current:.0f} ({total_change:.1f}% {arrow})", fontsize=12, color=color, ha='center')
+    ax4.text(0.36, 0.9, f"December 2024: {total_dec_current:.0f}", fontsize=14, fontweight='bold', ha='center')
+    ax4.text(0.37, 0.85, f"vs November 2024: {total_nov_current:.0f} ({total_change:.1f}% {arrow})", fontsize=12, color=color, ha='center')
     for i, (channel, value_current, value_last,t) in enumerate(channel_data1):
-        percentage = (value_current / monthly_achievement_nov) * 100
-        percentage_last_month = (value_last / total_oct_current) * 100
+        percentage = (value_current / monthly_achievement_dec) * 100
+        percentage_last_month = (value_last / total_nov_current) * 100
         change = ((value_current - value_last) / value_last) * 100
         arrow = get_arrow(change)
         color = get_color(change)
@@ -4315,9 +4311,7 @@ def create_visualization(region_data, region, brand, months):
         ax4.text(0.65, y_pos, f"{value_current:.0f}", fontsize=14)
         ax4.text(0.10, y_pos-0.05, f"vs Last Month: {value_last:.0f}", fontsize=12)
         ax4.text(0.65, y_pos-0.05, f"({change:.1f}% {arrow})", fontsize=12, color=color)
-        ax4.text(0.00, y_pos-0.1, 
-                f"•{channel} {t} has share of {percentage_last_month:.1f}% in Oct. as compared to {percentage:.1f}% in Nov.",
-                fontsize=11, color='darkcyan')
+        ax4.text(0.00, y_pos-0.1,f"•{channel} {t} has share of {percentage_last_month:.1f}% in Nov. as compared to {percentage:.1f}% in Dec.",fontsize=11, color='darkcyan')
     def create_pie_data(data_values, labels, colors):
      non_zero_data = []
      non_zero_labels = []
@@ -4335,39 +4329,32 @@ def create_visualization(region_data, region, brand, months):
         return f'{pct:.0f}%\n({val:.0f})'
      return my_autopct
     ax5 = fig.add_subplot(gs[6, 0])
-    region_type_data = [region_data['Green Nov'].iloc[-1],region_data['Yellow Nov'].iloc[-1],region_data['Red Nov'].iloc[-1],region_data['Unidentified Nov'].iloc[-1]]
+    region_type_data = [region_data['Green Dec'].iloc[-1],region_data['Yellow Dec'].iloc[-1],region_data['Red Dec'].iloc[-1],region_data['Unidentified Dec'].iloc[-1]]
     region_type_labels = ['G', 'Y', 'R', '']
     colors = ['green', 'yellow', 'red', 'gray']
-    filtered_data, filtered_labels, filtered_colors = create_pie_data(
-    region_type_data, region_type_labels, colors)
+    filtered_data, filtered_labels, filtered_colors = create_pie_data(region_type_data, region_type_labels, colors)
     explode = [0.05] * len(filtered_data)
     ax5.pie(filtered_data, labels=filtered_labels, colors=filtered_colors,
         autopct=make_autopct(filtered_data), startangle=90, explode=explode)
-    ax5.set_title('Novemeber 2024 Region Type Breakdown:-', fontsize=16, fontweight='bold')
+    ax5.set_title('December 2024 Region Type Breakdown:-', fontsize=16, fontweight='bold')
     ax6 = fig.add_subplot(gs[6, 1])
-    region_type_data = [
-    region_data['Green Nov 2023'].iloc[-1],
-    region_data['Yellow Nov 2023'].iloc[-1],
-    region_data['Red Nov 2023'].iloc[-1],
-    region_data['Unidentified Nov 2023'].iloc[-1]]
+    region_type_data = [region_data['Green Dec 2023'].iloc[-1],region_data['Yellow Dec 2023'].iloc[-1],region_data['Red Dec 2023'].iloc[-1],region_data['Unidentified Dec 2023'].iloc[-1]]
     filtered_data, filtered_labels, filtered_colors = create_pie_data(
     region_type_data, region_type_labels, colors)
     explode = [0.05] * len(filtered_data)
     ax6.pie(filtered_data, labels=filtered_labels, colors=filtered_colors,
         autopct=make_autopct(filtered_data), startangle=90, explode=explode)
-    ax6.set_title('November 2023 Region Type Breakdown:-', fontsize=16, fontweight='bold')
+    ax6.set_title('December 2023 Region Type Breakdown:-', fontsize=16, fontweight='bold')
     ax7 = fig.add_subplot(gs[6, 2])
     region_type_data = [
-    region_data['Green Oct'].iloc[-1],
-    region_data['Yellow Oct'].iloc[-1],
-    region_data['Red Oct'].iloc[-1],
-    region_data['Unidentified Oct'].iloc[-1]]
-    filtered_data, filtered_labels, filtered_colors = create_pie_data(
-    region_type_data, region_type_labels, colors)
+    region_data['Green Nov'].iloc[-1],
+    region_data['Yellow Nov'].iloc[-1],
+    region_data['Red Nov'].iloc[-1],
+    region_data['Unidentified Nov'].iloc[-1]]
+    filtered_data, filtered_labels, filtered_colors = create_pie_data(region_type_data, region_type_labels, colors)
     explode = [0.05] * len(filtered_data)
-    ax7.pie(filtered_data, labels=filtered_labels, colors=filtered_colors,
-        autopct=make_autopct(filtered_data), startangle=90, explode=explode)
-    ax7.set_title('October 2024 Region Type Breakdown:-', fontsize=16, fontweight='bold')
+    ax7.pie(filtered_data, labels=filtered_labels, colors=filtered_colors,autopct=make_autopct(filtered_data), startangle=90, explode=explode)
+    ax7.set_title('November 2024 Region Type Breakdown:-', fontsize=16, fontweight='bold')
     ax_comparison = fig.add_subplot(gs[7, :])
     ax_comparison.axis('off')
     ax_comparison.set_title('Quarterly Performance Analysis (2023 vs 2024)',fontsize=20, fontweight='bold', pad=20)
@@ -4385,8 +4372,8 @@ def create_visualization(region_data, region, brand, months):
         y_offset = y + height - title_height - 0.1
         ax.text(x + 0.05, y_offset,"Total Sales Comparison:",fontsize=14, fontweight='bold',color='#2c3e50')
         y_offset -= 0.08
-        ax.text(x + 0.05, y_offset,f"2023: {total_2023:,.0f}",fontsize=11)
-        ax.text(x + width/2, y_offset,f"2024: {total_2024:,.0f}",fontsize=11)
+        ax.text(x + 0.05, y_offset,f"FY 2024: {total_2023:,.0f}",fontsize=11)
+        ax.text(x + width/2, y_offset,f"FY 2025: {total_2024:,.0f}",fontsize=11)
         ax.text(x + 0.375*width, y_offset,f"{pct_change:+.1f}%",fontsize=11,color='green' if pct_change > 0 else 'red')
         y_offset -= 0.12
         ax.text(x + 0.05, y_offset,"Trade Volume:",fontsize=14, fontweight='bold',color='#2c3e50')
@@ -4430,8 +4417,10 @@ def create_visualization(region_data, region, brand, months):
     box_y = 0.2   
     q1_data = {'total_2023': region_data['Q1 2023 Total'].iloc[-1],'total_2024': region_data['Q1 2024 Total'].iloc[-1],'trade_2023': region_data['Q1 2023 Trade'].iloc[-1],'trade_2024': region_data['Q1 2024 Trade'].iloc[-1]}
     q2_data = {'total_2023': region_data['Q2 2023 Total'].iloc[-1],'total_2024': region_data['Q2 2024 Total'].iloc[-1],'trade_2023': region_data['Q2 2023 Trade'].iloc[-1],'trade_2024': region_data['Q2 2024 Trade'].iloc[-1]}
+    q3_data = {'total_2023': region_data['Q3 2023 Total'].iloc[-1],'total_2024': region_data['Q3 2024 Total'].iloc[-1],'trade_2023': region_data['Q3 2023 Trade'].iloc[-1],'trade_2024': region_data['Q3 2024 Trade'].iloc[-1]}
     create_modern_quarterly_box(ax_comparison, 0.1, box_y, 0.35, box_height, q1_data, "Q1")
     create_modern_quarterly_box(ax_comparison, 0.55, box_y, 0.35, box_height, q2_data, "Q2")
+    create_modern_quarterly_box(ax_comparison, 1.00, box_y, 0.35, box_height, q3_data, "Q3")
     ax_comparison.set_xlim(0, 1)
     ax_comparison.set_ylim(0, 1)
     plt.tight_layout()
@@ -4505,7 +4494,7 @@ def show_report_generator():
             if st.button("🔍 Generate Individual Report", key='individual_report'):
                 with st.spinner("Creating your report..."):
                     region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)]
-                    months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct','Nov']
+                    months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct','Nov','Dec']
                     fig = create_visualization(region_data, region, brand, months)
                     st.pyplot(fig)
                     buf = BytesIO()
