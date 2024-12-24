@@ -5689,8 +5689,7 @@ def green():
         renderPDF.draw(drawing, c, inch, height - 300)
         c.setFont("Helvetica-Bold", 18)
         c.drawString(inch, height - 350, "Key Concepts:")
-        concepts = [("Overall EBITDA:", "Weighted average of Green, Yellow, and Red EBITDA based on their actual quantities."),("Imaginary EBITDA:", "Calculated by adjusting shares based on the following rules:"),("", "• If all three (Green, Yellow, Red) are present: Green +5%, Yellow +2.5%, Red -7.5%"),
-            ("", "• If only two are present: Superior one (Green in GR or GY, Yellow in YR) +5%, other -5%"),("", "• If only one is present: No change"),("Adjusted Shares:", "These adjustments aim to model potential improvements in product mix."),]
+        concepts = [("Overall EBITDA:", "Weighted average of Green, Yellow, and Red EBITDA based on their actual quantities."),("Imaginary EBITDA:", "Calculated by adjusting shares based on the following rules:"),("", "• If all three (Green, Yellow, Red) are present: Green +5%, Yellow +2.5%, Red -7.5%"),("", "• If only two are present: Superior one (Green in GR or GY, Yellow in YR) +5%, other -5%"),("", "• If only one is present: No change"),("Adjusted Shares:", "These adjustments aim to model potential improvements in product mix."),]
         text_object = c.beginText(inch, height - 380)
         for title, description in concepts:
             if title:
@@ -5708,10 +5707,7 @@ def green():
     def add_appendix():
         c.setFont("Helvetica-Bold", 24)
         c.drawString(inch, height - inch, "Appendix")
-        sections = [
-            ("Graph Interpretation:", "Each line represents a different metric over time. The differences between metrics are shown below\n each month."),
-            ("Tables:", "The descriptive statistics table provides a summary of the data. The monthly share distribution table\n shows the proportion of Green, Yellow, and Red products for each month."),
-            ("Importance:", "These visualizations help identify trends, compare performance across product categories, and\n understand the potential impact of changing product distributions."),]
+        sections = [("Graph Interpretation:", "Each line represents a different metric over time. The differences between metrics are shown below\n each month."),("Tables:", "The descriptive statistics table provides a summary of the data. The monthly share distribution table\n shows the proportion of Green, Yellow, and Red products for each month."),("Importance:", "These visualizations help identify trends, compare performance across product categories, and\n understand the potential impact of changing product distributions."),]
         text_object = c.beginText(inch, height - 1.5*inch)
         text_object.setFont("Helvetica-Bold", 14)
         for title, content in sections:
@@ -5971,50 +5967,17 @@ def projection():
     if 'cookie_password' not in st.session_state:
         st.session_state.cookie_password = secrets.token_hex(16)
     return st.session_state.cookie_password
- cookies = EncryptedCookieManager(
-    prefix="sales_predictor_",
-    password=get_cookie_password())
+ cookies = EncryptedCookieManager(prefix="sales_predictor_",password=get_cookie_password())
  CORRECT_PASSWORD = "prasoonA1@"
  MAX_ATTEMPTS = 5
  LOCKOUT_DURATION = 3600 
  def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
  def check_password():
-    """Returns `True` if the user had the correct password."""
     if not cookies.ready():
         st.warning("Initializing cookies...")
         return False
-    st.markdown("""
-    <style>
-    .stTextInput > div > div > input {
-        background-color: #f0f0f0;
-        color: #333;
-        border: 2px solid #4a69bd;
-        border-radius: 5px;
-        padding: 10px;
-        font-size: 16px;
-    }
-    .stButton > button {
-        background-color: #4a69bd;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        padding: 10px 20px;
-        font-size: 16px;
-        cursor: pointer;
-        transition: background-color 0.3s;
-    }
-    .stButton > button:hover {
-        background-color: #82ccdd;
-    }
-    .attempt-text {
-        color: #ff4b4b;
-        font-size: 14px;
-        margin-top: 5px;
-        text-align: center;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+    st.markdown("""<style>.stTextInput > div > div > input {background-color: #f0f0f0;color: #333;border: 2px solid #4a69bd;border-radius: 5px;padding: 10px;font-size: 16px;}.stButton > button {background-color: #4a69bd;color: white;border: none;border-radius: 5px;padding: 10px 20px;font-size: 16px;cursor: pointer;transition: background-color 0.3s;}.stButton > button:hover {background-color: #82ccdd;}.attempt-text {color: #ff4b4b;font-size: 14px;margin-top: 5px;text-align: center;}</style>""", unsafe_allow_html=True)
     lockout_time = cookies.get('lockout_time')
     if lockout_time is not None and time.time() < float(lockout_time):
         remaining_time = int(float(lockout_time) - time.time())
@@ -6056,89 +6019,7 @@ def projection():
             st.markdown(f"<p class='attempt-text'>Incorrect password. Attempt {st.session_state.login_attempts} of {MAX_ATTEMPTS}.</p>", unsafe_allow_html=True)
         return False
  if check_password():
-  st.markdown("""
-<style>
-    body {
-        background-color: #0e1117;
-        color: #ffffff;
-    }
-    .stApp {
-        background-image: linear-gradient(45deg, #1e3799, #0c2461);
-    }
-    .big-font {
-        font-size: 48px !important;
-        font-weight: bold;
-        color: lime;
-        text-align: center;
-        text-shadow: 2px 2px 4px #000000;
-    }
-    .subheader {
-        font-size: 24px;
-        color: moccasin;
-        text-align: center;
-    }
-    .stButton>button {
-        background-color: #4a69bd;
-        color: white;
-        border-radius: 20px;
-        border: 2px solid #82ccdd;
-        padding: 10px 24px;
-        font-size: 16px;
-        transition: all 0.3s;}
-    .stButton>button:hover {
-        background-color: #82ccdd;
-        color: #0c2461;
-        transform: scale(1.05);}
-    .stProgress > div > div > div > div {
-        background-color: #4a69bd;}
-    .stSelectbox {
-        background-color: #1e3799;}
-    .stDataFrame {
-        background-color: #0c2461;}
-    .metric-value {
-        color: gold !important;
-        font-size: 24px !important;
-        font-weight: bold !important;}
-    .metric-label {
-        color: white !important;}
-    h3 {
-        color: #ff9f43 !important;
-        font-size: 28px !important;
-        font-weight: bold !important;
-        text-shadow: 1px 1px 2px #000000;}
-    /* Updated styles for file uploader */
-    .stFileUploader {
-        background-color: rgba(255, 255, 255, 0.1);
-        border-radius: 10px;
-        padding: 20px;
-        margin-bottom: 20px;}
-    .custom-file-upload {
-        display: inline-block;
-        padding: 10px 20px;
-        cursor: pointer;
-        background-color: #4a69bd;
-        color: #ffffff;
-        border-radius: 5px;
-        transition: all 0.3s;}
-    .custom-file-upload:hover {
-        background-color: #82ccdd;
-        color: #0c2461;}
-    .file-upload-text {
-        font-size: 18px;
-        color: fuchsia;
-        font-weight: bold;
-        margin-bottom: 10px;}
-    /* Style for uploaded file name */
-    .uploaded-filename {
-        background-color: rgba(255, 255, 255, 0.2);
-        color: cyan;
-        padding: 10px;
-        border-radius: 5px;
-        margin-top: 10px;
-        font-weight: bold;
-    }
-</style>
-""", unsafe_allow_html=True)
+  st.markdown("""<style>body {background-color: #0e1117;color: #ffffff;}.stApp {background-image: linear-gradient(45deg, #1e3799, #0c2461);}.big-font {font-size: 48px !important;font-weight: bold;color: lime;text-align: center;text-shadow: 2px 2px 4px #000000;}.subheader {font-size: 24px;color: moccasin;text-align: center;}.stButton>button {background-color: #4a69bd;color: white;border-radius: 20px;border: 2px solid #82ccdd;padding: 10px 24px;font-size: 16px;transition: all 0.3s;}.stButton>button:hover {background-color: #82ccdd;color: #0c2461;transform: scale(1.05);}.stProgress > div > div > div > div {background-color: #4a69bd;}.stSelectbox {background-color: #1e3799;}.stDataFrame {background-color: #0c2461;}.metric-value {color: gold !important;font-size: 24px !important;font-weight: bold !important;}.metric-label {color: white !important;}h3 {color: #ff9f43 !important;font-size: 28px !important;font-weight: bold !important;text-shadow: 1px 1px 2px #000000;}/* Updated styles for file uploader */.stFileUploader {background-color: rgba(255, 255, 255, 0.1);border-radius: 10px;padding: 20px;margin-bottom: 20px;}.custom-file-upload {display: inline-block;padding: 10px 20px;cursor: pointer;background-color: #4a69bd;color: #ffffff;border-radius: 5px;transition: all 0.3s;}.custom-file-upload:hover {background-color: #82ccdd;color: #0c2461;}.file-upload-text {font-size: 18px;color: fuchsia;font-weight: bold;margin-bottom: 10px;}/* Style for uploaded file name */.uploaded-filename {background-color: rgba(255, 255, 255, 0.2);color: cyan;padding: 10px;border-radius: 5px;margin-top: 10px;font-weight: bold;}</style>""", unsafe_allow_html=True)
   def custom_file_uploader(label, type):
     st.markdown(f'<p class="file-upload-text">{label}</p>', unsafe_allow_html=True)
     uploaded_file = st.file_uploader("Choose file", type=type, key="file_uploader", label_visibility="collapsed")
@@ -6218,9 +6099,7 @@ def projection():
         table_data.append([row['Zone'],row['Brand'],f"{row['Month Tgt (Nov)']:,}",f"{row['Predicted Nov 2024']:,}",f"{row['Total Nov 2023']:,}",f"{row['YoY Growth']:.2f}%"])
     table_data[0][-1] = table_data[0][-1] + "*"  
     table = Table(table_data, colWidths=[1.25*inch, 0.80*inch, 1.5*inch, 1.75*inch, 1.5*inch, 1.20*inch],rowHeights=[0.60*inch] + [0.38*inch] * (len(table_data) - 1))
-    style = TableStyle([('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4A708B')),('BACKGROUND', (0, len(table_data) - 3), (-1, len(table_data) - 1), colors.orange),('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),('FONTSIZE', (0, 0), (-1, 0), 12),('BOTTOMPADDING', (0, 0), (-1, 0), 10),('BACKGROUND', (0, 1), (-1, -4), colors.white),
-        ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),('ALIGN', (0, 0), (-1, -1), 'CENTER'),('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),('FONTSIZE', (0, 1), (-1, -1), 10),('GRID', (0, 0), (-1, -1), 1, colors.lightgrey)])
+    style = TableStyle([('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4A708B')),('BACKGROUND', (0, len(table_data) - 3), (-1, len(table_data) - 1), colors.orange),('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),('ALIGN', (0, 0), (-1, -1), 'CENTER'),('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),('FONTSIZE', (0, 0), (-1, 0), 12),('BOTTOMPADDING', (0, 0), (-1, 0), 10),('BACKGROUND', (0, 1), (-1, -4), colors.white),('TEXTCOLOR', (0, 1), (-1, -1), colors.black),('ALIGN', (0, 0), (-1, -1), 'CENTER'),('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),('FONTSIZE', (0, 1), (-1, -1), 10),('GRID', (0, 0), (-1, -1), 1, colors.lightgrey)])
     table.setStyle(style)
     elements.append(table)
     footnote_style = getSampleStyleSheet()['Normal']
@@ -6349,124 +6228,7 @@ def projection():
     st.stop()
 def market_share():
     THEME = {'PRIMARY': '#2563eb','SECONDARY': '#64748b','SUCCESS': '#10b981','WARNING': '#f59e0b','DANGER': '#ef4444','BACKGROUND': '#ffffff','SIDEBAR': '#f8fafc','TEXT': '#1e293b','HEADER': '#0f172a'}
-    st.markdown("""
-        <style>
-        /* Global Styles */
-        .stApp {
-            background-color: #ffffff;
-        }
-        /* Main Content Area */
-        .main {
-            background-color: #f8fafc;
-            padding: 2rem;
-            border-radius: 1rem;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-        }
-        /* Headers */
-        h1 {
-            color: #0f172a;
-            font-size: 2.25rem !important;
-            font-weight: 700 !important;
-            margin-bottom: 1.5rem !important;
-            padding-bottom: 0.5rem;
-            border-bottom: 2px solid #e2e8f0;
-        }
-        h2 {
-            color: #1e293b;
-            font-size: 1.875rem !important;
-            font-weight: 600 !important;
-            margin-top: 2rem !important;
-        }
-        h3 {
-            color: #334155;
-            font-size: 1.5rem !important;
-            font-weight: 600 !important;
-        }
-        /* Sidebar */
-        .css-1d391kg {
-            background-color: #f8fafc;
-            padding: 2rem 1.5rem;
-            border-right: 1px solid #e2e8f0;
-        }
-        /* Cards */
-        .stMetric {
-            background-color: white;
-            padding: 1rem;
-            border-radius: 0.75rem;
-            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
-            transition: transform 0.2s;
-        }
-        .stMetric:hover {
-            transform: translateY(-2px);
-        }
-        /* Buttons */
-        .stButton>button {
-            background-color: #2563eb;
-            color: white;
-            border: none;
-            padding: 0.5rem 1.25rem;
-            border-radius: 0.5rem;
-            font-weight: 500;
-            transition: all 0.2s;
-            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
-        }
-        .stButton>button:hover {
-            background-color: #1d4ed8;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);
-        }
-        /* Select Boxes */
-        .stSelectbox>div>div {
-            background-color: white;
-            border-radius: 0.5rem;
-            border: 1px solid #e2e8f0;
-        }
-        /* Expander */
-        .streamlit-expanderHeader {
-            background-color: white;
-            border-radius: 0.5rem;
-            border: 1px solid #e2e8f0;
-            padding: 0.75rem 1rem;
-        }
-        /* Plots */
-        .stPlot {
-            background-color: white;
-            padding: 1rem;
-            border-radius: 0.75rem;
-            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
-        }
-        /* Loading Animation */
-        .stSpinner {
-            text-align: center;
-            color: #2563eb;
-        }
-        /* Tooltips */
-        .tooltip {
-            position: relative;
-            display: inline-block;
-            border-bottom: 1px dotted #64748b;
-        } 
-        .tooltip .tooltiptext {
-            visibility: hidden;
-            background-color: #1e293b;
-            color: white;
-            text-align: center;
-            padding: 0.5rem 1rem;
-            border-radius: 0.375rem;
-            position: absolute;
-            z-index: 1;
-            bottom: 125%;
-            left: 50%;
-            transform: translateX(-50%);
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-        .tooltip:hover .tooltiptext {
-            visibility: visible;
-            opacity: 1;
-        }
-        </style>
-    """, unsafe_allow_html=True)
+    st.markdown("""<style>/* Global Styles */.stApp {background-color: #ffffff;}/* Main Content Area */.main {background-color: #f8fafc;padding: 2rem;border-radius: 1rem;box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);}/* Headers */h1 {color: #0f172a;font-size: 2.25rem !important;font-weight: 700 !important;margin-bottom: 1.5rem !important;padding-bottom: 0.5rem;border-bottom: 2px solid #e2e8f0;}h2 {color: #1e293b;font-size: 1.875rem !important;font-weight: 600 !important;margin-top: 2rem !important;}h3 {color: #334155;font-size: 1.5rem !important;font-weight: 600 !important;}/* Sidebar */.css-1d391kg {background-color: #f8fafc;padding: 2rem 1.5rem;border-right: 1px solid #e2e8f0;}/* Cards */.stMetric {background-color: white;padding: 1rem;border-radius: 0.75rem;box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);transition: transform 0.2s;}.stMetric:hover {transform: translateY(-2px);}/* Buttons */.stButton>button {background-color: #2563eb;color: white;border: none;padding: 0.5rem 1.25rem;border-radius: 0.5rem;font-weight: 500;transition: all 0.2s;box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);}.stButton>button:hover {background-color: #1d4ed8;transform: translateY(-1px);box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);}/* Select Boxes */.stSelectbox>div>div {background-color: white;border-radius: 0.5rem;border: 1px solid #e2e8f0;}/* Expander */.streamlit-expanderHeader {background-color: white;border-radius: 0.5rem;border: 1px solid #e2e8f0;padding: 0.75rem 1rem;}/* Plots */.stPlot {background-color: white;padding: 1rem;border-radius: 0.75rem;box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);}/* Loading Animation */.stSpinner {text-align: center;color: #2563eb;}/* Tooltips */.tooltip {position: relative;display: inline-block;border-bottom: 1px dotted #64748b;} .tooltip .tooltiptext {visibility: hidden;background-color: #1e293b;color: white;text-align: center;padding: 0.5rem 1rem;border-radius: 0.375rem;position: absolute;z-index: 1;bottom: 125%;left: 50%;transform: translateX(-50%);opacity: 0;transition: opacity 0.2s;}.tooltip:hover .tooltiptext {visibility: visible;opacity: 1;}</style>""", unsafe_allow_html=True)
     COMPANY_COLORS = {}
     @st.cache_data
     def generate_distinct_color(existing_colors):
@@ -6650,7 +6412,7 @@ def market_share():
                     volume_positions.append((vol, center, company_colors[company], i))
         bottom += values
      max_total_share = total_shares.max()
-     y_max = max_total_share * 1.15  # Add 15% padding
+     y_max = max_total_share * 1.15
      ax1.set_ylim(0, y_max)
      for i, total in enumerate(total_shares):
         ax1.text(i, total + (y_max * 0.02), f'Total: {total:.1f}%',ha='center', va='bottom',fontsize=12,fontweight='bold',color='#2c3e50')
@@ -6867,132 +6629,17 @@ def market_share():
         main()
 def discount():
  warnings.filterwarnings('ignore')
- st.markdown("""
-<style>
-    /* Global Styles */
-    [data-testid="stSidebar"] {
-        background-color: #f8fafc;
-        border-right: 1px solid #e2e8f0;
-    }
-    .stButton button {
-        background-color: #3b82f6;
-        color: white;
-        border-radius: 6px;
-        padding: 0.5rem 1rem;
-        border: none;
-        transition: all 0.2s;
-    }
-    .stButton button:hover {
-        background-color: #2563eb;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-    /* Ticker Animation */
-    @keyframes ticker {
-        0% { transform: translateX(100%); }
-        100% { transform: translateX(-100%); }
-    }
-    .ticker-container {
-        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-        color: white;
-        padding: 16px;
-        overflow: hidden;
-        white-space: nowrap;
-        position: relative;
-        margin-bottom: 24px;
-        border-radius: 12px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-    .ticker-content {
-        display: inline-block;
-        animation: ticker 2500s linear infinite;
-        animation-delay: -1250s;
-        padding-right: 100%;
-        will-change: transform;
-    }
-    .ticker-content:hover {
-        animation-play-state: paused;
-    }
-    .ticker-item {
-        display: inline-block;
-        margin-right: 80px;
-        font-size: 16px;
-        padding: 8px 16px;
-        opacity: 1;
-        transition: opacity 0.3s;
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 8px;
-    }
-    /* Enhanced Metrics */
-    .state-name {
-        color: #10B981;
-        font-weight: 600;
-    }
-    .month-name {
-        color: #60A5FA;
-        font-weight: 600;
-    }
-    .discount-value {
-        color: #FBBF24;
-        font-weight: 600;
-    }
-    /* Card Styles */
-    .metric-card {
-        background: white;
-        padding: 1.5rem;
-        border-radius: 12px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        transition: transform 0.2s;
-        border: 1px solid #e2e8f0;
-    }
-    .metric-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    }
-    .metric-value {
-        font-size: 2rem;
-        font-weight: 600;
-        color: #1e293b;
-    }
-    .metric-label {
-        color: #64748b;
-        font-size: 0.875rem;
-        margin-top: 0.5rem;
-    }
-    /* Chart Container */
-    .chart-container {
-        background: white;
-        padding: 1.5rem;
-        border-radius: 12px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        margin: 1rem 0;
-        border: 1px solid #e2e8f0;
-    }
-    /* Selectbox Styling */
-    .stSelectbox {
-        background: white;
-        border-radius: 8px;
-        border: 1px solid #e2e8f0;
-    }
-    /* Custom Header */
-    .dashboard-header {
-        padding: 1.5rem;
-        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-        color: white;
-        border-radius: 12px;
-        margin-bottom: 2rem;
-        text-align: center;
-    }
-    .dashboard-title {
-        font-size: 2rem;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-    }
-    .dashboard-subtitle {
-        color: #94a3b8;
-        font-size: 1rem;
-    }
- </style>
- """, unsafe_allow_html=True)
+ st.markdown("""<style>/* Global Styles */[data-testid="stSidebar"] {background-color: #f8fafc;border-right: 1px solid #e2e8f0;}.stButton button {background-color: #3b82f6;color: white;border-radius: 6px;padding: 0.5rem 1rem;border: none;transition: all 0.2s;}.stButton button:hover {background-color: #2563eb;box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);}
+    /* Ticker Animation */@keyframes ticker {0% { transform: translateX(100%); }100% { transform: translateX(-100%); }}.ticker-container {background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);color: white;padding: 16px;overflow: hidden;white-space: nowrap;position: relative;margin-bottom: 24px;border-radius: 12px;box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);}
+    .ticker-content {display: inline-block;animation: ticker 2500s linear infinite;animation-delay: -1250s;padding-right: 100%;will-change: transform;}.ticker-content:hover {animation-play-state: paused;}
+    .ticker-item {display: inline-block;margin-right: 80px;font-size: 16px;padding: 8px 16px;opacity: 1;transition: opacity 0.3s;background: rgba(255, 255, 255, 0.1);border-radius: 8px;}
+    /* Enhanced Metrics */.state-name {color: #10B981;font-weight: 600;}.month-name {color: #60A5FA;font-weight: 600;}.discount-value {color: #FBBF24;font-weight: 600;}/* Card Styles */
+    .metric-card {background: white;padding: 1.5rem;border-radius: 12px;box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);transition: transform 0.2s;border: 1px solid #e2e8f0;}
+    .metric-card:hover {transform: translateY(-2px);box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);}.metric-value {font-size: 2rem;font-weight: 600;color: #1e293b;}.metric-label {color: #64748b;font-size: 0.875rem;margin-top: 0.5rem;}
+    /* Chart Container */.chart-container {background: white;padding: 1.5rem;border-radius: 12px;box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);margin: 1rem 0;border: 1px solid #e2e8f0;}
+    /* Selectbox Styling */.stSelectbox {background: white;border-radius: 8px;border: 1px solid #e2e8f0;}
+    /* Custom Header */.dashboard-header {padding: 1.5rem;background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);color: white;border-radius: 12px;margin-bottom: 2rem;text-align: center;}
+    .dashboard-title {font-size: 2rem;font-weight: 600;margin-bottom: 0.5rem;}.dashboard-subtitle {color: #94a3b8;font-size: 1rem;}</style>""", unsafe_allow_html=True)
  @st.cache_data(ttl=3600)
  def process_excel_file(file_content, excluded_sheets):
     excel_data = io.BytesIO(file_content)
@@ -7253,13 +6900,7 @@ def discount():
                 full_text = f"{state_text} | {month_text} | {' | '.join(discount_items)}"
                 ticker_items.append(f"<span class='ticker-item'>{full_text}</span>")
      ticker_items = ticker_items * 3
-     ticker_html = f"""
-     <div class="ticker-container">
-        <div class="ticker-content">
-            {' '.join(ticker_items)}
-        </div>
-     </div>
-     """
+     ticker_html = f"""<div class="ticker-container"><div class="ticker-content">{' '.join(ticker_items)}</div></div>"""
      st.markdown(ticker_html, unsafe_allow_html=True)
     def create_summary_metrics(self, data):
         total_states = len(data)
@@ -7284,11 +6925,7 @@ def discount():
             if len(filtered_df) > 0:
                 monthly_data = {month: {'actual': filtered_df.iloc[0, cols['actual']],'approved': filtered_df.iloc[0, cols['approved']],'quantity': filtered_df.iloc[0, cols['quantity']]}for month, cols in self.month_columns.items()}
         for month, data in monthly_data.items():
-            st.markdown(f"""
-            <div style='text-align: center; margin-bottom: 10px;'>
-                <h3 style='color: #1e293b; margin-bottom: 15px;'>{month}</h3>
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown(f"""<div style='text-align: center; margin-bottom: 10px;'><h3 style='color: #1e293b; margin-bottom: 15px;'>{month}</h3></div>""", unsafe_allow_html=True)
             col1, col2, col3 = st.columns(3)
             with col1:
                 quantity = data.get('quantity', 0)
@@ -7338,10 +6975,7 @@ def discount():
      first_col = df.iloc[:, 0]
      valid_discounts = []
      if state:
-        state_group = next(
-            (group for group, config in self.discount_mappings.items()
-             if state in config['states']),
-            None)
+        state_group = next((group for group, config in self.discount_mappings.items()if state in config['states']),None)
         if state_group:
             relevant_discounts = self.discount_mappings[state_group]['discounts']
             if any(d in first_col.values for d in relevant_discounts):
@@ -7350,20 +6984,13 @@ def discount():
                 if (isinstance(d, str) and d.strip() not in self.excluded_discounts and d.strip() not in relevant_discounts):
                     valid_discounts.append(d)
         else:
-            valid_discounts = [
-                d for d in first_col.unique() 
-                if isinstance(d, str) and d.strip() not in self.excluded_discounts]
+            valid_discounts = [d for d in first_col.unique() if isinstance(d, str) and d.strip() not in self.excluded_discounts]
      else:
-        valid_discounts = [
-            d for d in first_col.unique() 
-            if isinstance(d, str) and d.strip() not in self.excluded_discounts]
+        valid_discounts = [d for d in first_col.unique() if isinstance(d, str) and d.strip() not in self.excluded_discounts]
      return sorted(valid_discounts)
     def get_combined_data(self, df, month_cols, state):
      combined_data = {'actual': np.nan, 'approved': np.nan,'quantity': np.nan}
-     state_group = next(
-        (group for group, config in self.discount_mappings.items()
-         if state in config['states']),
-        None)
+     state_group = next((group for group, config in self.discount_mappings.items()if state in config['states']),None)
      if state_group:
         relevant_discounts = self.discount_mappings[state_group]['discounts']
         mask = df.iloc[:, 0].fillna('').astype(str).str.strip().isin(relevant_discounts)
@@ -7377,33 +7004,16 @@ def discount():
  def main():
     processor = DiscountAnalytics()
     with st.sidebar:
-        st.markdown("""
-        <div style='text-align: center; padding: 1rem;'>
-            <h2 style='color: #1e293b;'>Dashboard Controls</h2>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown("""<div style='text-align: center; padding: 1rem;'><h2 style='color: #1e293b;'>Dashboard Controls</h2></div>""", unsafe_allow_html=True)
         uploaded_file = st.file_uploader("Upload Excel File", type=['xlsx', 'xls'])
-    st.markdown("""
-    <div class='dashboard-header'>
-        <div class='dashboard-title'>Discount Analytics Dashboard</div>
-        <div class='dashboard-subtitle'>Monitor and analyze discount performance across states</div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown("""<div class='dashboard-header'><div class='dashboard-title'>Discount Analytics Dashboard</div><div class='dashboard-subtitle'>Monitor and analyze discount performance across states</div></div>""", unsafe_allow_html=True)
     if uploaded_file is not None:
         with st.spinner('Processing data...'):
             data = processor.process_excel(uploaded_file)
             processor.create_ticker(data)
-        st.markdown("""
-        <div style='margin: 2rem 0;'>
-            <h3 style='color: #1e293b; margin-bottom: 1rem;'>Key Performance Indicators</h3>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown("""<div style='margin: 2rem 0;'><h3 style='color: #1e293b; margin-bottom: 1rem;'>Key Performance Indicators</h3></div>""", unsafe_allow_html=True)
         processor.create_summary_metrics(data)
-        st.markdown("""
-        <div style='margin: 2rem 0;'>
-            <h3 style='color: #1e293b; margin-bottom: 1rem;'>Detailed Analysis</h3>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown("""<div style='margin: 2rem 0;'><h3 style='color: #1e293b; margin-bottom: 1rem;'>Detailed Analysis</h3></div>""", unsafe_allow_html=True)
         col1, col2 = st.columns(2)
         with col1:
             selected_state = st.selectbox("Select State", list(data.keys()))
@@ -7419,12 +7029,7 @@ def discount():
             st.markdown("</div>", unsafe_allow_html=True)
             add_pdf_download(processor, data, selected_state)
     else:
-        st.markdown("""
-        <div style='text-align: center; padding: 3rem; background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);'>
-            <h2 style='color: #1e293b; margin-bottom: 1rem;'>Welcome to Discount Analytics</h2>
-            <p style='color: #64748b; margin-bottom: 2rem;'>Please upload an Excel file to begin your analysis.</p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown("""<div style='text-align: center; padding: 3rem; background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);'><h2 style='color: #1e293b; margin-bottom: 1rem;'>Welcome to Discount Analytics</h2><p style='color: #64748b; margin-bottom: 2rem;'>Please upload an Excel file to begin your analysis.</p></div>""", unsafe_allow_html=True)
         st.markdown("<div style='margin-top: 2rem;'>", unsafe_allow_html=True)
         col1, col2, col3 = st.columns(3)
         with col1:
