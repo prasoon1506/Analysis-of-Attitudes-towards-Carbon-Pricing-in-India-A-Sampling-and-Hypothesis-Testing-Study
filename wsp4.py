@@ -5659,9 +5659,7 @@ def green():
         c.drawImage(img, x, y, width, height)
     def draw_table(data, x, y, col_widths):
         table = Table(data, colWidths=col_widths)
-        table.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, 0), colors.grey),('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),('ALIGN', (0, 0), (-1, -1), 'CENTER'),('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),('FONTSIZE', (0, 0), (-1, 0), 8),  
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 6), ('BACKGROUND', (0, 1), (-1, -1), colors.beige),('TEXTCOLOR', (0, 1), (-1, -1), colors.black),('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),('FONTSIZE', (0, 1), (-1, -1), 6), ('TOPPADDING', (0, 1), (-1, -1), 3), ('BOTTOMPADDING', (0, 1), (-1, -1), 3), ('GRID', (0, 0), (-1, -1), 1, colors.black)]))
+        table.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, 0), colors.grey),('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),('ALIGN', (0, 0), (-1, -1), 'CENTER'),('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),('FONTSIZE', (0, 0), (-1, 0), 8),  ('BOTTOMPADDING', (0, 0), (-1, 0), 6), ('BACKGROUND', (0, 1), (-1, -1), colors.beige),('TEXTCOLOR', (0, 1), (-1, -1), colors.black),('ALIGN', (0, 0), (-1, -1), 'CENTER'),('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),('FONTSIZE', (0, 1), (-1, -1), 6), ('TOPPADDING', (0, 1), (-1, -1), 3), ('BOTTOMPADDING', (0, 1), (-1, -1), 3), ('GRID', (0, 0), (-1, -1), 1, colors.black)]))
         w, h = table.wrapOn(c, width, height)
         table.drawOn(c, x, y - h)
     def add_tutorial_page():
@@ -5719,11 +5717,7 @@ def green():
         c.drawText(text_object)
         c.setFont("Helvetica-Bold", 14)
         c.drawString(inch, height - 4*inch, "Suggestions for Improvement:")
-        suggestions = [
-            "Increase the share of Green Region products, which typically have higher EBIDTA margins.",
-            "Analyze factors contributing to higher EBIDTA in Green zone,and apply insights to Red zone.",
-            "Regularly review and adjust pricing strategies to optimize EBITDA across all product categories.",
-            "Invest in product innovation to expand Green and Yellow region offerings.",]
+        suggestions = ["Increase the share of Green Region products, which typically have higher EBIDTA margins.","Analyze factors contributing to higher EBIDTA in Green zone,and apply insights to Red zone.","Regularly review and adjust pricing strategies to optimize EBITDA across all product categories.","Invest in product innovation to expand Green and Yellow region offerings.",]
         text_object = c.beginText(inch, height - 4.3*inch)
         text_object.setFont("Helvetica", 12)
         for suggestion in suggestions:
@@ -5731,10 +5725,7 @@ def green():
         c.drawText(text_object)
         c.setFont("Helvetica-Bold", 14)
         c.drawString(inch, height - 5.2*inch, "Limitations:")
-        limitations = [
-            "This analysis is based on historical data and may not predict future market changes.",
-            "External factors such as economic conditions are not accounted for in this report.",
-            "This report analyzes the EBIDTA for GYR keeping everything else constant.",]
+        limitations = ["This analysis is based on historical data and may not predict future market changes.","External factors such as economic conditions are not accounted for in this report.","This report analyzes the EBIDTA for GYR keeping everything else constant.",]
         text_object = c.beginText(inch, height - 5.5*inch)
         text_object.setFont("Helvetica", 12)
         for limitation in limitations:
