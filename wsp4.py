@@ -4378,20 +4378,20 @@ def create_visualization(region_data, region, brand, months):
         y_offset -= 0.12
         ax.text(x + 0.05, y_offset,"Trade Volume:",fontsize=14, fontweight='bold',color='#2c3e50')
         y_offset -= 0.08
-        ax.text(x + 0.05, y_offset,f"2023: {trade_2023:,.0f}",fontsize=11)
-        ax.text(x + width/2, y_offset,f"2024: {trade_2024:,.0f}",fontsize=11)
+        ax.text(x + 0.05, y_offset,f"FY 2024: {trade_2023:,.0f}",fontsize=11)
+        ax.text(x + width/2, y_offset,f"FY 2025: {trade_2024:,.0f}",fontsize=11)
         ax.text(x + 0.375*width, y_offset,f"{trade_pct_change:+.1f}%",fontsize=11,color='green' if trade_pct_change > 0 else 'red')
         if pct_change > 0:
             arrow_style = 'fancy,head_length=4,head_width=6'
             arrow_color = 'green'
-            start_x = x + 0.11
+            start_x = x + 0.15
             end_x = x + width * 0.49
             start_y = y + 0.31
             end_y = y + 0.31
         else:
             arrow_style = 'fancy,head_length=4,head_width=6'
             arrow_color = 'red'
-            start_x = x + 0.11
+            start_x = x + 0.15
             end_x = x + width * 0.49
             start_y = y + 0.31
             end_y = y + 0.31
@@ -4400,14 +4400,14 @@ def create_visualization(region_data, region, brand, months):
         if trade_pct_change > 0:
             arrow_style = 'fancy,head_length=4,head_width=6'
             arrow_color = 'green'
-            start_x = x + 0.11
+            start_x = x + 0.15
             end_x = x + width * 0.49
             start_y = y + 0.11
             end_y = y + 0.11
         else:
             arrow_style = 'fancy,head_length=4,head_width=6'
             arrow_color = 'red'
-            start_x = x + 0.11
+            start_x = x + 0.15
             end_x = x + width * 0.49
             start_y = y + 0.11
             end_y = y + 0.11
