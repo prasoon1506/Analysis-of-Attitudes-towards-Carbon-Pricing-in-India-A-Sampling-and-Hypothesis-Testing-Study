@@ -4419,8 +4419,8 @@ def create_visualization(region_data, region, brand, months):
     q2_data = {'total_2023': region_data['Q2 2023 Total'].iloc[-1],'total_2024': region_data['Q2 2024 Total'].iloc[-1],'trade_2023': region_data['Q2 2023 Trade'].iloc[-1],'trade_2024': region_data['Q2 2024 Trade'].iloc[-1]}
     q3_data = {'total_2023': region_data['Q3 2023 Total'].iloc[-1],'total_2024': region_data['Q3 2024 Total'].iloc[-1],'trade_2023': region_data['Q3 2023 Trade'].iloc[-1],'trade_2024': region_data['Q3 2024 Trade'].iloc[-1]}
     create_modern_quarterly_box(ax_comparison, 0.1, box_y, 0.35, box_height, q1_data, "Q1")
-    create_modern_quarterly_box(ax_comparison, 0.55, box_y, 0.35, box_height, q2_data, "Q2")
-    create_modern_quarterly_box(ax_comparison, 1.00, box_y, 0.35, box_height, q3_data, "Q3")
+    create_modern_quarterly_box(ax_comparison, 0.25, box_y, 0.35, box_height, q2_data, "Q2")
+    create_modern_quarterly_box(ax_comparison, 0.50, box_y, 0.35, box_height, q3_data, "Q3")
     ax_comparison.set_xlim(0, 1)
     ax_comparison.set_ylim(0, 1)
     plt.tight_layout()
