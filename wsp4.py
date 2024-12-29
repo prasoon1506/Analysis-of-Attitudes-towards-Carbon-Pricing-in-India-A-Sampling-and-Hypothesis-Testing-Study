@@ -411,7 +411,7 @@ def price():
             else:
                 metric_progression_parts.append(f'<sup><font size="8">00</font></sup>→')
     full_progression = " ".join(metric_progression_parts)
-    week_progression_text = "-".join(week_labels)
+    week_progression_text = "- ".join(week_labels)
     story.append(Paragraph(full_progression, large_price_style))
     story.append(Paragraph(week_progression_text, normal_style))
     if len(metric_values) > 1:
