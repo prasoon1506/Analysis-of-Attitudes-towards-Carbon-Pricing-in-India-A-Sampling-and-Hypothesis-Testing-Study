@@ -267,7 +267,7 @@ def price():
         if competitive_brands_file is not None:
             try:
                 xls = pd.ExcelFile(competitive_brands_file)
-                required_columns = ['Region(District)', 'D1-3', 'D4-6', 'D7-9', 'D10-12', 'D13-15','D16-18','D19-21','D22-24,'D25-27','D28-30']
+                required_columns = ['Region(District)', 'D1-3', 'D4-6', 'D7-9', 'D10-12', 'D13-15','D16-18','D19-21','D22-24','D25-27','D28-30']
                 for sheet_name in xls.sheet_names:
                     df = pd.read_excel(competitive_brands_file, sheet_name=sheet_name)
                     missing_columns = [col for col in required_columns if col not in df.columns]
