@@ -358,14 +358,14 @@ def price():
                 current_month_change = current_month_end_value - current_month_start_value
                 if is_secondary_metric:
                     if current_month_change == 0:
-                        current_month_change_text = f"Net Change in {title} from 1st Dec.: No Change"
+                        current_month_change_text = f"Net Change in {title} from (Current Month): No Change"
                     else:
-                        current_month_change_text = f"Net Change in {title} from 1st Dec.: {current_month_change:+.0f} Rs."
+                        current_month_change_text = f"Net Change in {title} from (Current Month): {current_month_change:+.0f} Rs."
                 else:
                     if current_month_change == 0:
-                        current_month_change_text = f"Net Change in {title} from 1st Dec.: 0 Rs."
+                        current_month_change_text = f"Net Change in {title} from (Current Month): 0 Rs."
                     else:
-                        current_month_change_text = f"Net Change in {title} from 1st Dec.: {current_month_change:+.0f} Rs."
+                        current_month_change_text = f"Net Change in {title} from (Current Month): {current_month_change:+.0f} Rs."
         if is_secondary_metric:
             if total_change == 0:
                 total_change_text = f"Net Change in {title} from 1st Dec.: No Change"
@@ -403,7 +403,7 @@ def price():
     metric_values = region_wsp[wsp_columns].values.flatten().tolist()
     week_labels = ['01-03 Dec', '04-06 Dec', '07-09 Dec', '10-12 Dec', '13-15 Dec','16-18 Dec','19-21 Dec','22-24 Dec','25-27 Dec','28-29 Dec','01-02 Jan']
     
-    header_text = f"WSP Progression in December 2024" + \
+    header_text = f"WSP Progression from December 2024 to January 2025" + \
                   (f" - {brand_name}" if brand_name else "")
     story.append(Paragraph(header_text + ":-", month_style))
     
@@ -428,9 +428,9 @@ def price():
     if len(metric_values) > 1:
         total_change = float(metric_values[-1]) - float(metric_values[0])
         if total_change == 0:
-            total_change_text = f"Net Change in WSP{' - ' + brand_name if brand_name else ''}(Current Month): 0 Rs."
+            total_change_text = f"Net Change in WSP{' - ' + brand_name if brand_name else ''} from 1st Dec.: 0 Rs."
         else:
-            total_change_text = f"Net Change in WSP{' - ' + brand_name if brand_name else ''}(Current Month): {total_change:+.0f} Rs."
+            total_change_text = f"Net Change in WSP{' - ' + brand_name if brand_name else ''} from 1st Dec.: {total_change:+.0f} Rs."
         story.append(Paragraph(total_change_text, total_change_style))
         
     if company_wsp_df is not None and brand_name is not None:
