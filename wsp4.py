@@ -358,12 +358,12 @@ def price():
                 current_month_change = current_month_end_value - current_month_start_value
                 if is_secondary_metric:
                     if current_month_change == 0:
-                        current_month_change_text = f"Net Change in {title} (Current Month): No Change"
+                        current_month_change_text = f"Net Change in {title} from 1st Dec.: No Change"
                     else:
                         current_month_change_text = f"Net Change in {title} (Current Month): {current_month_change:+.0f} Rs."
                 else:
                     if current_month_change == 0:
-                        current_month_change_text = f"Net Change in {title} (Current Month): 0 Rs."
+                        current_month_change_text = f"Net Change in {title} from 1st Dec.: 0 Rs."
                     else:
                         current_month_change_text = f"Net Change in {title} (Current Month): {current_month_change:+.0f} Rs."
         if is_secondary_metric:
