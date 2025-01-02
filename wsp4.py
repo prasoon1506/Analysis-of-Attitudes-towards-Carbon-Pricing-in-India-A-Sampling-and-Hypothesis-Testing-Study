@@ -267,7 +267,7 @@ def price():
         if competitive_brands_file is not None:
             try:
                 xls = pd.ExcelFile(competitive_brands_file)
-                required_columns = ['Region(District)', 'D1-3', 'D4-6', 'D7-9', 'D10-12', 'D13-15','D16-18','D19-21','D22-24','D25-27','D28-30']
+                required_columns = ['Region(District)', 'D1-3', 'D4-6', 'D7-9', 'D10-12', 'D13-15','D16-18','D19-21','D22-24','D25-27','D28-30','D1-3 J']
                 for sheet_name in xls.sheet_names:
                     df = pd.read_excel(competitive_brands_file, sheet_name=sheet_name)
                     missing_columns = [col for col in required_columns if col not in df.columns]
@@ -349,7 +349,7 @@ def price():
         start_value = progression_df[metric_column].iloc[0]
         end_value = progression_df[metric_column].iloc[-1]
         total_change = end_value - start_value
-        current_month_change_text = "No current month data available"
+        current_month_change_text = ""
         if current_month_start_data_point is not None:
             current_month_df = region_df[(region_df['Date'] >= current_month_start_data_point['Date']) & (region_df['Date'] <= current_date)]
             if not current_month_df.empty:
@@ -368,16 +368,16 @@ def price():
                         current_month_change_text = f"Net Change in {title} (Current Month): {current_month_change:+.0f} Rs."
         if is_secondary_metric:
             if total_change == 0:
-                total_change_text = f"Net Change in {title} from 1st Nov.: No Change"
+                total_change_text = f"Net Change in {title} from 1st Dec.: No Change"
             else:
-                total_change_text = f"Net Change in {title} from 1st Nov.: {total_change:+.0f} Rs."
+                total_change_text = f"Net Change in {title} from 1st Dec.: {total_change:+.0f} Rs."
             story.append(Paragraph(total_change_text, total_change_style))
             story.append(Paragraph(current_month_change_text, total_change_style))
         else:
             if total_change == 0:
-                total_change_text = f"Net Change in {title} from 1st Nov.: 0 Rs."
+                total_change_text = f"Net Change in {title} from 1st Dec.: 0 Rs."
             else:
-                total_change_text = f"Net Change in {title} from 1st Nov.: {total_change:+.0f} Rs."
+                total_change_text = f"Net Change in {title} from 1st Dec.: {total_change:+.0f} Rs."
             story.append(Paragraph(total_change_text, total_change_style))
             story.append(Paragraph(current_month_change_text, total_change_style))
     story.append(Spacer(1, 0 if is_secondary_metric else 0))
@@ -399,9 +399,9 @@ def price():
         story.append(Spacer(1, 0))
         return
         
-    wsp_columns = ['D1-3', 'D4-6', 'D7-9', 'D10-12', 'D13-15','D16-18','D19-21','D22-24','D25-27','D28-30']
+    wsp_columns = ['D1-3', 'D4-6', 'D7-9', 'D10-12', 'D13-15','D16-18','D19-21','D22-24','D25-27','D28-30',,'D1-3 J']
     metric_values = region_wsp[wsp_columns].values.flatten().tolist()
-    week_labels = ['01-03 Dec', '04-06 Dec', '07-09 Dec', '10-12 Dec', '13-15 Dec','16-18 Dec','19-21 Dec','22-24 Dec','25-27 Dec','28-29 Dec']
+    week_labels = ['01-03 Dec', '04-06 Dec', '07-09 Dec', '10-12 Dec', '13-15 Dec','16-18 Dec','19-21 Dec','22-24 Dec','25-27 Dec','28-29 Dec',01-02 Jan']
     
     header_text = f"WSP Progression in December 2024" + \
                   (f" - {brand_name}" if brand_name else "")
@@ -510,7 +510,7 @@ def price():
                     wsp_df = pd.read_csv(wsp_file)
                 else:
                     wsp_df = pd.read_excel(wsp_file)
-                required_columns = ['Region(District)', 'D1-3', 'D4-6', 'D7-9', 'D10-12', 'D13-15','D16-18','D19-21','D22-24','D25-27','D28-30']
+                required_columns = ['Region(District)', 'D1-3', 'D4-6', 'D7-9', 'D10-12', 'D13-15','D16-18','D19-21','D22-24','D25-27','D28-30','D1-3 J']
                 for col in required_columns:
                     if col not in wsp_df.columns:
                         st.error(f"Missing required WSP column: {col}")
