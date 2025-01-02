@@ -382,23 +382,31 @@ def price():
             story.append(Paragraph(current_month_change_text, total_change_style))
     story.append(Spacer(1, 0 if is_secondary_metric else 0))
  def create_wsp_progression(story, wsp_df, region, styles, brand_name=None, is_last_brand=False, company_wsp_df=None):
+    if region in ['UK (Dehradun)', 'UK (Haridwar)']:
+        return
+        
     normal_style = styles['Normal']
     month_style = ParagraphStyle('MonthStyle', parent=styles['Heading3'], textColor=colors.green, spaceAfter=2)
     large_price_style = ParagraphStyle('LargePriceStyle', parent=styles['Normal'], fontSize=14, spaceAfter=2)
     total_change_style = ParagraphStyle('TotalChangeStyle', parent=styles['Normal'], fontSize=12, textColor=colors.brown, alignment=TA_LEFT, spaceAfter=2, fontName='Helvetica-Bold')
+    
     if wsp_df is None:
         return
+        
     region_wsp = wsp_df[wsp_df['Region(District)'] == region]
     if region_wsp.empty:
         story.append(Paragraph(f"No WSP data available for {region}" + (f" - {brand_name}" if brand_name else ""), normal_style))
         story.append(Spacer(1, 0))
         return
+        
     wsp_columns = ['D1-3', 'D4-6', 'D7-9', 'D10-12', 'D13-15','D16-18','D19-21','D22-24','D25-27','D28-30']
     metric_values = region_wsp[wsp_columns].values.flatten().tolist()
     week_labels = ['01-03 Dec', '04-06 Dec', '07-09 Dec', '10-12 Dec', '13-15 Dec','16-18 Dec','19-21 Dec','22-24 Dec','25-27 Dec','28-29 Dec']
+    
     header_text = f"WSP Progression in December 2024" + \
                   (f" - {brand_name}" if brand_name else "")
     story.append(Paragraph(header_text + ":-", month_style))
+    
     metric_progression_parts = []
     for i in range(len(metric_values)):
         metric_progression_parts.append(f"{metric_values[i]:.0f}")
@@ -410,10 +418,13 @@ def price():
                 metric_progression_parts.append(f'<sup><font color="red" size="7">{change:.0f}</font></sup>→')
             else:
                 metric_progression_parts.append(f'<sup><font size="8">00</font></sup>→')
+                
     full_progression = " ".join(metric_progression_parts)
     week_progression_text = "- ".join(week_labels)
+    
     story.append(Paragraph(full_progression, large_price_style))
     story.append(Paragraph(week_progression_text, normal_style))
+    
     if len(metric_values) > 1:
         total_change = float(metric_values[-1]) - float(metric_values[0])
         if total_change == 0:
@@ -421,7 +432,7 @@ def price():
         else:
             total_change_text = f"Net Change in WSP{' - ' + brand_name if brand_name else ''}(Current Month): {total_change:+.0f} Rs."
         story.append(Paragraph(total_change_text, total_change_style))
-        #story.append(Paragraph(total_change_style))
+        
     if company_wsp_df is not None and brand_name is not None:
         company_region_wsp = company_wsp_df[company_wsp_df['Region(District)'] == region]
         if not company_region_wsp.empty and not region_wsp.empty:
@@ -430,9 +441,10 @@ def price():
             wsp_difference = company_w1_dec_wsp - competitive_w1_dec_wsp
             wsp_diff_text = f"Difference in WSP between JKLC and {brand_name} on W-1 December is {wsp_difference:+.0f} Rs."
             story.append(Paragraph(wsp_diff_text, total_change_style))
+            
     story.append(Spacer(1, 0))
     if not is_last_brand:
-        story.append(HRFlowable(width="100%",thickness=1,lineCap='round',color=colors.black,spaceBefore=2,spaceAfter=2))
+        story.append(HRFlowable(width="100%", thickness=1, lineCap='round', color=colors.black, spaceBefore=2, spaceAfter=2))
  def save_regional_price_trend_report(df):
     company_wsp_df = get_wsp_data()
     competitive_brands_wsp = get_competitive_brands_wsp_data()
