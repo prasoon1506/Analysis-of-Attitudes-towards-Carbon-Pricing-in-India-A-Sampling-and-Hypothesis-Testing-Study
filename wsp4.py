@@ -1096,50 +1096,109 @@ def price_input():
     filename = f"price_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
     wb.save(filename)
     return filename
+ def parse_pasted_owners(pasted_text):
+        """Parse pasted text into a list of owner names"""
+        if not pasted_text:
+            return []
+        # Split by newlines and clean up each name
+        owners = [name.strip() for name in pasted_text.split('\n') if name.strip()]
+        return owners
+
  def main():
-    st.title('📊 Price Report Generator')
-    st.markdown("""
-    ### Upload Your Excel File
-    Please upload an Excel file containing the following columns:
-    - `Owner: Full Name`
-    - `Brand: Name`
-    - `checkin date`
-    """)
-    uploaded_file = st.file_uploader("Choose an Excel file",type=['xlsx', 'xls'],help="Upload your price report Excel file")
-    if uploaded_file is not None:
-        try:
-            df = pd.read_excel(uploaded_file)
-            required_columns = ['Owner: Full Name', 'Brand: Name', 'checkin date']
-            if not all(col in df.columns for col in required_columns):
-                st.error("Invalid file format. Please ensure your file contains the required columns.")
-                return
-            st.sidebar.header('🔍 Select Owners')
-            owners = sorted(df['Owner: Full Name'].astype(str).unique().tolist())
-            selected_owners = st.sidebar.multiselect("Choose Regional Heads",options=owners,default=owners[:5],help="Select the regional heads for your report")
-            st.sidebar.markdown("---")
-            report_type = st.sidebar.radio("Choose Report Type",["Date-Based Report", "Owner-Based Report"],help="Select the type of report you want to generate")
-            if st.sidebar.button('🚀 Generate Report', type='primary'):
-                if not selected_owners:
-                    st.warning("Please select at least one owner.")
+        st.title('📊 Price Report Generator')
+        st.markdown("""
+        ### Upload Your Excel File
+        Please upload an Excel file containing the following columns:
+        - `Owner: Full Name`
+        - `Brand: Name`
+        - `checkin date`
+        """)
+        
+        uploaded_file = st.file_uploader("Choose an Excel file", type=['xlsx', 'xls'], 
+                                       help="Upload your price report Excel file")
+        
+        if uploaded_file is not None:
+            try:
+                df = pd.read_excel(uploaded_file)
+                required_columns = ['Owner: Full Name', 'Brand: Name', 'checkin date']
+                if not all(col in df.columns for col in required_columns):
+                    st.error("Invalid file format. Please ensure your file contains the required columns.")
+                    return
+                
+                st.sidebar.header('🔍 Select Owners')
+                
+                # Add text area for pasting owners
+                st.sidebar.subheader("Paste Owners")
+                pasted_owners = st.sidebar.text_area(
+                    "Paste owner names (one per line)",
+                    help="Copy and paste owner names from your Excel file, one name per line",
+                    height=150
+                )
+                
+                # Get all unique owners from the DataFrame
+                owners = sorted(df['Owner: Full Name'].astype(str).unique().tolist())
+                
+                # Parse pasted owners and find matches
+                if pasted_owners:
+                    parsed_owners = parse_pasted_owners(pasted_owners)
+                    # Find valid owners from the pasted list
+                    valid_owners = [owner for owner in parsed_owners if owner in owners]
+                    invalid_owners = [owner for owner in parsed_owners if owner not in owners]
+                    
+                    if invalid_owners:
+                        st.sidebar.warning("Some pasted names were not found in the data:")
+                        st.sidebar.write("\n".join(invalid_owners))
                 else:
-                    with st.spinner('Generating Report...'):
-                        try:
-                            if report_type == "Date-Based Report":
-                                filename = create_price_report(df, selected_owners)
-                                st.success(f"Date-Based Report Generated: {filename}")
-                                with open(filename, 'rb') as file:
-                                    st.download_button(label="Download Date-Based Report",data=file,file_name=filename,mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-                            else:
-                                filename = create_price_report1(df, selected_owners)
-                                st.success(f"Owner-Based Report Generated: {filename}")
-                                with open(filename, 'rb') as file:
-                                    st.download_button(label="Download Owner-Based Report",data=file,file_name=filename,mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-                        except Exception as e:
-                            st.error(f"An error occurred: {e}")
-        except Exception as e:
-            st.error(f"Error processing the file: {e}")
+                    valid_owners = []
+
+                # MultiSelect widget with pasted owners pre-selected
+                selected_owners = st.sidebar.multiselect(
+                    "Choose Regional Heads",
+                    options=owners,
+                    default=valid_owners if valid_owners else owners[:5],
+                    help="Select the regional heads for your report"
+                )
+                
+                st.sidebar.markdown("---")
+                report_type = st.sidebar.radio(
+                    "Choose Report Type",
+                    ["Date-Based Report", "Owner-Based Report"],
+                    help="Select the type of report you want to generate"
+                )
+
+                if st.sidebar.button('🚀 Generate Report', type='primary'):
+                    if not selected_owners:
+                        st.warning("Please select at least one owner.")
+                    else:
+                        with st.spinner('Generating Report...'):
+                            try:
+                                if report_type == "Date-Based Report":
+                                    filename = create_price_report(df, selected_owners)
+                                    st.success(f"Date-Based Report Generated: {filename}")
+                                    with open(filename, 'rb') as file:
+                                        st.download_button(
+                                            label="Download Date-Based Report",
+                                            data=file,
+                                            file_name=filename,
+                                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                                        )
+                                else:
+                                    filename = create_price_report1(df, selected_owners)
+                                    st.success(f"Owner-Based Report Generated: {filename}")
+                                    with open(filename, 'rb') as file:
+                                        st.download_button(
+                                            label="Download Owner-Based Report",
+                                            data=file,
+                                            file_name=filename,
+                                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                                        )
+                            except Exception as e:
+                                st.error(f"An error occurred: {e}")
+            except Exception as e:
+                st.error(f"Error processing the file: {e}")
+
  if __name__ == "__main__":
-    main()
+        main()
 def geo():
  def fill_second_column(df):
     processed_df = df.copy()
