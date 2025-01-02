@@ -399,7 +399,7 @@ def price():
         story.append(Spacer(1, 0))
         return
         
-    wsp_columns = ['D1-3', 'D4-6', 'D7-9', 'D10-12', 'D13-15','D16-18','D19-21','D22-24','D25-27','D28-30',,'D1-3 J']
+    wsp_columns = ['D1-3', 'D4-6', 'D7-9', 'D10-12', 'D13-15','D16-18','D19-21','D22-24','D25-27','D28-30','D1-3 J']
     metric_values = region_wsp[wsp_columns].values.flatten().tolist()
     week_labels = ['01-03 Dec', '04-06 Dec', '07-09 Dec', '10-12 Dec', '13-15 Dec','16-18 Dec','19-21 Dec','22-24 Dec','25-27 Dec','28-29 Dec','01-02 Jan']
     
