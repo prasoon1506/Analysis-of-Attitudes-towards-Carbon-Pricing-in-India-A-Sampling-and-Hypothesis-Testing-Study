@@ -4509,7 +4509,7 @@ def generate_full_report(df, regions):
             region_brands = df[df['Zone'] == region]['Brand'].unique().tolist()
             for brand in region_brands:
                 region_data = df[(df['Zone'] == region) & (df['Brand'] == brand)]
-                months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct','Nov']
+                months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct','Nov','Dec']
                 fig = create_visualization(region_data, region, brand, months)
                 pdf.savefig(fig)
                 plt.close(fig)
