@@ -430,9 +430,9 @@ def price():
             spaceAfter=2
         )
     else:
-        month_style = ParagraphStyle('MonthStyle', parent=styles['Heading3'], textColor=colors.green, spaceAfter=2)
+        month_style = ParagraphStyle('MonthStyle', parent=styles['Heading3'], textColor=colors.green, spaceAfter=1)
         normal_style = styles['Normal']
-        large_price_style = ParagraphStyle('LargePriceStyle', parent=styles['Normal'], fontSize=14, spaceAfter=2)
+        large_price_style = ParagraphStyle('LargePriceStyle', parent=styles['Normal'], fontSize=10, spaceAfter=1)
         total_change_style = ParagraphStyle(
             'TotalChangeStyle',
             parent=styles['Normal'],
