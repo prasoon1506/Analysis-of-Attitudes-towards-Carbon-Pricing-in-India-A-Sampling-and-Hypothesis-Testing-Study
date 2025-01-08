@@ -168,7 +168,7 @@ def price():
  def create_effective_invoice_analysis(story, df, region, current_date, styles):
     normal_style = styles['Normal']
     month_style = ParagraphStyle('MonthStyle',parent=styles['Heading3'],textColor=colors.green,spaceAfter=2)
-    metric_style = ParagraphStyle('MetricStyle',parent=styles['Normal'],fontSize=12,textColor=colors.brown,spaceAfter=2)
+    metric_style = ParagraphStyle('MetricStyle',parent=styles['Normal'],fontSize=14,textColor=colors.brown,spaceAfter=2)
     current_month = current_date.month
     current_year = current_date.year
     last_month = current_month - 1 if current_month > 1 else 12
