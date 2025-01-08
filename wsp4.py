@@ -190,8 +190,8 @@ def price():
         story.append(Spacer(1, 6))
  def create_effective_nod_analysis(story, df, region, current_date, styles):
     normal_style = styles['Normal']
-    month_style = ParagraphStyle('MonthStyle',parent=styles['Heading3'],textColor=colors.green,spaceAfter=2)
-    metric_style = ParagraphStyle('MetricStyle',parent=styles['Normal'],fontSize=12,textColor=colors.brown,spaceAfter=2)
+    month_style = ParagraphStyle('MonthStyle',parent=styles['Heading3'],textColor=colors.green,spaceAfter=1)
+    metric_style = ParagraphStyle('MetricStyle',parent=styles['Normal'],fontSize=12,textColor=colors.brown,spaceAfter=1)
     current_month = current_date.month
     current_year = current_date.year
     last_month = current_month - 1 if current_month > 1 else 12
@@ -556,7 +556,7 @@ def price():
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=8, leftMargin=1, topMargin=5, bottomMargin=1)
         styles = getSampleStyleSheet()
-        title_style = ParagraphStyle('TitleStyle', parent=styles['Title'], fontSize=20, textColor=colors.darkblue, alignment=TA_CENTER, spaceAfter=5)
+        title_style = ParagraphStyle('TitleStyle', parent=styles['Title'], fontSize=20, textColor=colors.darkblue, alignment=TA_CENTER, spaceAfter=1)
         region_style = ParagraphStyle('RegionStyle', parent=styles['Heading2'], textColor=colors.blue, spaceAfter=1, fontSize=12)
         
         story = []
