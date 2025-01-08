@@ -499,7 +499,7 @@ def price():
         changes_text.append(f"Total Change in {title} from 1st Dec.: {total_change:+.0f} Rs.")
 
         if is_secondary_metric:
-            # Create a box for secondary metrics (RD and STS)
+            # Create box content without FrameBreak
             box_content = [Paragraph(f"<b>{title} Changes</b>", box_style)]
             for text in changes_text:
                 box_content.append(Paragraph(text, total_change_style))
@@ -517,8 +517,7 @@ def price():
                                 ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
                             ])
             
-            # Position the box on the right side
-            story.append(FrameBreak())
+            # Simply append the table without FrameBreak
             story.append(box_table)
         else:
             for text in changes_text:
