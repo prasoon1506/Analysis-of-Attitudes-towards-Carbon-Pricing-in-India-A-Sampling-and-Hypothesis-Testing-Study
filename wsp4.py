@@ -309,9 +309,9 @@ def price():
         return
         
     normal_style = styles['Normal']
-    month_style = ParagraphStyle('MonthStyle', parent=styles['Heading3'], textColor=colors.green, spaceAfter=2)
-    large_price_style = ParagraphStyle('LargePriceStyle', parent=styles['Normal'], fontSize=14, spaceAfter=2)
-    total_change_style = ParagraphStyle('TotalChangeStyle', parent=styles['Normal'], fontSize=12, textColor=colors.brown, alignment=TA_LEFT, spaceAfter=2, fontName='Helvetica-Bold')
+    month_style = ParagraphStyle('MonthStyle', parent=styles['Heading3'], textColor=colors.green, spaceAfter=1)
+    large_price_style = ParagraphStyle('LargePriceStyle', parent=styles['Normal'], fontSize=14, spaceAfter=1)
+    total_change_style = ParagraphStyle('TotalChangeStyle', parent=styles['Normal'], fontSize=12, textColor=colors.brown, alignment=TA_LEFT, spaceAfter=1, fontName='Helvetica-Bold')
     
     if wsp_df is None:
         return
@@ -405,7 +405,7 @@ def price():
             
     story.append(Spacer(1, 0))
     if not is_last_brand:
-        story.append(HRFlowable(width="100%", thickness=1, lineCap='round', color=colors.black, spaceBefore=2, spaceAfter=2))
+        story.append(HRFlowable(width="100%", thickness=1, lineCap='round', color=colors.black, spaceBefore=1, spaceAfter=1))
  def create_comprehensive_metric_progression(story, region_df, current_date, last_month, metric_column, title, styles, is_secondary_metric=False):
     if is_secondary_metric:
         # Create styles for side box
@@ -430,16 +430,16 @@ def price():
             spaceAfter=2
         )
     else:
-        month_style = ParagraphStyle('MonthStyle', parent=styles['Heading3'], textColor=colors.green, spaceAfter=2)
+        month_style = ParagraphStyle('MonthStyle', parent=styles['Heading3'], textColor=colors.green, spaceAfter=1)
         normal_style = styles['Normal']
-        large_price_style = ParagraphStyle('LargePriceStyle', parent=styles['Normal'], fontSize=14, spaceAfter=2)
+        large_price_style = ParagraphStyle('LargePriceStyle', parent=styles['Normal'], fontSize=14, spaceAfter=1)
         total_change_style = ParagraphStyle(
             'TotalChangeStyle',
             parent=styles['Normal'],
             fontSize=12,
             textColor=colors.brown,
             alignment=TA_LEFT,
-            spaceAfter=2,
+            spaceAfter=1,
             fontName='Helvetica-Bold'
         )
 
