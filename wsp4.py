@@ -406,7 +406,7 @@ def price():
     if not is_last_brand:
         story.append(HRFlowable(width="100%", thickness=1, lineCap='round', color=colors.black, spaceBefore=2, spaceAfter=2))
 
-def create_comprehensive_metric_progression(story, region_df, current_date, last_month, metric_column, title, styles, is_secondary_metric=False):
+ def create_comprehensive_metric_progression(story, region_df, current_date, last_month, metric_column, title, styles, is_secondary_metric=False):
     if is_secondary_metric:
         month_style = ParagraphStyle(f'{title}MonthStyle', parent=styles['Normal'], textColor=colors.darkgreen, fontSize=10, spaceAfter=2)
         normal_style = ParagraphStyle(f'{title}NormalStyle', parent=styles['Normal'], fontSize=10)
