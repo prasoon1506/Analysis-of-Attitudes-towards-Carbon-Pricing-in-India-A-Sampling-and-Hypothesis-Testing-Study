@@ -414,8 +414,8 @@ def price():
     else:
         month_style = ParagraphStyle('MonthStyle', parent=styles['Heading3'], textColor=colors.green, spaceAfter=2)
         normal_style = styles['Normal']
-        large_price_style = ParagraphStyle('LargePriceStyle', parent=styles['Normal'], fontSize=14, spaceAfter=2)
-        total_change_style = ParagraphStyle('TotalChangeStyle', parent=styles['Normal'], fontSize=12, textColor=colors.brown, alignment=TA_LEFT, spaceAfter=2, fontName='Helvetica-Bold')
+        large_price_style = ParagraphStyle('LargePriceStyle', parent=styles['Normal'], fontSize=10, spaceAfter=2)
+        total_change_style = ParagraphStyle('TotalChangeStyle', parent=styles['Normal'], fontSize=10, textColor=colors.brown, alignment=TA_LEFT, spaceAfter=2, fontName='Helvetica-Bold')
 
     if not is_secondary_metric:
         story.append(Paragraph(f"{title} Progression from {last_month.strftime('%B %Y')} to {current_date.strftime('%B %Y')}:-", month_style))
