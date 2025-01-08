@@ -520,8 +520,8 @@ def price():
                                 ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
                                 ('LEFTPADDING', (0, 0), (-1, -1), 5),
                                 ('RIGHTPADDING', (0, 0), (-1, -1), 5),
-                                ('TOPPADDING', (0, 0), (-1, -1), 1),  # Reduced padding
-                                ('BOTTOMPADDING', (0, 0), (-1, -1), 1),  # Reduced padding
+                                ('TOPPADDING', (0, 0), (-1, -1), 3),  # Reduced padding
+                                ('BOTTOMPADDING', (0, 0), (-1, -1), 3),  # Reduced padding
                             ])
             story.append(box_table)
         else:
