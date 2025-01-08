@@ -418,7 +418,7 @@ def price():
             borderWidth=1,
             borderPadding=5,
             backColor=colors.whitesmoke,
-            spaceAfter=2
+            spaceAfter=1
         )
         normal_style = ParagraphStyle(f'{title}NormalStyle', parent=styles['Normal'], fontSize=10)
         total_change_style = ParagraphStyle(
@@ -427,7 +427,7 @@ def price():
             fontSize=10,
             textColor=colors.brown,
             alignment=TA_LEFT,
-            spaceAfter=2
+            spaceAfter=1
         )
     else:
         month_style = ParagraphStyle('MonthStyle', parent=styles['Heading3'], textColor=colors.green, spaceAfter=1)
