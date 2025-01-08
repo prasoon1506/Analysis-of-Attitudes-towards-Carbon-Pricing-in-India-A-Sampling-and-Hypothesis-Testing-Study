@@ -166,8 +166,8 @@ def price():
     return {'effective_invoice': round(effective_invoice, 2),'first_period_invoice': round(first_period_invoice / 0.20, 2) if first_period_invoice != 0 else 0,'middle_period_invoice': round(middle_period_invoice / 0.30, 2) if middle_period_invoice != 0 else 0,'last_period_invoice': round(last_period_invoice / 0.50, 2) if last_period_invoice != 0 else 0,'first_period_contribution': round(first_period_invoice, 2),'middle_period_contribution': round(middle_period_invoice, 2),'last_period_contribution': round(last_period_invoice, 2),'last_available_invoice': last_available_invoice}
  def create_effective_invoice_analysis(story, df, region, current_date, styles):
     normal_style = styles['Normal']
-    month_style = ParagraphStyle('MonthStyle',parent=styles['Heading3'],textColor=colors.green,spaceAfter=1)
-    metric_style = ParagraphStyle('MetricStyle',parent=styles['Normal'],fontSize=10,textColor=colors.brown,spaceAfter=1)
+    month_style = ParagraphStyle('MonthStyle',parent=styles['Heading3'],textColor=colors.green,spaceAfter=2)
+    metric_style = ParagraphStyle('MetricStyle',parent=styles['Normal'],fontSize=12,textColor=colors.brown,spaceAfter=2)
     current_month = current_date.month
     current_year = current_date.year
     last_month = current_month - 1 if current_month > 1 else 12
@@ -189,8 +189,8 @@ def price():
         story.append(Spacer(1, 6))
  def create_effective_nod_analysis(story, df, region, current_date, styles):
     normal_style = styles['Normal']
-    month_style = ParagraphStyle('MonthStyle',parent=styles['Heading3'],textColor=colors.green,spaceAfter=1)
-    metric_style = ParagraphStyle('MetricStyle',parent=styles['Normal'],fontSize=10,textColor=colors.brown,spaceAfter=1)
+    month_style = ParagraphStyle('MonthStyle',parent=styles['Heading3'],textColor=colors.green,spaceAfter=2)
+    metric_style = ParagraphStyle('MetricStyle',parent=styles['Normal'],fontSize=12,textColor=colors.brown,spaceAfter=2)
     current_month = current_date.month
     current_year = current_date.year
     last_month = current_month - 1 if current_month > 1 else 12
@@ -308,9 +308,9 @@ def price():
         return
         
     normal_style = styles['Normal']
-    month_style = ParagraphStyle('MonthStyle', parent=styles['Heading3'], textColor=colors.green, spaceAfter=1)
-    large_price_style = ParagraphStyle('LargePriceStyle', parent=styles['Normal'], fontSize=12, spaceAfter=1)
-    total_change_style = ParagraphStyle('TotalChangeStyle', parent=styles['Normal'], fontSize=10, textColor=colors.brown, alignment=TA_LEFT, spaceAfter=1, fontName='Helvetica-Bold')
+    month_style = ParagraphStyle('MonthStyle', parent=styles['Heading3'], textColor=colors.green, spaceAfter=2)
+    large_price_style = ParagraphStyle('LargePriceStyle', parent=styles['Normal'], fontSize=14, spaceAfter=2)
+    total_change_style = ParagraphStyle('TotalChangeStyle', parent=styles['Normal'], fontSize=12, textColor=colors.brown, alignment=TA_LEFT, spaceAfter=2, fontName='Helvetica-Bold')
     
     if wsp_df is None:
         return
@@ -408,14 +408,14 @@ def price():
 
  def create_comprehensive_metric_progression(story, region_df, current_date, last_month, metric_column, title, styles, is_secondary_metric=False):
     if is_secondary_metric:
-        month_style = ParagraphStyle(f'{title}MonthStyle', parent=styles['Normal'], textColor=colors.darkgreen, fontSize=10, spaceAfter=1)
-        normal_style = ParagraphStyle(f'{title}NormalStyle', parent=styles['Normal'], fontSize=8)
-        total_change_style = ParagraphStyle(f'{title}TotalChangeStyle', parent=styles['Normal'], fontSize=8, textColor=colors.brown, alignment=TA_LEFT, spaceAfter=1)
+        month_style = ParagraphStyle(f'{title}MonthStyle', parent=styles['Normal'], textColor=colors.darkgreen, fontSize=10, spaceAfter=2)
+        normal_style = ParagraphStyle(f'{title}NormalStyle', parent=styles['Normal'], fontSize=10)
+        total_change_style = ParagraphStyle(f'{title}TotalChangeStyle', parent=styles['Normal'], fontSize=12, textColor=colors.brown, alignment=TA_LEFT, spaceAfter=2)
     else:
-        month_style = ParagraphStyle('MonthStyle', parent=styles['Heading3'], textColor=colors.green, spaceAfter=1)
+        month_style = ParagraphStyle('MonthStyle', parent=styles['Heading3'], textColor=colors.green, spaceAfter=2)
         normal_style = styles['Normal']
-        large_price_style = ParagraphStyle('LargePriceStyle', parent=styles['Normal'], fontSize=10, spaceAfter=1)
-        total_change_style = ParagraphStyle('TotalChangeStyle', parent=styles['Normal'], fontSize=10, textColor=colors.brown, alignment=TA_LEFT, spaceAfter=2, fontName='Helvetica-Bold')
+        large_price_style = ParagraphStyle('LargePriceStyle', parent=styles['Normal'], fontSize=14, spaceAfter=2)
+        total_change_style = ParagraphStyle('TotalChangeStyle', parent=styles['Normal'], fontSize=12, textColor=colors.brown, alignment=TA_LEFT, spaceAfter=2, fontName='Helvetica-Bold')
 
     if not is_secondary_metric:
         story.append(Paragraph(f"{title} Progression from {last_month.strftime('%B %Y')} to {current_date.strftime('%B %Y')}:-", month_style))
