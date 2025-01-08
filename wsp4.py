@@ -399,40 +399,76 @@ def price():
         story.append(Spacer(1, 0))
         return
         
-    wsp_columns = ['D1-3', 'D4-6', 'D7-9', 'D10-12', 'D13-15','D16-18','D19-21','D22-24','D25-27','D28-30','D1-3 J','D4-6 J','D7-8 J']
-    metric_values = region_wsp[wsp_columns].values.flatten().tolist()
-    week_labels = ['01-03 Dec', '04-06 Dec', '07-09 Dec', '10-12 Dec', '13-15 Dec','16-18 Dec','19-21 Dec','22-24 Dec','25-27 Dec','28-29 Dec','01-03 Jan','04-06 Jan','07-09 Jan']
+    # Define December and January columns
+    dec_columns = ['D1-3', 'D4-6', 'D7-9', 'D10-12', 'D13-15', 'D16-18', 'D19-21', 'D22-24', 'D25-27', 'D28-30']
+    jan_columns = ['D1-3 J', 'D4-6 J', 'D7-8 J']
+    
+    dec_values = region_wsp[dec_columns].values.flatten().tolist()
+    jan_values = region_wsp[jan_columns].values.flatten().tolist()
+    
+    dec_labels = ['01-03 Dec', '04-06 Dec', '07-09 Dec', '10-12 Dec', '13-15 Dec', '16-18 Dec', '19-21 Dec', '22-24 Dec', '25-27 Dec', '28-30 Dec']
+    jan_labels = ['01-03 Jan', '04-06 Jan', '07-09 Jan']
     
     header_text = f"WSP Progression from December 2024 to January 2025" + \
                   (f" - {brand_name}" if brand_name else "")
     story.append(Paragraph(header_text + ":-", month_style))
     
-    metric_progression_parts = []
-    for i in range(len(metric_values)):
-        metric_progression_parts.append(f"{metric_values[i]:.0f}")
-        if i < len(metric_values) - 1:
-            change = float(metric_values[i+1]) - float(metric_values[i])
+    # December Progression
+    dec_progression_parts = []
+    for i in range(len(dec_values)):
+        dec_progression_parts.append(f"{dec_values[i]:.0f}")
+        if i < len(dec_values) - 1:
+            change = float(dec_values[i+1]) - float(dec_values[i])
             if change > 0:
-                metric_progression_parts.append(f'<sup><font color="green" size="7">+{change:.0f}</font></sup>→')
+                dec_progression_parts.append(f'<sup><font color="green" size="7">+{change:.0f}</font></sup>→')
             elif change < 0:
-                metric_progression_parts.append(f'<sup><font color="red" size="7">{change:.0f}</font></sup>→')
+                dec_progression_parts.append(f'<sup><font color="red" size="7">{change:.0f}</font></sup>→')
             else:
-                metric_progression_parts.append(f'<sup><font size="8">00</font></sup>→')
-                
-    full_progression = " ".join(metric_progression_parts)
-    week_progression_text = "- ".join(week_labels)
+                dec_progression_parts.append(f'<sup><font size="8">00</font></sup>→')
     
-    story.append(Paragraph(full_progression, large_price_style))
-    story.append(Paragraph(week_progression_text, normal_style))
+    dec_full_progression = " ".join(dec_progression_parts)
+    dec_week_progression_text = "- ".join(dec_labels)
     
-    if len(metric_values) > 1:
-        total_change = float(metric_values[-1]) - float(metric_values[0])
-        if total_change == 0:
-            total_change_text = f"Net Change in WSP{' - ' + brand_name if brand_name else ''} from 1st Dec.: 0 Rs."
-        else:
-            total_change_text = f"Net Change in WSP{' - ' + brand_name if brand_name else ''} from 1st Dec.: {total_change:+.0f} Rs."
-        story.append(Paragraph(total_change_text, total_change_style))
-        
+    story.append(Paragraph("December 2024:", normal_style))
+    story.append(Paragraph(dec_full_progression, large_price_style))
+    story.append(Paragraph(dec_week_progression_text, normal_style))
+    
+    # January Progression
+    jan_progression_parts = []
+    for i in range(len(jan_values)):
+        jan_progression_parts.append(f"{jan_values[i]:.0f}")
+        if i < len(jan_values) - 1:
+            change = float(jan_values[i+1]) - float(jan_values[i])
+            if change > 0:
+                jan_progression_parts.append(f'<sup><font color="green" size="7">+{change:.0f}</font></sup>→')
+            elif change < 0:
+                jan_progression_parts.append(f'<sup><font color="red" size="7">{change:.0f}</font></sup>→')
+            else:
+                jan_progression_parts.append(f'<sup><font size="8">00</font></sup>→')
+    
+    jan_full_progression = " ".join(jan_progression_parts)
+    jan_week_progression_text = "- ".join(jan_labels)
+    
+    story.append(Paragraph("January 2025:", normal_style))
+    story.append(Paragraph(jan_full_progression, large_price_style))
+    story.append(Paragraph(jan_week_progression_text, normal_style))
+    
+    # Calculate and display changes
+    if len(dec_values) > 1:
+        dec_change = float(dec_values[-1]) - float(dec_values[0])
+        dec_change_text = f"Net Change in WSP{' - ' + brand_name if brand_name else ''} in December: {dec_change:+.0f} Rs."
+        story.append(Paragraph(dec_change_text, total_change_style))
+    
+    if len(jan_values) > 1:
+        jan_change = float(jan_values[-1]) - float(jan_values[0])
+        jan_change_text = f"Net Change in WSP{' - ' + brand_name if brand_name else ''} in January: {jan_change:+.0f} Rs."
+        story.append(Paragraph(jan_change_text, total_change_style))
+    
+    # Calculate total change from December 1st
+    total_change = float(jan_values[-1]) - float(dec_values[0])
+    total_change_text = f"Total Change in WSP{' - ' + brand_name if brand_name else ''} from 1st Dec.: {total_change:+.0f} Rs."
+    story.append(Paragraph(total_change_text, total_change_style))
+    
     if company_wsp_df is not None and brand_name is not None:
         company_region_wsp = company_wsp_df[company_wsp_df['Region(District)'] == region]
         if not company_region_wsp.empty and not region_wsp.empty:
@@ -445,6 +481,77 @@ def price():
     story.append(Spacer(1, 0))
     if not is_last_brand:
         story.append(HRFlowable(width="100%", thickness=1, lineCap='round', color=colors.black, spaceBefore=2, spaceAfter=2))
+
+def create_comprehensive_metric_progression(story, region_df, current_date, last_month, metric_column, title, styles, is_secondary_metric=False):
+    if is_secondary_metric:
+        month_style = ParagraphStyle(f'{title}MonthStyle', parent=styles['Normal'], textColor=colors.darkgreen, fontSize=10, spaceAfter=2)
+        normal_style = ParagraphStyle(f'{title}NormalStyle', parent=styles['Normal'], fontSize=10)
+        total_change_style = ParagraphStyle(f'{title}TotalChangeStyle', parent=styles['Normal'], fontSize=12, textColor=colors.brown, alignment=TA_LEFT, spaceAfter=2)
+    else:
+        month_style = ParagraphStyle('MonthStyle', parent=styles['Heading3'], textColor=colors.green, spaceAfter=2)
+        normal_style = styles['Normal']
+        large_price_style = ParagraphStyle('LargePriceStyle', parent=styles['Normal'], fontSize=14, spaceAfter=2)
+        total_change_style = ParagraphStyle('TotalChangeStyle', parent=styles['Normal'], fontSize=12, textColor=colors.brown, alignment=TA_LEFT, spaceAfter=2, fontName='Helvetica-Bold')
+
+    if not is_secondary_metric:
+        story.append(Paragraph(f"{title} Progression from {last_month.strftime('%B %Y')} to {current_date.strftime('%B %Y')}:-", month_style))
+    
+    start_data_point = get_start_data_point(region_df, last_month)
+    if start_data_point is None:
+        story.append(Paragraph("No data available for this period", normal_style))
+        story.append(Spacer(1, 0 if is_secondary_metric else 0))
+        return
+
+    current_month_start_data_point = get_start_data_point_current_month(region_df, current_date)
+    progression_df = region_df[(region_df['Date'] >= start_data_point['Date']) & (region_df['Date'] <= current_date)].copy().sort_values('Date')
+
+    if progression_df.empty:
+        story.append(Paragraph("No data available for this period", normal_style))
+        story.append(Spacer(1, 0 if is_secondary_metric else 0))
+        return
+
+    if not is_secondary_metric:
+        metric_values = progression_df[metric_column].apply(lambda x: f"{x:.0f}").tolist()
+        dates = progression_df['Date'].dt.strftime('%d-%b').tolist()
+        metric_progression_parts = []
+        for i in range(len(metric_values)):
+            metric_progression_parts.append(metric_values[i])
+            if i < len(metric_values) - 1:
+                change = float(metric_values[i+1]) - float(metric_values[i])
+                if change > 0:
+                    metric_progression_parts.append(f'<sup><font color="green" size="7">+{change:.0f}</font></sup>→')
+                elif change < 0:
+                    metric_progression_parts.append(f'<sup><font color="red" size="7">{change:.0f}</font></sup>→')
+                else:
+                    metric_progression_parts.append(f'<sup><font size="8">00</font></sup>→')
+
+        full_progression = " ".join(metric_progression_parts)
+        date_progression_text = " ----- ".join(dates)
+        story.append(Paragraph(full_progression, large_price_style))
+        story.append(Paragraph(date_progression_text, normal_style))
+
+    if len(progression_df[metric_column]) > 1:
+        # Calculate December change
+        dec_data = progression_df[progression_df['Date'].dt.month == 12]
+        if not dec_data.empty:
+            dec_change = dec_data[metric_column].iloc[-1] - dec_data[metric_column].iloc[0]
+            dec_change_text = f"Net Change in {title} for December: {dec_change:+.0f} Rs."
+            story.append(Paragraph(dec_change_text, total_change_style))
+
+        # Calculate January change
+        jan_data = progression_df[progression_df['Date'].dt.month == 1]
+        if not jan_data.empty:
+            jan_change = jan_data[metric_column].iloc[-1] - jan_data[metric_column].iloc[0]
+            jan_change_text = f"Net Change in {title} for January: {jan_change:+.0f} Rs."
+            story.append(Paragraph(jan_change_text, total_change_style))
+
+        # Calculate total change from December 1st
+        total_change = progression_df[metric_column].iloc[-1] - progression_df[metric_column].iloc[0]
+        total_change_text = f"Total Change in {title} from 1st Dec.: {total_change:+.0f} Rs."
+        story.append(Paragraph(total_change_text, total_change_style))
+
+    story.append(Spacer(1, 0 if is_secondary_metric else 0))
+    story.append(Spacer(1, 0))
  def save_regional_price_trend_report(df):
     company_wsp_df = get_wsp_data()
     competitive_brands_wsp = get_competitive_brands_wsp_data()
