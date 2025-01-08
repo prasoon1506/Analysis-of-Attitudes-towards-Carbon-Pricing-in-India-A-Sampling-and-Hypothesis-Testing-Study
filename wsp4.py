@@ -556,12 +556,12 @@ def price():
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=8, leftMargin=1, topMargin=5, bottomMargin=1)
         styles = getSampleStyleSheet()
-        title_style = ParagraphStyle('TitleStyle', parent=styles['Title'], fontSize=20, textColor=colors.darkblue, alignment=TA_CENTER, spaceAfter=10)
-        region_style = ParagraphStyle('RegionStyle', parent=styles['Heading2'], textColor=colors.blue, spaceAfter=3, fontSize=14)
+        title_style = ParagraphStyle('TitleStyle', parent=styles['Title'], fontSize=20, textColor=colors.darkblue, alignment=TA_CENTER, spaceAfter=5)
+        region_style = ParagraphStyle('RegionStyle', parent=styles['Heading2'], textColor=colors.blue, spaceAfter=1, fontSize=12)
         
         story = []
         story.append(Paragraph("Regional Price Trend Analysis Report", title_style))
-        story.append(Paragraph("Comprehensive Price Movement Insights", ParagraphStyle('SubtitleStyle', parent=styles['Normal'], fontSize=12, textColor=colors.red, alignment=TA_CENTER, spaceAfter=3)))
+        story.append(Paragraph("Comprehensive Price Movement Insights", ParagraphStyle('SubtitleStyle', parent=styles['Normal'], fontSize=12, textColor=colors.red, alignment=TA_CENTER, spaceAfter=1)))
         story.append(Spacer(1, 0))
         
         current_date = datetime.now()
