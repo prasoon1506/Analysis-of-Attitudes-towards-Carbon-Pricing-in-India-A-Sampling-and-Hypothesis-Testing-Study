@@ -408,7 +408,6 @@ def price():
         story.append(HRFlowable(width="100%", thickness=1, lineCap='round', color=colors.black, spaceBefore=1, spaceAfter=1))
  def create_comprehensive_metric_progression(story, region_df, current_date, last_month, metric_column, title, styles, is_secondary_metric=False):
     if is_secondary_metric:
-        # Create styles for side box
         box_style = ParagraphStyle(
             f'{title}BoxStyle',
             parent=styles['Normal'],
@@ -418,7 +417,7 @@ def price():
             borderWidth=1,
             borderPadding=5,
             backColor=colors.whitesmoke,
-            spaceAfter=1
+            spaceAfter=0  # Reduced from 1 to 0
         )
         normal_style = ParagraphStyle(f'{title}NormalStyle', parent=styles['Normal'], fontSize=10)
         total_change_style = ParagraphStyle(
@@ -427,7 +426,7 @@ def price():
             fontSize=10,
             textColor=colors.brown,
             alignment=TA_LEFT,
-            spaceAfter=1
+            spaceAfter=0  # Reduced from 1 to 0
         )
     else:
         month_style = ParagraphStyle('MonthStyle', parent=styles['Heading3'], textColor=colors.green, spaceAfter=1)
@@ -439,7 +438,7 @@ def price():
             fontSize=12,
             textColor=colors.brown,
             alignment=TA_LEFT,
-            spaceAfter=1,
+            spaceAfter=0,  # Reduced from 1 to 0
             fontName='Helvetica-Bold'
         )
 
@@ -457,7 +456,6 @@ def price():
             story.append(Paragraph("No data available for this period", normal_style))
         return
 
-    # Create a 2-column table for layout
     if not is_secondary_metric:
         story.append(Paragraph(f"{title} Progression from {last_month.strftime('%B %Y')} to {current_date.strftime('%B %Y')}:-", month_style))
         
@@ -479,18 +477,18 @@ def price():
         full_progression = " ".join(metric_progression_parts)
         date_progression_text = " ----- ".join(dates)
 
-        # Create a table for the progression and dates
         progression_table = Table([
             [Paragraph(full_progression, large_price_style)],
             [Paragraph(date_progression_text, normal_style)]
-        ], colWidths=[400])  # Adjust width as needed
+        ], colWidths=[400])
         progression_table.setStyle(TableStyle([
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, -1), 1),   # Reduced padding
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 1)  # Reduced padding
         ]))
         story.append(progression_table)
 
-    # Calculate and display changes
     if len(progression_df[metric_column]) > 1:
         dec_data = progression_df[progression_df['Date'].dt.month == 12]
         jan_data = progression_df[progression_df['Date'].dt.month == 1]
@@ -510,12 +508,10 @@ def price():
         changes_text.append(f"Total Change in {title} from 1st Dec.: {total_change:+.0f} Rs.")
 
         if is_secondary_metric:
-            # Create box content for secondary metrics
             box_content = [Paragraph(f"<b>{title} Changes</b>", box_style)]
             for text in changes_text:
                 box_content.append(Paragraph(text, total_change_style))
             
-            # Create a table for the box with borders
             box_table = Table([[content] for content in box_content], 
                             colWidths=[200],
                             style=[
@@ -524,19 +520,21 @@ def price():
                                 ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
                                 ('LEFTPADDING', (0, 0), (-1, -1), 5),
                                 ('RIGHTPADDING', (0, 0), (-1, -1), 5),
-                                ('TOPPADDING', (0, 0), (-1, -1), 3),
-                                ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+                                ('TOPPADDING', (0, 0), (-1, -1), 1),  # Reduced padding
+                                ('BOTTOMPADDING', (0, 0), (-1, -1), 1),  # Reduced padding
                             ])
             story.append(box_table)
         else:
-            # Create a table for the changes text
             changes_table = Table([[Paragraph(text, total_change_style)] for text in changes_text],
-                                colWidths=[400])  # Adjust width as needed
+                                colWidths=[400])
             changes_table.setStyle(TableStyle([
                 ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
                 ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('TOPPADDING', (0, 0), (-1, -1), 1),  # Reduced padding
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 1)  # Reduced padding
             ]))
             story.append(changes_table)
+
  def save_regional_price_trend_report(df):
     company_wsp_df = get_wsp_data()
     competitive_brands_wsp = get_competitive_brands_wsp_data()
