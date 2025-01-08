@@ -457,6 +457,7 @@ def price():
             story.append(Paragraph("No data available for this period", normal_style))
         return
 
+    # Create a 2-column table for layout
     if not is_secondary_metric:
         story.append(Paragraph(f"{title} Progression from {last_month.strftime('%B %Y')} to {current_date.strftime('%B %Y')}:-", month_style))
         
@@ -477,9 +478,19 @@ def price():
 
         full_progression = " ".join(metric_progression_parts)
         date_progression_text = " ----- ".join(dates)
-        story.append(Paragraph(full_progression, large_price_style))
-        story.append(Paragraph(date_progression_text, normal_style))
 
+        # Create a table for the progression and dates
+        progression_table = Table([
+            [Paragraph(full_progression, large_price_style)],
+            [Paragraph(date_progression_text, normal_style)]
+        ], colWidths=[400])  # Adjust width as needed
+        progression_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ]))
+        story.append(progression_table)
+
+    # Calculate and display changes
     if len(progression_df[metric_column]) > 1:
         dec_data = progression_df[progression_df['Date'].dt.month == 12]
         jan_data = progression_df[progression_df['Date'].dt.month == 1]
@@ -499,7 +510,7 @@ def price():
         changes_text.append(f"Total Change in {title} from 1st Dec.: {total_change:+.0f} Rs.")
 
         if is_secondary_metric:
-            # Create box content without FrameBreak
+            # Create box content for secondary metrics
             box_content = [Paragraph(f"<b>{title} Changes</b>", box_style)]
             for text in changes_text:
                 box_content.append(Paragraph(text, total_change_style))
@@ -516,12 +527,16 @@ def price():
                                 ('TOPPADDING', (0, 0), (-1, -1), 3),
                                 ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
                             ])
-            
-            # Simply append the table without FrameBreak
             story.append(box_table)
         else:
-            for text in changes_text:
-                story.append(Paragraph(text, total_change_style))
+            # Create a table for the changes text
+            changes_table = Table([[Paragraph(text, total_change_style)] for text in changes_text],
+                                colWidths=[400])  # Adjust width as needed
+            changes_table.setStyle(TableStyle([
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ]))
+            story.append(changes_table)
  def save_regional_price_trend_report(df):
     company_wsp_df = get_wsp_data()
     competitive_brands_wsp = get_competitive_brands_wsp_data()
@@ -533,44 +548,72 @@ def price():
         for col in required_columns:
             if col not in df.columns:
                 raise ValueError(f"Missing required column: {col}")
+        
         df['Date'] = pd.to_datetime(df['Date'], format='%d-%b %Y')
         df['region_order'] = df['Region(District)'].map({region: idx for idx, region in enumerate(region_order)})
         df = df.sort_values(['region_order', 'Date'])
+        
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=8, leftMargin=1, topMargin=5, bottomMargin=1)
         styles = getSampleStyleSheet()
-        title_style = ParagraphStyle('TitleStyle',parent=styles['Title'],fontSize=20, textColor=colors.darkblue,alignment=TA_CENTER,spaceAfter=10)
-        region_style = ParagraphStyle('RegionStyle',parent=styles['Heading2'], textColor=colors.blue,spaceAfter=3,fontSize=14)
+        title_style = ParagraphStyle('TitleStyle', parent=styles['Title'], fontSize=20, textColor=colors.darkblue, alignment=TA_CENTER, spaceAfter=10)
+        region_style = ParagraphStyle('RegionStyle', parent=styles['Heading2'], textColor=colors.blue, spaceAfter=3, fontSize=14)
+        
         story = []
         story.append(Paragraph("Regional Price Trend Analysis Report", title_style))
-        story.append(Paragraph("Comprehensive Price Movement Insights", ParagraphStyle('SubtitleStyle', parent=styles['Normal'], fontSize=12, textColor=colors.red,alignment=TA_CENTER,spaceAfter=3)))
+        story.append(Paragraph("Comprehensive Price Movement Insights", ParagraphStyle('SubtitleStyle', parent=styles['Normal'], fontSize=12, textColor=colors.red, alignment=TA_CENTER, spaceAfter=3)))
         story.append(Spacer(1, 0))
+        
         current_date = datetime.now()
         last_month = current_date.replace(day=1) - timedelta(days=1)
         regions = [region for region in region_order if region in df['Region(District)'].unique()]
+        
         for region in regions:
             region_story = []
             region_df = df[df['Region(District)'] == region].copy()
+            
+            # Region header
             region_story.append(Paragraph(f"{region}", region_style))
             region_story.append(Spacer(1, 1))
-            create_comprehensive_metric_progression(region_story, region_df, current_date, last_month, 'Inv.', 'Invoice Price', styles)
-            #create_effective_invoice_analysis(region_story, df, region, current_date, styles)
-            create_comprehensive_metric_progression(region_story, region_df, current_date, last_month, 'RD', 'RD', styles, is_secondary_metric=True)
-            create_comprehensive_metric_progression(region_story, region_df, current_date, last_month, 'STS', 'STS', styles, is_secondary_metric=True)
-            create_comprehensive_metric_progression(region_story, region_df, current_date, last_month, 'Net', 'NOD', styles)
-            #create_effective_nod_analysis(region_story, df, region, current_date, styles)
+            
+            # Create main metrics table (Invoice and NOD progression)
+            metrics_data = []
+            
+            # Left column: Invoice and NOD progression
+            left_column = []
+            create_comprehensive_metric_progression(left_column, region_df, current_date, last_month, 'Inv.', 'Invoice Price', styles)
+            create_comprehensive_metric_progression(left_column, region_df, current_date, last_month, 'Net', 'NOD', styles)
+            
+            # Right column: RD and STS boxes
+            right_column = []
+            create_comprehensive_metric_progression(right_column, region_df, current_date, last_month, 'RD', 'RD', styles, is_secondary_metric=True)
+            create_comprehensive_metric_progression(right_column, region_df, current_date, last_month, 'STS', 'STS', styles, is_secondary_metric=True)
+            
+            # Create a table for the two-column layout
+            layout_table = Table([[left_column, right_column]], colWidths=[400, 200])
+            layout_table.setStyle(TableStyle([
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ]))
+            region_story.append(layout_table)
+            
+            # WSP Progression
             brand_count = 1 if company_wsp_df is not None and not company_wsp_df.empty else 0
             if competitive_brands_wsp:
                 brand_count += len(competitive_brands_wsp)
             is_last_brand = (brand_count == 1)
+            
             create_wsp_progression(region_story, company_wsp_df, region, styles, is_last_brand=is_last_brand, company_wsp_df=company_wsp_df)
+            
             if competitive_brands_wsp:
                 brand_names = list(competitive_brands_wsp.keys())
                 for i, (brand, brand_wsp_df) in enumerate(competitive_brands_wsp.items()):
                     is_last_brand = (i == len(brand_names) - 1)
                     create_wsp_progression(region_story, brand_wsp_df, region, styles, brand_name=brand, is_last_brand=is_last_brand, company_wsp_df=company_wsp_df)
+            
             story.append(KeepTogether(region_story))
             story.append(Paragraph("<pagebreak/>", styles['Normal']))
+        
         doc.build(story)
         buffer.seek(0)
         return buffer
