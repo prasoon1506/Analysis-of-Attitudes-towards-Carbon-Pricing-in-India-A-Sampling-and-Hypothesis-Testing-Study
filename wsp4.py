@@ -381,9 +381,11 @@ def price():
         dec_change_text = f"Net Change in WSP{' - ' + brand_name if brand_name else ''} in December: {dec_change:+.0f} Rs."
         story.append(Paragraph(dec_change_text, total_change_style))
     
-    if len(jan_values) > 1:
-        jan_change = float(jan_values[-1]) - float(jan_values[0])
-        jan_change_text = f"Net Change in WSP{' - ' + brand_name if brand_name else ''} in January: {jan_change:+.0f} Rs."
+    # Modified January change calculation to include December end to January start transition
+    if len(jan_values) > 0:
+        # Calculate change from last December value to last January value
+        total_jan_change = float(jan_values[-1]) - float(dec_values[-1])
+        jan_change_text = f"Net Change in WSP{' - ' + brand_name if brand_name else ''} in January: {total_jan_change:+.0f} Rs."
         story.append(Paragraph(jan_change_text, total_change_style))
     
     # Calculate total change from December 1st
@@ -404,7 +406,7 @@ def price():
     if not is_last_brand:
         story.append(HRFlowable(width="100%", thickness=1, lineCap='round', color=colors.black, spaceBefore=2, spaceAfter=2))
 
- def create_comprehensive_metric_progression(story, region_df, current_date, last_month, metric_column, title, styles, is_secondary_metric=False):
+def create_comprehensive_metric_progression(story, region_df, current_date, last_month, metric_column, title, styles, is_secondary_metric=False):
     if is_secondary_metric:
         month_style = ParagraphStyle(f'{title}MonthStyle', parent=styles['Normal'], textColor=colors.darkgreen, fontSize=10, spaceAfter=2)
         normal_style = ParagraphStyle(f'{title}NormalStyle', parent=styles['Normal'], fontSize=10)
@@ -424,7 +426,6 @@ def price():
         story.append(Spacer(1, 0 if is_secondary_metric else 0))
         return
 
-    current_month_start_data_point = get_start_data_point_current_month(region_df, current_date)
     progression_df = region_df[(region_df['Date'] >= start_data_point['Date']) & (region_df['Date'] <= current_date)].copy().sort_values('Date')
 
     if progression_df.empty:
@@ -460,10 +461,12 @@ def price():
             dec_change_text = f"Net Change in {title} for December: {dec_change:+.0f} Rs."
             story.append(Paragraph(dec_change_text, total_change_style))
 
-        # Calculate January change
+        # Modified January change calculation
         jan_data = progression_df[progression_df['Date'].dt.month == 1]
         if not jan_data.empty:
-            jan_change = jan_data[metric_column].iloc[-1] - jan_data[metric_column].iloc[0]
+            # Use last December value as the reference point for January changes
+            dec_last_value = dec_data[metric_column].iloc[-1] if not dec_data.empty else progression_df[metric_column].iloc[0]
+            jan_change = jan_data[metric_column].iloc[-1] - dec_last_value
             jan_change_text = f"Net Change in {title} for January: {jan_change:+.0f} Rs."
             story.append(Paragraph(jan_change_text, total_change_style))
 
@@ -473,7 +476,6 @@ def price():
         story.append(Paragraph(total_change_text, total_change_style))
 
     story.append(Spacer(1, 0 if is_secondary_metric else 0))
-    story.append(Spacer(1, 0))
  def save_regional_price_trend_report(df):
     company_wsp_df = get_wsp_data()
     competitive_brands_wsp = get_competitive_brands_wsp_data()
