@@ -267,7 +267,7 @@ def price():
         if competitive_brands_file is not None:
             try:
                 xls = pd.ExcelFile(competitive_brands_file)
-                required_columns = ['Region(District)', 'D1-3', 'D4-6', 'D7-9', 'D10-12', 'D13-15','D16-18','D19-21','D22-24','D25-27','D28-30','D1-3 J']
+                required_columns = ['Region(District)', 'D1-3', 'D4-6', 'D7-9', 'D10-12', 'D13-15','D16-18','D19-21','D22-24','D25-27','D28-30','D1-3 J','D4-6 J','D7-8 J']
                 for sheet_name in xls.sheet_names:
                     df = pd.read_excel(competitive_brands_file, sheet_name=sheet_name)
                     missing_columns = [col for col in required_columns if col not in df.columns]
@@ -399,9 +399,9 @@ def price():
         story.append(Spacer(1, 0))
         return
         
-    wsp_columns = ['D1-3', 'D4-6', 'D7-9', 'D10-12', 'D13-15','D16-18','D19-21','D22-24','D25-27','D28-30','D1-3 J']
+    wsp_columns = ['D1-3', 'D4-6', 'D7-9', 'D10-12', 'D13-15','D16-18','D19-21','D22-24','D25-27','D28-30','D1-3 J','D4-6 J','D7-8 J']
     metric_values = region_wsp[wsp_columns].values.flatten().tolist()
-    week_labels = ['01-03 Dec', '04-06 Dec', '07-09 Dec', '10-12 Dec', '13-15 Dec','16-18 Dec','19-21 Dec','22-24 Dec','25-27 Dec','28-29 Dec','01-02 Jan']
+    week_labels = ['01-03 Dec', '04-06 Dec', '07-09 Dec', '10-12 Dec', '13-15 Dec','16-18 Dec','19-21 Dec','22-24 Dec','25-27 Dec','28-29 Dec','01-03 Jan','04-06 Jan','07-09 Jan']
     
     header_text = f"WSP Progression from December 2024 to January 2025" + \
                   (f" - {brand_name}" if brand_name else "")
@@ -510,7 +510,7 @@ def price():
                     wsp_df = pd.read_csv(wsp_file)
                 else:
                     wsp_df = pd.read_excel(wsp_file)
-                required_columns = ['Region(District)', 'D1-3', 'D4-6', 'D7-9', 'D10-12', 'D13-15','D16-18','D19-21','D22-24','D25-27','D28-30','D1-3 J']
+                required_columns = ['Region(District)', 'D1-3', 'D4-6', 'D7-9', 'D10-12', 'D13-15','D16-18','D19-21','D22-24','D25-27','D28-30','D1-3 J','D4-6 J','D7-8 J']
                 for col in required_columns:
                     if col not in wsp_df.columns:
                         st.error(f"Missing required WSP column: {col}")
