@@ -609,9 +609,13 @@ def price():
         last_month = current_date.replace(day=1) - timedelta(days=1)
         regions = [region for region in region_order if region in df['Region(District)'].unique()]
         
-        for region in regions:
+        for i, region in enumerate(regions):
             region_story = []
             region_df = df[df['Region(District)'] == region].copy()
+            
+            # Add separator line between regions (except for the first region)
+            if i > 0:
+                region_story.append(HRFlowable(width="100%", thickness=2, lineCap='round', color=colors.grey, spaceBefore=10, spaceAfter=10))
             
             # Region header
             region_story.append(Paragraph(f"{region}", region_style))
@@ -653,7 +657,6 @@ def price():
                     create_wsp_progression(region_story, brand_wsp_df, region, styles, brand_name=brand, is_last_brand=is_last_brand, company_wsp_df=company_wsp_df)
             
             story.append(KeepTogether(region_story))
-            story.append(Paragraph("<pagebreak/>", styles['Normal']))
         
         doc.build(story)
         buffer.seek(0)
