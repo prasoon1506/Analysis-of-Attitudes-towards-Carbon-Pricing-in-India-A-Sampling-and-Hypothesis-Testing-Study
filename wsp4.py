@@ -326,8 +326,15 @@ def price():
     dec_columns = ['D1-3', 'D4-6', 'D7-9', 'D10-12', 'D13-15', 'D16-18', 'D19-21', 'D22-24', 'D25-27', 'D28-30']
     jan_columns = ['D1-3 J', 'D4-6 J', 'D7-8 J']
     
+    # Get the values and handle NaN
     dec_values = region_wsp[dec_columns].values.flatten().tolist()
     jan_values = region_wsp[jan_columns].values.flatten().tolist()
+    
+    # Check if all values are NaN
+    if all(pd.isna(val) for val in dec_values + jan_values):
+        story.append(Paragraph(f"No data available for {region}" + (f" - {brand_name}" if brand_name else ""), normal_style))
+        story.append(Spacer(1, 0))
+        return
     
     dec_labels = ['01-03 Dec', '04-06 Dec', '07-09 Dec', '10-12 Dec', '13-15 Dec', '16-18 Dec', '19-21 Dec', '22-24 Dec', '25-27 Dec', '28-30 Dec']
     jan_labels = ['01-03 Jan', '04-06 Jan', '07-09 Jan']
@@ -338,9 +345,18 @@ def price():
     
     # December Progression
     dec_progression_parts = []
+    last_valid_value = None
     for i in range(len(dec_values)):
-        dec_progression_parts.append(f"{dec_values[i]:.0f}")
-        if i < len(dec_values) - 1:
+        if pd.isna(dec_values[i]):
+            if last_valid_value is not None:
+                dec_progression_parts.append(f"{last_valid_value:.0f}")
+            else:
+                dec_progression_parts.append("No data")
+        else:
+            dec_progression_parts.append(f"{dec_values[i]:.0f}")
+            last_valid_value = dec_values[i]
+        
+        if i < len(dec_values) - 1 and not (pd.isna(dec_values[i]) or pd.isna(dec_values[i+1])):
             change = float(dec_values[i+1]) - float(dec_values[i])
             if change > 0:
                 dec_progression_parts.append(f'<sup><font color="green" size="7">+{change:.0f}</font></sup>→')
@@ -348,6 +364,8 @@ def price():
                 dec_progression_parts.append(f'<sup><font color="red" size="7">{change:.0f}</font></sup>→')
             else:
                 dec_progression_parts.append(f'<sup><font size="8">00</font></sup>→')
+        elif i < len(dec_values) - 1:
+            dec_progression_parts.append("→")
     
     dec_full_progression = " ".join(dec_progression_parts)
     dec_week_progression_text = "- ".join(dec_labels)
@@ -358,9 +376,18 @@ def price():
     
     # January Progression
     jan_progression_parts = []
+    last_valid_value = None
     for i in range(len(jan_values)):
-        jan_progression_parts.append(f"{jan_values[i]:.0f}")
-        if i < len(jan_values) - 1:
+        if pd.isna(jan_values[i]):
+            if last_valid_value is not None:
+                jan_progression_parts.append(f"{last_valid_value:.0f}")
+            else:
+                jan_progression_parts.append("No data")
+        else:
+            jan_progression_parts.append(f"{jan_values[i]:.0f}")
+            last_valid_value = jan_values[i]
+        
+        if i < len(jan_values) - 1 and not (pd.isna(jan_values[i]) or pd.isna(jan_values[i+1])):
             change = float(jan_values[i+1]) - float(jan_values[i])
             if change > 0:
                 jan_progression_parts.append(f'<sup><font color="green" size="7">+{change:.0f}</font></sup>→')
@@ -368,6 +395,8 @@ def price():
                 jan_progression_parts.append(f'<sup><font color="red" size="7">{change:.0f}</font></sup>→')
             else:
                 jan_progression_parts.append(f'<sup><font size="8">00</font></sup>→')
+        elif i < len(jan_values) - 1:
+            jan_progression_parts.append("→")
     
     jan_full_progression = " ".join(jan_progression_parts)
     jan_week_progression_text = "- ".join(jan_labels)
@@ -376,32 +405,40 @@ def price():
     story.append(Paragraph(jan_full_progression, large_price_style))
     story.append(Paragraph(jan_week_progression_text, normal_style))
     
-    # Calculate and display changes
-    if len(dec_values) > 1:
-        dec_change = float(dec_values[-1]) - float(dec_values[0])
-        dec_change_text = f"Net Change in WSP{' - ' + brand_name if brand_name else ''} in December: {dec_change:+.0f} Rs."
-        story.append(Paragraph(dec_change_text, total_change_style))
+    # Calculate and display changes only for valid data
+    if len(dec_values) > 1 and not all(pd.isna(val) for val in dec_values):
+        valid_dec_values = [val for val in dec_values if not pd.isna(val)]
+        if len(valid_dec_values) >= 2:
+            dec_change = valid_dec_values[-1] - valid_dec_values[0]
+            dec_change_text = f"Net Change in WSP{' - ' + brand_name if brand_name else ''} in December: {dec_change:+.0f} Rs."
+            story.append(Paragraph(dec_change_text, total_change_style))
     
-    # Modified January change calculation to include December end to January start transition
-    if len(jan_values) > 0:
-        # Calculate change from last December value to last January value
-        total_jan_change = float(jan_values[-1]) - float(dec_values[-1])
-        jan_change_text = f"Net Change in WSP{' - ' + brand_name if brand_name else ''} in January: {total_jan_change:+.0f} Rs."
-        story.append(Paragraph(jan_change_text, total_change_style))
+    # Calculate January change if data is available
+    if len(jan_values) > 0 and not all(pd.isna(val) for val in dec_values + jan_values):
+        valid_dec_values = [val for val in dec_values if not pd.isna(val)]
+        valid_jan_values = [val for val in jan_values if not pd.isna(val)]
+        
+        if valid_dec_values and valid_jan_values:
+            total_jan_change = valid_jan_values[-1] - valid_dec_values[-1]
+            jan_change_text = f"Net Change in WSP{' - ' + brand_name if brand_name else ''} in January: {total_jan_change:+.0f} Rs."
+            story.append(Paragraph(jan_change_text, total_change_style))
     
-    # Calculate total change from December 1st
-    total_change = float(jan_values[-1]) - float(dec_values[0])
-    total_change_text = f"Total Change in WSP{' - ' + brand_name if brand_name else ''} from 1st Dec.: {total_change:+.0f} Rs."
-    story.append(Paragraph(total_change_text, total_change_style))
+    # Calculate total change if both start and end data are available
+    valid_all_values = [val for val in dec_values + jan_values if not pd.isna(val)]
+    if len(valid_all_values) >= 2:
+        total_change = valid_all_values[-1] - valid_all_values[0]
+        total_change_text = f"Total Change in WSP{' - ' + brand_name if brand_name else ''} from 1st Dec.: {total_change:+.0f} Rs."
+        story.append(Paragraph(total_change_text, total_change_style))
     
     if company_wsp_df is not None and brand_name is not None:
         company_region_wsp = company_wsp_df[company_wsp_df['Region(District)'] == region]
         if not company_region_wsp.empty and not region_wsp.empty:
             company_w1_dec_wsp = company_region_wsp['D1-3'].values[0]
             competitive_w1_dec_wsp = region_wsp['D1-3'].values[0]
-            wsp_difference = company_w1_dec_wsp - competitive_w1_dec_wsp
-            wsp_diff_text = f"Difference in WSP between JKLC and {brand_name} on W-1 December is {wsp_difference:+.0f} Rs."
-            story.append(Paragraph(wsp_diff_text, total_change_style))
+            if not pd.isna(company_w1_dec_wsp) and not pd.isna(competitive_w1_dec_wsp):
+                wsp_difference = company_w1_dec_wsp - competitive_w1_dec_wsp
+                wsp_diff_text = f"Difference in WSP between JKLC and {brand_name} on W-1 December is {wsp_difference:+.0f} Rs."
+                story.append(Paragraph(wsp_diff_text, total_change_style))
             
     story.append(Spacer(1, 0))
     if not is_last_brand:
