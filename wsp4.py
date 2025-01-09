@@ -114,7 +114,7 @@ import statistics
 import plotly.express as fx
 import plotly.graph_objs as go
 import plotly.io as pio
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, PageBreak,Paragraph, Spacer, KeepTogether,HRFlowable
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, PageBreak,Paragraph, Spacer,HRFlowable
 from openpyxl import Workbook
 def price():
  def calculate_effective_invoice(df, region, month, year):
