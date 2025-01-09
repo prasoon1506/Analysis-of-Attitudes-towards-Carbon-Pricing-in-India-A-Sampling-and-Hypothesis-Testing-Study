@@ -439,7 +439,7 @@ def price():
                 wsp_difference = company_w1_dec_wsp - competitive_w1_dec_wsp
                 wsp_diff_text = f"The Difference in WSP between JKLC and {brand_name} was {wsp_difference:+.0f} Rs. at the start of Decemeber."
                 story.append(Paragraph(wsp_diff_text, total_change_style))
-            company_w3j_jan_wsp = company_region['D7-8 J'].values[0]
+            company_w3j_jan_wsp = company_region_wsp['D7-8 J'].values[0]
             competitive_w3j_jan_wsp = region_wsp['D7-8 J'].values[0]
             if not pd.isna(company_w3j_jan_wsp) and not pd.isna(competitive_w3j_jan_wsp):
                 wsp_diff_1 = company_w3j_jan_wsp-competitive_w3j_jan_wsp
