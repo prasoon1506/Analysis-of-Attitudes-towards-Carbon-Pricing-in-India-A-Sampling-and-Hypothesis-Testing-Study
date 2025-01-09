@@ -656,7 +656,7 @@ def price():
                     is_last_brand = (i == len(brand_names) - 1)
                     create_wsp_progression(region_story, brand_wsp_df, region, styles, brand_name=brand, is_last_brand=is_last_brand, company_wsp_df=company_wsp_df)
             
-            story.append(KeepTogether(region_story))
+            story.append((region_story)
         
         doc.build(story)
         buffer.seek(0)
