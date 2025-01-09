@@ -745,6 +745,177 @@ def price():
     df = df.rename(columns={df.columns[0]: 'Region(District)'})
     df = df.reset_index(drop=True)
     return df
+ def generate_wsp_comparison_report(company_wsp_df, competitive_brands_wsp=None):
+    try:
+        region_order = ['GJ (Ahmedabad)', 'GJ (Surat)', 'RJ(Jaipur)', 'RJ(Udaipur)', 
+                       'HY (Gurgaon)', 'PB (Bhatinda)', 'Delhi', 'CG (Raipur)', 
+                       'ORR (Khorda)', 'ORR (Sambalpur)', 'UP (Gaziabad)', 'UK (Haridwar)', 
+                       'UK (Dehradun)', 'M.P.(East)[Balaghat]', 'M.P.(West)[Indore]', 
+                       'M.H.(East)[Nagpur Urban]']
+        
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=8, leftMargin=8, 
+                              topMargin=8, bottomMargin=8)
+        styles = getSampleStyleSheet()
+        
+        # Custom styles
+        title_style = ParagraphStyle('TitleStyle', parent=styles['Title'], 
+                                   fontSize=20, textColor=colors.darkblue, 
+                                   alignment=TA_CENTER, spaceAfter=1)
+        region_style = ParagraphStyle('RegionStyle', parent=styles['Heading2'], 
+                                    textColor=colors.blue, spaceAfter=1, fontSize=12)
+        normal_style = styles['Normal']
+        month_style = ParagraphStyle('MonthStyle', parent=styles['Heading3'], 
+                                   textColor=colors.green, spaceAfter=1)
+        
+        story = []
+        
+        # Report header
+        story.append(Paragraph("WSP Comparison Report", title_style))
+        story.append(Paragraph("December 2024 - January 2025", 
+                             ParagraphStyle('SubtitleStyle', parent=styles['Normal'], 
+                                          fontSize=12, textColor=colors.red, 
+                                          alignment=TA_CENTER, spaceAfter=1)))
+        story.append(Spacer(1, 12))
+        
+        # Process each region
+        for region in region_order:
+            if region in ['UK (Dehradun)', 'UK (Haridwar)']:
+                continue
+                
+            region_story = []
+            region_story.append(Paragraph(f"{region}", region_style))
+            region_story.append(Spacer(1, 6))
+            
+            # Company WSP data
+            if company_wsp_df is not None and not company_wsp_df.empty:
+                region_story.append(Paragraph("JKLC WSP Progression:", month_style))
+                company_data = create_wsp_summary(company_wsp_df, region)
+                if company_data:
+                    region_story.extend(company_data)
+                    region_story.append(Spacer(1, 6))
+            
+            # Competitive brands WSP data
+            if competitive_brands_wsp:
+                for brand, brand_wsp_df in competitive_brands_wsp.items():
+                    region_story.append(Paragraph(f"{brand} WSP Progression:", month_style))
+                    competitor_data = create_wsp_summary(brand_wsp_df, region)
+                    if competitor_data:
+                        region_story.extend(competitor_data)
+                        region_story.append(Spacer(1, 6))
+            
+            # Add comparison summary if both company and competitor data exist
+            if company_wsp_df is not None and competitive_brands_wsp:
+                comparison_data = create_comparison_summary(company_wsp_df, competitive_brands_wsp, region)
+                if comparison_data:
+                    region_story.extend(comparison_data)
+            
+            story.append(KeepTogether(region_story))
+            story.append(Paragraph("<pagebreak/>", styles['Normal']))
+        
+        doc.build(story)
+        buffer.seek(0)
+        return buffer
+    
+    except Exception as e:
+        print(f"Error generating WSP comparison report: {e}")
+        raise
+
+ def create_wsp_summary(wsp_df, region):
+    styles = getSampleStyleSheet()
+    normal_style = styles['Normal']
+    summary_style = ParagraphStyle('SummaryStyle', parent=styles['Normal'], 
+                                 textColor=colors.brown, spaceAfter=0)
+    
+    region_wsp = wsp_df[wsp_df['Region(District)'] == region]
+    if region_wsp.empty:
+        return None
+        
+    summary = []
+    
+    # December WSP calculation
+    dec_columns = ['D1-3', 'D4-6', 'D7-9', 'D10-12', 'D13-15', 'D16-18', 
+                  'D19-21', 'D22-24', 'D25-27', 'D28-30']
+    dec_values = region_wsp[dec_columns].values.flatten().tolist()
+    
+    # January WSP calculation
+    jan_columns = ['D1-3 J', 'D4-6 J', 'D7-8 J']
+    jan_values = region_wsp[jan_columns].values.flatten().tolist()
+    
+    # Calculate changes
+    dec_change = float(dec_values[-1]) - float(dec_values[0])
+    jan_change = float(jan_values[-1]) - float(dec_values[-1])
+    total_change = float(jan_values[-1]) - float(dec_values[0])
+    
+    # Add WSP values
+    summary.append(Paragraph(f"December Start: Rs. {dec_values[0]:.0f}", normal_style))
+    summary.append(Paragraph(f"December End: Rs. {dec_values[-1]:.0f}", normal_style))
+    summary.append(Paragraph(f"January Latest: Rs. {jan_values[-1]:.0f}", normal_style))
+    
+    # Add changes
+    summary.append(Paragraph(f"December Net Change: {dec_change:+.0f} Rs.", summary_style))
+    summary.append(Paragraph(f"January Net Change: {jan_change:+.0f} Rs.", summary_style))
+    summary.append(Paragraph(f"Total Net Change: {total_change:+.0f} Rs.", summary_style))
+    
+    return summary
+
+ def create_comparison_summary(company_wsp_df, competitive_brands_wsp, region):
+    styles = getSampleStyleSheet()
+    comparison_style = ParagraphStyle('ComparisonStyle', parent=styles['Normal'], 
+                                    textColor=colors.blue, spaceAfter=0)
+    
+    summary = []
+    summary.append(Spacer(1, 6))
+    summary.append(Paragraph("Comparative Analysis:", comparison_style))
+    
+    company_region_wsp = company_wsp_df[company_wsp_df['Region(District)'] == region]
+    if company_region_wsp.empty:
+        return None
+    
+    company_dec_start = company_region_wsp['D1-3'].values[0]
+    
+    for brand, brand_wsp_df in competitive_brands_wsp.items():
+        competitor_region_wsp = brand_wsp_df[brand_wsp_df['Region(District)'] == region]
+        if not competitor_region_wsp.empty:
+            competitor_dec_start = competitor_region_wsp['D1-3'].values[0]
+            difference = company_dec_start - competitor_dec_start
+            summary.append(Paragraph(
+                f"JKLC vs {brand} (December Start): {difference:+.0f} Rs.", 
+                comparison_style))
+    
+    return summary
+ def download_wsp_comparison_report():
+    st.subheader("WSP Comparison Report Generator")
+    
+    # Get company WSP data
+    company_wsp_df = get_wsp_data()
+    
+    # Get competitive brands WSP data
+    competitive_brands_wsp = get_competitive_brands_wsp_data()
+    
+    if company_wsp_df is not None or competitive_brands_wsp is not None:
+        # Create a download button
+        if st.button("Generate WSP Comparison Report"):
+            try:
+                # Generate the report
+                report_buffer = generate_wsp_comparison_report(company_wsp_df, competitive_brands_wsp)
+                
+                # Create the download button
+                current_date = datetime.now().strftime("%d%b%Y")
+                st.download_button(
+                    label="📥 Download WSP Comparison Report",
+                    data=report_buffer,
+                    file_name=f"WSP_Comparison_Report_{current_date}.pdf",
+                    mime="application/pdf",
+                    key='download_wsp_report'
+                )
+                
+                st.success("Report generated successfully! Click the download button above to save it.")
+                
+            except Exception as e:
+                st.error(f"Error generating report: {e}")
+    else:
+        st.info("Please upload the WSP data files to generate the comparison report.")
  def main():
     st.title("📊 Price Tracker Analysis Tool")
     st.markdown("""
@@ -1003,7 +1174,7 @@ def price():
                 else:
                         st.info("No remarks found for this region.")
             st.markdown("## 📥 Download Options")
-            download_options = st.radio("Download File From:", ["Entire Dataframe", "Specific Month", "Regional Price Trend Report"], horizontal=True)
+            download_options = st.radio("Download File From:", ["Entire Dataframe", "Specific Month", "Regional Price Trend Report","DOWNLOAD WSP REPORT"], horizontal=True)
             start_date = None
             if download_options =="Entire Dataframe":
                 if st.button("Download Processed File"):
@@ -1031,6 +1202,8 @@ def price():
             if download_options == "Regional Price Trend Report":
                 output = save_regional_price_trend_report(df)
                 st.download_button(label="Download Regional Price Trend Report (PDF)",data=output,file_name="regional_price_trend_report.pdf",mime="application/pdf")
+            if download_options == "DOWNLOAD WSP REPORT":
+               download_wsp_comparison_report()
         except Exception as e:
             st.error(f"An error occurred: {e}")
             st.exception(e)
