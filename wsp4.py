@@ -582,7 +582,6 @@ def price():
     company_wsp_df = get_wsp_data()
     competitive_brands_wsp = get_competitive_brands_wsp_data()
     return generate_regional_price_trend_report(df, company_wsp_df, competitive_brands_wsp)
-
  def generate_regional_price_trend_report(df, company_wsp_df=None, competitive_brands_wsp=None):
     try:
         region_order = ['GJ (Ahmedabad)', 'GJ (Surat)','RJ(Jaipur)', 'RJ(Udaipur)','HY (Gurgaon)','PB (Bhatinda)','Delhi','CG (Raipur)','ORR (Khorda)', 'ORR (Sambalpur)', 'UP (Gaziabad)','UK (Haridwar)','UK (Dehradun)', 'M.P.(East)[Balaghat]', 'M.P.(West)[Indore]', 'M.H.(East)[Nagpur Urban]']
@@ -611,18 +610,18 @@ def price():
         regions = [region for region in region_order if region in df['Region(District)'].unique()]
         
         for i, region in enumerate(regions):
-            # Create a list to hold all elements for this region
-            region_elements = []
-            
             # Add separator line between regions (except for the first region)
             if i > 0:
-                region_elements.append(HRFlowable(width="100%", thickness=2, lineCap='round', color=colors.grey, spaceBefore=10, spaceAfter=10))
+                story.append(HRFlowable(width="100%", thickness=2, lineCap='round', color=colors.grey, spaceBefore=10, spaceAfter=10))
             
             region_df = df[df['Region(District)'] == region].copy()
             
             # Region header
-            region_elements.append(Paragraph(f"{region}", region_style))
-            region_elements.append(Spacer(1, 1))
+            story.append(Paragraph(f"{region}", region_style))
+            story.append(Spacer(1, 1))
+            
+            # Create main metrics table (Invoice and NOD progression)
+            metrics_data = []
             
             # Left column: Invoice and NOD progression
             left_column = []
@@ -640,7 +639,7 @@ def price():
                 ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
                 ('VALIGN', (0, 0), (-1, -1), 'TOP'),
             ]))
-            region_elements.append(layout_table)
+            story.append(layout_table)
             
             # WSP Progression
             brand_count = 1 if company_wsp_df is not None and not company_wsp_df.empty else 0
@@ -648,20 +647,13 @@ def price():
                 brand_count += len(competitive_brands_wsp)
             is_last_brand = (brand_count == 1)
             
-            create_wsp_progression(region_elements, company_wsp_df, region, styles, is_last_brand=is_last_brand, company_wsp_df=company_wsp_df)
+            create_wsp_progression(story, company_wsp_df, region, styles, is_last_brand=is_last_brand, company_wsp_df=company_wsp_df)
             
             if competitive_brands_wsp:
                 brand_names = list(competitive_brands_wsp.keys())
                 for i, (brand, brand_wsp_df) in enumerate(competitive_brands_wsp.items()):
                     is_last_brand = (i == len(brand_names) - 1)
-                    create_wsp_progression(region_elements, brand_wsp_df, region, styles, brand_name=brand, is_last_brand=is_last_brand, company_wsp_df=company_wsp_df)
-            
-            # Add page break if not the last region
-            if i < len(regions) - 1:
-                region_elements.append(PageBreak())
-            
-            # Wrap all region elements in KeepTogether
-            story.append(KeepTogether(region_elements))
+                    create_wsp_progression(story, brand_wsp_df, region, styles, brand_name=brand, is_last_brand=is_last_brand, company_wsp_df=company_wsp_df)
         
         doc.build(story)
         buffer.seek(0)
