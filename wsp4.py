@@ -661,8 +661,12 @@ def price():
     except Exception as e:
         print(f"Error generating report: {e}")
         raise
- def generate_summary_report(df, company_wsp_df=None, competitive_brands_wsp=None):
+ def generate_summary_report(df):
     try:
+        # Get WSP data using the existing function from the main report
+        company_wsp_df = get_wsp_data()
+        competitive_brands_wsp = get_competitive_brands_wsp_data()
+        
         # Setup document
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=20, leftMargin=20, topMargin=20, bottomMargin=20)
@@ -769,7 +773,7 @@ def price():
         print(f"Error generating summary report: {e}")
         raise
 
- def calculate_changes(df, metric_column, current_date):
+def calculate_changes(df, metric_column, current_date):
     """Calculate changes for December, January, and total period"""
     dec_data = df[df['Date'].dt.month == 12]
     jan_data = df[df['Date'].dt.month == 1]
@@ -787,7 +791,7 @@ def price():
     
     return [dec_change, jan_change, total_change]
 
- def calculate_wsp_changes(wsp_df, region):
+def calculate_wsp_changes(wsp_df, region):
     """Calculate WSP changes for December, January, and total period"""
     if wsp_df is None or region not in wsp_df['Region(District)'].values:
         return [0, 0, 0]
@@ -814,6 +818,11 @@ def price():
         return '0'
     color = colors.green if value > 0 else colors.red
     return f'<font color="{color.hexval()}">{value:+.0f}</font>'
+
+ def save_regional_summary_report(df):
+    """Main function to generate and save the summary report"""
+    return generate_summary_report(df)
+ 
  def get_wsp_data():
     include_wsp = st.checkbox("Include WSP (Wholesale Price) Data")
     if include_wsp:
