@@ -769,7 +769,7 @@ def price():
         print(f"Error generating summary report: {e}")
         raise
 
-def calculate_changes(df, metric_column, current_date):
+ def calculate_changes(df, metric_column, current_date):
     """Calculate changes for December, January, and total period"""
     dec_data = df[df['Date'].dt.month == 12]
     jan_data = df[df['Date'].dt.month == 1]
@@ -787,7 +787,7 @@ def calculate_changes(df, metric_column, current_date):
     
     return [dec_change, jan_change, total_change]
 
-def calculate_wsp_changes(wsp_df, region):
+ def calculate_wsp_changes(wsp_df, region):
     """Calculate WSP changes for December, January, and total period"""
     if wsp_df is None or region not in wsp_df['Region(District)'].values:
         return [0, 0, 0]
@@ -814,7 +814,7 @@ def format_change(value):
         return '0'
     color = colors.green if value > 0 else colors.red
     return f'<font color="{color.hexval()}">{value:+.0f}</font>'
-def get_wsp_data():
+ def get_wsp_data():
     include_wsp = st.checkbox("Include WSP (Wholesale Price) Data")
     if include_wsp:
         wsp_file = st.file_uploader("Upload WSP Data File", type=['csv', 'xlsx'])
