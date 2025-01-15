@@ -814,7 +814,7 @@ def format_change(value):
         return '0'
     color = colors.green if value > 0 else colors.red
     return f'<font color="{color.hexval()}">{value:+.0f}</font>'
- def get_wsp_data():
+def get_wsp_data():
     include_wsp = st.checkbox("Include WSP (Wholesale Price) Data")
     if include_wsp:
         wsp_file = st.file_uploader("Upload WSP Data File", type=['csv', 'xlsx'])
