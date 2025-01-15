@@ -268,7 +268,7 @@ def price():
         if competitive_brands_file is not None:
             try:
                 xls = pd.ExcelFile(competitive_brands_file)
-                required_columns = ['Region(District)', 'D1-3', 'D4-6', 'D7-9', 'D10-12', 'D13-15','D16-18','D19-21','D22-24','D25-27','D28-30','D1-3 J','D4-6 J','D7-8 J']
+                required_columns = ['Region(District)', 'D1-3', 'D4-6', 'D7-9', 'D10-12', 'D13-15','D16-18','D19-21','D22-24','D25-27','D28-30','D1-3 J','D4-6 J','D7-9 J','D10-12 J','D13-14 J']
                 for sheet_name in xls.sheet_names:
                     df = pd.read_excel(competitive_brands_file, sheet_name=sheet_name)
                     missing_columns = [col for col in required_columns if col not in df.columns]
@@ -324,7 +324,7 @@ def price():
         
     # Define December and January columns
     dec_columns = ['D1-3', 'D4-6', 'D7-9', 'D10-12', 'D13-15', 'D16-18', 'D19-21', 'D22-24', 'D25-27', 'D28-30']
-    jan_columns = ['D1-3 J', 'D4-6 J', 'D7-9 J','D10-12 J']
+    jan_columns = ['D1-3 J', 'D4-6 J', 'D7-9 J','D10-12 J','D13-14 J']
     
     # Get the values and handle NaN
     dec_values = region_wsp[dec_columns].values.flatten().tolist()
@@ -337,7 +337,7 @@ def price():
         return
     
     dec_labels = ['01-03 Dec', '04-06 Dec', '07-09 Dec', '10-12 Dec', '13-15 Dec', '16-18 Dec', '19-21 Dec', '22-24 Dec', '25-27 Dec', '28-30 Dec']
-    jan_labels = ['01-03 Jan', '04-06 Jan', '07-09 Jan','10-12 Jan']
+    jan_labels = ['01-03 Jan', '04-06 Jan', '07-09 Jan','10-12 Jan',13-14 Jan']
     
     header_text = f"WSP Progression from December 2024 to January 2025" + \
                   (f" - {brand_name}" if brand_name else "")
@@ -671,7 +671,7 @@ def price():
                     wsp_df = pd.read_csv(wsp_file)
                 else:
                     wsp_df = pd.read_excel(wsp_file)
-                required_columns = ['Region(District)', 'D1-3', 'D4-6', 'D7-9', 'D10-12', 'D13-15','D16-18','D19-21','D22-24','D25-27','D28-30','D1-3 J','D4-6 J','D7-9 J','D10-12 J']
+                required_columns = ['Region(District)', 'D1-3', 'D4-6', 'D7-9', 'D10-12', 'D13-15','D16-18','D19-21','D22-24','D25-27','D28-30','D1-3 J','D4-6 J','D7-9 J','D10-12 J','D13-14 J']
                 for col in required_columns:
                     if col not in wsp_df.columns:
                         st.error(f"Missing required WSP column: {col}")
