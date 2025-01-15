@@ -337,7 +337,7 @@ def price():
         return
     
     dec_labels = ['01-03 Dec', '04-06 Dec', '07-09 Dec', '10-12 Dec', '13-15 Dec', '16-18 Dec', '19-21 Dec', '22-24 Dec', '25-27 Dec', '28-30 Dec']
-    jan_labels = ['01-03 Jan', '04-06 Jan', '07-09 Jan','10-12 Jan',13-14 Jan']
+    jan_labels = ['01-03 Jan', '04-06 Jan', '07-09 Jan','10-12 Jan','13-14 Jan']
     
     header_text = f"WSP Progression from December 2024 to January 2025" + \
                   (f" - {brand_name}" if brand_name else "")
