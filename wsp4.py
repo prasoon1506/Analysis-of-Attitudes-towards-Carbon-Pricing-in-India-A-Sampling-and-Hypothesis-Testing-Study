@@ -661,6 +661,159 @@ def price():
     except Exception as e:
         print(f"Error generating report: {e}")
         raise
+ def generate_summary_report(df, company_wsp_df=None, competitive_brands_wsp=None):
+    try:
+        # Setup document
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=20, leftMargin=20, topMargin=20, bottomMargin=20)
+        
+        # Create styles
+        styles = getSampleStyleSheet()
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Title'],
+            fontSize=16,
+            textColor=colors.darkblue,
+            alignment=TA_CENTER,
+            spaceAfter=20
+        )
+        
+        # Define table styles
+        table_style = TableStyle([
+            # Header styling
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2C3E50')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('TOPPADDING', (0, 0), (-1, 0), 12),
+            
+            # Content styling
+            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('ALIGN', (1, 0), (-1, -1), 'RIGHT'),  # Right align numbers
+            ('ALIGN', (0, 0), (0, -1), 'LEFT'),    # Left align region names
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            
+            # Alternating row colors
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.HexColor('#FFFFFF'), colors.HexColor('#F5F9FF')]),
+            
+            # Vertical separators for NOD and WSP sections
+            ('LINEAFTER', (3, 0), (3, -1), 2, colors.HexColor('#2C3E50')),
+            
+            # Padding
+            ('TOPPADDING', (0, 1), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 8),
+            ('LEFTPADDING', (0, 0), (-1, -1), 6),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+        ])
+        
+        # Prepare data
+        region_order = ['GJ (Ahmedabad)', 'GJ (Surat)', 'RJ(Jaipur)', 'RJ(Udaipur)', 'HY (Gurgaon)', 
+                       'PB (Bhatinda)', 'Delhi', 'CG (Raipur)', 'ORR (Khorda)', 'ORR (Sambalpur)', 
+                       'UP (Gaziabad)', 'UK (Haridwar)', 'UK (Dehradun)', 'M.P.(East)[Balaghat]', 
+                       'M.P.(West)[Indore]', 'M.H.(East)[Nagpur Urban]']
+        
+        df['Date'] = pd.to_datetime(df['Date'])
+        current_date = datetime.now()
+        last_month = current_date.replace(day=1) - timedelta(days=1)
+        
+        # Table headers
+        headers = [
+            'Region',
+            'NOD Change\nJan', 'NOD Change\nDec', 'Total NOD\nChange',
+            'WSP Change\nDec', 'WSP Change\nJan', 'Total WSP\nChange'
+        ]
+        
+        data = [headers]
+        
+        # Calculate changes for each region
+        for region in region_order:
+            region_df = df[df['Region(District)'] == region].copy()
+            if region_df.empty:
+                continue
+                
+            # Calculate NOD changes
+            nod_changes = calculate_changes(region_df, 'Net', current_date)
+            
+            # Calculate WSP changes using company WSP data
+            wsp_changes = calculate_wsp_changes(company_wsp_df, region) if company_wsp_df is not None else [0, 0, 0]
+            
+            row = [
+                region,
+                format_change(nod_changes[1]),  # Jan NOD change
+                format_change(nod_changes[0]),  # Dec NOD change
+                format_change(nod_changes[2]),  # Total NOD change
+                format_change(wsp_changes[0]),  # Dec WSP change
+                format_change(wsp_changes[1]),  # Jan WSP change
+                format_change(wsp_changes[2])   # Total WSP change
+            ]
+            data.append(row)
+        
+        # Create the story
+        story = []
+        story.append(Paragraph("Regional Price Changes Summary Report", title_style))
+        
+        # Create and style the table
+        table = Table(data, colWidths=[120, 65, 65, 65, 65, 65, 65])
+        table.setStyle(table_style)
+        story.append(table)
+        
+        # Build the document
+        doc.build(story)
+        buffer.seek(0)
+        return buffer
+        
+    except Exception as e:
+        print(f"Error generating summary report: {e}")
+        raise
+
+def calculate_changes(df, metric_column, current_date):
+    """Calculate changes for December, January, and total period"""
+    dec_data = df[df['Date'].dt.month == 12]
+    jan_data = df[df['Date'].dt.month == 1]
+    
+    dec_change = 0
+    if not dec_data.empty:
+        dec_change = dec_data[metric_column].iloc[-1] - dec_data[metric_column].iloc[0]
+    
+    jan_change = 0
+    if not jan_data.empty:
+        dec_last_value = dec_data[metric_column].iloc[-1] if not dec_data.empty else df[metric_column].iloc[0]
+        jan_change = jan_data[metric_column].iloc[-1] - dec_last_value
+    
+    total_change = df[metric_column].iloc[-1] - df[metric_column].iloc[0] if not df.empty else 0
+    
+    return [dec_change, jan_change, total_change]
+
+def calculate_wsp_changes(wsp_df, region):
+    """Calculate WSP changes for December, January, and total period"""
+    if wsp_df is None or region not in wsp_df['Region(District)'].values:
+        return [0, 0, 0]
+        
+    region_wsp = wsp_df[wsp_df['Region(District)'] == region]
+    
+    # December columns
+    dec_columns = ['D1-3', 'D4-6', 'D7-9', 'D10-12', 'D13-15', 'D16-18', 'D19-21', 'D22-24', 'D25-27', 'D28-30']
+    # January columns
+    jan_columns = ['D1-3 J', 'D4-6 J', 'D7-9 J', 'D10-12 J', 'D13-14 J']
+    
+    dec_values = [v for v in region_wsp[dec_columns].values.flatten() if not pd.isna(v)]
+    jan_values = [v for v in region_wsp[jan_columns].values.flatten() if not pd.isna(v)]
+    
+    dec_change = dec_values[-1] - dec_values[0] if len(dec_values) >= 2 else 0
+    jan_change = jan_values[-1] - dec_values[-1] if len(jan_values) >= 1 and len(dec_values) >= 1 else 0
+    total_change = jan_values[-1] - dec_values[0] if len(jan_values) >= 1 and len(dec_values) >= 1 else 0
+    
+    return [dec_change, jan_change, total_change]
+
+def format_change(value):
+    """Format change values with colors and signs"""
+    if value == 0:
+        return '0'
+    color = colors.green if value > 0 else colors.red
+    return f'<font color="{color.hexval()}">{value:+.0f}</font>'
  def get_wsp_data():
     include_wsp = st.checkbox("Include WSP (Wholesale Price) Data")
     if include_wsp:
@@ -1217,7 +1370,7 @@ def price():
                 else:
                         st.info("No remarks found for this region.")
             st.markdown("## 📥 Download Options")
-            download_options = st.radio("Download File From:", ["Entire Dataframe", "Specific Month", "Regional Price Trend Report","DOWNLOAD WSP REPORT"], horizontal=True)
+            download_options = st.radio("Download File From:", ["Entire Dataframe", "Specific Month", "Regional Price Trend Report","DOWNLOAD WSP REPORT","Report"], horizontal=True)
             start_date = None
             if download_options =="Entire Dataframe":
                 if st.button("Download Processed File"):
@@ -1247,6 +1400,8 @@ def price():
                 st.download_button(label="Download Regional Price Trend Report (PDF)",data=output,file_name="regional_price_trend_report.pdf",mime="application/pdf")
             if download_options == "DOWNLOAD WSP REPORT":
                download_wsp_comparison_report()
+            if download_options == "Report":
+              generate_summary_report(df, company_wsp_df, competitive_brands_wsp)
         except Exception as e:
             st.error(f"An error occurred: {e}")
             st.exception(e)
