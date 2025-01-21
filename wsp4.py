@@ -307,43 +307,29 @@ def price():
  def create_wsp_progression(story, wsp_df, region, styles, brand_name=None, is_last_brand=False, company_wsp_df=None):
     if region in ['UK (Dehradun)', 'UK (Haridwar)']:
         return
-        
     normal_style = styles['Normal']
     month_style = ParagraphStyle('MonthStyle', parent=styles['Heading3'], textColor=colors.green, spaceAfter=1)
     large_price_style = ParagraphStyle('LargePriceStyle', parent=styles['Normal'], fontSize=14, spaceAfter=1)
     total_change_style = ParagraphStyle('TotalChangeStyle', parent=styles['Normal'], fontSize=12, textColor=colors.brown, alignment=TA_LEFT, spaceAfter=1, fontName='Helvetica-Bold')
-    
     if wsp_df is None:
         return
-        
     region_wsp = wsp_df[wsp_df['Region(District)'] == region]
     if region_wsp.empty:
         story.append(Paragraph(f"No WSP data available for {region}" + (f" - {brand_name}" if brand_name else ""), normal_style))
         story.append(Spacer(1, 0))
         return
-        
-    # Define December and January columns
     dec_columns = ['D1-3', 'D4-6', 'D7-9', 'D10-12', 'D13-15', 'D16-18', 'D19-21', 'D22-24', 'D25-27', 'D28-30']
     jan_columns = ['D1-3 J', 'D4-6 J', 'D7-9 J','D10-12 J','D13-15 J','D16-18 J','D19 J']
-    
-    # Get the values and handle NaN
     dec_values = region_wsp[dec_columns].values.flatten().tolist()
     jan_values = region_wsp[jan_columns].values.flatten().tolist()
-    
-    # Check if all values are NaN
     if all(pd.isna(val) for val in dec_values + jan_values):
         story.append(Paragraph(f"No data available for {region}" + (f" - {brand_name}" if brand_name else ""), normal_style))
         story.append(Spacer(1, 0))
         return
-    
     dec_labels = ['01-03 Dec', '04-06 Dec', '07-09 Dec', '10-12 Dec', '13-15 Dec', '16-18 Dec', '19-21 Dec', '22-24 Dec', '25-27 Dec', '28-30 Dec']
     jan_labels = ['01-03 Jan', '04-06 Jan', '07-09 Jan','10-12 Jan','13-15 Jan','16-17 Jan','18-19 Jan']
-    
-    header_text = f"WSP Progression from December 2024 to January 2025" + \
-                  (f" - {brand_name}" if brand_name else "")
+    header_text = f"WSP Progression from December 2024 to January 2025" + \(f" - {brand_name}" if brand_name else "")
     story.append(Paragraph(header_text + ":-", month_style))
-    
-    # December Progression
     dec_progression_parts = []
     last_valid_value = None
     for i in range(len(dec_values)):
@@ -355,7 +341,6 @@ def price():
         else:
             dec_progression_parts.append(f"{dec_values[i]:.0f}")
             last_valid_value = dec_values[i]
-        
         if i < len(dec_values) - 1 and not (pd.isna(dec_values[i]) or pd.isna(dec_values[i+1])):
             change = float(dec_values[i+1]) - float(dec_values[i])
             if change > 0:
@@ -366,15 +351,11 @@ def price():
                 dec_progression_parts.append(f'<sup><font size="8">00</font></sup>→')
         elif i < len(dec_values) - 1:
             dec_progression_parts.append("→")
-    
     dec_full_progression = " ".join(dec_progression_parts)
     dec_week_progression_text = "- ".join(dec_labels)
-    
     story.append(Paragraph("December 2024:", normal_style))
     story.append(Paragraph(dec_full_progression, large_price_style))
     story.append(Paragraph(dec_week_progression_text, normal_style))
-    
-    # January Progression
     jan_progression_parts = []
     last_valid_value = None
     for i in range(len(jan_values)):
@@ -386,7 +367,6 @@ def price():
         else:
             jan_progression_parts.append(f"{jan_values[i]:.0f}")
             last_valid_value = jan_values[i]
-        
         if i < len(jan_values) - 1 and not (pd.isna(jan_values[i]) or pd.isna(jan_values[i+1])):
             change = float(jan_values[i+1]) - float(jan_values[i])
             if change > 0:
@@ -397,39 +377,29 @@ def price():
                 jan_progression_parts.append(f'<sup><font size="8">00</font></sup>→')
         elif i < len(jan_values) - 1:
             jan_progression_parts.append("→")
-    
     jan_full_progression = " ".join(jan_progression_parts)
     jan_week_progression_text = "- ".join(jan_labels)
-    
     story.append(Paragraph("January 2025:", normal_style))
     story.append(Paragraph(jan_full_progression, large_price_style))
     story.append(Paragraph(jan_week_progression_text, normal_style))
-    
-    # Calculate and display changes only for valid data
     if len(dec_values) > 1 and not all(pd.isna(val) for val in dec_values):
         valid_dec_values = [val for val in dec_values if not pd.isna(val)]
         if len(valid_dec_values) >= 2:
             dec_change = valid_dec_values[-1] - valid_dec_values[0]
             dec_change_text = f"Net Change in WSP{' - ' + brand_name if brand_name else ''} in December: {dec_change:+.0f} Rs."
             story.append(Paragraph(dec_change_text, total_change_style))
-    
-    # Calculate January change if data is available
     if len(jan_values) > 0 and not all(pd.isna(val) for val in dec_values + jan_values):
         valid_dec_values = [val for val in dec_values if not pd.isna(val)]
         valid_jan_values = [val for val in jan_values if not pd.isna(val)]
-        
         if valid_dec_values and valid_jan_values:
             total_jan_change = valid_jan_values[-1] - valid_dec_values[-1]
             jan_change_text = f"Net Change in WSP{' - ' + brand_name if brand_name else ''} in January: {total_jan_change:+.0f} Rs."
             story.append(Paragraph(jan_change_text, total_change_style))
-    
-    # Calculate total change if both start and end data are available
     valid_all_values = [val for val in dec_values + jan_values if not pd.isna(val)]
     if len(valid_all_values) >= 2:
         total_change = valid_all_values[-1] - valid_all_values[0]
         total_change_text = f"Total Change in WSP{' - ' + brand_name if brand_name else ''} from 1st Dec.: {total_change:+.0f} Rs."
         story.append(Paragraph(total_change_text, total_change_style))
-    
     if company_wsp_df is not None and brand_name is not None:
         company_region_wsp = company_wsp_df[company_wsp_df['Region(District)'] == region]
         if not company_region_wsp.empty and not region_wsp.empty:
@@ -445,67 +415,35 @@ def price():
                 wsp_diff_1 = company_w3j_jan_wsp-competitive_w3j_jan_wsp
                 wsp_diff_text_1 = f"The Difference in WSP between JKLC and {brand_name} currently is {wsp_diff_1:+.0f} Rs."
                 story.append(Paragraph(wsp_diff_text_1, total_change_style))
-            
     story.append(Spacer(1, 0))
     if not is_last_brand:
         story.append(HRFlowable(width="100%", thickness=1, lineCap='round', color=colors.black, spaceBefore=1, spaceAfter=1))
  def create_comprehensive_metric_progression(story, region_df, current_date, last_month, metric_column, title, styles, is_secondary_metric=False):
     if is_secondary_metric:
-        box_style = ParagraphStyle(
-            f'{title}BoxStyle',
-            parent=styles['Normal'],
-            fontSize=10,
-            textColor=colors.darkgreen,
-            borderColor=colors.lightgrey,
-            borderWidth=1,
-            borderPadding=5,
-            backColor=colors.whitesmoke,
-            spaceAfter=0  # Reduced from 1 to 0
-        )
+        box_style = ParagraphStyle(f'{title}BoxStyle',parent=styles['Normal'],fontSize=10,textColor=colors.darkgreen,
+            borderColor=colors.lightgrey,borderWidth=1,borderPadding=5,backColor=colors.whitesmoke,spaceAfter=0)
         normal_style = ParagraphStyle(f'{title}NormalStyle', parent=styles['Normal'], fontSize=10)
-        total_change_style = ParagraphStyle(
-            f'{title}TotalChangeStyle',
-            parent=styles['Normal'],
-            fontSize=10,
-            textColor=colors.brown,
-            alignment=TA_LEFT,
-            spaceAfter=0  # Reduced from 1 to 0
-        )
+        total_change_style = ParagraphStyle(f'{title}TotalChangeStyle',parent=styles['Normal'],fontSize=10,textColor=colors.brown,alignment=TA_LEFT,spaceAfter=0)
     else:
         month_style = ParagraphStyle('MonthStyle', parent=styles['Heading3'], textColor=colors.green, spaceAfter=1)
         normal_style = styles['Normal']
         large_price_style = ParagraphStyle('LargePriceStyle', parent=styles['Normal'], fontSize=14, spaceAfter=1)
-        total_change_style = ParagraphStyle(
-            'TotalChangeStyle',
-            parent=styles['Normal'],
-            fontSize=12,
-            textColor=colors.brown,
-            alignment=TA_LEFT,
-            spaceAfter=0,  # Reduced from 1 to 0
-            fontName='Helvetica-Bold'
-        )
-
+        total_change_style = ParagraphStyle('TotalChangeStyle',parent=styles['Normal'],fontSize=12,textColor=colors.brown,alignment=TA_LEFT,spaceAfter=0,fontName='Helvetica-Bold')
     start_data_point = get_start_data_point(region_df, last_month)
     if start_data_point is None:
         if not is_secondary_metric:
             story.append(Paragraph("No data available for this period", normal_style))
         return
-
-    progression_df = region_df[(region_df['Date'] >= start_data_point['Date']) & 
-                             (region_df['Date'] <= current_date)].copy().sort_values('Date')
-
+    progression_df = region_df[(region_df['Date'] >= start_data_point['Date']) & (region_df['Date'] <= current_date)].copy().sort_values('Date')
     if progression_df.empty:
         if not is_secondary_metric:
             story.append(Paragraph("No data available for this period", normal_style))
         return
-
     if not is_secondary_metric:
         story.append(Paragraph(f"{title} Progression from {last_month.strftime('%B %Y')} to {current_date.strftime('%B %Y')}:-", month_style))
-        
         metric_values = progression_df[metric_column].apply(lambda x: f"{x:.0f}").tolist()
         dates = progression_df['Date'].dt.strftime('%d-%b').tolist()
         metric_progression_parts = []
-        
         for i in range(len(metric_values)):
             metric_progression_parts.append(metric_values[i])
             if i < len(metric_values) - 1:
@@ -516,68 +454,34 @@ def price():
                     metric_progression_parts.append(f'<sup><font color="red" size="7">{change:.0f}</font></sup>→')
                 else:
                     metric_progression_parts.append(f'<sup><font size="8">00</font></sup>→')
-
         full_progression = " ".join(metric_progression_parts)
         date_progression_text = " ----- ".join(dates)
-
-        progression_table = Table([
-            [Paragraph(full_progression, large_price_style)],
-            [Paragraph(date_progression_text, normal_style)]
-        ], colWidths=[400])
-        progression_table.setStyle(TableStyle([
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('TOPPADDING', (0, 0), (-1, -1), 1),   # Reduced padding
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 1)  # Reduced padding
-        ]))
+        progression_table = Table([[Paragraph(full_progression, large_price_style)],[Paragraph(date_progression_text, normal_style)]], colWidths=[400])
+        progression_table.setStyle(TableStyle([('ALIGN', (0, 0), (-1, -1), 'LEFT'),('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),('TOPPADDING', (0, 0), (-1, -1), 1),('BOTTOMPADDING', (0, 0), (-1, -1), 1)]))
         story.append(progression_table)
-
     if len(progression_df[metric_column]) > 1:
         dec_data = progression_df[progression_df['Date'].dt.month == 12]
         jan_data = progression_df[progression_df['Date'].dt.month == 1]
-        
         changes_text = []
-        
         if not dec_data.empty:
             dec_change = dec_data[metric_column].iloc[-1] - dec_data[metric_column].iloc[0]
             changes_text.append(f"Net Change in {title} for December: {dec_change:+.0f} Rs.")
-
         if not jan_data.empty:
             dec_last_value = dec_data[metric_column].iloc[-1] if not dec_data.empty else progression_df[metric_column].iloc[0]
             jan_change = jan_data[metric_column].iloc[-1] - dec_last_value
             changes_text.append(f"Net Change in {title} for January: {jan_change:+.0f} Rs.")
-
         total_change = progression_df[metric_column].iloc[-1] - progression_df[metric_column].iloc[0]
         changes_text.append(f"Total Change in {title} from 1st Dec.: {total_change:+.0f} Rs.")
-
         if is_secondary_metric:
             box_content = [Paragraph(f"<b>{title} Changes</b>", box_style)]
             for text in changes_text:
                 box_content.append(Paragraph(text, total_change_style))
-            
-            box_table = Table([[content] for content in box_content], 
-                            colWidths=[200],
-                            style=[
-                                ('BOX', (0, 0), (-1, -1), 1, colors.lightgrey),
-                                ('BACKGROUND', (0, 0), (-1, 0), colors.whitesmoke),
-                                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                                ('LEFTPADDING', (0, 0), (-1, -1), 5),
-                                ('RIGHTPADDING', (0, 0), (-1, -1), 5),
-                                ('TOPPADDING', (0, 0), (-1, -1), 3),  # Reduced padding
-                                ('BOTTOMPADDING', (0, 0), (-1, -1), 3),  # Reduced padding
-                            ])
+            box_table = Table([[content] for content in box_content], colWidths=[200],style=[('BOX', (0, 0), (-1, -1), 1, colors.lightgrey),('BACKGROUND', (0, 0), (-1, 0), colors.whitesmoke),('ALIGN', (0, 0), (-1, -1), 'LEFT'),('LEFTPADDING', (0, 0), (-1, -1), 5),('RIGHTPADDING', (0, 0), (-1, -1), 5),('TOPPADDING', (0, 0), (-1, -1), 3),('BOTTOMPADDING', (0, 0), (-1, -1), 3),])
             story.append(box_table)
         else:
-            changes_table = Table([[Paragraph(text, total_change_style)] for text in changes_text],
-                                colWidths=[400])
-            changes_table.setStyle(TableStyle([
-                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                ('TOPPADDING', (0, 0), (-1, -1), 1),  # Reduced padding
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 1)  # Reduced padding
-            ]))
+            changes_table = Table([[Paragraph(text, total_change_style)] for text in changes_text],colWidths=[400])
+            changes_table.setStyle(TableStyle([('ALIGN', (0, 0), (-1, -1), 'LEFT'),('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),('TOPPADDING', (0, 0), (-1, -1), 1),('BOTTOMPADDING', (0, 0), (-1, -1), 1)]))
             story.append(changes_table)
-
  def save_regional_price_trend_report(df):
     company_wsp_df = get_wsp_data()
     competitive_brands_wsp = get_competitive_brands_wsp_data()
@@ -589,31 +493,24 @@ def price():
         for col in required_columns:
             if col not in df.columns:
                 raise ValueError(f"Missing required column: {col}")
-        
         df['Date'] = pd.to_datetime(df['Date'], format='%d-%b %Y')
         df['region_order'] = df['Region(District)'].map({region: idx for idx, region in enumerate(region_order)})
         df = df.sort_values(['region_order', 'Date'])
-        
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=8, leftMargin=1, topMargin=5, bottomMargin=1)
         styles = getSampleStyleSheet()
         title_style = ParagraphStyle('TitleStyle', parent=styles['Title'], fontSize=20, textColor=colors.darkblue, alignment=TA_CENTER, spaceAfter=1)
         region_style = ParagraphStyle('RegionStyle', parent=styles['Heading2'], textColor=colors.blue, spaceAfter=1, fontSize=12)
-        
         story = []
         story.append(Paragraph("Regional Price Trend Analysis Report", title_style))
         story.append(Paragraph("Comprehensive Price Movement Insights", ParagraphStyle('SubtitleStyle', parent=styles['Normal'], fontSize=12, textColor=colors.red, alignment=TA_CENTER, spaceAfter=1)))
         story.append(Spacer(1, 0))
-        
         current_date = datetime.now()
         last_month = current_date.replace(day=1) - timedelta(days=1)
         regions = [region for region in region_order if region in df['Region(District)'].unique()]
-        
         for i, region in enumerate(regions):
-            # Add separator line between regions (except for the first region)
             if i > 0:
                 story.append(HRFlowable(width="100%", thickness=2, lineCap='round', color=colors.grey, spaceBefore=10, spaceAfter=10))
-            
             region_df = df[df['Region(District)'] == region].copy()
             
             # Region header
