@@ -328,8 +328,8 @@ def price():
         return
     dec_labels = ['01-03 Dec', '04-06 Dec', '07-09 Dec', '10-12 Dec', '13-15 Dec', '16-18 Dec', '19-21 Dec', '22-24 Dec', '25-27 Dec', '28-30 Dec']
     jan_labels = ['01-03 Jan', '04-06 Jan', '07-09 Jan','10-12 Jan','13-15 Jan','16-17 Jan','18-19 Jan']
-    header_text = f"WSP Progression from December 2024 to January 2025" + 
-                \(f" - {brand_name}" if brand_name else "")
+    header_text = f"WSP Progression from December 2024 to January 2025" 
+                        +\(f" - {brand_name}" if brand_name else "")
     story.append(Paragraph(header_text + ":-", month_style))
     dec_progression_parts = []
     last_valid_value = None
