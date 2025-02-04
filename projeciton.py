@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -9,61 +8,37 @@ import warnings
 from openpyxl import load_workbook
 import plotly.express as px
 import plotly.graph_objects as go
-
 warnings.filterwarnings('ignore')
-
 def read_excel_skip_hidden(uploaded_file):
-    """
-    Read Excel file while skipping hidden rows
-    """
-    # Save uploaded file to a temporary file
     wb = load_workbook(uploaded_file)
     ws = wb.active
     hidden_rows = [i + 1 for i in range(ws.max_row) if ws.row_dimensions[i + 1].hidden]
-    df = pd.read_excel(
-        uploaded_file,
-        skiprows=hidden_rows
-    )
+    df = pd.read_excel(uploaded_file,skiprows=hidden_rows)
     return df
 def calculate_trend_prediction(features, growth_weights):
-    weighted_growth = sum(features[month] * weight 
-                        for month, weight in growth_weights.items()) / sum(growth_weights.values())
+    weighted_growth = sum(features[month] * weight for month, weight in growth_weights.items()) / sum(growth_weights.values())
     return features['sales_Oct'] * weighted_growth
 def prepare_features_for_optimization(df, target_month='Oct'):
-    """
-    Prepare features for optimization, excluding the target month data
-    """
     features = pd.DataFrame()
-    
-    # Define months based on target
     if target_month == 'Oct':
         training_months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep']
         prev_year_months = ['Sep', 'Oct']
-        growth_months = training_months[1:]  # Start from May
+        growth_months = training_months[1:]
     else:  # For November predictions
         training_months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct']
         prev_year_months = ['Sep', 'Oct', 'Nov']
-        growth_months = training_months[1:]  # Start from May
-    
-    # Extract monthly sales
+        growth_months = training_months[1:]
     for month in training_months:
         features[f'sales_{month}'] = df[f'Monthly Achievement({month})']
-    
-    # Add previous year sales
     for month in prev_year_months:
         features[f'prev_{month.lower()}'] = df[f'Total {month} 2023']
-    
-    # Add target information
     for month in training_months:
         features[f'month_target_{month}'] = df[f'Month Tgt ({month})']
         features[f'ags_target_{month}'] = df[f'AGS Tgt ({month})']
-    
     features['avg_monthly_sales'] = features[[f'sales_{m}' for m in training_months]].mean(axis=1)
-    
-    # Calculate month-over-month growth rates
     for i in range(len(growth_months)):
         curr_month = growth_months[i]
-        prev_month = training_months[i]  # This will get the previous month
+        prev_month = training_months[i]
         features[f'growth_{curr_month}'] = (
             features[f'sales_{curr_month}'] / 
             features[f'sales_{prev_month}']
