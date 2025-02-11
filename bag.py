@@ -1,11 +1,15 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
 
+def get_month_year(col_name):
+    """Convert column names to standardized date format"""
+    if len(col_name.split()) == 1:  # For 'Jan', 'Feb' (2025)
+        return f"{col_name} 2025"
+    return col_name
+
 def main():
-    st.set_page_config(page_title="Cement Plant Bag Usage", layout="wide")
     st.title("Cement Plant Bag Usage Analysis")
     
     # File uploader
@@ -41,55 +45,56 @@ def main():
                          (df['MAKTX'] == selected_bag)]
         
         if not selected_data.empty:
-            # Extract monthly data
-            months = ['Apr', 'May', 'Jun', 'July', 'Aug', 'Sep', 
-                     'Oct', 'Nov', 'Dec', 'Jan', 'Feb']
+            # Get all monthly columns (excluding 'Cement Plant Sname' and 'MAKTX')
+            month_columns = [col for col in df.columns if col not in ['Cement Plant Sname', 'MAKTX']]
             
-            # Create data for plotting
-            usage_data = []
-            for month in months:
+            # Create data for all months (for table)
+            all_usage_data = []
+            for month in month_columns:
+                month_year = get_month_year(month)
                 usage = selected_data[month].iloc[0]
-                # For February 2025, prorate the data
-                if month == 'Feb':
-                    # Calculate daily average and project for full month
-                    daily_avg = usage / 9  # Usage till 9th Feb
-                    projected_usage = daily_avg * 29  # February 2025 has 29 days
-                    usage_data.append({
-                        'Month': f"{month} 2025" if month in ['Jan', 'Feb'] else f"{month} 2024",
-                        'Usage': usage,
-                        'Projected': projected_usage if month == 'Feb' else None
-                    })
-                else:
-                    usage_data.append({
-                        'Month': f"{month} 2025" if month in ['Jan', 'Feb'] else f"{month} 2024",
-                        'Usage': usage,
-                        'Projected': None
-                    })
+                all_usage_data.append({
+                    'Month': month_year,
+                    'Usage': usage
+                })
             
-            # Create DataFrame for plotting
-            plot_df = pd.DataFrame(usage_data)
+            # Create DataFrame for all historical data
+            all_data_df = pd.DataFrame(all_usage_data)
+            
+            # Filter data from Apr 2024 onwards for plotting
+            plot_data = all_data_df[all_data_df['Month'].apply(
+                lambda x: datetime.strptime(x, '%b %Y') >= datetime.strptime('Apr 2024', '%b %Y')
+            )].copy()
+            
+            # Add projected data for February 2025
+            if 'Feb 2025' in plot_data['Month'].values:
+                feb_usage = plot_data.loc[plot_data['Month'] == 'Feb 2025', 'Usage'].iloc[0]
+                daily_avg = feb_usage / 9
+                projected_usage = daily_avg * 29
+                plot_data.loc[plot_data['Month'] == 'Feb 2025', 'Projected'] = projected_usage
             
             # Create figure with custom layout
             fig = go.Figure()
             
             # Add actual usage line
             fig.add_trace(go.Scatter(
-                x=plot_df['Month'],
-                y=plot_df['Usage'],
+                x=plot_data['Month'],
+                y=plot_data['Usage'],
                 name='Actual Usage',
                 line=dict(color='#1f77b4', width=3),
                 mode='lines+markers',
                 marker=dict(size=10, symbol='circle')
             ))
             
-            # Add projected usage line for February
-            fig.add_trace(go.Scatter(
-                x=plot_df['Month'],
-                y=plot_df['Projected'],
-                name='Projected (Feb)',
-                line=dict(color='#ff7f0e', width=2, dash='dash'),
-                mode='lines'
-            ))
+            # Add projected usage line for February 2025
+            if 'Projected' in plot_data.columns:
+                fig.add_trace(go.Scatter(
+                    x=plot_data['Month'],
+                    y=plot_data['Projected'],
+                    name='Projected (Feb)',
+                    line=dict(color='#ff7f0e', width=2, dash='dash'),
+                    mode='lines'
+                ))
             
             # Add brand rejuvenation vertical line
             fig.add_shape(
@@ -97,14 +102,14 @@ def main():
                 x0="Jan 2025",
                 x1="Jan 2025",
                 y0=0,
-                y1=plot_df['Usage'].max() * 1.1,
+                y1=plot_data['Usage'].max() * 1.1,
                 line=dict(color="#FF4B4B", width=2, dash="dash"),
             )
             
             # Add annotation for brand rejuvenation
             fig.add_annotation(
                 x="Jan 2025",
-                y=plot_df['Usage'].max() * 1.15,
+                y=plot_data['Usage'].max() * 1.15,
                 text="Brand Rejuvenation<br>(15th Jan 2025)",
                 showarrow=True,
                 arrowhead=1,
@@ -117,24 +122,25 @@ def main():
             )
             
             # Add annotation for February data
-            fig.add_annotation(
-                x="Feb 2025",
-                y=plot_df.loc[plot_df['Month'] == 'Feb 2025', 'Usage'].iloc[0],
-                text="Till 9th Feb",
-                showarrow=True,
-                arrowhead=1,
-                ax=0,
-                ay=-40,
-                font=dict(size=12),
-                bgcolor="white",
-                bordercolor="#1f77b4",
-                borderwidth=2
-            )
+            if 'Feb 2025' in plot_data['Month'].values:
+                fig.add_annotation(
+                    x="Feb 2025",
+                    y=plot_data.loc[plot_data['Month'] == 'Feb 2025', 'Usage'].iloc[0],
+                    text="Till 9th Feb",
+                    showarrow=True,
+                    arrowhead=1,
+                    ax=0,
+                    ay=-40,
+                    font=dict(size=12),
+                    bgcolor="white",
+                    bordercolor="#1f77b4",
+                    borderwidth=2
+                )
             
             # Update layout with enhanced styling
             fig.update_layout(
                 title={
-                    'text': f'Monthly Usage for {selected_bag} at {selected_plant}',
+                    'text': f'Monthly Usage for {selected_bag} at {selected_plant}<br><sup>Showing data from April 2024 onwards</sup>',
                     'y':0.95,
                     'x':0.5,
                     'xanchor': 'center',
@@ -171,9 +177,11 @@ def main():
             # Display the graph
             st.plotly_chart(fig, use_container_width=True)
             
-            # Display the raw data
-            if st.checkbox('Show raw data'):
-                st.write(plot_df)
+            # Display the complete historical data
+            st.subheader("Complete Historical Data")
+            st.dataframe(
+                all_data_df.style.format({'Usage': '{:,.2f}'})
+            )
 
 if __name__ == '__main__':
     main()
