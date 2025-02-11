@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 from datetime import datetime
 
 def main():
+    st.set_page_config(page_title="Cement Plant Bag Usage", layout="wide")
     st.title("Cement Plant Bag Usage Analysis")
     
     # File uploader
