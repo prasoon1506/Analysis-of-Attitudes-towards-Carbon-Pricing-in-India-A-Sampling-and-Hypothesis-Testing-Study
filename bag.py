@@ -3,22 +3,11 @@ import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime
 
-def standardize_date(col_name):
-    """Convert column names to standardized date format"""
-    if isinstance(col_name, str):
-        parts = col_name.split()
-        if len(parts) == 1:  # For 'Jan', 'Feb' (2025)
-            return f"{col_name} 2025"
-        elif len(parts) == 2:  # For 'Aug 2022', 'Sep 2022', etc.
-            return col_name
-    return col_name
-
-def parse_date(date_str):
-    """Parse date string to datetime object"""
-    try:
-        return datetime.strptime(date_str, '%b %Y')
-    except:
-        return None
+def format_date_for_display(date):
+    """Convert datetime to 'MMM YYYY' format"""
+    if isinstance(date, str):
+        date = pd.to_datetime(date)
+    return date.strftime('%b %Y')
 
 def main():
     st.title("Cement Plant Bag Usage Analysis")
@@ -62,30 +51,31 @@ def main():
             # Create data for all months (for table)
             all_usage_data = []
             for month in month_columns:
-                standardized_month = standardize_date(month)
+                date = pd.to_datetime(month)
                 usage = selected_data[month].iloc[0]
                 all_usage_data.append({
-                    'Month': standardized_month,
+                    'Date': date,
                     'Usage': usage
                 })
             
             # Create DataFrame for all historical data
             all_data_df = pd.DataFrame(all_usage_data)
-            
-            # Convert Month column to datetime for sorting
-            all_data_df['Date'] = all_data_df['Month'].apply(parse_date)
             all_data_df = all_data_df.sort_values('Date')
             
+            # Add Month column for display
+            all_data_df['Month'] = all_data_df['Date'].apply(format_date_for_display)
+            
             # Filter data from Apr 2024 onwards for plotting
-            apr_2024_date = datetime.strptime('Apr 2024', '%b %Y')
+            apr_2024_date = pd.to_datetime('2024-04-01')
             plot_data = all_data_df[all_data_df['Date'] >= apr_2024_date].copy()
             
             # Add projected data for February 2025
-            if 'Feb 2025' in plot_data['Month'].values:
-                feb_usage = plot_data.loc[plot_data['Month'] == 'Feb 2025', 'Usage'].iloc[0]
+            if any(plot_data['Date'].dt.strftime('%Y-%m') == '2025-02'):
+                feb_data = plot_data[plot_data['Date'].dt.strftime('%Y-%m') == '2025-02']
+                feb_usage = feb_data['Usage'].iloc[0]
                 daily_avg = feb_usage / 9
                 projected_usage = daily_avg * 29
-                plot_data.loc[plot_data['Month'] == 'Feb 2025', 'Projected'] = projected_usage
+                plot_data.loc[plot_data['Date'].dt.strftime('%Y-%m') == '2025-02', 'Projected'] = projected_usage
             
             # Create figure with custom layout
             fig = go.Figure()
@@ -136,10 +126,11 @@ def main():
             )
             
             # Add annotation for February data
-            if 'Feb 2025' in plot_data['Month'].values:
+            if any(plot_data['Month'] == 'Feb 2025'):
+                feb_data = plot_data[plot_data['Month'] == 'Feb 2025']
                 fig.add_annotation(
                     x="Feb 2025",
-                    y=plot_data.loc[plot_data['Month'] == 'Feb 2025', 'Usage'].iloc[0],
+                    y=feb_data['Usage'].iloc[0],
                     text="Till 9th Feb",
                     showarrow=True,
                     arrowhead=1,
@@ -193,8 +184,8 @@ def main():
             
             # Display the complete historical data
             st.subheader("Complete Historical Data")
-            # Remove the Date column and display the data
-            display_df = all_data_df.drop('Date', axis=1)
+            # Display the data without the Date column
+            display_df = all_data_df[['Month', 'Usage']]
             st.dataframe(
                 display_df.style.format({'Usage': '{:,.2f}'})
             )
