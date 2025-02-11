@@ -108,6 +108,7 @@ def select_best_model(data):
         return None, None, f"Error in model fitting: {str(e)}"
 
 def main():
+    st.set_page_config("Cement Plant Bag Usage Analysis",layout="wide")
     st.title("Cement Plant Bag Usage Analysis")
     
     # Create two columns
