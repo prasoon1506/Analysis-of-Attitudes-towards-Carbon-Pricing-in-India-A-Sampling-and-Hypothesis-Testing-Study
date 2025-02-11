@@ -3,11 +3,22 @@ import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime
 
-def get_month_year(col_name):
+def standardize_date(col_name):
     """Convert column names to standardized date format"""
-    if len(col_name.split()) == 1:  # For 'Jan', 'Feb' (2025)
-        return f"{col_name} 2025"
+    if isinstance(col_name, str):
+        parts = col_name.split()
+        if len(parts) == 1:  # For 'Jan', 'Feb' (2025)
+            return f"{col_name} 2025"
+        elif len(parts) == 2:  # For 'Aug 2022', 'Sep 2022', etc.
+            return col_name
     return col_name
+
+def parse_date(date_str):
+    """Parse date string to datetime object"""
+    try:
+        return datetime.strptime(date_str, '%b %Y')
+    except:
+        return None
 
 def main():
     st.title("Cement Plant Bag Usage Analysis")
@@ -51,20 +62,23 @@ def main():
             # Create data for all months (for table)
             all_usage_data = []
             for month in month_columns:
-                month_year = get_month_year(month)
+                standardized_month = standardize_date(month)
                 usage = selected_data[month].iloc[0]
                 all_usage_data.append({
-                    'Month': month_year,
+                    'Month': standardized_month,
                     'Usage': usage
                 })
             
             # Create DataFrame for all historical data
             all_data_df = pd.DataFrame(all_usage_data)
             
+            # Convert Month column to datetime for sorting
+            all_data_df['Date'] = all_data_df['Month'].apply(parse_date)
+            all_data_df = all_data_df.sort_values('Date')
+            
             # Filter data from Apr 2024 onwards for plotting
-            plot_data = all_data_df[all_data_df['Month'].apply(
-                lambda x: datetime.strptime(x, '%b %Y') >= datetime.strptime('Apr 2024', '%b %Y')
-            )].copy()
+            apr_2024_date = datetime.strptime('Apr 2024', '%b %Y')
+            plot_data = all_data_df[all_data_df['Date'] >= apr_2024_date].copy()
             
             # Add projected data for February 2025
             if 'Feb 2025' in plot_data['Month'].values:
@@ -179,8 +193,10 @@ def main():
             
             # Display the complete historical data
             st.subheader("Complete Historical Data")
+            # Remove the Date column and display the data
+            display_df = all_data_df.drop('Date', axis=1)
             st.dataframe(
-                all_data_df.style.format({'Usage': '{:,.2f}'})
+                display_df.style.format({'Usage': '{:,.2f}'})
             )
 
 if __name__ == '__main__':
