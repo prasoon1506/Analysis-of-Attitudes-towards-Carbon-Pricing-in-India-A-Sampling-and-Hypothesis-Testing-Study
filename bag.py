@@ -3,9 +3,9 @@ import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime
 import numpy as np
-from pmdarima import auto_arima
-from statsmodels.tsa.statespace.sarimax import SARIMAX
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
+from statsmodels.tsa.statespace.sarimax import SARIMAX
+from statsmodels.tsa.stattools import adfuller
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -14,6 +14,30 @@ def format_date_for_display(date):
     if isinstance(date, str):
         date = pd.to_datetime(date)
     return date.strftime('%b %Y')
+
+def find_best_sarima_parameters(data):
+    """Find best SARIMA parameters using grid search"""
+    best_aic = float('inf')
+    best_params = None
+    
+    # Define parameter ranges
+    p_values = range(0, 3)
+    d_values = range(0, 2)
+    q_values = range(0, 3)
+    
+    for p in p_values:
+        for d in d_values:
+            for q in q_values:
+                try:
+                    model = SARIMAX(data, order=(p, d, q), seasonal_order=(1, 1, 1, 12))
+                    results = model.fit()
+                    if results.aic < best_aic:
+                        best_aic = results.aic
+                        best_params = (p, d, q)
+                except:
+                    continue
+    
+    return best_params
 
 def select_best_model(data):
     """
@@ -27,53 +51,58 @@ def select_best_model(data):
         # Prepare data
         data = data.astype(float)
         
-        # Try different models and compare their AIC
-        models = []
+        # Initialize variables for model comparison
+        best_aic = float('inf')
+        best_model = None
+        best_forecast = None
+        best_model_name = None
         
-        # 1. Auto ARIMA
+        # 1. Try SARIMA
         try:
-            auto_arima_model = auto_arima(data, seasonal=False, suppress_warnings=True)
-            arima_aic = auto_arima_model.aic()
-            models.append(('ARIMA', auto_arima_model, arima_aic))
+            best_params = find_best_sarima_parameters(data)
+            if best_params:
+                sarima_model = SARIMAX(data, 
+                                     order=best_params, 
+                                     seasonal_order=(1, 1, 1, 12))
+                sarima_results = sarima_model.fit()
+                if sarima_results.aic < best_aic:
+                    best_aic = sarima_results.aic
+                    best_model = sarima_results
+                    best_forecast = sarima_results.forecast(1)[0]
+                    best_model_name = f"SARIMA{best_params}x(1,1,1,12)"
         except:
             pass
 
-        # 2. SARIMA with yearly seasonality
-        try:
-            sarima_model = auto_arima(data, seasonal=True, m=12, suppress_warnings=True)
-            sarima_aic = sarima_model.aic()
-            models.append(('SARIMA', sarima_model, sarima_aic))
-        except:
-            pass
-
-        # 3. Holt-Winters
+        # 2. Try Holt-Winters
         try:
             hw_model = ExponentialSmoothing(data, 
                                           seasonal_periods=12, 
                                           trend='add', 
                                           seasonal='add').fit()
-            hw_aic = hw_model.aic
-            models.append(('Holt-Winters', hw_model, hw_aic))
+            if hw_model.aic < best_aic:
+                best_aic = hw_model.aic
+                best_model = hw_model
+                best_forecast = hw_model.forecast(1)[0]
+                best_model_name = "Holt-Winters Exponential Smoothing"
         except:
             pass
+        
+        # 3. Try simple SARIMA if others fail
+        if best_model is None:
+            try:
+                simple_model = SARIMAX(data, order=(1, 1, 1), 
+                                     seasonal_order=(1, 1, 1, 12))
+                simple_results = simple_model.fit()
+                best_model = simple_results
+                best_forecast = simple_results.forecast(1)[0]
+                best_model_name = "SARIMA(1,1,1)x(1,1,1,12)"
+            except:
+                pass
 
-        if not models:
+        if best_model is None:
             return None, None, "Could not fit any time series model to the data"
 
-        # Select best model based on AIC
-        best_model_name, best_model, best_aic = min(models, key=lambda x: x[2])
-        
-        # Generate forecast
-        if best_model_name in ['ARIMA', 'SARIMA']:
-            forecast = best_model.predict(n_periods=1)[0]
-            model_desc = f"{best_model_name}{best_model.get_params()['order']}"
-            if best_model_name == 'SARIMA':
-                model_desc += f" with seasonal order {best_model.get_params()['seasonal_order']}"
-        else:  # Holt-Winters
-            forecast = best_model.forecast(1)[0]
-            model_desc = f"Holt-Winters Exponential Smoothing"
-
-        return best_model, forecast, model_desc
+        return best_model, best_forecast, best_model_name
 
     except Exception as e:
         return None, None, f"Error in model fitting: {str(e)}"
@@ -152,7 +181,8 @@ def main():
                 ts_data = all_data_df.set_index('Date')['Usage']
                 
                 # Get best model and forecast
-                model, forecast, model_description = select_best_model(ts_data)
+                with st.spinner('Fitting time series models...'):
+                    model, forecast, model_description = select_best_model(ts_data)
                 
                 if forecast is not None:
                     st.write(f"**Selected Model:**")
