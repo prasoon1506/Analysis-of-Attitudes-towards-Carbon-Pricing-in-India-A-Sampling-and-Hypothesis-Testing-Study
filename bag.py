@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.express as px
 from datetime import datetime
 def main():
-    st.title("Cement Plant Bag Usage Analysis",layout=wide)
+    st.title("Cement Plant Bag Usage Analysis",layout="wide")
     
     # File uploader
     uploaded_file = st.file_uploader("Upload your Excel file", type=['xlsx', 'xls'])
