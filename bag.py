@@ -5,6 +5,81 @@ import plotly.express as px
 import seaborn as sns
 import numpy as np
 from datetime import datetime
+def generate_comparison_excel(df, current_date=pd.to_datetime('2025-02-09')):
+    """
+    Generate comparison Excel file between actual and projected consumption
+    
+    Args:
+        df: Input DataFrame with plant data
+        current_date: Current date to calculate partial month projection
+    """
+    # Calculate days ratio for February
+    total_feb_days = 28  # February 2025 has 28 days
+    days_passed = 9
+    ratio = days_passed / total_feb_days
+    
+    # Create comparison DataFrame
+    comparison_data = []
+    
+    # Get all unique plants and their bags
+    for plant in df['Cement Plant Sname'].unique():
+        plant_data = df[df['Cement Plant Sname'] == plant]
+        
+        for _, row in plant_data.iterrows():
+            actual_usage = row['2025-02']  # February 2025 column
+            planned_usage = row['Feb-Plan']  # February Plan column
+            projected_partial = planned_usage * ratio  # Projected usage till 9th Feb
+            
+            # Calculate percentage difference
+            pct_difference = ((actual_usage - projected_partial) / projected_partial) * 100
+            
+            comparison_data.append({
+                'Plant Name': plant,
+                'Bag Name': row['MAKTX'],
+                'Actual Usage (Till 9th Feb)': actual_usage,
+                'Projected Usage (Till 9th Feb)': projected_partial,
+                'Difference %': pct_difference,
+                'Status': 'Alert' if abs(pct_difference) > 10 else 'Normal'
+            })
+    
+    # Create DataFrame
+    comparison_df = pd.DataFrame(comparison_data)
+    
+    # Create Excel writer with xlsxwriter
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        comparison_df.to_excel(writer, sheet_name='Comparison', index=False)
+        
+        # Get workbook and worksheet objects
+        workbook = writer.book
+        worksheet = writer.sheets['Comparison']
+        
+        # Define formats
+        red_format = workbook.add_format({
+            'bg_color': '#FFC7CE',
+            'font_color': '#9C0006'
+        })
+        
+        normal_format = workbook.add_format({
+            'bg_color': '#FFFFFF'
+        })
+        
+        # Apply conditional formatting
+        for row_num in range(1, len(comparison_df) + 1):
+            if comparison_df.iloc[row_num-1]['Status'] == 'Alert':
+                worksheet.set_row(row_num, None, red_format)
+            else:
+                worksheet.set_row(row_num, None, normal_format)
+        
+        # Adjust column widths
+        for i, col in enumerate(comparison_df.columns):
+            max_length = max(
+                comparison_df[col].astype(str).apply(len).max(),
+                len(col)
+            )
+            worksheet.set_column(i, i, max_length + 2)
+    
+    return output.getvalue()
 def format_date_for_display(date):
     """Convert datetime to 'MMM YYYY' format"""
     if isinstance(date, str):
@@ -102,7 +177,15 @@ def main():
     with st.sidebar:
         st.header("📁 Data Input")
         uploaded_file = st.file_uploader("Upload your Excel file", type=['xlsx', 'xls'])
-    
+    # Add download button for comparison Excel
+    if uploaded_file is not None:
+     comparison_excel = generate_comparison_excel(df)
+     st.download_button(
+        label="📥 Download Consumption Comparison Report",
+        data=comparison_excel,
+        file_name="consumption_comparison.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
     if uploaded_file is not None:
         try:
             # Read and process the Excel file
