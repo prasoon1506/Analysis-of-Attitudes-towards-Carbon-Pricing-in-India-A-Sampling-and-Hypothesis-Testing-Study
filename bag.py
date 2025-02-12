@@ -5,17 +5,12 @@ import plotly.express as px
 import seaborn as sns
 import numpy as np
 from datetime import datetime
+
 def format_date_for_display(date):
     """Convert datetime to 'MMM YYYY' format"""
-    if isinstance(date, str) and 'Plan' in date:  # Skip if it's the Plan column
-        return date
     if isinstance(date, str):
-        try:
-            date = pd.to_datetime(date)
-        except:
-            return date
+        date = pd.to_datetime(date)
     return date.strftime('%b %Y')
-
 
 def calculate_statistics(data_df):
     """Calculate key statistics from the usage data"""
@@ -47,102 +42,7 @@ def prepare_correlation_data(df, selected_bags, plant_name):
     
     correlation_df = pd.DataFrame(correlation_data)
     return correlation_df
-def generate_deviation_report(df):
-    """
-    Generate an Excel report comparing actual vs projected consumption with deviation highlighting.
-    
-    Args:
-        df (pd.DataFrame): Input DataFrame containing plant data with Feb-Plan column
-    """
-    # Find the actual February 2025 column (it will be named something like "2025-02-01" in the DataFrame)
-    month_cols = [col for col in df.columns if isinstance(col, str) and not col.startswith('Cement') and not col.startswith('MAKTX')]
-    feb_col = None
-    for col in month_cols:
-        try:
-            if isinstance(col, str) and 'Feb' in col and 'Plan' not in col:
-                feb_col = col
-                break
-        except:
-            continue
-    
-    if not feb_col:
-        raise ValueError("Could not find February 2025 column in the data")
-    
-    if 'Feb-Plan' not in df.columns:
-        raise ValueError("Feb-Plan column not found in the data")
-    
-    # Create report DataFrame
-    report_data = []
-    for _, row in df.iterrows():
-        plant_name = row['Cement Plant Sname']
-        bag_name = row['MAKTX']
-        actual_usage = row[feb_col]  # Actual usage till 9th Feb
-        planned_usage = row['Feb-Plan']  # Full month plan
-        
-        # Calculate projected usage till 9th Feb (9/28 of monthly plan)
-        projected_till_9th = (9/28) * planned_usage
-        
-        # Calculate deviation percentage
-        if projected_till_9th != 0:  # Avoid division by zero
-            deviation_percent = ((actual_usage - projected_till_9th) / projected_till_9th) * 100
-        else:
-            deviation_percent = 0
-        
-        report_data.append({
-            'Plant Name': plant_name,
-            'Bag Name': bag_name,
-            'Actual Usage (Till 9th Feb)': actual_usage,
-            'Projected Usage (Till 9th Feb)': projected_till_9th,
-            'Full Month Plan': planned_usage,
-            'Deviation %': deviation_percent
-        })
-    
-    # Create DataFrame from report data
-    report_df = pd.DataFrame(report_data)
-    
-    # Create Excel writer with xlsxwriter engine
-    output_file = 'consumption_deviation_report.xlsx'
-    writer = pd.ExcelWriter(output_file, engine='xlsxwriter')
-    
-    # Write DataFrame to Excel
-    report_df.to_excel(writer, sheet_name='Deviation Report', index=False)
-    
-    # Get workbook and worksheet objects
-    workbook = writer.book
-    worksheet = writer.sheets['Deviation Report']
-    
-    # Define formats
-    red_format = workbook.add_format({
-        'bg_color': '#FFC7CE',
-        'font_color': '#9C0006'
-    })
-    
-    number_format = workbook.add_format({'num_format': '#,##0.00'})
-    percent_format = workbook.add_format({'num_format': '0.00%'})
-    
-    # Apply number formatting to numeric columns
-    worksheet.set_column('C:E', None, number_format)  # Usage columns
-    worksheet.set_column('F:F', None, percent_format)  # Deviation % column
-    
-    # Apply conditional formatting
-    deviation_col = report_df.columns.get_loc('Deviation %') + 1  # +1 because Excel is 1-based
-    worksheet.conditional_format(1, 0, len(report_df), len(report_df.columns)-1,
-                               {'type': 'formula',
-                                'criteria': f'=ABS($F2)>10',  # F is the Deviation % column
-                                'format': red_format})
-    
-    # Adjust column widths
-    for idx, col in enumerate(report_df.columns):
-        max_length = max(
-            report_df[col].astype(str).apply(len).max(),
-            len(col)
-        )
-        worksheet.set_column(idx, idx, max_length + 2)
-    
-    # Close the writer
-    writer.close()
-    
-    return output_file
+
 def main():
     # Set page configuration with custom theme
     st.set_page_config(
@@ -203,30 +103,15 @@ def main():
     with st.sidebar:
         st.header("📁 Data Input")
         uploaded_file = st.file_uploader("Upload your Excel file", type=['xlsx', 'xls'])
-    # Add download button for comparison Excel
     
     if uploaded_file is not None:
-
         try:
             # Read and process the Excel file
             df = pd.read_excel(uploaded_file)
-            df = df.iloc[:, 1:]  # Remove the first colum
-            if st.sidebar.button('Generate Deviation Report'):
-             output_file = generate_deviation_report(df)
-             with open(output_file, 'rb') as f:
-                excel_data = f.read()
+            df = df.iloc[:, 1:]  # Remove the first column
             
-             st.sidebar.download_button(
-                label="📥 Download Deviation Report",
-                data=excel_data,
-                file_name="consumption_deviation_report.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
-            
-             st.sidebar.success("Report generated successfully!")
             # Sidebar filters
             with st.sidebar:
-                st.write("Available columns:", df.columns.tolist())
                 st.header("🎯 Filters")
                 unique_plants = sorted(df['Cement Plant Sname'].unique())
                 selected_plant = st.selectbox('Select Cement Plant:', unique_plants)
@@ -529,7 +414,7 @@ def main():
 )
                     # Enhanced historical data display
                     
-        
+
         except Exception as e:
             st.error(f"An error occurred while processing the data: {str(e)}")
             st.write("Please make sure your Excel file has the correct format and try again.")
