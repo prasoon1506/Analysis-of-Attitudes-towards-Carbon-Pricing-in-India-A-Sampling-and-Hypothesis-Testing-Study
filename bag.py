@@ -5,12 +5,17 @@ import plotly.express as px
 import seaborn as sns
 import numpy as np
 from datetime import datetime
-
 def format_date_for_display(date):
     """Convert datetime to 'MMM YYYY' format"""
+    if isinstance(date, str) and 'Plan' in date:  # Skip if it's the Plan column
+        return date
     if isinstance(date, str):
-        date = pd.to_datetime(date)
+        try:
+            date = pd.to_datetime(date)
+        except:
+            return date
     return date.strftime('%b %Y')
+
 
 def calculate_statistics(data_df):
     """Calculate key statistics from the usage data"""
