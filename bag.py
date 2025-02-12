@@ -58,24 +58,42 @@ def generate_comparison_excel(df, current_date=pd.to_datetime('2025-02-09')):
     # Create comparison DataFrame
     comparison_data = []
     
+    # Find the February 2025 column
+    feb_2025_col = None
+    for col in df.columns:
+        if isinstance(col, str):
+            try:
+                date = pd.to_datetime(col)
+                if date.year == 2025 and date.month == 2:
+                    feb_2025_col = col
+                    break
+            except:
+                continue
+    
+    if not feb_2025_col:
+        raise ValueError("February 2025 column not found in the data")
+    
     # Get all unique plants and their bags
     for plant in df['Cement Plant Sname'].unique():
         plant_data = df[df['Cement Plant Sname'] == plant]
         
         for _, row in plant_data.iterrows():
-            actual_usage = row['Feb-25']  # February 2025 column
+            actual_usage = row[feb_2025_col]  # February 2025 column
             planned_usage = row['Feb-Plan']  # February Plan column
             projected_partial = planned_usage * ratio  # Projected usage till 9th Feb
             
             # Calculate percentage difference
-            pct_difference = ((actual_usage - projected_partial) / projected_partial) * 100
+            if projected_partial != 0:  # Avoid division by zero
+                pct_difference = ((actual_usage - projected_partial) / projected_partial) * 100
+            else:
+                pct_difference = 0 if actual_usage == 0 else float('inf')
             
             comparison_data.append({
                 'Plant Name': plant,
                 'Bag Name': row['MAKTX'],
                 'Actual Usage (Till 9th Feb)': actual_usage,
-                'Projected Usage (Till 9th Feb)': projected_partial,
-                'Difference %': pct_difference,
+                'Projected Usage (Till 9th Feb)': round(projected_partial, 2),
+                'Difference %': round(pct_difference, 2),
                 'Status': 'Alert' if abs(pct_difference) > 10 else 'Normal'
             })
     
@@ -92,6 +110,12 @@ def generate_comparison_excel(df, current_date=pd.to_datetime('2025-02-09')):
         worksheet = writer.sheets['Comparison']
         
         # Define formats
+        header_format = workbook.add_format({
+            'bold': True,
+            'bg_color': '#D9E1F2',
+            'border': 1
+        })
+        
         red_format = workbook.add_format({
             'bg_color': '#FFC7CE',
             'font_color': '#9C0006'
@@ -101,12 +125,32 @@ def generate_comparison_excel(df, current_date=pd.to_datetime('2025-02-09')):
             'bg_color': '#FFFFFF'
         })
         
-        # Apply conditional formatting
+        number_format = workbook.add_format({
+            'num_format': '#,##0.00'
+        })
+        
+        percent_format = workbook.add_format({
+            'num_format': '0.00%'
+        })
+        
+        # Write headers with format
+        for col_num, value in enumerate(comparison_df.columns.values):
+            worksheet.write(0, col_num, value, header_format)
+        
+        # Apply conditional formatting and number formats
         for row_num in range(1, len(comparison_df) + 1):
             if comparison_df.iloc[row_num-1]['Status'] == 'Alert':
-                worksheet.set_row(row_num, None, red_format)
+                row_format = red_format
             else:
-                worksheet.set_row(row_num, None, normal_format)
+                row_format = normal_format
+                
+            # Apply row format and number formats
+            worksheet.set_row(row_num, None, row_format)
+            
+            # Apply specific number formats to numeric columns
+            worksheet.write(row_num, 2, comparison_df.iloc[row_num-1]['Actual Usage (Till 9th Feb)'], number_format)
+            worksheet.write(row_num, 3, comparison_df.iloc[row_num-1]['Projected Usage (Till 9th Feb)'], number_format)
+            worksheet.write(row_num, 4, comparison_df.iloc[row_num-1]['Difference %'] / 100, percent_format)
         
         # Adjust column widths
         for i, col in enumerate(comparison_df.columns):
@@ -117,6 +161,7 @@ def generate_comparison_excel(df, current_date=pd.to_datetime('2025-02-09')):
             worksheet.set_column(i, i, max_length + 2)
     
     return output.getvalue()
+
 def main():
     # Set page configuration with custom theme
     st.set_page_config(
