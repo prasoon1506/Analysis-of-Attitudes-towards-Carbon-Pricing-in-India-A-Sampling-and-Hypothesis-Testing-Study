@@ -180,18 +180,18 @@ def main():
     # Add download button for comparison Excel
     
     if uploaded_file is not None:
-        comparison_excel = generate_comparison_excel(df)
-        st.download_button(
+
+        try:
+            # Read and process the Excel file
+            df = pd.read_excel(uploaded_file)
+            df = df.iloc[:, 1:]  # Remove the first column
+            comparison_excel = generate_comparison_excel(df)
+            st.download_button(
         label="📥 Download Consumption Comparison Report",
         data=comparison_excel,
         file_name="consumption_comparison.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-        try:
-            # Read and process the Excel file
-            df = pd.read_excel(uploaded_file)
-            df = df.iloc[:, 1:]  # Remove the first column
-            
             # Sidebar filters
             with st.sidebar:
                 st.header("🎯 Filters")
