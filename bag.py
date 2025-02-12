@@ -49,8 +49,20 @@ def generate_deviation_report(df):
     Args:
         df (pd.DataFrame): Input DataFrame containing plant data with Feb-Plan column
     """
-    # Get the February 2025 column name
-    feb_col = [col for col in df.columns if pd.to_datetime(col).strftime('%Y-%m') == '2025-02'][0]
+    # Get the February 2025 column name by checking datetime conversion success
+    feb_cols = []
+    for col in df.columns:
+        try:
+            date = pd.to_datetime(col)
+            if date.strftime('%Y-%m') == '2025-02':
+                feb_cols.append(col)
+        except:
+            continue
+    
+    if not feb_cols:
+        raise ValueError("Could not find February 2025 column in the data")
+    
+    feb_col = feb_cols[0]  # Use the first February 2025 column found
     
     # Create report DataFrame
     report_data = []
@@ -93,12 +105,22 @@ def generate_deviation_report(df):
     worksheet = writer.sheets['Deviation Report']
     
     # Define formats
-    red_format = workbook.add_format({'bg_color': '#FFC7CE',
-                                    'font_color': '#9C0006'})
+    red_format = workbook.add_format({
+        'bg_color': '#FFC7CE',
+        'font_color': '#9C0006'
+    })
+    
+    # Add number formats
+    number_format = workbook.add_format({'num_format': '#,##0.00'})
+    percent_format = workbook.add_format({'num_format': '0.00%'})
+    
+    # Apply number formatting to numeric columns
+    worksheet.set_column('C:E', None, number_format)  # Usage columns
+    worksheet.set_column('F:F', None, percent_format)  # Deviation % column
     
     # Apply conditional formatting
-    deviation_col = report_df.columns.get_loc('Deviation %') + 1  # +1 because Excel is 1-based
-    worksheet.conditional_format(1, 0, len(report_df), len(report_df.columns)-1,
+    last_row = len(report_df) + 1  # +1 for header row
+    worksheet.conditional_format(1, 0, last_row, len(report_df.columns)-1,
                                {'type': 'formula',
                                 'criteria': f'=ABS($F2)>10',  # F is the Deviation % column
                                 'format': red_format})
@@ -115,7 +137,6 @@ def generate_deviation_report(df):
     writer.close()
     
     return output_file
-
 def main():
     # Set page configuration with custom theme
     st.set_page_config(
