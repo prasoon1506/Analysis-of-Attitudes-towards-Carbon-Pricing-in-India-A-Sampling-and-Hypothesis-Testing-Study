@@ -49,16 +49,22 @@ def generate_deviation_report(df):
     Args:
         df (pd.DataFrame): Input DataFrame containing plant data with Feb-Plan column
     """
-    # Find the February 2025 column by converting only valid date columns
-    date_columns = []
-    for col in df.columns:
+    # Find the actual February 2025 column (it will be named something like "2025-02-01" in the DataFrame)
+    month_cols = [col for col in df.columns if isinstance(col, str) and not col.startswith('Cement') and not col.startswith('MAKTX')]
+    feb_col = None
+    for col in month_cols:
         try:
-            date = pd.to_datetime(col)
-            if date.strftime('%Y-%m') == '2025-02':
+            if isinstance(col, str) and 'Feb' in col and 'Plan' not in col:
                 feb_col = col
                 break
         except:
             continue
+    
+    if not feb_col:
+        raise ValueError("Could not find February 2025 column in the data")
+    
+    if 'Feb-Plan' not in df.columns:
+        raise ValueError("Feb-Plan column not found in the data")
     
     # Create report DataFrame
     report_data = []
@@ -132,7 +138,6 @@ def generate_deviation_report(df):
     writer.close()
     
     return output_file
-
 def main():
     # Set page configuration with custom theme
     st.set_page_config(
