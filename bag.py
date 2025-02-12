@@ -178,14 +178,7 @@ def main():
         st.header("📁 Data Input")
         uploaded_file = st.file_uploader("Upload your Excel file", type=['xlsx', 'xls'])
     # Add download button for comparison Excel
-    if uploaded_file is not None:
-     comparison_excel = generate_comparison_excel(df)
-     st.download_button(
-        label="📥 Download Consumption Comparison Report",
-        data=comparison_excel,
-        file_name="consumption_comparison.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
+    
     if uploaded_file is not None:
         try:
             # Read and process the Excel file
@@ -496,7 +489,14 @@ def main():
 )
                     # Enhanced historical data display
                     
-
+        if uploaded_file is not None:
+         comparison_excel = generate_comparison_excel(df)
+         st.download_button(
+        label="📥 Download Consumption Comparison Report",
+        data=comparison_excel,
+        file_name="consumption_comparison.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
         except Exception as e:
             st.error(f"An error occurred while processing the data: {str(e)}")
             st.write("Please make sure your Excel file has the correct format and try again.")
