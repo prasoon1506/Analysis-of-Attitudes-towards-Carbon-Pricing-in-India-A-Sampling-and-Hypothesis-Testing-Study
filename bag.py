@@ -217,7 +217,7 @@ def main():
             Stay tuned for this exciting update!</p>
         </div>
     """, unsafe_allow_html=True)
-    st.write("Available columns:", df.columns.tolist())
+    
     # File uploader in sidebar
     with st.sidebar:
         st.header("📁 Data Input")
@@ -239,6 +239,7 @@ def main():
     )
             # Sidebar filters
             with st.sidebar:
+                st.write("Available columns:", df.columns.tolist())
                 st.header("🎯 Filters")
                 unique_plants = sorted(df['Cement Plant Sname'].unique())
                 selected_plant = st.selectbox('Select Cement Plant:', unique_plants)
