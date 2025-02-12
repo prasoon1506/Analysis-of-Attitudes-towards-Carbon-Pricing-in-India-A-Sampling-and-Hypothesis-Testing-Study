@@ -6,8 +6,20 @@ import seaborn as sns
 import numpy as np
 from datetime import datetime
 def generate_deviation_report(df):
-    # Get the February 2025 column name
-    feb_col = [col for col in df.columns if pd.to_datetime(col).strftime('%Y-%m') == '2025-02'][0]
+    # Get the February 2025 column name by checking if the column can be parsed as a date
+    # and then checking if it's February 2025
+    feb_col = None
+    for col in df.columns:
+        try:
+            date = pd.to_datetime(col)
+            if date.strftime('%Y-%m') == '2025-02':
+                feb_col = col
+                break
+        except (ValueError, TypeError):
+            continue
+    
+    if feb_col is None:
+        raise ValueError("Could not find February 2025 column in the data")
     
     # Create report DataFrame
     report_data = []
@@ -50,8 +62,10 @@ def generate_deviation_report(df):
     worksheet = writer.sheets['Deviation Report']
     
     # Define formats
-    red_format = workbook.add_format({'bg_color': '#FFC7CE',
-                                    'font_color': '#9C0006'})
+    red_format = workbook.add_format({
+        'bg_color': '#FFC7CE',
+        'font_color': '#9C0006'
+    })
     
     # Apply conditional formatting
     deviation_col = report_df.columns.get_loc('Deviation %') + 1  # +1 because Excel is 1-based
