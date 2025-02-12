@@ -395,25 +395,44 @@ def main():
                                 st.plotly_chart(fig_scatter, use_container_width=True)
                     else:
                         st.info("Please select at least two bags in the sidebar for correlation analysis.")
-
                 with tab4:
                     # Enhanced historical data display
                     st.subheader("📜 Complete Historical Data")
                     
-                    # Add percentage change column
-                    display_df = all_data_df[['Month', 'Usage']].copy()
+                    # Add percentage change column with proper month-year format
+                    display_df = pd.DataFrame({
+                        'Month-Year': all_data_df['Date'].apply(lambda x: x.strftime('%b %Y')),
+                        'Usage': all_data_df['Usage']
+                    })
+                    
+                    # Calculate percentage change
                     display_df['% Change'] = display_df['Usage'].pct_change() * 100
                     
+                    # Sort values by date in descending order (most recent first)
+                    display_df = display_df.sort_values('Month-Year', ascending=False)
+                    
                     # Style the dataframe
-                    st.dataframe(
-                        display_df.style
-                        .format({
-                            'Usage': '{:,.2f}',
-                            '% Change': '{:+.2f}%'
-                        })
-                        .background_gradient(subset=['Usage'], cmap='Blues')
-                        .background_gradient(subset=['% Change'], cmap='RdYlGn')
+                    styled_df = display_df.style.format({
+                        'Usage': '{:,.2f}',
+                        '% Change': '{:+.2f}%'
+                    })
+                    
+                    # Apply background gradient
+                    styled_df = styled_df.background_gradient(subset=['Usage'], cmap='Blues')
+                    styled_df = styled_df.background_gradient(subset=['% Change'], cmap='RdYlGn')
+                    
+                    # Display the styled dataframe
+                    st.dataframe(styled_df, use_container_width=True)
+                    
+                    # Add download button for the data
+                    csv = display_df.to_csv(index=False)
+                    st.download_button(
+                        label="📥 Download Historical Data",
+                        data=csv,
+                        file_name=f"historical_data_{selected_plant}_{selected_bag}.csv",
+                        mime="text/csv"
                     )
+                
 
         except Exception as e:
             st.error(f"An error occurred while processing the data: {str(e)}")
