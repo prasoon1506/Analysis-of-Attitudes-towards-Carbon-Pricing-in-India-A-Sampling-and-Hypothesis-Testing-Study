@@ -5,6 +5,43 @@ import plotly.express as px
 import seaborn as sns
 import numpy as np
 from datetime import datetime
+
+def format_date_for_display(date):
+    """Convert datetime to 'MMM YYYY' format"""
+    if isinstance(date, str):
+        date = pd.to_datetime(date)
+    return date.strftime('%b %Y')
+
+def calculate_statistics(data_df):
+    """Calculate key statistics from the usage data"""
+    stats = {
+        'Total Usage': data_df['Usage'].sum(),
+        'Average Monthly Usage': data_df['Usage'].mean(),
+        'Highest Usage': data_df['Usage'].max(),
+        'Lowest Usage': data_df['Usage'].min(),
+        'Usage Variance': data_df['Usage'].var(),
+        'Month-over-Month Change': (data_df['Usage'].iloc[-1] - data_df['Usage'].iloc[-2]) / data_df['Usage'].iloc[-2] * 100
+    }
+    return stats
+
+def create_year_over_year_comparison(data_df):
+    """Create year-over-year comparison data"""
+    data_df['Year'] = data_df['Date'].dt.year
+    data_df['Month'] = data_df['Date'].dt.month
+    yearly_comparison = data_df.pivot(index='Month', columns='Year', values='Usage')
+    return yearly_comparison
+
+def prepare_correlation_data(df, selected_bags, plant_name):
+    """Prepare data for correlation analysis between selected bags"""
+    month_columns = [col for col in df.columns if col not in ['Cement Plant Sname', 'MAKTX']]
+    correlation_data = {}
+    
+    for bag in selected_bags:
+        bag_data = df[df['MAKTX'] == bag][month_columns].iloc[0]
+        correlation_data[bag] = bag_data
+    
+    correlation_df = pd.DataFrame(correlation_data)
+    return correlation_df
 def generate_comparison_excel(df, current_date=pd.to_datetime('2025-02-09')):
     """
     Generate comparison Excel file between actual and projected consumption
@@ -80,43 +117,6 @@ def generate_comparison_excel(df, current_date=pd.to_datetime('2025-02-09')):
             worksheet.set_column(i, i, max_length + 2)
     
     return output.getvalue()
-def format_date_for_display(date):
-    """Convert datetime to 'MMM YYYY' format"""
-    if isinstance(date, str):
-        date = pd.to_datetime(date)
-    return date.strftime('%b %Y')
-
-def calculate_statistics(data_df):
-    """Calculate key statistics from the usage data"""
-    stats = {
-        'Total Usage': data_df['Usage'].sum(),
-        'Average Monthly Usage': data_df['Usage'].mean(),
-        'Highest Usage': data_df['Usage'].max(),
-        'Lowest Usage': data_df['Usage'].min(),
-        'Usage Variance': data_df['Usage'].var(),
-        'Month-over-Month Change': (data_df['Usage'].iloc[-1] - data_df['Usage'].iloc[-2]) / data_df['Usage'].iloc[-2] * 100
-    }
-    return stats
-
-def create_year_over_year_comparison(data_df):
-    """Create year-over-year comparison data"""
-    data_df['Year'] = data_df['Date'].dt.year
-    data_df['Month'] = data_df['Date'].dt.month
-    yearly_comparison = data_df.pivot(index='Month', columns='Year', values='Usage')
-    return yearly_comparison
-
-def prepare_correlation_data(df, selected_bags, plant_name):
-    """Prepare data for correlation analysis between selected bags"""
-    month_columns = [col for col in df.columns if col not in ['Cement Plant Sname', 'MAKTX']]
-    correlation_data = {}
-    
-    for bag in selected_bags:
-        bag_data = df[df['MAKTX'] == bag][month_columns].iloc[0]
-        correlation_data[bag] = bag_data
-    
-    correlation_df = pd.DataFrame(correlation_data)
-    return correlation_df
-
 def main():
     # Set page configuration with custom theme
     st.set_page_config(
