@@ -396,43 +396,31 @@ def main():
                     else:
                         st.info("Please select at least two bags in the sidebar for correlation analysis.")
                 with tab4:
-                    # Enhanced historical data display
                     st.subheader("📜 Complete Historical Data")
-                    
-                    # Add percentage change column with proper month-year format
                     display_df = pd.DataFrame({
-                        'Month-Year': all_data_df['Date'].apply(lambda x: x.strftime('%b %Y')),
-                        'Usage': all_data_df['Usage']
-                    })
-                    
-                    # Calculate percentage change
+    'Date': all_data_df['Date'],  # Keep original date column for sorting
+    'Month-Year': all_data_df['Date'].apply(lambda x: x.strftime('%b %Y')),
+    'Usage': all_data_df['Usage']
+})
                     display_df['% Change'] = display_df['Usage'].pct_change() * 100
-                    
-                    # Sort values by date in descending order (most recent first)
-                    display_df = display_df.sort_values('Month-Year', ascending=False)
-                    
-                    # Style the dataframe
+                    display_df = display_df.sort_values('Date', ascending=False)
+                    display_df = display_df.drop('Date', axis=1)
                     styled_df = display_df.style.format({
-                        'Usage': '{:,.2f}',
-                        '% Change': '{:+.2f}%'
-                    })
-                    
-                    # Apply background gradient
+    'Usage': '{:,.2f}',
+    '% Change': '{:+.2f}%'
+})
                     styled_df = styled_df.background_gradient(subset=['Usage'], cmap='Blues')
                     styled_df = styled_df.background_gradient(subset=['% Change'], cmap='RdYlGn')
-                    
-                    # Display the styled dataframe
                     st.dataframe(styled_df, use_container_width=True)
-                    
-                    # Add download button for the data
                     csv = display_df.to_csv(index=False)
                     st.download_button(
-                        label="📥 Download Historical Data",
-                        data=csv,
-                        file_name=f"historical_data_{selected_plant}_{selected_bag}.csv",
-                        mime="text/csv"
-                    )
-                
+    label="📥 Download Historical Data",
+    data=csv,
+    file_name=f"historical_data_{selected_plant}_{selected_bag}.csv",
+    mime="text/csv"
+)
+                    # Enhanced historical data display
+                    
 
         except Exception as e:
             st.error(f"An error occurred while processing the data: {str(e)}")
