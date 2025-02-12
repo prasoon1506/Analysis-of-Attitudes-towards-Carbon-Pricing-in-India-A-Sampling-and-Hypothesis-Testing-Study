@@ -217,7 +217,7 @@ def main():
             Stay tuned for this exciting update!</p>
         </div>
     """, unsafe_allow_html=True)
-    
+    st.write("Available columns:", df.columns.tolist())
     # File uploader in sidebar
     with st.sidebar:
         st.header("📁 Data Input")
