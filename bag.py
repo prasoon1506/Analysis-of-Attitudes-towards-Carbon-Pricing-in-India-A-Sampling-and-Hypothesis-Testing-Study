@@ -58,17 +58,21 @@ def generate_comparison_excel(df, current_date=pd.to_datetime('2025-02-09')):
     # Create comparison DataFrame
     comparison_data = []
     
-    # Find the February 2025 column
+    # Find the February 2025 column by checking datetime values
     feb_2025_col = None
     for col in df.columns:
-        if isinstance(col, str):
-            try:
+        try:
+            if isinstance(col, pd.Timestamp):
+                if col.year == 2025 and col.month == 2:
+                    feb_2025_col = col
+                    break
+            elif isinstance(col, str):
                 date = pd.to_datetime(col)
                 if date.year == 2025 and date.month == 2:
                     feb_2025_col = col
                     break
-            except:
-                continue
+        except:
+            continue
     
     if not feb_2025_col:
         raise ValueError("February 2025 column not found in the data")
@@ -118,14 +122,12 @@ def generate_comparison_excel(df, current_date=pd.to_datetime('2025-02-09')):
         
         red_format = workbook.add_format({
             'bg_color': '#FFC7CE',
-            'font_color': '#9C0006'
+            'font_color': '#9C0006',
+            'num_format': '#,##0.00'
         })
         
         normal_format = workbook.add_format({
-            'bg_color': '#FFFFFF'
-        })
-        
-        number_format = workbook.add_format({
+            'bg_color': '#FFFFFF',
             'num_format': '#,##0.00'
         })
         
@@ -139,18 +141,16 @@ def generate_comparison_excel(df, current_date=pd.to_datetime('2025-02-09')):
         
         # Apply conditional formatting and number formats
         for row_num in range(1, len(comparison_df) + 1):
-            if comparison_df.iloc[row_num-1]['Status'] == 'Alert':
-                row_format = red_format
-            else:
-                row_format = normal_format
-                
-            # Apply row format and number formats
-            worksheet.set_row(row_num, None, row_format)
+            row_data = comparison_df.iloc[row_num-1]
+            base_format = red_format if row_data['Status'] == 'Alert' else normal_format
             
-            # Apply specific number formats to numeric columns
-            worksheet.write(row_num, 2, comparison_df.iloc[row_num-1]['Actual Usage (Till 9th Feb)'], number_format)
-            worksheet.write(row_num, 3, comparison_df.iloc[row_num-1]['Projected Usage (Till 9th Feb)'], number_format)
-            worksheet.write(row_num, 4, comparison_df.iloc[row_num-1]['Difference %'] / 100, percent_format)
+            # Write each cell with appropriate format
+            worksheet.write(row_num, 0, row_data['Plant Name'], base_format)
+            worksheet.write(row_num, 1, row_data['Bag Name'], base_format)
+            worksheet.write(row_num, 2, row_data['Actual Usage (Till 9th Feb)'], base_format)
+            worksheet.write(row_num, 3, row_data['Projected Usage (Till 9th Feb)'], base_format)
+            worksheet.write(row_num, 4, row_data['Difference %'] / 100, percent_format)
+            worksheet.write(row_num, 5, row_data['Status'], base_format)
         
         # Adjust column widths
         for i, col in enumerate(comparison_df.columns):
