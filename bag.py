@@ -9,7 +9,7 @@ def generate_deviation_report(df):
     # Get the February 2025 column name by checking if the column can be parsed as a date
     # and then checking if it's February 2025
     feb_col = None
-    planned_col = None
+    planned_col = '1'  # Setting the planned column name directly since we know it's "1"
     
     # First, identify the February 2025 column
     for col in df.columns:
@@ -24,24 +24,9 @@ def generate_deviation_report(df):
     if feb_col is None:
         raise ValueError("Could not find February 2025 column in the data")
     
-    # Find the planned usage column (assuming it's the first numeric column that's not a date)
-    for col in df.columns:
-        if col not in ['Cement Plant Sname', 'MAKTX']:
-            try:
-                # Try to parse as date to exclude date columns
-                pd.to_datetime(col)
-            except (ValueError, TypeError):
-                # If it fails to parse as date, this might be our planned column
-                try:
-                    # Check if the column contains numeric data
-                    if pd.to_numeric(df[col], errors='raise').dtype in ['int64', 'float64']:
-                        planned_col = col
-                        break
-                except (ValueError, TypeError):
-                    continue
-    
-    if planned_col is None:
-        raise ValueError("Could not find planned usage column in the data")
+    # Verify that the planned column exists
+    if planned_col not in df.columns:
+        raise ValueError(f"Could not find planned usage column '{planned_col}' in the data")
     
     # Create report DataFrame
     report_data = []
@@ -49,7 +34,7 @@ def generate_deviation_report(df):
         plant_name = row['Cement Plant Sname']
         bag_name = row['MAKTX']
         actual_usage = row[feb_col]  # Actual usage till 9th Feb
-        planned_usage = row[planned_col]  # Full month plan
+        planned_usage = float(row[planned_col])  # Convert to float to ensure numeric operations work
         
         # Calculate projected usage till 9th Feb (9/28 of monthly plan)
         projected_till_9th = (9/28) * planned_usage
@@ -108,6 +93,7 @@ def generate_deviation_report(df):
     writer.close()
     
     return output_file
+
 def format_date_for_display(date):
     """Convert datetime to 'MMM YYYY' format"""
     if isinstance(date, str):
