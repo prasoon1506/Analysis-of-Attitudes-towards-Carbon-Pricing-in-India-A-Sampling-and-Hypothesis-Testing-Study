@@ -63,7 +63,7 @@ def generate_comparison_excel(df, current_date=pd.to_datetime('2025-02-09')):
         plant_data = df[df['Cement Plant Sname'] == plant]
         
         for _, row in plant_data.iterrows():
-            actual_usage = row['01-02-2025']  # February 2025 column
+            actual_usage = row['Feb-25']  # February 2025 column
             planned_usage = row['Feb-Plan']  # February Plan column
             projected_partial = planned_usage * ratio  # Projected usage till 9th Feb
             
