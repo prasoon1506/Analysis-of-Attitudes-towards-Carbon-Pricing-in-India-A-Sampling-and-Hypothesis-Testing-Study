@@ -6,10 +6,11 @@ import seaborn as sns
 import numpy as np
 from datetime import datetime
 def generate_deviation_report(df):
+    # Print columns for debugging
+    print("Available columns:", df.columns.tolist())
+    
     # Get the February 2025 column name by checking if the column can be parsed as a date
-    # and then checking if it's February 2025
     feb_col = None
-    planned_col = '1'  # Setting the planned column name directly since we know it's "1"
     
     # First, identify the February 2025 column
     for col in df.columns:
@@ -24,9 +25,27 @@ def generate_deviation_report(df):
     if feb_col is None:
         raise ValueError("Could not find February 2025 column in the data")
     
-    # Verify that the planned column exists
-    if planned_col not in df.columns:
-        raise ValueError(f"Could not find planned usage column '{planned_col}' in the data")
+    # Try different variations of the planned column name
+    possible_planned_cols = ['1', 1, '1.0', 1.0]
+    planned_col = None
+    
+    for col in possible_planned_cols:
+        if col in df.columns or str(col) in df.columns:
+            planned_col = col if col in df.columns else str(col)
+            break
+            
+    if planned_col is None:
+        # If still not found, try to find a numeric column that might be the plan
+        numeric_cols = df.select_dtypes(include=['int64', 'float64']).columns
+        for col in numeric_cols:
+            if str(col).replace('.0', '') == '1':
+                planned_col = col
+                break
+    
+    if planned_col is None:
+        raise ValueError(f"Could not find planned usage column. Available columns: {df.columns.tolist()}")
+    
+    print(f"Using planned column: {planned_col}")
     
     # Create report DataFrame
     report_data = []
