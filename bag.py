@@ -10,6 +10,7 @@ def format_date_for_display(date):
     return date.strftime('%b %Y')
 
 def main():
+    st.set_page_config("Cement Plant Bag Usage Analysis",layout='wide')
     st.title("Cement Plant Bag Usage Analysis")
     
     # File uploader
