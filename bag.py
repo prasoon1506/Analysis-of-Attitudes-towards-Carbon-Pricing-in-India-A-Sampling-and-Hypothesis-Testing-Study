@@ -42,6 +42,7 @@ def prepare_correlation_data(df, selected_bags, plant_name):
     
     correlation_df = pd.DataFrame(correlation_data)
     return correlation_df
+
 def generate_comparison_excel(df, current_date=pd.to_datetime('2025-02-09')):
     """
     Generate comparison Excel file between actual and projected consumption
@@ -161,7 +162,6 @@ def generate_comparison_excel(df, current_date=pd.to_datetime('2025-02-09')):
             worksheet.set_column(i, i, max_length + 2)
     
     return output.getvalue()
-
 def main():
     # Set page configuration with custom theme
     st.set_page_config(
