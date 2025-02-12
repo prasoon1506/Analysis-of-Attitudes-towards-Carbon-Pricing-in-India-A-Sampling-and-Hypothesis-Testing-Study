@@ -42,126 +42,80 @@ def prepare_correlation_data(df, selected_bags, plant_name):
     
     correlation_df = pd.DataFrame(correlation_data)
     return correlation_df
-
-def generate_comparison_excel(df, current_date=pd.to_datetime('2025-02-09')):
+def generate_deviation_report(df):
     """
-    Generate comparison Excel file between actual and projected consumption
+    Generate an Excel report comparing actual vs projected consumption with deviation highlighting.
     
     Args:
-        df: Input DataFrame with plant data
-        current_date: Current date to calculate partial month projection
+        df (pd.DataFrame): Input DataFrame containing plant data with Feb-Plan column
     """
-    # Calculate days ratio for February
-    total_feb_days = 28  # February 2025 has 28 days
-    days_passed = 9
-    ratio = days_passed / total_feb_days
+    # Get the February 2025 column name
+    feb_col = [col for col in df.columns if pd.to_datetime(col).strftime('%Y-%m') == '2025-02'][0]
     
-    # Create comparison DataFrame
-    comparison_data = []
-    
-    # Find the February 2025 column by checking datetime values
-    feb_2025_col = None
-    for col in df.columns:
-        try:
-            if isinstance(col, pd.Timestamp):
-                if col.year == 2025 and col.month == 2:
-                    feb_2025_col = col
-                    break
-            elif isinstance(col, str):
-                date = pd.to_datetime(col)
-                if date.year == 2025 and date.month == 2:
-                    feb_2025_col = col
-                    break
-        except:
-            continue
-    
-    if not feb_2025_col:
-        raise ValueError("February 2025 column not found in the data")
-    
-    # Get all unique plants and their bags
-    for plant in df['Cement Plant Sname'].unique():
-        plant_data = df[df['Cement Plant Sname'] == plant]
+    # Create report DataFrame
+    report_data = []
+    for _, row in df.iterrows():
+        plant_name = row['Cement Plant Sname']
+        bag_name = row['MAKTX']
+        actual_usage = row[feb_col]  # Actual usage till 9th Feb
+        planned_usage = row['Feb-Plan']  # Full month plan
         
-        for _, row in plant_data.iterrows():
-            actual_usage = row[feb_2025_col]  # February 2025 column
-            planned_usage = row['Feb-Plan']  # February Plan column
-            projected_partial = planned_usage * ratio  # Projected usage till 9th Feb
-            
-            # Calculate percentage difference
-            if projected_partial != 0:  # Avoid division by zero
-                pct_difference = ((actual_usage - projected_partial) / projected_partial) * 100
-            else:
-                pct_difference = 0 if actual_usage == 0 else float('inf')
-            
-            comparison_data.append({
-                'Plant Name': plant,
-                'Bag Name': row['MAKTX'],
-                'Actual Usage (Till 9th Feb)': actual_usage,
-                'Projected Usage (Till 9th Feb)': round(projected_partial, 2),
-                'Difference %': round(pct_difference, 2),
-                'Status': 'Alert' if abs(pct_difference) > 10 else 'Normal'
-            })
-    
-    # Create DataFrame
-    comparison_df = pd.DataFrame(comparison_data)
-    
-    # Create Excel writer with xlsxwriter
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        comparison_df.to_excel(writer, sheet_name='Comparison', index=False)
+        # Calculate projected usage till 9th Feb (9/28 of monthly plan)
+        projected_till_9th = (9/28) * planned_usage
         
-        # Get workbook and worksheet objects
-        workbook = writer.book
-        worksheet = writer.sheets['Comparison']
+        # Calculate deviation percentage
+        if projected_till_9th != 0:  # Avoid division by zero
+            deviation_percent = ((actual_usage - projected_till_9th) / projected_till_9th) * 100
+        else:
+            deviation_percent = 0
         
-        # Define formats
-        header_format = workbook.add_format({
-            'bold': True,
-            'bg_color': '#D9E1F2',
-            'border': 1
+        report_data.append({
+            'Plant Name': plant_name,
+            'Bag Name': bag_name,
+            'Actual Usage (Till 9th Feb)': actual_usage,
+            'Projected Usage (Till 9th Feb)': projected_till_9th,
+            'Full Month Plan': planned_usage,
+            'Deviation %': deviation_percent
         })
-        
-        red_format = workbook.add_format({
-            'bg_color': '#FFC7CE',
-            'font_color': '#9C0006',
-            'num_format': '#,##0.00'
-        })
-        
-        normal_format = workbook.add_format({
-            'bg_color': '#FFFFFF',
-            'num_format': '#,##0.00'
-        })
-        
-        percent_format = workbook.add_format({
-            'num_format': '0.00%'
-        })
-        
-        # Write headers with format
-        for col_num, value in enumerate(comparison_df.columns.values):
-            worksheet.write(0, col_num, value, header_format)
-        
-        # Apply conditional formatting and number formats
-        for row_num in range(1, len(comparison_df) + 1):
-            row_data = comparison_df.iloc[row_num-1]
-            base_format = red_format if row_data['Status'] == 'Alert' else normal_format
-            
-            # Write each cell with appropriate format
-            worksheet.write(row_num, 0, row_data['Plant Name'], base_format)
-            worksheet.write(row_num, 1, row_data['Bag Name'], base_format)
-            worksheet.write(row_num, 2, row_data['Actual Usage (Till 9th Feb)'], base_format)
-            worksheet.write(row_num, 3, row_data['Projected Usage (Till 9th Feb)'], base_format)
-            worksheet.write(row_num, 4, row_data['Difference %'] / 100, percent_format)
-            worksheet.write(row_num, 5, row_data['Status'], base_format)
-        
-        # Adjust column widths
-        for i, col in enumerate(comparison_df.columns):
-            max_length = max(
-                comparison_df[col].astype(str).apply(len).max(),
-                len(col)
-            )
-            worksheet.set_column(i, i, max_length + 2)
     
-    return output.getvalue()
+    # Create DataFrame from report data
+    report_df = pd.DataFrame(report_data)
+    
+    # Create Excel writer with xlsxwriter engine
+    output_file = 'consumption_deviation_report.xlsx'
+    writer = pd.ExcelWriter(output_file, engine='xlsxwriter')
+    
+    # Write DataFrame to Excel
+    report_df.to_excel(writer, sheet_name='Deviation Report', index=False)
+    
+    # Get workbook and worksheet objects
+    workbook = writer.book
+    worksheet = writer.sheets['Deviation Report']
+    
+    # Define formats
+    red_format = workbook.add_format({'bg_color': '#FFC7CE',
+                                    'font_color': '#9C0006'})
+    
+    # Apply conditional formatting
+    deviation_col = report_df.columns.get_loc('Deviation %') + 1  # +1 because Excel is 1-based
+    worksheet.conditional_format(1, 0, len(report_df), len(report_df.columns)-1,
+                               {'type': 'formula',
+                                'criteria': f'=ABS($F2)>10',  # F is the Deviation % column
+                                'format': red_format})
+    
+    # Adjust column widths
+    for idx, col in enumerate(report_df.columns):
+        max_length = max(
+            report_df[col].astype(str).apply(len).max(),
+            len(col)
+        )
+        worksheet.set_column(idx, idx, max_length + 2)
+    
+    # Close the writer
+    writer.close()
+    
+    return output_file
+
 def main():
     # Set page configuration with custom theme
     st.set_page_config(
@@ -229,14 +183,20 @@ def main():
         try:
             # Read and process the Excel file
             df = pd.read_excel(uploaded_file)
-            df = df.iloc[:, 1:]  # Remove the first column
-            comparison_excel = generate_comparison_excel(df)
-            st.download_button(
-        label="📥 Download Consumption Comparison Report",
-        data=comparison_excel,
-        file_name="consumption_comparison.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
+            df = df.iloc[:, 1:]  # Remove the first colum
+            if st.sidebar.button('Generate Deviation Report'):
+             output_file = generate_deviation_report(df)
+             with open(output_file, 'rb') as f:
+                excel_data = f.read()
+            
+             st.sidebar.download_button(
+                label="📥 Download Deviation Report",
+                data=excel_data,
+                file_name="consumption_deviation_report.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+            
+             st.sidebar.success("Report generated successfully!")
             # Sidebar filters
             with st.sidebar:
                 st.write("Available columns:", df.columns.tolist())
