@@ -5,7 +5,6 @@ import plotly.express as px
 import seaborn as sns
 import numpy as np
 from datetime import datetime
-
 def format_date_for_display(date):
     """Convert datetime to 'MMM YYYY' format"""
     if isinstance(date, str):
