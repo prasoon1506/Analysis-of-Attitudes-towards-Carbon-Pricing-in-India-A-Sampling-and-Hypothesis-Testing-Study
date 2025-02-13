@@ -81,39 +81,7 @@ def prepare_correlation_data(df, selected_bags, plant_name):
     return correlation_df
 def main():
     st.set_page_config(page_title="Cement Plant Bag Usage Analysis",layout='wide',initial_sidebar_state='expanded')
-    st.markdown("""
-        <style>
-        .main {
-            padding: 2rem;
-        }
-        .stTitle {
-            font-size: 2.5rem !important;
-            padding-bottom: 2rem;
-        }
-        .stats-card {
-            background-color: #f8f9fa;
-            padding: 1.5rem;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .announcement {
-            background-color: #e3f2fd;
-            padding: 1rem;
-            border-radius: 10px;
-            border-left: 5px solid #1976d2;
-            margin: 1rem 0;
-        }
-        .stTabs [data-baseweb="tab-list"] {
-            gap: 2rem;
-        }
-        .stTabs [data-baseweb="tab"] {
-            height: 4rem;
-        }
-        div[data-testid="stMetricValue"] {
-            font-size: 1.8rem;
-        }
-        </style>
-    """, unsafe_allow_html=True)
+    st.markdown("""<style>.main {padding: 2rem;}.stTitle {font-size: 2.5rem !important;padding-bottom: 2rem;}.stats-card {background-color: #f8f9fa;padding: 1.5rem;border-radius: 10px;box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);}.announcement {background-color: #e3f2fd;padding: 1rem;border-radius: 10px;border-left: 5px solid #1976d2;margin: 1rem 0;}.stTabs [data-baseweb="tab-list"] {gap: 2rem;}.stTabs [data-baseweb="tab"] {height: 4rem;}div[data-testid="stMetricValue"] {font-size: 1.8rem;}</style>""", unsafe_allow_html=True)
     st.title("📊 Cement Plant Bag Usage Analysis")
     st.markdown("""<div class='announcement'><h3>🤖 Coming Soon: AI-Powered Demand Forecasting</h3><p>We are currently developing a robust Machine Learning model for accurate demand projections. This advanced forecasting system will help optimize inventory management and improve supply chain efficiency. Stay tuned for this exciting update!</p></div>""", unsafe_allow_html=True)
     with st.sidebar:
@@ -180,163 +148,59 @@ def main():
                         fig.add_annotation(x="Feb 2025",y=feb_data['Usage'].iloc[0],text="Till 9th Feb",showarrow=True,arrowhead=1,ax=0,ay=-40,font=dict(size=12),bgcolor="white",bordercolor="#2E86C1",borderwidth=2)
                     fig.update_layout(
                         title={'text': f'Monthly Usage Trend for {selected_bag}<br><sup>{selected_plant}</sup>','y':0.95,'x':0.5,'xanchor': 'center','yanchor': 'top','font': dict(size=20)},xaxis_title='Month',yaxis_title='Usage',legend_title='Type',hovermode='x unified',plot_bgcolor='white',paper_bgcolor='white',showlegend=True,
-                        xaxis=dict(
-                            showgrid=True,
-                            gridcolor='rgba(0,0,0,0.1)',
-                            tickangle=45
-                        ),
-                        yaxis=dict(
-                            showgrid=True,
-                            gridcolor='rgba(0,0,0,0.1)',
-                            zeroline=True,
-                            zerolinecolor='rgba(0,0,0,0.2)'
-                        ),
-                        legend=dict(
-                            yanchor="top",
-                            y=0.99,
-                            xanchor="left",
-                            x=0.01,
-                            bgcolor='rgba(255, 255, 255, 0.8)'
-                        )
-                    )
-                    
+                        xaxis=dict(showgrid=True,gridcolor='rgba(0,0,0,0.1)',tickangle=45),
+                        yaxis=dict(showgrid=True,gridcolor='rgba(0,0,0,0.1)',zeroline=True,zerolinecolor='rgba(0,0,0,0.2)'),
+                        legend=dict(yanchor="top",y=0.99,xanchor="left",x=0.01,bgcolor='rgba(255, 255, 255, 0.8)'))
                     st.plotly_chart(fig, use_container_width=True)
-
                 with tab2:
-                    # Year over year comparison
                     yearly_comparison = create_year_over_year_comparison(all_data_df)
-                    
-                    fig_heatmap = px.imshow(
-                        yearly_comparison,
-                        labels=dict(x="Year", y="Month", color="Usage"),
-                        aspect="auto",
-                        color_continuous_scale="RdYlBu_r"
-                    )
-                    
-                    fig_heatmap.update_layout(
-                        title="Year-over-Year Usage Comparison",
-                        xaxis_title="Year",
-                        yaxis_title="Month",
-                    )
-                    
+                    fig_heatmap = px.imshow(yearly_comparison,labels=dict(x="Year", y="Month", color="Usage"),aspect="auto",color_continuous_scale="RdYlBu_r")
+                    fig_heatmap.update_layout(title="Year-over-Year Usage Comparison",xaxis_title="Year",yaxis_title="Month",)
                     st.plotly_chart(fig_heatmap, use_container_width=True)
-
                 with tab3:
                     if len(selected_bags_correlation) > 1:
                         st.subheader("Bag Demand Correlation Analysis")
-                        
-                        # Prepare correlation data
-                        correlation_df = prepare_correlation_data(
-                            df[df['Cement Plant Sname'] == selected_plant],
-                            selected_bags_correlation,
-                            selected_plant
-                        )
-                        
-                        # Calculate correlation matrix
+                        correlation_df = prepare_correlation_data(df[df['Cement Plant Sname'] == selected_plant],selected_bags_correlation,selected_plant)
                         correlation_matrix = correlation_df.corr()
-                        
-                        # Create correlation heatmap
-                        fig_corr = px.imshow(
-                            correlation_matrix,
-                            labels=dict(x="Bag Type", y="Bag Type", color="Correlation"),
-                            aspect="auto",
-                            color_continuous_scale="RdBu",
-                            title=f"Demand Correlation Matrix - {selected_plant}"
-                        )
-                        
-                        fig_corr.update_layout(
-                            width=800,
-                            height=800,
-                        )
-                        
+                        fig_corr = px.imshow(correlation_matrix,labels=dict(x="Bag Type", y="Bag Type", color="Correlation"),aspect="auto",color_continuous_scale="RdBu",title=f"Demand Correlation Matrix - {selected_plant}")
+                        fig_corr.update_layout(width=800,height=800,)
                         st.plotly_chart(fig_corr, use_container_width=True)
-                        
-                        # Display correlation insights
                         st.subheader("Correlation Insights")
-                        
-                        # Find highest correlated pairs
                         correlations = []
                         for i in range(len(correlation_matrix.columns)):
                             for j in range(i+1, len(correlation_matrix.columns)):
-                                correlations.append({
-                                    'Bag 1': correlation_matrix.columns[i],
-                                    'Bag 2': correlation_matrix.columns[j],
-                                    'Correlation': correlation_matrix.iloc[i,j]
-                                })
-                        
+                                correlations.append({'Bag 1': correlation_matrix.columns[i],'Bag 2': correlation_matrix.columns[j],'Correlation': correlation_matrix.iloc[i,j]})
                         if correlations:
                             correlations_df = pd.DataFrame(correlations)
                             correlations_df = correlations_df.sort_values('Correlation', ascending=False)
-                            
                             col1, col2 = st.columns(2)
                             with col1:
                                 st.write("Strongest Positive Correlations:")
-                                st.dataframe(
-                                    correlations_df[correlations_df['Correlation'] > 0]
-                                    .head()
-                                    .style.format({'Correlation': '{:.2f}'})
-                                    .background_gradient(cmap='Blues')
-                                )
-                            
+                                st.dataframe(correlations_df[correlations_df['Correlation'] > 0].head().style.format({'Correlation': '{:.2f}'}).background_gradient(cmap='Blues'))
                             with col2:
                                 st.write("Strongest Negative Correlations:")
-                                st.dataframe(
-                                    correlations_df[correlations_df['Correlation'] < 0]
-                                    .sort_values('Correlation')
-                                    .head()
-                                    .style.format({'Correlation': '{:.2f}'})
-                                    .background_gradient(cmap='Reds')
-                                )
-                            
-                            # Scatter plot of most correlated pair
+                                st.dataframe(correlations_df[correlations_df['Correlation'] < 0].sort_values('Correlation').head().style.format({'Correlation': '{:.2f}'}).background_gradient(cmap='Reds'))
                             if not correlations_df.empty:
                                 top_pair = correlations_df.iloc[0]
-                                fig_scatter = px.scatter(
-                                    correlation_df,
-                                    x=top_pair['Bag 1'],
-                                    y=top_pair['Bag 2'],
-                                    title=f"Demand Relationship: {top_pair['Bag 1']} vs {top_pair['Bag 2']}"
-                                )
-                                
-                                fig_scatter.update_layout(
-                                    xaxis_title=top_pair['Bag 1'],
-                                    yaxis_title=top_pair['Bag 2'],
-                                    showlegend=True,
-                                )
-                                
+                                fig_scatter = px.scatter(correlation_df,x=top_pair['Bag 1'],y=top_pair['Bag 2'],title=f"Demand Relationship: {top_pair['Bag 1']} vs {top_pair['Bag 2']}")
+                                fig_scatter.update_layout(xaxis_title=top_pair['Bag 1'],yaxis_title=top_pair['Bag 2'],showlegend=True,)
                                 st.plotly_chart(fig_scatter, use_container_width=True)
                     else:
                         st.info("Please select at least two bags in the sidebar for correlation analysis.")
                 with tab4:
                     st.subheader("📜 Complete Historical Data")
-                    display_df = pd.DataFrame({
-    'Date': all_data_df['Date'],  # Keep original date column for sorting
-    'Month-Year': all_data_df['Date'].apply(lambda x: x.strftime('%b %Y')),
-    'Usage': all_data_df['Usage']
-})
+                    display_df = pd.DataFrame({'Date': all_data_df['Date'],'Month-Year': all_data_df['Date'].apply(lambda x: x.strftime('%b %Y')),'Usage': all_data_df['Usage']})
                     display_df['% Change'] = display_df['Usage'].pct_change() * 100
                     display_df = display_df.sort_values('Date', ascending=False)
                     display_df = display_df.drop('Date', axis=1)
-                    styled_df = display_df.style.format({
-    'Usage': '{:,.2f}',
-    '% Change': '{:+.2f}%'
-})
+                    styled_df = display_df.style.format({'Usage': '{:,.2f}','% Change': '{:+.2f}%'})
                     styled_df = styled_df.background_gradient(subset=['Usage'], cmap='Blues')
                     styled_df = styled_df.background_gradient(subset=['% Change'], cmap='RdYlGn')
                     st.dataframe(styled_df, use_container_width=True)
                     csv = display_df.to_csv(index=False)
-                    st.download_button(
-    label="📥 Download Historical Data",
-    data=csv,
-    file_name=f"historical_data_{selected_plant}_{selected_bag}.csv",
-    mime="text/csv"
-)
-                    # Enhanced historical data display
-                    
-
+                    st.download_button(label="📥 Download Historical Data",data=csv,file_name=f"historical_data_{selected_plant}_{selected_bag}.csv",mime="text/csv")
         except Exception as e:
             st.error(f"An error occurred while processing the data: {str(e)}")
             st.write("Please make sure your Excel file has the correct format and try again.")
-
 if __name__ == '__main__':
     main()
