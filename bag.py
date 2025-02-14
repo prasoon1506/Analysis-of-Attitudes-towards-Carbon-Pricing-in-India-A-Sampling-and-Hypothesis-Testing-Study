@@ -7,6 +7,8 @@ import numpy as np
 from datetime import datetime
 def generate_deviation_report(df):
     print("Available columns:", df.columns.tolist())
+    
+    # Find February 2025 column and planned column using original logic
     feb_col = None
     for col in df.columns:
         try:
@@ -16,47 +18,226 @@ def generate_deviation_report(df):
                 break
         except (ValueError, TypeError):
             continue
+            
     if feb_col is None:
         raise ValueError("Could not find February 2025 column in the data")
+
+    # Find planned column using original logic    
     possible_planned_cols = ['1', 1, '1.0', 1.0]
     planned_col = None
     for col in possible_planned_cols:
         if col in df.columns or str(col) in df.columns:
             planned_col = col if col in df.columns else str(col)
             break
+
     if planned_col is None:
         numeric_cols = df.select_dtypes(include=['int64', 'float64']).columns
         for col in numeric_cols:
             if str(col).replace('.0', '') == '1':
                 planned_col = col
                 break
+
     if planned_col is None:
         raise ValueError(f"Could not find planned usage column. Available columns: {df.columns.tolist()}")
-    print(f"Using planned column: {planned_col}")
+
+    # Calculate plant level statistics
+    plant_stats = {}
+    total_bags = 0
+    total_actual = 0
+    total_planned = 0
+    
+    for plant in df['Cement Plant Sname'].unique():
+        plant_data = df[df['Cement Plant Sname'] == plant]
+        actual = plant_data[feb_col].sum()
+        planned = plant_data[planned_col].sum()
+        bags = len(plant_data)
+        
+        plant_stats[plant] = {
+            'Total_Bags': bags,
+            'Total_Actual_Usage': actual,
+            'Total_Planned_Usage': planned,
+            'Average_Deviation': ((actual - (9/28) * planned) / ((9/28) * planned) * 100) if planned != 0 else 0
+        }
+        total_bags += bags
+        total_actual += actual
+        total_planned += planned
+
+    # Generate detailed report data
     report_data = []
     for _, row in df.iterrows():
         plant_name = row['Cement Plant Sname']
         bag_name = row['MAKTX']
-        actual_usage = row[feb_col]  # Actual usage till 9th Feb
-        planned_usage = float(row[planned_col])  # Convert to float to ensure numeric operations work
-        projected_till_9th = (9/28) * planned_usage
-        if projected_till_9th != 0:  # Avoid division by zero
-            deviation_percent = ((actual_usage - projected_till_9th) / projected_till_9th) * 100
-        else:
-            deviation_percent = 0
-        report_data.append({'Plant Name': plant_name,'Bag Name': bag_name,'Actual Usage (Till 9th Feb)': actual_usage,'Projected Usage (Till 9th Feb)': projected_till_9th,'Full Month Plan': planned_usage,'Deviation %': deviation_percent})
+        actual_usage = int(row[feb_col])
+        planned_usage = int(float(row[planned_col]))
+        projected_till_9th = int((9/28) * planned_usage)
+        deviation_percent = int(((actual_usage - projected_till_9th) / projected_till_9th) * 100) if projected_till_9th != 0 else 0
+        
+        report_data.append({
+            'Plant Name': plant_name,
+            'Bag Name': bag_name,
+            'Actual Usage (Till 9th Feb)': actual_usage,
+            'Projected Usage (Till 9th Feb)': projected_till_9th,
+            'Full Month Plan': planned_usage,
+            'Deviation %': deviation_percent,
+            'Status': 'High' if abs(deviation_percent) > 20 else 'Medium' if abs(deviation_percent) > 10 else 'Low'
+        })
+
     report_df = pd.DataFrame(report_data)
+
+    # Create Excel writer
     output_file = 'consumption_deviation_report.xlsx'
     writer = pd.ExcelWriter(output_file, engine='xlsxwriter')
-    report_df.to_excel(writer, sheet_name='Deviation Report', index=False)
     workbook = writer.book
-    worksheet = writer.sheets['Deviation Report']
-    red_format = workbook.add_format({'bg_color': '#FFC7CE','font_color': '#9C0006'})
-    deviation_col = report_df.columns.get_loc('Deviation %') + 1  # +1 because Excel is 1-based
-    worksheet.conditional_format(1, 0, len(report_df), len(report_df.columns)-1,{'type': 'formula','criteria': f'=ABS($F2)>10','format': red_format})
-    for idx, col in enumerate(report_df.columns):
-        max_length = max(report_df[col].astype(str).apply(len).max(),len(col))
-        worksheet.set_column(idx, idx, max_length + 2)
+
+    # Define formats
+    title_format = workbook.add_format({
+        'bold': True,
+        'font_size': 16,
+        'font_name': 'Calibri',
+        'align': 'center',
+        'valign': 'vcenter',
+        'bg_color': '#4472C4',
+        'font_color': 'white'
+    })
+
+    subtitle_format = workbook.add_format({
+        'font_size': 11,
+        'font_name': 'Calibri',
+        'align': 'center',
+        'valign': 'vcenter',
+        'italic': True
+    })
+
+    header_format = workbook.add_format({
+        'bold': True,
+        'font_size': 11,
+        'font_name': 'Calibri',
+        'bg_color': '#D9E1F2',
+        'border': 1,
+        'border_color': '#4472C4',
+        'align': 'center',
+        'valign': 'vcenter',
+        'text_wrap': True
+    })
+
+    section_format = workbook.add_format({
+        'bold': True,
+        'font_size': 12,
+        'font_name': 'Calibri',
+        'bg_color': '#8EA9DB',
+        'font_color': 'white',
+        'align': 'center',
+        'valign': 'vcenter'
+    })
+
+    cell_format = workbook.add_format({
+        'font_name': 'Calibri',
+        'font_size': 11,
+        'align': 'center',
+        'border': 1,
+        'border_color': '#B4C6E7'
+    })
+
+    number_format = workbook.add_format({
+        'font_name': 'Calibri',
+        'font_size': 11,
+        'align': 'center',
+        'border': 1,
+        'border_color': '#B4C6E7',
+        'num_format': '#,##0'
+    })
+
+    total_format = workbook.add_format({
+        'bold': True,
+        'font_name': 'Calibri',
+        'font_size': 11,
+        'align': 'center',
+        'border': 1,
+        'border_color': '#4472C4',
+        'bg_color': '#E2EFD9',
+        'num_format': '#,##0'
+    })
+
+    worksheet = workbook.add_worksheet('Consumption Report')
+
+    # Set print titles and page setup
+    worksheet.repeat_rows(0, 4)
+    worksheet.set_landscape()
+    worksheet.set_paper(9)  # A4 paper
+    worksheet.fit_to_pages(1, 0)  # Fit to 1 page wide
+    worksheet.set_margins(left=0.7, right=0.7, top=0.75, bottom=0.75)
+    worksheet.set_header('&C&B&16Bag Consumption Deviation Report', {'font_size': 16})
+    worksheet.set_footer('&L&D &T&C&P of &N&R&F')
+
+    # Write title section
+    worksheet.merge_range('A1:G1', 'BAG CONSUMPTION DEVIATION REPORT', title_format)
+    worksheet.merge_range('A2:G2', f'Report Generated on: {datetime.now().strftime("%d-%b-%Y %H:%M:%S")}', subtitle_format)
+    worksheet.merge_range('A3:G3', f'Period: 1st Feb 2025 to 9th Feb 2025', subtitle_format)
+
+    # Write summary section
+    row = 5
+    worksheet.merge_range(row, 0, row, 6, 'COMPANY LEVEL SUMMARY', section_format)
+    row += 1
+
+    summary_headers = ['Total Plants', 'Total Bag Types', 'Total Actual Usage', 'Total Planned Usage', 'Overall Deviation']
+    for col, header in enumerate(summary_headers):
+        worksheet.write(row, col, header, header_format)
+    
+    row += 1
+    overall_deviation = ((total_actual - (9/28) * total_planned) / ((9/28) * total_planned) * 100) if total_planned != 0 else 0
+    
+    worksheet.write(row, 0, len(plant_stats), number_format)
+    worksheet.write(row, 1, total_bags, number_format)
+    worksheet.write(row, 2, int(total_actual), number_format)
+    worksheet.write(row, 3, int(total_planned), number_format)
+    worksheet.write(row, 4, f"{int(overall_deviation)}%", cell_format)
+
+    # Write plant statistics
+    row += 3
+    worksheet.merge_range(row, 0, row, 6, 'PLANT LEVEL STATISTICS', section_format)
+    row += 1
+
+    stats_headers = ['Plant Name', 'Total Bags', 'Total Actual Usage', 'Total Planned Usage', 'Average Deviation']
+    for col, header in enumerate(stats_headers):
+        worksheet.write(row, col, header, header_format)
+    
+    row += 1
+    for plant, stats in plant_stats.items():
+        worksheet.write(row, 0, plant, cell_format)
+        worksheet.write(row, 1, stats['Total_Bags'], number_format)
+        worksheet.write(row, 2, int(stats['Total_Actual_Usage']), number_format)
+        worksheet.write(row, 3, int(stats['Total_Planned_Usage']), number_format)
+        worksheet.write(row, 4, f"{int(stats['Average_Deviation'])}%", cell_format)
+        row += 1
+
+    # Write detailed report
+    row += 2
+    worksheet.merge_range(row, 0, row, 6, 'DETAILED CONSUMPTION REPORT', section_format)
+    row += 1
+
+    for col, header in enumerate(report_df.columns):
+        worksheet.write(row, col, header, header_format)
+
+    # Write data
+    for r, row_data in enumerate(report_df.values, row + 1):
+        for c, value in enumerate(row_data):
+            if isinstance(value, (int, float)):
+                if c == report_df.columns.get_loc('Deviation %'):
+                    worksheet.write(r, c, f"{int(value)}%", cell_format)
+                else:
+                    worksheet.write(r, c, int(value), number_format)
+            else:
+                worksheet.write(r, c, value, cell_format)
+
+    # Set column widths
+    worksheet.set_column('A:A', 25)  # Plant Name
+    worksheet.set_column('B:B', 35)  # Bag Name
+    worksheet.set_column('C:F', 18)  # Numeric columns
+    worksheet.set_column('G:G', 12)  # Status
+
+    # Add autofilter
+    worksheet.autofilter(row, 0, len(report_df) + row, len(report_df.columns) - 1)
+
     writer.close()
     return output_file
 def format_date_for_display(date):
