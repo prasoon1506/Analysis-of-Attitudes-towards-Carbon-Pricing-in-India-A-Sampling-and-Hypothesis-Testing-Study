@@ -68,85 +68,40 @@ def generate_deviation_report(df):
     title_format = workbook.add_format({'bold': True,'font_size': 16,'font_name': 'Calibri','align': 'center','valign': 'vcenter','bg_color': '#4472C4','font_color': 'white'})
     subtitle_format = workbook.add_format({'font_size': 11,'font_name': 'Calibri','align': 'center','valign': 'vcenter','italic': True})
     header_format = workbook.add_format({'bold': True,'font_size': 11,'font_name': 'Calibri','bg_color': '#D9E1F2','border': 1,'border_color': '#4472C4','align': 'center','valign': 'vcenter','text_wrap': True})
-    section_format = workbook.add_format({'bold': True,'font_size': 12,
-        'font_name': 'Calibri',
-        'bg_color': '#8EA9DB',
-        'font_color': 'white',
-        'align': 'center',
-        'valign': 'vcenter'
-    })
-
-    cell_format = workbook.add_format({
-        'font_name': 'Calibri',
-        'font_size': 11,
-        'align': 'center',
-        'border': 1,
-        'border_color': '#B4C6E7'
-    })
-
-    number_format = workbook.add_format({
-        'font_name': 'Calibri',
-        'font_size': 11,
-        'align': 'center',
-        'border': 1,
-        'border_color': '#B4C6E7',
-        'num_format': '#,##0'
-    })
-
-    total_format = workbook.add_format({
-        'bold': True,
-        'font_name': 'Calibri',
-        'font_size': 11,
-        'align': 'center',
-        'border': 1,
-        'border_color': '#4472C4',
-        'bg_color': '#E2EFD9',
-        'num_format': '#,##0'
-    })
-
+    section_format = workbook.add_format({'bold': True,'font_size': 12,'font_name': 'Calibri','bg_color': '#8EA9DB','font_color': 'white','align': 'center','valign': 'vcenter'})
+    cell_format = workbook.add_format({'font_name': 'Calibri','font_size': 11,'align': 'center','border': 1,'border_color': '#B4C6E7'})
+    number_format = workbook.add_format({'font_name': 'Calibri','font_size': 11,'align': 'center','border': 1,'border_color': '#B4C6E7','num_format': '#,##0'})
+    total_format = workbook.add_format({'bold': True,'font_name': 'Calibri','font_size': 11,'align': 'center','border': 1,'border_color': '#4472C4','bg_color': '#E2EFD9','num_format': '#,##0'})
     worksheet = workbook.add_worksheet('Consumption Report')
-
-    # Set print titles and page setup
     worksheet.repeat_rows(0, 4)
     worksheet.set_landscape()
-    worksheet.set_paper(9)  # A4 paper
-    worksheet.fit_to_pages(1, 0)  # Fit to 1 page wide
+    worksheet.set_paper(9)  
+    worksheet.fit_to_pages(1, 0)  
     worksheet.set_margins(left=0.7, right=0.7, top=0.75, bottom=0.75)
     worksheet.set_header('&C&B&16Bag Consumption Deviation Report', {'font_size': 16})
     worksheet.set_footer('&L&D &T&C&P of &N&R&F')
-
-    # Write title section
     worksheet.merge_range('A1:G1', 'BAG CONSUMPTION DEVIATION REPORT', title_format)
     worksheet.merge_range('A2:G2', f'Report Generated on: {datetime.now().strftime("%d-%b-%Y %H:%M:%S")}', subtitle_format)
     worksheet.merge_range('A3:G3', f'Period: 1st Feb 2025 to 9th Feb 2025', subtitle_format)
-
-    # Write summary section
     row = 5
     worksheet.merge_range(row, 0, row, 6, 'COMPANY LEVEL SUMMARY', section_format)
     row += 1
-
     summary_headers = ['Total Plants', 'Total Bag Types', 'Total Actual Usage', 'Total Planned Usage', 'Overall Deviation']
     for col, header in enumerate(summary_headers):
         worksheet.write(row, col, header, header_format)
-    
     row += 1
     overall_deviation = ((total_actual - (9/28) * total_planned) / ((9/28) * total_planned) * 100) if total_planned != 0 else 0
-    
     worksheet.write(row, 0, len(plant_stats), number_format)
     worksheet.write(row, 1, total_bags, number_format)
     worksheet.write(row, 2, safe_int(total_actual), number_format)
     worksheet.write(row, 3, safe_int(total_planned), number_format)
     worksheet.write(row, 4, f"{safe_int(overall_deviation)}%", cell_format)
-
-    # Write plant statistics
     row += 3
     worksheet.merge_range(row, 0, row, 6, 'PLANT LEVEL STATISTICS', section_format)
     row += 1
-
     stats_headers = ['Plant Name', 'Total Bags', 'Total Actual Usage', 'Total Planned Usage', 'Average Deviation']
     for col, header in enumerate(stats_headers):
         worksheet.write(row, col, header, header_format)
-    
     row += 1
     for plant, stats in plant_stats.items():
         worksheet.write(row, 0, plant, cell_format)
@@ -155,16 +110,11 @@ def generate_deviation_report(df):
         worksheet.write(row, 3, safe_int(stats['Total_Planned_Usage']), number_format)
         worksheet.write(row, 4, f"{safe_int(stats['Average_Deviation'])}%", cell_format)
         row += 1
-
-    # Write detailed report
     row += 2
     worksheet.merge_range(row, 0, row, 6, 'DETAILED CONSUMPTION REPORT', section_format)
     row += 1
-
     for col, header in enumerate(report_df.columns):
         worksheet.write(row, col, header, header_format)
-
-    # Write data
     for r, row_data in enumerate(report_df.values, row + 1):
         for c, value in enumerate(row_data):
             if isinstance(value, (int, float)):
@@ -176,16 +126,11 @@ def generate_deviation_report(df):
                     worksheet.write(r, c, safe_int(value), number_format)
             else:
                 worksheet.write(r, c, value if pd.notna(value) else '', cell_format)
-
-    # Set column widths
     worksheet.set_column('A:A', 25)  # Plant Name
     worksheet.set_column('B:B', 35)  # Bag Name
     worksheet.set_column('C:F', 18)  # Numeric columns
     worksheet.set_column('G:G', 12)  # Status
-
-    # Add autofilter
     worksheet.autofilter(row, 0, len(report_df) + row, len(report_df.columns) - 1)
-
     writer.close()
     return output_file
 def format_date_for_display(date):
