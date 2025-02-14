@@ -6,7 +6,6 @@ import seaborn as sns
 import numpy as np
 from datetime import datetime
 def generate_deviation_report(df):
-    # Helper function to safely convert to int
     def safe_int(value):
         try:
             if pd.isna(value):
@@ -14,10 +13,7 @@ def generate_deviation_report(df):
             return int(float(value))
         except (ValueError, TypeError):
             return 0
-
     print("Available columns:", df.columns.tolist())
-    
-    # Find February 2025 column and planned column using original logic
     feb_col = None
     for col in df.columns:
         try:
@@ -27,51 +23,35 @@ def generate_deviation_report(df):
                 break
         except (ValueError, TypeError):
             continue
-            
     if feb_col is None:
-        raise ValueError("Could not find February 2025 column in the data")
-
-    # Find planned column using original logic    
+        raise ValueError("Could not find February 2025 column in the data")  
     possible_planned_cols = ['1', 1, '1.0', 1.0]
     planned_col = None
     for col in possible_planned_cols:
         if col in df.columns or str(col) in df.columns:
             planned_col = col if col in df.columns else str(col)
             break
-
     if planned_col is None:
         numeric_cols = df.select_dtypes(include=['int64', 'float64']).columns
         for col in numeric_cols:
             if str(col).replace('.0', '') == '1':
                 planned_col = col
                 break
-
     if planned_col is None:
         raise ValueError(f"Could not find planned usage column. Available columns: {df.columns.tolist()}")
-
-    # Calculate plant level statistics
     plant_stats = {}
     total_bags = 0
     total_actual = 0
     total_planned = 0
-    
     for plant in df['Cement Plant Sname'].unique():
         plant_data = df[df['Cement Plant Sname'] == plant]
         actual = plant_data[feb_col].fillna(0).sum()
         planned = plant_data[planned_col].fillna(0).sum()
         bags = len(plant_data)
-        
-        plant_stats[plant] = {
-            'Total_Bags': bags,
-            'Total_Actual_Usage': actual,
-            'Total_Planned_Usage': planned,
-            'Average_Deviation': ((actual - (9/28) * planned) / ((9/28) * planned) * 100) if planned != 0 else 0
-        }
+        plant_stats[plant] = {'Total_Bags': bags,'Total_Actual_Usage': actual,'Total_Planned_Usage': planned,'Average_Deviation': ((actual - (9/28) * planned) / ((9/28) * planned) * 100) if planned != 0 else 0}
         total_bags += bags
         total_actual += actual
         total_planned += planned
-
-    # Generate detailed report data
     report_data = []
     for _, row in df.iterrows():
         plant_name = row['Cement Plant Sname']
@@ -80,58 +60,15 @@ def generate_deviation_report(df):
         planned_usage = safe_int(row[planned_col])
         projected_till_9th = int((9/28) * planned_usage)
         deviation_percent = int(((actual_usage - projected_till_9th) / projected_till_9th) * 100) if projected_till_9th != 0 else 0
-        
-        report_data.append({
-            'Plant Name': plant_name,
-            'Bag Name': bag_name,
-            'Actual Usage (Till 9th Feb)': actual_usage,
-            'Projected Usage (Till 9th Feb)': projected_till_9th,
-            'Full Month Plan': planned_usage,
-            'Deviation %': deviation_percent,
-            'Status': 'High' if abs(deviation_percent) > 20 else 'Medium' if abs(deviation_percent) > 10 else 'Low'
-        })
-
+        report_data.append({'Plant Name': plant_name,'Bag Name': bag_name,'Actual Usage (Till 9th Feb)': actual_usage,'Projected Usage (Till 9th Feb)': projected_till_9th,'Full Month Plan': planned_usage,'Deviation %': deviation_percent,'Status': 'High' if abs(deviation_percent) > 20 else 'Medium' if abs(deviation_percent) > 10 else 'Low'})
     report_df = pd.DataFrame(report_data)
-
-    # Create Excel writer
     output_file = 'consumption_deviation_report.xlsx'
     writer = pd.ExcelWriter(output_file, engine='xlsxwriter')
     workbook = writer.book
-
-    # Define formats
-    title_format = workbook.add_format({
-        'bold': True,
-        'font_size': 16,
-        'font_name': 'Calibri',
-        'align': 'center',
-        'valign': 'vcenter',
-        'bg_color': '#4472C4',
-        'font_color': 'white'
-    })
-
-    subtitle_format = workbook.add_format({
-        'font_size': 11,
-        'font_name': 'Calibri',
-        'align': 'center',
-        'valign': 'vcenter',
-        'italic': True
-    })
-
-    header_format = workbook.add_format({
-        'bold': True,
-        'font_size': 11,
-        'font_name': 'Calibri',
-        'bg_color': '#D9E1F2',
-        'border': 1,
-        'border_color': '#4472C4',
-        'align': 'center',
-        'valign': 'vcenter',
-        'text_wrap': True
-    })
-
-    section_format = workbook.add_format({
-        'bold': True,
-        'font_size': 12,
+    title_format = workbook.add_format({'bold': True,'font_size': 16,'font_name': 'Calibri','align': 'center','valign': 'vcenter','bg_color': '#4472C4','font_color': 'white'})
+    subtitle_format = workbook.add_format({'font_size': 11,'font_name': 'Calibri','align': 'center','valign': 'vcenter','italic': True})
+    header_format = workbook.add_format({'bold': True,'font_size': 11,'font_name': 'Calibri','bg_color': '#D9E1F2','border': 1,'border_color': '#4472C4','align': 'center','valign': 'vcenter','text_wrap': True})
+    section_format = workbook.add_format({'bold': True,'font_size': 12,
         'font_name': 'Calibri',
         'bg_color': '#8EA9DB',
         'font_color': 'white',
