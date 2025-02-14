@@ -8,13 +8,40 @@ from datetime import datetime
 def generate_deviation_report(df):
     print("Available columns:", df.columns.tolist())
     
-    # Find February 2025 column
-    feb_col = next((col for col in df.columns if isinstance(col, str) and pd.to_datetime(col, errors='coerce').strftime('%Y-%m') == '2025-02'), None)
+    # Find February 2025 column - modified to handle different date formats
+    def find_feb_2025_column(columns):
+        for col in columns:
+            try:
+                # Try parsing as date first
+                if isinstance(col, pd.Timestamp) and col.strftime('%Y-%m') == '2025-02':
+                    return col
+                # Try parsing string representation
+                if isinstance(col, str):
+                    parsed_date = pd.to_datetime(col, errors='coerce')
+                    if pd.notna(parsed_date) and parsed_date.strftime('%Y-%m') == '2025-02':
+                        return col
+            except:
+                continue
+        return None
+
+    # Find planned column - modified to be more flexible
+    def find_planned_column(columns):
+        for col in columns:
+            try:
+                # Convert to string and remove decimal points
+                col_str = str(col).replace('.0', '')
+                if col_str == '1':
+                    return col
+            except:
+                continue
+        return None
+    
+    # Find the required columns
+    feb_col = find_feb_2025_column(df.columns)
+    planned_col = find_planned_column(df.columns)
+    
     if feb_col is None:
         raise ValueError("Could not find February 2025 column in the data")
-    
-    # Find planned column
-    planned_col = next((col for col in df.columns if str(col).replace('.0', '') == '1'), None)
     if planned_col is None:
         raise ValueError("Could not find planned usage column")
     
@@ -103,7 +130,7 @@ def generate_deviation_report(df):
     worksheet = workbook.add_worksheet('Consumption Report')
     
     # Set print titles
-    worksheet.repeat_rows(0, 3)  # Repeat first 4 rows on each printed page
+    worksheet.repeat_rows(0, 3)
     worksheet.set_landscape()
     worksheet.set_paper(9)  # A4 paper
     worksheet.set_margins(left=0.7, right=0.7, top=0.75, bottom=0.75)
