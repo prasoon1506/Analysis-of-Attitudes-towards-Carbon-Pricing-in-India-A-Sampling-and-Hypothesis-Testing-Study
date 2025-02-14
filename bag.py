@@ -6,7 +6,32 @@ import seaborn as sns
 import numpy as np
 from datetime import datetime
 def generate_deviation_report(df):
-    print("Available columns:", df.columns.tolist())
+    output_file = 'consumption_deviation_report.xlsx'
+    writer = pd.ExcelWriter(output_file, engine='xlsxwriter')
+    workbook = writer.book
+
+    # Define formats
+    header_format = workbook.add_format({
+        'bold': True,
+        'font_size': 12,
+        'font_color': 'white',
+        'bg_color': '#2E86C1',
+        'border': 1,
+        'align': 'center',
+        'valign': 'vcenter'
+    })
+    
+    number_format = workbook.add_format({
+        'num_format': '#,##0',
+        'border': 1
+    })
+    
+    percentage_format = workbook.add_format({
+        'num_format': '0.0%',
+        'border': 1
+    })
+
+    # Find February 2025 column
     feb_col = None
     for col in df.columns:
         try:
@@ -16,47 +41,137 @@ def generate_deviation_report(df):
                 break
         except (ValueError, TypeError):
             continue
-    if feb_col is None:
-        raise ValueError("Could not find February 2025 column in the data")
-    possible_planned_cols = ['1', 1, '1.0', 1.0]
+
+    # Find planned usage column
     planned_col = None
+    possible_planned_cols = ['1', 1, '1.0', 1.0]
     for col in possible_planned_cols:
         if col in df.columns or str(col) in df.columns:
             planned_col = col if col in df.columns else str(col)
             break
-    if planned_col is None:
-        numeric_cols = df.select_dtypes(include=['int64', 'float64']).columns
-        for col in numeric_cols:
-            if str(col).replace('.0', '') == '1':
-                planned_col = col
-                break
-    if planned_col is None:
-        raise ValueError(f"Could not find planned usage column. Available columns: {df.columns.tolist()}")
-    print(f"Using planned column: {planned_col}")
+
+    if planned_col is None or feb_col is None:
+        raise ValueError("Required columns not found in the data")
+
+    # Prepare report data
     report_data = []
     for _, row in df.iterrows():
-        plant_name = row['Cement Plant Sname']
-        bag_name = row['MAKTX']
-        actual_usage = row[feb_col]  # Actual usage till 9th Feb
-        planned_usage = float(row[planned_col])  # Convert to float to ensure numeric operations work
+        actual_usage = row[feb_col]
+        planned_usage = float(row[planned_col])
         projected_till_9th = (9/28) * planned_usage
-        if projected_till_9th != 0:  # Avoid division by zero
-            deviation_percent = ((actual_usage - projected_till_9th) / projected_till_9th) * 100
-        else:
-            deviation_percent = 0
-        report_data.append({'Plant Name': plant_name,'Bag Name': bag_name,'Actual Usage (Till 9th Feb)': actual_usage,'Projected Usage (Till 9th Feb)': projected_till_9th,'Full Month Plan': planned_usage,'Deviation %': deviation_percent})
+        
+        # Calculate metrics
+        deviation = actual_usage - projected_till_9th
+        deviation_percent = (deviation / projected_till_9th * 100) if projected_till_9th != 0 else 0
+        daily_rate = actual_usage / 9
+        projected_month_end = daily_rate * 28
+        month_end_variance = projected_month_end - planned_usage
+        month_end_variance_percent = (month_end_variance / planned_usage * 100) if planned_usage != 0 else 0
+
+        report_data.append({
+            'Plant Name': row['Cement Plant Sname'],
+            'Bag Name': row['MAKTX'],
+            'Actual Usage (Till 9th Feb)': actual_usage,
+            'Daily Average': daily_rate,
+            'Projected Usage (Till 9th Feb)': projected_till_9th,
+            'Deviation': deviation,
+            'Deviation %': deviation_percent,
+            'Full Month Plan': planned_usage,
+            'Projected Month End': projected_month_end,
+            'Month End Variance': month_end_variance,
+            'Month End Variance %': month_end_variance_percent
+        })
+
+    # Create main report DataFrame
     report_df = pd.DataFrame(report_data)
-    output_file = 'consumption_deviation_report.xlsx'
-    writer = pd.ExcelWriter(output_file, engine='xlsxwriter')
+
+    # Generate plant-level statistics
+    plant_stats = []
+    for plant in report_df['Plant Name'].unique():
+        plant_data = report_df[report_df['Plant Name'] == plant]
+        
+        stats = {
+            'Plant Name': plant,
+            'Total Bag Types': len(plant_data),
+            'Total Actual Usage': plant_data['Actual Usage (Till 9th Feb)'].sum(),
+            'Total Planned Usage': plant_data['Full Month Plan'].sum(),
+            'Average Daily Usage': plant_data['Daily Average'].sum(),
+            'Average Deviation %': plant_data['Deviation %'].mean(),
+            'Projected Month End Total': plant_data['Projected Month End'].sum(),
+            'Overall Month End Variance %': ((plant_data['Projected Month End'].sum() - 
+                                           plant_data['Full Month Plan'].sum()) / 
+                                          plant_data['Full Month Plan'].sum() * 100)
+        }
+        plant_stats.append(stats)
+
+    plant_stats_df = pd.DataFrame(plant_stats)
+
+    # Write Plant Statistics sheet
+    plant_stats_df.to_excel(writer, sheet_name='Plant Statistics', index=False)
+    plant_stats_sheet = writer.sheets['Plant Statistics']
+    
+    # Format Plant Statistics sheet
+    for col_num, value in enumerate(plant_stats_df.columns.values):
+        plant_stats_sheet.write(0, col_num, value, header_format)
+    
+    plant_stats_sheet.set_column('A:A', 20)  # Plant name
+    plant_stats_sheet.set_column('B:H', 15)  # Numeric columns
+    
+    # Set print settings for Plant Statistics
+    plant_stats_sheet.set_paper(9)  # A4 paper
+    plant_stats_sheet.set_portrait()
+    plant_stats_sheet.repeat_rows(0)  # Repeat header row
+    plant_stats_sheet.set_print_scale(90)
+    
+    # Write main Deviation Report
     report_df.to_excel(writer, sheet_name='Deviation Report', index=False)
-    workbook = writer.book
     worksheet = writer.sheets['Deviation Report']
-    red_format = workbook.add_format({'bg_color': '#FFC7CE','font_color': '#9C0006'})
-    deviation_col = report_df.columns.get_loc('Deviation %') + 1  # +1 because Excel is 1-based
-    worksheet.conditional_format(1, 0, len(report_df), len(report_df.columns)-1,{'type': 'formula','criteria': f'=ABS($F2)>10','format': red_format})
-    for idx, col in enumerate(report_df.columns):
-        max_length = max(report_df[col].astype(str).apply(len).max(),len(col))
-        worksheet.set_column(idx, idx, max_length + 2)
+
+    # Format Deviation Report
+    for col_num, value in enumerate(report_df.columns.values):
+        worksheet.write(0, col_num, value, header_format)
+
+    # Set column widths
+    worksheet.set_column('A:B', 20)  # Plant and Bag names
+    worksheet.set_column('C:K', 15)  # Numeric columns
+
+    # Set print settings for Deviation Report
+    worksheet.set_paper(9)  # A4 paper
+    worksheet.set_portrait()
+    worksheet.repeat_rows(0)  # Repeat header row
+    worksheet.set_print_scale(90)
+    worksheet.set_h_pagebreaks([])
+    worksheet.set_v_pagebreaks([])
+    
+    # Add filters
+    worksheet.autofilter(0, 0, len(report_df), len(report_df.columns)-1)
+
+    # Create summary pivot sheet
+    pivot_df = report_df.pivot_table(
+        values=['Actual Usage (Till 9th Feb)', 'Projected Usage (Till 9th Feb)', 
+                'Full Month Plan', 'Deviation %'],
+        index=['Plant Name'],
+        aggfunc={
+            'Actual Usage (Till 9th Feb)': 'sum',
+            'Projected Usage (Till 9th Feb)': 'sum',
+            'Full Month Plan': 'sum',
+            'Deviation %': 'mean'
+        }
+    )
+    
+    pivot_df.to_excel(writer, sheet_name='Summary Pivot')
+    pivot_sheet = writer.sheets['Summary Pivot']
+    
+    # Format pivot sheet
+    pivot_sheet.set_column('A:A', 20)
+    pivot_sheet.set_column('B:E', 15)
+    
+    # Set print settings for pivot sheet
+    pivot_sheet.set_paper(9)
+    pivot_sheet.set_portrait()
+    pivot_sheet.repeat_rows(0)
+    pivot_sheet.set_print_scale(90)
+    
     writer.close()
     return output_file
 def format_date_for_display(date):
