@@ -6,6 +6,15 @@ import seaborn as sns
 import numpy as np
 from datetime import datetime
 def generate_deviation_report(df):
+    # Helper function to safely convert to int
+    def safe_int(value):
+        try:
+            if pd.isna(value):
+                return 0
+            return int(float(value))
+        except (ValueError, TypeError):
+            return 0
+
     print("Available columns:", df.columns.tolist())
     
     # Find February 2025 column and planned column using original logic
@@ -48,8 +57,8 @@ def generate_deviation_report(df):
     
     for plant in df['Cement Plant Sname'].unique():
         plant_data = df[df['Cement Plant Sname'] == plant]
-        actual = plant_data[feb_col].sum()
-        planned = plant_data[planned_col].sum()
+        actual = plant_data[feb_col].fillna(0).sum()
+        planned = plant_data[planned_col].fillna(0).sum()
         bags = len(plant_data)
         
         plant_stats[plant] = {
@@ -67,8 +76,8 @@ def generate_deviation_report(df):
     for _, row in df.iterrows():
         plant_name = row['Cement Plant Sname']
         bag_name = row['MAKTX']
-        actual_usage = int(row[feb_col])
-        planned_usage = int(float(row[planned_col]))
+        actual_usage = safe_int(row[feb_col])
+        planned_usage = safe_int(row[planned_col])
         projected_till_9th = int((9/28) * planned_usage)
         deviation_percent = int(((actual_usage - projected_till_9th) / projected_till_9th) * 100) if projected_till_9th != 0 else 0
         
@@ -188,9 +197,9 @@ def generate_deviation_report(df):
     
     worksheet.write(row, 0, len(plant_stats), number_format)
     worksheet.write(row, 1, total_bags, number_format)
-    worksheet.write(row, 2, int(total_actual), number_format)
-    worksheet.write(row, 3, int(total_planned), number_format)
-    worksheet.write(row, 4, f"{int(overall_deviation)}%", cell_format)
+    worksheet.write(row, 2, safe_int(total_actual), number_format)
+    worksheet.write(row, 3, safe_int(total_planned), number_format)
+    worksheet.write(row, 4, f"{safe_int(overall_deviation)}%", cell_format)
 
     # Write plant statistics
     row += 3
@@ -205,9 +214,9 @@ def generate_deviation_report(df):
     for plant, stats in plant_stats.items():
         worksheet.write(row, 0, plant, cell_format)
         worksheet.write(row, 1, stats['Total_Bags'], number_format)
-        worksheet.write(row, 2, int(stats['Total_Actual_Usage']), number_format)
-        worksheet.write(row, 3, int(stats['Total_Planned_Usage']), number_format)
-        worksheet.write(row, 4, f"{int(stats['Average_Deviation'])}%", cell_format)
+        worksheet.write(row, 2, safe_int(stats['Total_Actual_Usage']), number_format)
+        worksheet.write(row, 3, safe_int(stats['Total_Planned_Usage']), number_format)
+        worksheet.write(row, 4, f"{safe_int(stats['Average_Deviation'])}%", cell_format)
         row += 1
 
     # Write detailed report
@@ -222,12 +231,14 @@ def generate_deviation_report(df):
     for r, row_data in enumerate(report_df.values, row + 1):
         for c, value in enumerate(row_data):
             if isinstance(value, (int, float)):
-                if c == report_df.columns.get_loc('Deviation %'):
-                    worksheet.write(r, c, f"{int(value)}%", cell_format)
+                if pd.isna(value):
+                    worksheet.write(r, c, 0, number_format)
+                elif c == report_df.columns.get_loc('Deviation %'):
+                    worksheet.write(r, c, f"{safe_int(value)}%", cell_format)
                 else:
-                    worksheet.write(r, c, int(value), number_format)
+                    worksheet.write(r, c, safe_int(value), number_format)
             else:
-                worksheet.write(r, c, value, cell_format)
+                worksheet.write(r, c, value if pd.notna(value) else '', cell_format)
 
     # Set column widths
     worksheet.set_column('A:A', 25)  # Plant Name
