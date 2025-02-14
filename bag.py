@@ -5,6 +5,24 @@ import plotly.express as px
 import seaborn as sns
 import numpy as np
 from datetime import datetime
+def safe_int_convert(value):
+    """Safely convert a value to integer, handling NaN and None values"""
+    try:
+        if pd.isna(value) or value is None:
+            return 0
+        return int(float(value))
+    except (ValueError, TypeError):
+        return 0
+
+def safe_percentage(numerator, denominator):
+    """Safely calculate percentage, handling division by zero and NaN values"""
+    try:
+        if pd.isna(numerator) or pd.isna(denominator) or denominator == 0:
+            return 0
+        return int((numerator / denominator) * 100)
+    except (ValueError, TypeError):
+        return 0
+
 def generate_deviation_report(df):
     output_file = 'consumption_deviation_report.xlsx'
     writer = pd.ExcelWriter(output_file, engine='xlsxwriter')
@@ -66,26 +84,6 @@ def generate_deviation_report(df):
 
     # Create main worksheet
     worksheet = workbook.add_worksheet('Plant Reports')
-    
-    # Add PDF export button macro
-    pdf_macro = """
-    Sub ExportToPDF()
-        ActiveSheet.ExportAsFixedFormat Type:=xlTypePDF, _
-            Filename:=ThisWorkbook.Path & "\\" & ActiveSheet.Name & ".pdf", _
-            Quality:=xlQualityStandard, _
-            IncludeDocProperties:=True, _
-            IgnorePrintAreas:=False, _
-            OpenAfterPublish:=True
-    End Sub
-    """
-    
-    workbook.add_vba_project('./vbaProject.bin')  # Add VBA project for PDF export
-    
-    # Add PDF export button
-    worksheet.insert_button('A1', {'macro': 'ExportToPDF',
-                                 'caption': 'Export to PDF',
-                                 'width': 100,
-                                 'height': 30})
 
     # Get unique plants
     plants = sorted(df['Cement Plant Sname'].unique())
@@ -112,26 +110,28 @@ def generate_deviation_report(df):
         worksheet.write(data_start_row, col, header, header_format)
 
     # Create named ranges for each plant's data
+    current_row = data_start_row + 1
+    
     for plant in plants:
         plant_data = df[df['Cement Plant Sname'] == plant]
         
         # Calculate plant metrics
-        report_data = []
         for _, row in plant_data.iterrows():
-            actual_usage = int(row[feb_col])
-            planned_usage = int(float(row[planned_col]))
-            projected_till_9th = int((9/28) * planned_usage)
+            actual_usage = safe_int_convert(row[feb_col])
+            planned_usage = safe_int_convert(row[planned_col])
+            projected_till_9th = safe_int_convert((9/28) * planned_usage)
             
-            daily_rate = int(actual_usage / 9)
-            projected_month_end = int(daily_rate * 28)
+            daily_rate = safe_int_convert(actual_usage / 9 if actual_usage != 0 else 0)
+            projected_month_end = safe_int_convert(daily_rate * 28)
             
             deviation = actual_usage - projected_till_9th
-            deviation_percent = int((deviation / projected_till_9th * 100) if projected_till_9th != 0 else 0)
+            deviation_percent = safe_percentage(deviation, projected_till_9th)
             
             month_end_variance = projected_month_end - planned_usage
-            month_end_variance_percent = int((month_end_variance / planned_usage * 100) if planned_usage != 0 else 0)
+            month_end_variance_percent = safe_percentage(month_end_variance, planned_usage)
             
-            report_data.append([
+            # Write row data
+            row_data = [
                 row['Cement Plant Sname'],
                 row['MAKTX'],
                 actual_usage,
@@ -143,35 +143,18 @@ def generate_deviation_report(df):
                 projected_month_end,
                 month_end_variance,
                 month_end_variance_percent
-            ])
-        
-        # Create named range for plant data
-        range_name = f'Plant_{plant.replace(" ", "_")}'
-        start_row = len(report_data) * plants.index(plant) + data_start_row + 1
-        end_row = start_row + len(report_data) - 1
-        
-        # Write plant data
-        for row_idx, data_row in enumerate(report_data):
-            for col_idx, value in enumerate(data_row):
-                cell_format = number_format if isinstance(value, (int, float)) else None
-                if col_idx in [6, 10]:  # Percentage columns
+            ]
+            
+            for col, value in enumerate(row_data):
+                cell_format = number_format if isinstance(value, (int, float)) and col >= 2 else None
+                if col in [6, 10]:  # Percentage columns
                     cell_format = percentage_format
-                worksheet.write(start_row + row_idx, col_idx, value, cell_format)
-        
-        # Define named range
-        range_address = f'$A${start_row}:$K${end_row}'
-        workbook.define_name(range_name, f'=Plant_Reports!{range_address}')
+                worksheet.write(current_row, col, value, cell_format)
+            
+            current_row += 1
 
-    # Add VBA code for plant selection
-    plant_selection_macro = """
-    Sub ShowPlantData(plant_name)
-        ' Hide all rows
-        Rows(data_start_row + 1 & ":" & last_row).Hidden = True
-        
-        ' Show selected plant rows
-        Range("Plant_" & plant_name).EntireRow.Hidden = False
-    End Sub
-    """
+    # Add autofilter for all data
+    worksheet.autofilter(data_start_row, 0, current_row - 1, len(headers) - 1)
     
     # Set column widths
     worksheet.set_column('A:B', 20)  # Plant and Bag names
@@ -183,8 +166,8 @@ def generate_deviation_report(df):
     worksheet.repeat_rows(data_start_row)  # Repeat header row
     worksheet.set_print_scale(90)
     
-    # Add autofilter
-    worksheet.autofilter(data_start_row, 0, data_start_row + len(df), len(headers)-1)
+    # Add data validation and filters
+    worksheet.autofilter(data_start_row, 0, current_row - 1, len(headers) - 1)
     
     writer.close()
     return output_file
