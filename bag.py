@@ -5,172 +5,152 @@ import plotly.express as px
 import seaborn as sns
 import numpy as np
 from datetime import datetime
-def safe_int_convert(value):
-    """Safely convert a value to integer, handling NaN and None values"""
-    try:
-        if pd.isna(value) or value is None:
-            return 0
-        return int(float(value))
-    except (ValueError, TypeError):
-        return 0
-
-def safe_percentage(numerator, denominator):
-    """Safely calculate percentage, handling division by zero and NaN values"""
-    try:
-        if pd.isna(numerator) or pd.isna(denominator) or denominator == 0:
-            return 0
-        return int((numerator / denominator) * 100)
-    except (ValueError, TypeError):
-        return 0
-
 def generate_deviation_report(df):
+    print("Available columns:", df.columns.tolist())
+    
+    # Find February 2025 column
+    feb_col = next((col for col in df.columns if isinstance(col, str) and pd.to_datetime(col, errors='coerce').strftime('%Y-%m') == '2025-02'), None)
+    if feb_col is None:
+        raise ValueError("Could not find February 2025 column in the data")
+    
+    # Find planned column
+    planned_col = next((col for col in df.columns if str(col).replace('.0', '') == '1'), None)
+    if planned_col is None:
+        raise ValueError("Could not find planned usage column")
+    
+    # Create summary data at plant level
+    plant_summary = []
+    for plant in df['Cement Plant Sname'].unique():
+        plant_data = df[df['Cement Plant Sname'] == plant]
+        plant_summary.append({
+            'Plant Name': plant,
+            'Total Actual Usage': int(plant_data[feb_col].sum()),
+            'Total Planned Usage': int((9/28) * plant_data[planned_col].sum()),
+            'Number of Bags': len(plant_data),
+            'Critical Deviations': len(plant_data[abs((plant_data[feb_col] - (9/28) * plant_data[planned_col]) / ((9/28) * plant_data[planned_col]) * 100) > 10])
+        })
+    
+    # Prepare detailed report data
+    report_data = []
+    for _, row in df.iterrows():
+        actual_usage = int(row[feb_col])
+        planned_usage = int(float(row[planned_col]))
+        projected_till_9th = int((9/28) * planned_usage)
+        deviation_percent = int(((actual_usage - projected_till_9th) / projected_till_9th * 100) if projected_till_9th != 0 else 0)
+        
+        report_data.append({
+            'Plant Name': row['Cement Plant Sname'],
+            'Bag Name': row['MAKTX'],
+            'Actual Usage': actual_usage,
+            'Projected Usage': projected_till_9th,
+            'Full Month Plan': planned_usage,
+            'Deviation %': deviation_percent,
+            'Status': 'High Alert' if abs(deviation_percent) > 20 else 'Warning' if abs(deviation_percent) > 10 else 'Normal'
+        })
+    
+    # Create Excel file
     output_file = 'consumption_deviation_report.xlsx'
     writer = pd.ExcelWriter(output_file, engine='xlsxwriter')
+    
+    # Get workbook and add formats
     workbook = writer.book
-
+    
     # Define formats
     header_format = workbook.add_format({
         'bold': True,
         'font_size': 12,
         'font_color': 'white',
-        'bg_color': '#2E86C1',
+        'bg_color': '#1F4E78',
         'border': 1,
         'align': 'center',
         'valign': 'vcenter'
     })
     
-    number_format = workbook.add_format({
-        'num_format': '#,##0',  # Integer format
-        'border': 1,
-        'align': 'right'
-    })
-    
-    percentage_format = workbook.add_format({
-        'num_format': '0%',  # Integer percentage
-        'border': 1,
-        'align': 'right'
-    })
-    
-    button_format = workbook.add_format({
+    plant_header_format = workbook.add_format({
         'bold': True,
-        'font_size': 11,
+        'font_size': 14,
         'font_color': 'white',
-        'bg_color': '#2E86C1',
+        'bg_color': '#2E75B6',
         'border': 1,
         'align': 'center',
         'valign': 'vcenter'
     })
-
-    # Find required columns
-    feb_col = None
-    for col in df.columns:
-        try:
-            date = pd.to_datetime(col)
-            if date.strftime('%Y-%m') == '2025-02':
-                feb_col = col
-                break
-        except (ValueError, TypeError):
-            continue
-
-    planned_col = None
-    possible_planned_cols = ['1', 1, '1.0', 1.0]
-    for col in possible_planned_cols:
-        if col in df.columns or str(col) in df.columns:
-            planned_col = col if col in df.columns else str(col)
-            break
-
-    if planned_col is None or feb_col is None:
-        raise ValueError("Required columns not found in the data")
-
-    # Create main worksheet
-    worksheet = workbook.add_worksheet('Plant Reports')
-
-    # Get unique plants
-    plants = sorted(df['Cement Plant Sname'].unique())
     
-    # Add plant selection buttons
-    button_row = 3
-    button_col = 0
-    for plant in plants:
-        worksheet.write(button_row, button_col, plant, button_format)
-        button_col += 1
-        if button_col == 5:  # New row after 5 buttons
-            button_row += 1
-            button_col = 0
-
-    # Starting row for data
-    data_start_row = button_row + 3
-
-    # Write column headers
-    headers = ['Plant Name', 'Bag Name', 'Actual Usage', 'Daily Average', 
-              'Projected Usage', 'Deviation', 'Deviation %', 'Full Month Plan', 
-              'Projected Month End', 'Month End Variance', 'Month End Variance %']
+    normal_format = workbook.add_format({
+        'font_size': 11,
+        'border': 1,
+        'align': 'center',
+        'valign': 'vcenter'
+    })
     
+    alert_format = workbook.add_format({
+        'font_size': 11,
+        'border': 1,
+        'align': 'center',
+        'bg_color': '#FFD9D9',
+        'valign': 'vcenter'
+    })
+    
+    warning_format = workbook.add_format({
+        'font_size': 11,
+        'border': 1,
+        'align': 'center',
+        'bg_color': '#FFEEBA',
+        'valign': 'vcenter'
+    })
+    
+    # Create report worksheet
+    worksheet = workbook.add_worksheet('Consumption Report')
+    
+    # Set print titles
+    worksheet.repeat_rows(0, 3)  # Repeat first 4 rows on each printed page
+    worksheet.set_landscape()
+    worksheet.set_paper(9)  # A4 paper
+    worksheet.set_margins(left=0.7, right=0.7, top=0.75, bottom=0.75)
+    
+    # Write plant level summary
+    worksheet.merge_range('A1:F1', 'PLANT LEVEL SUMMARY', plant_header_format)
+    summary_headers = ['Plant Name', 'Total Actual Usage', 'Total Planned Usage', 'Number of Bags', 'Critical Deviations']
+    for col, header in enumerate(summary_headers):
+        worksheet.write(1, col, header, header_format)
+    
+    summary_df = pd.DataFrame(plant_summary)
+    for row_idx, row in enumerate(summary_df.values):
+        for col_idx, value in enumerate(row):
+            worksheet.write(row_idx + 2, col_idx, value, normal_format)
+    
+    # Add space between summaries
+    current_row = len(plant_summary) + 4
+    
+    # Write detailed report
+    worksheet.merge_range(current_row, 0, current_row, 6, 'DETAILED BAG CONSUMPTION REPORT', plant_header_format)
+    current_row += 1
+    
+    # Write headers for detailed report
+    headers = ['Plant Name', 'Bag Name', 'Actual Usage', 'Projected Usage', 'Full Month Plan', 'Deviation %', 'Status']
     for col, header in enumerate(headers):
-        worksheet.write(data_start_row, col, header, header_format)
-
-    # Create named ranges for each plant's data
-    current_row = data_start_row + 1
+        worksheet.write(current_row, col, header, header_format)
     
-    for plant in plants:
-        plant_data = df[df['Cement Plant Sname'] == plant]
-        
-        # Calculate plant metrics
-        for _, row in plant_data.iterrows():
-            actual_usage = safe_int_convert(row[feb_col])
-            planned_usage = safe_int_convert(row[planned_col])
-            projected_till_9th = safe_int_convert((9/28) * planned_usage)
-            
-            daily_rate = safe_int_convert(actual_usage / 9 if actual_usage != 0 else 0)
-            projected_month_end = safe_int_convert(daily_rate * 28)
-            
-            deviation = actual_usage - projected_till_9th
-            deviation_percent = safe_percentage(deviation, projected_till_9th)
-            
-            month_end_variance = projected_month_end - planned_usage
-            month_end_variance_percent = safe_percentage(month_end_variance, planned_usage)
-            
-            # Write row data
-            row_data = [
-                row['Cement Plant Sname'],
-                row['MAKTX'],
-                actual_usage,
-                daily_rate,
-                projected_till_9th,
-                deviation,
-                deviation_percent,
-                planned_usage,
-                projected_month_end,
-                month_end_variance,
-                month_end_variance_percent
-            ]
-            
-            for col, value in enumerate(row_data):
-                cell_format = number_format if isinstance(value, (int, float)) and col >= 2 else None
-                if col in [6, 10]:  # Percentage columns
-                    cell_format = percentage_format
-                worksheet.write(current_row, col, value, cell_format)
-            
-            current_row += 1
-
-    # Add autofilter for all data
-    worksheet.autofilter(data_start_row, 0, current_row - 1, len(headers) - 1)
+    # Write data
+    report_df = pd.DataFrame(report_data)
+    for row_idx, row in enumerate(report_df.values, start=current_row + 1):
+        row_format = alert_format if row[-1] == 'High Alert' else warning_format if row[-1] == 'Warning' else normal_format
+        for col_idx, value in enumerate(row):
+            worksheet.write(row_idx, col_idx, value, row_format)
     
     # Set column widths
-    worksheet.set_column('A:B', 20)  # Plant and Bag names
-    worksheet.set_column('C:K', 15)  # Numeric columns
+    worksheet.set_column('A:A', 20)  # Plant Name
+    worksheet.set_column('B:B', 30)  # Bag Name
+    worksheet.set_column('C:F', 15)  # Numeric columns
+    worksheet.set_column('G:G', 12)  # Status
     
-    # Set print settings
-    worksheet.set_paper(9)  # A4 paper
-    worksheet.set_portrait()
-    worksheet.repeat_rows(data_start_row)  # Repeat header row
-    worksheet.set_print_scale(90)
+    # Add freeze panes
+    worksheet.freeze_panes(current_row + 1, 0)
     
-    # Add data validation and filters
-    worksheet.autofilter(data_start_row, 0, current_row - 1, len(headers) - 1)
-    
+    # Close Excel writer
     writer.close()
     return output_file
+
 def format_date_for_display(date):
     if isinstance(date, str):
         date = pd.to_datetime(date)
