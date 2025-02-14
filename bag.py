@@ -50,31 +50,52 @@ def generate_deviation_report(df):
     # Prepare report data
     report_data = []
     for _, row in df.iterrows():
-        actual_usage = int(row[feb_col])
-        planned_usage = int(float(row[planned_col]))
-        projected_till_9th = int((9/28) * planned_usage)
-        
-        # Calculate metrics (all as integers)
-        deviation = actual_usage - projected_till_9th
-        deviation_percent = int((deviation / projected_till_9th * 100) if projected_till_9th != 0 else 0)
-        daily_rate = int(actual_usage / 9)
-        projected_month_end = int(daily_rate * 28)
-        month_end_variance = projected_month_end - planned_usage
-        month_end_variance_percent = int((month_end_variance / planned_usage * 100) if planned_usage != 0 else 0)
+        try:
+            # Handle NaN values by replacing them with 0
+            actual_usage = int(row[feb_col] if pd.notna(row[feb_col]) else 0)
+            planned_usage = int(float(row[planned_col]) if pd.notna(row[planned_col]) else 0)
+            
+            # Avoid division by zero
+            projected_till_9th = int((9/28) * planned_usage) if planned_usage != 0 else 0
+            
+            # Calculate metrics (all as integers)
+            deviation = actual_usage - projected_till_9th
+            
+            # Safe division with error handling
+            try:
+                deviation_percent = int((deviation / projected_till_9th * 100) if projected_till_9th != 0 else 0)
+            except:
+                deviation_percent = 0
+                
+            try:
+                daily_rate = int(actual_usage / 9) if actual_usage != 0 else 0
+            except:
+                daily_rate = 0
+                
+            projected_month_end = int(daily_rate * 28)
+            month_end_variance = projected_month_end - planned_usage
+            
+            try:
+                month_end_variance_percent = int((month_end_variance / planned_usage * 100) if planned_usage != 0 else 0)
+            except:
+                month_end_variance_percent = 0
 
-        report_data.append({
-            'Plant Name': row['Cement Plant Sname'],
-            'Bag Name': row['MAKTX'],
-            'Actual Usage': actual_usage,
-            'Daily Average': daily_rate,
-            'Projected Usage': projected_till_9th,
-            'Deviation': deviation,
-            'Deviation %': deviation_percent,
-            'Full Month Plan': planned_usage,
-            'Month End Forecast': projected_month_end,
-            'Month End Variance': month_end_variance,
-            'Month End Variance %': month_end_variance_percent
-        })
+            report_data.append({
+                'Plant Name': row['Cement Plant Sname'],
+                'Bag Name': row['MAKTX'],
+                'Actual Usage': actual_usage,
+                'Daily Average': daily_rate,
+                'Projected Usage': projected_till_9th,
+                'Deviation': deviation,
+                'Deviation %': deviation_percent,
+                'Full Month Plan': planned_usage,
+                'Month End Forecast': projected_month_end,
+                'Month End Variance': month_end_variance,
+                'Month End Variance %': month_end_variance_percent
+            })
+        except Exception as e:
+            print(f"Error processing row for plant {row['Cement Plant Sname']}, bag {row['MAKTX']}: {str(e)}")
+            continue
 
     # Create DataFrame
     report_df = pd.DataFrame(report_data)
@@ -82,92 +103,55 @@ def generate_deviation_report(df):
     # Create the main sheet
     worksheet = workbook.add_worksheet('Dashboard')
     
-    # Add VBA code for PDF export and plant filtering
-    vba_code = '''
-Sub ExportToPDF()
-    ActiveSheet.ExportAsFixedFormat Type:=xlTypePDF, _
-        Filename:=ThisWorkbook.Path & "\Report_" & Format(Now(), "yyyymmdd_hhmmss") & ".pdf", _
-        Quality:=xlQualityStandard, _
-        IncludeDocProperties:=True, _
-        IgnorePrintAreas:=False, _
-        OpenAfterPublish:=True
-End Sub
-
-Sub ShowPlantData()
-    Dim pt As PivotTable
-    Dim pf As PivotField
-    Dim selectedPlant As String
-    
-    Set pt = ActiveSheet.PivotTables(1)
-    Set pf = pt.PivotFields("Plant Name")
-    
-    selectedPlant = Application.Caller.Text
-    
-    ' Clear all filters
-    pf.ClearAllFilters
-    
-    ' Apply filter for selected plant
-    pf.CurrentPage = selectedPlant
-End Sub
-'''
-
-    # Add the VBA module
-    workbook.add_vba_project('./vbaProject.bin')
-    
     # Create pivot table
-    pivot_cache = workbook.add_pivot_cache(df=report_df)
+    pivot_table = pd.pivot_table(
+        report_df,
+        values=['Actual Usage', 'Projected Usage', 'Full Month Plan', 'Month End Forecast'],
+        index=['Plant Name'],
+        aggfunc='sum',
+        fill_value=0
+    )
     
-    # Add pivot table starting at B3
-    worksheet.add_table('B3:L3', {'data': report_df.values.tolist(),
-                                 'columns': report_df.columns.tolist()})
-
-    # Add plant buttons
-    plants = sorted(report_df['Plant Name'].unique())
-    for i, plant in enumerate(plants):
-        worksheet.insert_button(f'A{i+3}', {'macro': 'ShowPlantData',
-                                           'caption': plant,
-                                           'width': 120,
-                                           'height': 30})
-
-    # Add PDF export button
-    worksheet.insert_button('A1', {'macro': 'ExportToPDF',
-                                  'caption': 'Export to PDF',
-                                  'width': 120,
-                                  'height': 30})
-
-    # Set print settings
-    worksheet.set_paper(9)  # A4 paper
-    worksheet.set_portrait()
-    worksheet.repeat_rows(0, 2)  # Repeat header rows
-    worksheet.set_print_scale(90)
+    # Write the pivot table to Excel
+    pivot_table.to_excel(writer, sheet_name='Dashboard', startrow=3)
     
-    # Format columns
-    worksheet.set_column('A:A', 15)  # Buttons column
-    worksheet.set_column('B:C', 20)  # Plant and Bag names
-    worksheet.set_column('D:L', 15)  # Numeric columns
+    # Get the worksheet object
+    worksheet = writer.sheets['Dashboard']
     
-    # Add title
+    # Format headers
+    for col_num, value in enumerate(pivot_table.columns.values):
+        worksheet.write(3, col_num + 1, value, header_format)
+    
+    # Format title
     title_format = workbook.add_format({
         'bold': True,
         'font_size': 14,
         'align': 'center',
         'valign': 'vcenter'
     })
-    worksheet.merge_range('B1:L1', 'Cement Plant Bag Usage Report', title_format)
+    worksheet.merge_range('A1:K1', 'Cement Plant Bag Usage Report', title_format)
     
-    # Add headers with format
-    for col, header in enumerate(report_df.columns):
-        worksheet.write(2, col + 1, header, header_format)
+    # Add plant buttons
+    plants = sorted(report_df['Plant Name'].unique())
+    row_offset = 4  # Starting row for data after headers
+    for i, plant in enumerate(plants):
+        cell_location = f'A{i + row_offset}'
+        worksheet.write(cell_location, plant)
+
+    # Set column widths
+    worksheet.set_column('A:A', 20)  # Plant names
+    worksheet.set_column('B:K', 15)  # Data columns
+    
+    # Set print settings
+    worksheet.set_paper(9)  # A4 paper
+    worksheet.set_portrait()
+    worksheet.repeat_rows(0, 3)  # Repeat header rows
+    worksheet.set_print_scale(90)
     
     # Add autofilter
-    worksheet.autofilter(2, 1, len(report_df) + 2, len(report_df.columns))
+    worksheet.autofilter(3, 0, len(pivot_table) + 3, len(pivot_table.columns))
     
     writer.close()
-
-    # Create the vbaProject.bin file
-    with open('vbaProject.bin', 'w') as f:
-        f.write(vba_code)
-    
     return output_file
 def format_date_for_display(date):
     if isinstance(date, str):
