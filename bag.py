@@ -22,16 +22,11 @@ def generate_deviation_report(df):
     })
     
     number_format = workbook.add_format({
-        'num_format': '#,##0',
-        'border': 1
-    })
-    
-    percentage_format = workbook.add_format({
-        'num_format': '0.0%',
+        'num_format': '#,##0',  # Integer format
         'border': 1
     })
 
-    # Find February 2025 column
+    # Find required columns
     feb_col = None
     for col in df.columns:
         try:
@@ -42,7 +37,6 @@ def generate_deviation_report(df):
         except (ValueError, TypeError):
             continue
 
-    # Find planned usage column
     planned_col = None
     possible_planned_cols = ['1', 1, '1.0', 1.0]
     for col in possible_planned_cols:
@@ -56,123 +50,124 @@ def generate_deviation_report(df):
     # Prepare report data
     report_data = []
     for _, row in df.iterrows():
-        actual_usage = row[feb_col]
-        planned_usage = float(row[planned_col])
-        projected_till_9th = (9/28) * planned_usage
+        actual_usage = int(row[feb_col])
+        planned_usage = int(float(row[planned_col]))
+        projected_till_9th = int((9/28) * planned_usage)
         
-        # Calculate metrics
+        # Calculate metrics (all as integers)
         deviation = actual_usage - projected_till_9th
-        deviation_percent = (deviation / projected_till_9th * 100) if projected_till_9th != 0 else 0
-        daily_rate = actual_usage / 9
-        projected_month_end = daily_rate * 28
+        deviation_percent = int((deviation / projected_till_9th * 100) if projected_till_9th != 0 else 0)
+        daily_rate = int(actual_usage / 9)
+        projected_month_end = int(daily_rate * 28)
         month_end_variance = projected_month_end - planned_usage
-        month_end_variance_percent = (month_end_variance / planned_usage * 100) if planned_usage != 0 else 0
+        month_end_variance_percent = int((month_end_variance / planned_usage * 100) if planned_usage != 0 else 0)
 
         report_data.append({
             'Plant Name': row['Cement Plant Sname'],
             'Bag Name': row['MAKTX'],
-            'Actual Usage (Till 9th Feb)': actual_usage,
+            'Actual Usage': actual_usage,
             'Daily Average': daily_rate,
-            'Projected Usage (Till 9th Feb)': projected_till_9th,
+            'Projected Usage': projected_till_9th,
             'Deviation': deviation,
             'Deviation %': deviation_percent,
             'Full Month Plan': planned_usage,
-            'Projected Month End': projected_month_end,
+            'Month End Forecast': projected_month_end,
             'Month End Variance': month_end_variance,
             'Month End Variance %': month_end_variance_percent
         })
 
-    # Create main report DataFrame
+    # Create DataFrame
     report_df = pd.DataFrame(report_data)
 
-    # Generate plant-level statistics
-    plant_stats = []
-    for plant in report_df['Plant Name'].unique():
-        plant_data = report_df[report_df['Plant Name'] == plant]
-        
-        stats = {
-            'Plant Name': plant,
-            'Total Bag Types': len(plant_data),
-            'Total Actual Usage': plant_data['Actual Usage (Till 9th Feb)'].sum(),
-            'Total Planned Usage': plant_data['Full Month Plan'].sum(),
-            'Average Daily Usage': plant_data['Daily Average'].sum(),
-            'Average Deviation %': plant_data['Deviation %'].mean(),
-            'Projected Month End Total': plant_data['Projected Month End'].sum(),
-            'Overall Month End Variance %': ((plant_data['Projected Month End'].sum() - 
-                                           plant_data['Full Month Plan'].sum()) / 
-                                          plant_data['Full Month Plan'].sum() * 100)
-        }
-        plant_stats.append(stats)
-
-    plant_stats_df = pd.DataFrame(plant_stats)
-
-    # Write Plant Statistics sheet
-    plant_stats_df.to_excel(writer, sheet_name='Plant Statistics', index=False)
-    plant_stats_sheet = writer.sheets['Plant Statistics']
+    # Create the main sheet
+    worksheet = workbook.add_worksheet('Dashboard')
     
-    # Format Plant Statistics sheet
-    for col_num, value in enumerate(plant_stats_df.columns.values):
-        plant_stats_sheet.write(0, col_num, value, header_format)
-    
-    plant_stats_sheet.set_column('A:A', 20)  # Plant name
-    plant_stats_sheet.set_column('B:H', 15)  # Numeric columns
-    
-    # Set print settings for Plant Statistics
-    plant_stats_sheet.set_paper(9)  # A4 paper
-    plant_stats_sheet.set_portrait()
-    plant_stats_sheet.repeat_rows(0)  # Repeat header row
-    plant_stats_sheet.set_print_scale(90)
-    
-    # Write main Deviation Report
-    report_df.to_excel(writer, sheet_name='Deviation Report', index=False)
-    worksheet = writer.sheets['Deviation Report']
+    # Add VBA code for PDF export and plant filtering
+    vba_code = '''
+Sub ExportToPDF()
+    ActiveSheet.ExportAsFixedFormat Type:=xlTypePDF, _
+        Filename:=ThisWorkbook.Path & "\Report_" & Format(Now(), "yyyymmdd_hhmmss") & ".pdf", _
+        Quality:=xlQualityStandard, _
+        IncludeDocProperties:=True, _
+        IgnorePrintAreas:=False, _
+        OpenAfterPublish:=True
+End Sub
 
-    # Format Deviation Report
-    for col_num, value in enumerate(report_df.columns.values):
-        worksheet.write(0, col_num, value, header_format)
+Sub ShowPlantData()
+    Dim pt As PivotTable
+    Dim pf As PivotField
+    Dim selectedPlant As String
+    
+    Set pt = ActiveSheet.PivotTables(1)
+    Set pf = pt.PivotFields("Plant Name")
+    
+    selectedPlant = Application.Caller.Text
+    
+    ' Clear all filters
+    pf.ClearAllFilters
+    
+    ' Apply filter for selected plant
+    pf.CurrentPage = selectedPlant
+End Sub
+'''
 
-    # Set column widths
-    worksheet.set_column('A:B', 20)  # Plant and Bag names
-    worksheet.set_column('C:K', 15)  # Numeric columns
+    # Add the VBA module
+    workbook.add_vba_project('./vbaProject.bin')
+    
+    # Create pivot table
+    pivot_cache = workbook.add_pivot_cache(df=report_df)
+    
+    # Add pivot table starting at B3
+    worksheet.add_table('B3:L3', {'data': report_df.values.tolist(),
+                                 'columns': report_df.columns.tolist()})
 
-    # Set print settings for Deviation Report
+    # Add plant buttons
+    plants = sorted(report_df['Plant Name'].unique())
+    for i, plant in enumerate(plants):
+        worksheet.insert_button(f'A{i+3}', {'macro': 'ShowPlantData',
+                                           'caption': plant,
+                                           'width': 120,
+                                           'height': 30})
+
+    # Add PDF export button
+    worksheet.insert_button('A1', {'macro': 'ExportToPDF',
+                                  'caption': 'Export to PDF',
+                                  'width': 120,
+                                  'height': 30})
+
+    # Set print settings
     worksheet.set_paper(9)  # A4 paper
     worksheet.set_portrait()
-    worksheet.repeat_rows(0)  # Repeat header row
+    worksheet.repeat_rows(0, 2)  # Repeat header rows
     worksheet.set_print_scale(90)
-    worksheet.set_h_pagebreaks([])
-    worksheet.set_v_pagebreaks([])
     
-    # Add filters
-    worksheet.autofilter(0, 0, len(report_df), len(report_df.columns)-1)
-
-    # Create summary pivot sheet
-    pivot_df = report_df.pivot_table(
-        values=['Actual Usage (Till 9th Feb)', 'Projected Usage (Till 9th Feb)', 
-                'Full Month Plan', 'Deviation %'],
-        index=['Plant Name'],
-        aggfunc={
-            'Actual Usage (Till 9th Feb)': 'sum',
-            'Projected Usage (Till 9th Feb)': 'sum',
-            'Full Month Plan': 'sum',
-            'Deviation %': 'mean'
-        }
-    )
+    # Format columns
+    worksheet.set_column('A:A', 15)  # Buttons column
+    worksheet.set_column('B:C', 20)  # Plant and Bag names
+    worksheet.set_column('D:L', 15)  # Numeric columns
     
-    pivot_df.to_excel(writer, sheet_name='Summary Pivot')
-    pivot_sheet = writer.sheets['Summary Pivot']
+    # Add title
+    title_format = workbook.add_format({
+        'bold': True,
+        'font_size': 14,
+        'align': 'center',
+        'valign': 'vcenter'
+    })
+    worksheet.merge_range('B1:L1', 'Cement Plant Bag Usage Report', title_format)
     
-    # Format pivot sheet
-    pivot_sheet.set_column('A:A', 20)
-    pivot_sheet.set_column('B:E', 15)
+    # Add headers with format
+    for col, header in enumerate(report_df.columns):
+        worksheet.write(2, col + 1, header, header_format)
     
-    # Set print settings for pivot sheet
-    pivot_sheet.set_paper(9)
-    pivot_sheet.set_portrait()
-    pivot_sheet.repeat_rows(0)
-    pivot_sheet.set_print_scale(90)
+    # Add autofilter
+    worksheet.autofilter(2, 1, len(report_df) + 2, len(report_df.columns))
     
     writer.close()
+
+    # Create the vbaProject.bin file
+    with open('vbaProject.bin', 'w') as f:
+        f.write(vba_code)
+    
     return output_file
 def format_date_for_display(date):
     if isinstance(date, str):
