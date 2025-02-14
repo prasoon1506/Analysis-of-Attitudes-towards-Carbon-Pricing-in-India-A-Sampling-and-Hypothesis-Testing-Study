@@ -8,15 +8,32 @@ from datetime import datetime
 def generate_deviation_report(df):
     print("Available columns:", df.columns.tolist())
     
-    # Find February 2025 column
-    feb_col = next((col for col in df.columns if isinstance(col, str) and pd.to_datetime(col, errors='coerce').strftime('%Y-%m') == '2025-02'), None)
+    # Find February 2025 column - improved date handling
+    feb_col = None
+    for col in df.columns:
+        try:
+            if isinstance(col, str):
+                date = pd.to_datetime(col)
+                if date.month == 2 and date.year == 2025:
+                    feb_col = col
+                    break
+        except (ValueError, TypeError):
+            continue
+            
     if feb_col is None:
         raise ValueError("Could not find February 2025 column in the data")
     
     # Find planned usage column
-    planned_col = next((col for col in df.columns if str(col).replace('.0', '') == '1'), None)
+    planned_col = None
+    for col in df.columns:
+        if str(col).replace('.0', '') == '1':
+            planned_col = col
+            break
+            
     if planned_col is None:
         raise ValueError(f"Could not find planned usage column. Available columns: {df.columns.tolist()}")
+    
+    print(f"Using columns - February: {feb_col}, Planned: {planned_col}")
     
     # Calculate plant level statistics
     plant_stats = {}
