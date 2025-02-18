@@ -48,7 +48,7 @@ def generate_deviation_report(df):
         actual = plant_data[feb_col].fillna(0).sum()
         planned = plant_data[planned_col].fillna(0).sum()
         bags = len(plant_data)
-        plant_stats[plant] = {'Total_Bags': bags,'Total_Actual_Usage': actual,'Total_Planned_Usage': planned,'Average_Deviation': ((actual - (9/28) * planned) / ((9/28) * planned) * 100) if planned != 0 else 0}
+        plant_stats[plant] = {'Total_Bags': bags,'Total_Actual_Usage': actual,'Total_Planned_Usage': planned,'Average_Deviation': ((actual - (16/28) * planned) / ((16/28) * planned) * 100) if planned != 0 else 0}
         total_bags += bags
         total_actual += actual
         total_planned += planned
@@ -58,9 +58,9 @@ def generate_deviation_report(df):
         bag_name = row['MAKTX']
         actual_usage = safe_int(row[feb_col])
         planned_usage = safe_int(row[planned_col])
-        projected_till_9th = int((9/28) * planned_usage)
-        deviation_percent = int(((actual_usage - projected_till_9th) / projected_till_9th) * 100) if projected_till_9th != 0 else 0
-        report_data.append({'Plant Name': plant_name,'Bag Name': bag_name,'Actual Usage (Till 9th Feb)': actual_usage,'Projected Usage (Till 9th Feb)': projected_till_9th,'Full Month Plan': planned_usage,'Deviation %': deviation_percent,'Status': 'High' if abs(deviation_percent) > 20 else 'Medium' if abs(deviation_percent) > 10 else 'Low'})
+        projected_till_16th = int((16/28) * planned_usage)
+        deviation_percent = int(((actual_usage - projected_till_16th) / projected_till_16th) * 100) if projected_till_16th != 0 else 0
+        report_data.append({'Plant Name': plant_name,'Bag Name': bag_name,'Actual Usage (Till 16th Feb)': actual_usage,'Projected Usage (Till 16th Feb)': projected_till_16th,'Full Month Plan': planned_usage,'Deviation %': deviation_percent,'Status': 'High' if abs(deviation_percent) > 20 else 'Medium' if abs(deviation_percent) > 10 else 'Low'})
     report_df = pd.DataFrame(report_data)
     output_file = 'consumption_deviation_report.xlsx'
     writer = pd.ExcelWriter(output_file, engine='xlsxwriter')
@@ -82,7 +82,7 @@ def generate_deviation_report(df):
     worksheet.set_footer('&L&D &T&C&P of &N&R&F')
     worksheet.merge_range('A1:G1', 'BAG CONSUMPTION DEVIATION REPORT', title_format)
     worksheet.merge_range('A2:G2', f'Report Generated on: {datetime.now().strftime("%d-%b-%Y %H:%M:%S")}', subtitle_format)
-    worksheet.merge_range('A3:G3', f'Period: 1st Feb 2025 to 9th Feb 2025', subtitle_format)
+    worksheet.merge_range('A3:G3', f'Period: 1st Feb 2025 to 16th Feb 2025', subtitle_format)
     row = 5
     worksheet.merge_range(row, 0, row, 6, 'COMPANY LEVEL SUMMARY', section_format)
     row += 1
@@ -90,7 +90,7 @@ def generate_deviation_report(df):
     for col, header in enumerate(summary_headers):
         worksheet.write(row, col, header, header_format)
     row += 1
-    overall_deviation = ((total_actual - (9/28) * total_planned) / ((9/28) * total_planned) * 100) if total_planned != 0 else 0
+    overall_deviation = ((total_actual - (16/28) * total_planned) / ((16/28) * total_planned) * 100) if total_planned != 0 else 0
     worksheet.write(row, 0, len(plant_stats), number_format)
     worksheet.write(row, 1, total_bags, number_format)
     worksheet.write(row, 2, safe_int(total_actual), number_format)
@@ -126,10 +126,10 @@ def generate_deviation_report(df):
                     worksheet.write(r, c, safe_int(value), number_format)
             else:
                 worksheet.write(r, c, value if pd.notna(value) else '', cell_format)
-    worksheet.set_column('A:A', 25)  # Plant Name
-    worksheet.set_column('B:B', 35)  # Bag Name
-    worksheet.set_column('C:F', 18)  # Numeric columns
-    worksheet.set_column('G:G', 12)  # Status
+    worksheet.set_column('A:A', 25)  
+    worksheet.set_column('B:B', 35)  
+    worksheet.set_column('C:F', 18)  
+    worksheet.set_column('G:G', 12)  
     worksheet.autofilter(row, 0, len(report_df) + row, len(report_df.columns) - 1)
     writer.close()
     return output_file
@@ -169,7 +169,7 @@ def main():
              output_file = generate_deviation_report(df)
              with open(output_file, 'rb') as f:
                 excel_data = f.read()
-             st.sidebar.download_button(label="📥 Download Deviation Report",data=excel_data,file_name="consumption_deviation_report.xlsx",mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+             st.sidebar.download_button(label="📥 Download Deviation Report",data=excel_data,file_name="Bag_Consumption_Report.xlsx",mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
              st.sidebar.success("Report generated successfully!")
             with st.sidebar:
                 st.header("🎯 Filters")
@@ -219,12 +219,8 @@ def main():
                     fig.add_annotation(x="Jan 2025",y=plot_data['Usage'].max() * 1.15,text="Brand Rejuvenation<br>(15th Jan 2025)",showarrow=True,arrowhead=1,ax=0,ay=-40,font=dict(size=12, color="#E74C3C"),bgcolor="white",bordercolor="#E74C3C",borderwidth=2)
                     if any(plot_data['Month'] == 'Feb 2025'):
                         feb_data = plot_data[plot_data['Month'] == 'Feb 2025']
-                        fig.add_annotation(x="Feb 2025",y=feb_data['Usage'].iloc[0],text="Till 9th Feb",showarrow=True,arrowhead=1,ax=0,ay=-40,font=dict(size=12),bgcolor="white",bordercolor="#2E86C1",borderwidth=2)
-                    fig.update_layout(
-                        title={'text': f'Monthly Usage Trend for {selected_bag}<br><sup>{selected_plant}</sup>','y':0.95,'x':0.5,'xanchor': 'center','yanchor': 'top','font': dict(size=20)},xaxis_title='Month',yaxis_title='Usage',legend_title='Type',hovermode='x unified',plot_bgcolor='white',paper_bgcolor='white',showlegend=True,
-                        xaxis=dict(showgrid=True,gridcolor='rgba(0,0,0,0.1)',tickangle=45),
-                        yaxis=dict(showgrid=True,gridcolor='rgba(0,0,0,0.1)',zeroline=True,zerolinecolor='rgba(0,0,0,0.2)'),
-                        legend=dict(yanchor="top",y=0.99,xanchor="left",x=0.01,bgcolor='rgba(255, 255, 255, 0.8)'))
+                        fig.add_annotation(x="Feb 2025",y=feb_data['Usage'].iloc[0],text="Till 16th Feb",showarrow=True,arrowhead=1,ax=0,ay=-40,font=dict(size=12),bgcolor="white",bordercolor="#2E86C1",borderwidth=2)
+                    fig.update_layout(title={'text': f'Monthly Usage Trend for {selected_bag}<br><sup>{selected_plant}</sup>','y':0.95,'x':0.5,'xanchor': 'center','yanchor': 'top','font': dict(size=20)},xaxis_title='Month',yaxis_title='Usage',legend_title='Type',hovermode='x unified',plot_bgcolor='white',paper_bgcolor='white',showlegend=True,xaxis=dict(showgrid=True,gridcolor='rgba(0,0,0,0.1)',tickangle=45),yaxis=dict(showgrid=True,gridcolor='rgba(0,0,0,0.1)',zeroline=True,zerolinecolor='rgba(0,0,0,0.2)'),legend=dict(yanchor="top",y=0.99,xanchor="left",x=0.01,bgcolor='rgba(255, 255, 255, 0.8)'))
                     st.plotly_chart(fig, use_container_width=True)
                 with tab2:
                     yearly_comparison = create_year_over_year_comparison(all_data_df)
