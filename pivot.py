@@ -1,249 +1,195 @@
 import pandas as pd
+import openpyxl
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.worksheet.datavalidation import DataValidation
+from openpyxl.utils import get_column_letter
 import streamlit as st
-from io import BytesIO
-import xlsxwriter
-import re
-import traceback
+import io
+import base64
 
-def create_excel_with_dashboard(uploaded_file):
-    """Create an Excel file with a dashboard and data view functionality without macros"""
+def create_download_link(file, filename):
+    """Generate a download link for a file"""
+    b64 = base64.b64encode(file).decode()
+    href = f'<a href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64}" download="{filename}">Download Excel file</a>'
+    return href
+
+def add_data_preview(sheet, data_df, start_row):
+    """Add a preview of dataframe data to the sheet"""
+    # Add headers
+    for col_idx, col_name in enumerate(data_df.columns, 1):
+        cell = sheet.cell(row=start_row, column=col_idx, value=col_name)
+        cell.font = Font(bold=True)
+        cell.fill = PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid")
     
-    try:
-        # Read the uploaded Excel file
-        xls = pd.ExcelFile(uploaded_file)
-        sheet_names = xls.sheet_names
-        
-        # Create a new Excel workbook
-        output = BytesIO()
-        workbook = xlsxwriter.Workbook(output)
-        
-        # Define cell formats
-        title_format = workbook.add_format({
-            'bold': True,
-            'font_size': 18,
-            'align': 'center',
-            'valign': 'vcenter',
-            'border': 0
-        })
-        
-        subtitle_format = workbook.add_format({
-            'font_size': 12,
-            'align': 'center',
-            'valign': 'vcenter',
-            'border': 0
-        })
-        
-        button_format = workbook.add_format({
-            'bold': True,
-            'font_size': 12,
-            'align': 'center',
-            'valign': 'vcenter',
-            'bg_color': '#D8E4BC',
-            'border': 1,
-            'border_color': '#538DD5'
-        })
-        
-        header_format = workbook.add_format({
-            'bold': True,
-            'font_size': 11,
-            'align': 'center',
-            'valign': 'vcenter',
-            'bg_color': '#C5D9F1',
-            'border': 1
-        })
-        
-        # Create Dashboard sheet
-        dashboard = workbook.add_worksheet('Dashboard')
-        
-        # Set up the dashboard layout
-        dashboard.set_column('A:A', 15)  # Set column width for Column A
-        dashboard.set_column('B:B', 25)  # Set column width for Column B
-        dashboard.set_column('C:C', 15)  # Set column width for Column C
-        dashboard.set_column('D:I', 15)  # Set column width for data display area
-        
-        # Add title and instructions
-        dashboard.merge_range('B2:H2', 'EXCEL SHEET NAVIGATOR', title_format)
-        dashboard.merge_range('B3:H3', 'Select a sheet to view its data below', subtitle_format)
-        
-        # Add sheet selection dropdown
-        dashboard.write('B5', 'Select Sheet:', subtitle_format)
-        
-        # Create dropdown for sheet selection - sanitize sheet names to prevent formula injection
-        dropdown_range = "Dashboard!$C$5"
-        # Use a list comprehension to safely format sheet names
-        safe_sheet_names = [name.replace('"', '""') for name in sheet_names]
-        sheet_list = ','.join([f'"{name}"' for name in safe_sheet_names])
-        dashboard.data_validation(dropdown_range, {
-            'validate': 'list',
-            'source': f"={sheet_list}",
-            'input_title': 'Select a sheet:',
-            'input_message': 'Choose a sheet to display its data below'
-        })
-        
-        # Write the first sheet name as default value
-        if sheet_names:
-            dashboard.write('C5', sheet_names[0])
-        
-        # Add buttons for each sheet
-        row = 7
-        for i, sheet_name in enumerate(sheet_names):
-            # Make button-like cells
-            dashboard.write(row, 1, sheet_name, button_format)
-            
-            # Add formula to update selected sheet when clicked
-            dashboard.write_formula(row, 2, f'=IF(B{row+1}=C5,"✓","")')
-            
-            row += 1
-        
-        # Add data display area title
-        dashboard.merge_range('B10:H10', 'DATA PREVIEW', title_format)
-        dashboard.write('B11', 'Showing data from sheet:', subtitle_format)
-        dashboard.write_formula('C11', '=C5')  # Display selected sheet name
-        
-        # Data area starts at row 13
-        data_start_row = 13
-        
-        # Create other sheets and read data
-        max_cols = 0
-        sheet_data = {}
-        
-        for sheet_name in sheet_names:
-            # Read data from original sheet
-            df = pd.read_excel(uploaded_file, sheet_name=sheet_name)
-            
-            # Store data for reference
-            sheet_data[sheet_name] = {
-                'columns': df.columns.tolist(),
-                'data': df.values.tolist(),
-                'row_count': len(df),
-                'col_count': len(df.columns)
-            }
-            
-            # Keep track of maximum columns
-            max_cols = max(max_cols, len(df.columns))
-            
-            # Create the sheet - sanitize sheet name
-            safe_sheet_name = re.sub(r'[\\*?:/\[\]]', '_', sheet_name)  # Replace illegal Excel chars
-            worksheet = workbook.add_worksheet(safe_sheet_name)
-            
-            # Add headers
-            for col_idx, col_name in enumerate(df.columns):
-                worksheet.write(0, col_idx, col_name, header_format)
-            
-            # Add data
-            for row_idx, row_data in enumerate(df.values):
-                for col_idx, value in enumerate(row_data):
-                    worksheet.write(row_idx + 1, col_idx, value)
-        
-        # Display the first 50 rows of data using INDIRECT formulas
-        # This allows the dashboard to dynamically pull data from the selected sheet
-        
-        # Add headers for data display section
-        for i, sheet_name in enumerate(sheet_names):
-            # Get columns for this sheet
-            columns = sheet_data[sheet_name]['columns']
-            safe_sheet_name = re.sub(r'[\\*?:/\[\]]', '_', sheet_name)
-            
-            # For each column, create a conditional formula that will show this header only when the sheet is selected
-            for col_idx, col_name in enumerate(columns):
-                try:
-                    col_letter = xlsxwriter.utility.xl_col_to_name(col_idx)
-                    formula = f'=IF(C5="{sheet_name}",INDIRECT("\'{safe_sheet_name}\'!{col_letter}1"),"")'
-                    dashboard.write_formula(data_start_row - 1, col_idx + 1, formula, header_format)
-                except Exception as e:
-                    # If there's an error with column names, use a simpler approach
-                    st.error(f"Error with column {col_idx} in sheet {sheet_name}: {str(e)}")
-                    dashboard.write_formula(data_start_row - 1, col_idx + 1, f'=IF(C5="{sheet_name}","Column {col_idx+1}","")', header_format)
-        
-        # Add data rows (up to 50)
-        if sheet_names:
-            max_rows = min(50, max(sheet_data[name]['row_count'] for name in sheet_names))
-            
-            for row_idx in range(max_rows):
-                for i, sheet_name in enumerate(sheet_names):
-                    # Only create formulas for sheets that have this many rows
-                    if row_idx < sheet_data[sheet_name]['row_count']:
-                        safe_sheet_name = re.sub(r'[\\*?:/\[\]]', '_', sheet_name)
-                        # For each column in this sheet
-                        for col_idx in range(sheet_data[sheet_name]['col_count']):
-                            try:
-                                # Create a conditional formula that will show this cell only when the sheet is selected
-                                col_letter = xlsxwriter.utility.xl_col_to_name(col_idx)
-                                cell_address = f"{col_letter}{row_idx + 2}"
-                                formula = f'=IF(C5="{sheet_name}",INDIRECT("\'{safe_sheet_name}\'!{cell_address}"),"")'
-                                dashboard.write_formula(data_start_row + row_idx, col_idx + 1, formula)
-                            except Exception as e:
-                                # Handle any errors with specific cells
-                                st.error(f"Error with cell at row {row_idx}, column {col_idx} in sheet {sheet_name}: {str(e)}")
-                                dashboard.write(data_start_row + row_idx, col_idx + 1, "ERROR")
-        
-        # Add a note about limitations
-        dashboard.merge_range(f'B{data_start_row + max_rows + 2}:H{data_start_row + max_rows + 2}', 
-                            'Note: Dashboard shows up to 50 rows. Open the specific sheet for complete data.', 
-                            subtitle_format)
-        
-        # Finalize the workbook
-        workbook.close()
-        output.seek(0)
-        
-        return output
-        
-    except Exception as e:
-        # Capture the full traceback
-        error_details = traceback.format_exc()
-        st.error(f"An error occurred: {str(e)}\n\nDetails:\n{error_details}")
-        # Create a simple error workbook
-        output = BytesIO()
-        error_workbook = xlsxwriter.Workbook(output)
-        error_sheet = error_workbook.add_worksheet('Error')
-        error_sheet.write(0, 0, f"Error: {str(e)}")
-        error_sheet.write(1, 0, "Please check your Excel file format and try again.")
-        error_workbook.close()
-        output.seek(0)
-        return output
+    # Add data (limit to first 10 rows for preview)
+    preview_data = data_df.head(10)
+    for row_idx, row_data in enumerate(preview_data.values, 1):
+        for col_idx, value in enumerate(row_data, 1):
+            sheet.cell(row=start_row + row_idx, column=col_idx, value=value)
 
-# Streamlit app UI
-st.title("Excel Dashboard Creator")
-st.write("Upload your Excel file to create a dashboard with sheet selection functionality")
+def create_navigator_excel(uploaded_file):
+    """Create a new Excel with navigation sheet and data previews"""
+    
+    # Read the uploaded Excel file
+    file_data = io.BytesIO(uploaded_file.getvalue())
+    
+    # Load existing workbook
+    wb = openpyxl.load_workbook(file_data)
+    sheet_names = wb.sheetnames
+    
+    # Read sheet data for previews
+    excel_data = pd.read_excel(file_data, sheet_name=None)
+    
+    # Create a new sheet at the beginning
+    navigator_sheet = wb.create_sheet("Navigator", 0)
+    
+    # Set up the Navigator sheet
+    navigator_sheet['A1'] = "SHEET NAVIGATOR"
+    navigator_sheet['A1'].font = Font(size=16, bold=True)
+    navigator_sheet.merge_cells('A1:E1')
+    navigator_sheet['A1'].alignment = Alignment(horizontal='center')
+    
+    # Add instructions
+    navigator_sheet['A3'] = "Select a sheet to view:"
+    navigator_sheet['A3'].font = Font(bold=True)
+    
+    # Create dropdown selection cell
+    sheet_list_cell = 'C3'
+    navigator_sheet[sheet_list_cell] = sheet_names[1] if len(sheet_names) > 1 else ""
+    
+    # Create data validation (dropdown) for sheet selection
+    sheet_list_str = ','.join([f'"{name}"' for name in sheet_names if name != "Navigator"])
+    dv = DataValidation(type="list", formula1=f"=\"{sheet_list_str}\"", allow_blank=False)
+    navigator_sheet.add_data_validation(dv)
+    dv.add(sheet_list_cell)
+    
+    # Add a button style
+    navigator_sheet['E3'] = "GO"
+    button_cell = navigator_sheet['E3']
+    button_cell.font = Font(color="FFFFFF", bold=True)
+    button_cell.fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+    button_cell.alignment = Alignment(horizontal='center')
+    button_cell.border = Border(
+        left=Side(style='thin'), 
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+    
+    # Set column widths
+    for col in range(1, 6):
+        navigator_sheet.column_dimensions[get_column_letter(col)].width = 15
+    
+    # Add sheet buttons for quick navigation
+    row = 5
+    navigator_sheet.cell(row=row, column=1, value="Quick Navigation:")
+    navigator_sheet.cell(row=row, column=1).font = Font(bold=True)
+    
+    # Add buttons for each sheet
+    row += 1
+    col = 1
+    button_fill = PatternFill(start_color="5B9BD5", end_color="5B9BD5", fill_type="solid")
+    button_font = Font(color="FFFFFF", bold=True)
+    
+    for sheet_name in sheet_names:
+        if sheet_name != "Navigator":
+            cell = navigator_sheet.cell(row=row, column=col, value=sheet_name)
+            cell.fill = button_fill
+            cell.font = button_font
+            cell.alignment = Alignment(horizontal='center')
+            cell.border = Border(
+                left=Side(style='thin'), 
+                right=Side(style='thin'),
+                top=Side(style='thin'),
+                bottom=Side(style='thin')
+            )
+            cell.hyperlink = f"#{sheet_name}!A1"
+            
+            col += 1
+            if col > 5:
+                col = 1
+                row += 1
+    
+    # Add section for data preview
+    preview_row = row + 2
+    navigator_sheet.cell(row=preview_row, column=1, value="DATA PREVIEW:")
+    navigator_sheet.cell(row=preview_row, column=1).font = Font(size=12, bold=True)
+    navigator_sheet.merge_cells(f'A{preview_row}:E{preview_row}')
+    
+    # Get first sheet data for initial preview
+    if len(sheet_names) > 1:
+        first_data_sheet = sheet_names[1] if sheet_names[0] == "Navigator" else sheet_names[0]
+        if first_data_sheet in excel_data:
+            preview_df = excel_data[first_data_sheet]
+            add_data_preview(navigator_sheet, preview_df, preview_row + 2)
+    
+    # Hide all sheets except Navigator
+    for sheet_name in sheet_names:
+        if sheet_name != "Navigator":
+            wb[sheet_name].sheet_state = 'hidden'
+    
+    # Save to a BytesIO object for download
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+    
+    return output
 
-uploaded_file = st.file_uploader("Choose an Excel file", type=['xlsx', 'xls'])
+# Create Streamlit app
+def main():
+    st.title("Excel Sheet Navigator Creator")
+    
+    st.write("""
+    ## Upload your Excel file
+    
+    This tool will create a new Excel file with:
+    - A Navigator sheet at the beginning
+    - A dropdown menu to select sheets
+    - Quick navigation buttons for each sheet
+    - A data preview of the selected sheet
+    - All other sheets initially hidden
+    
+    *No VBA or macros are used in this solution*
+    """)
+    
+    uploaded_file = st.file_uploader("Choose an Excel file", type=["xlsx", "xls"])
+    
+    if uploaded_file is not None:
+        # Display file info
+        file_details = {"Filename": uploaded_file.name, "File size": f"{uploaded_file.size/1024:.1f} KB"}
+        st.write(file_details)
+        
+        try:
+            # Check sheet count
+            xls = pd.ExcelFile(uploaded_file)
+            sheet_count = len(xls.sheet_names)
+            st.write(f"Found {sheet_count} sheets in the uploaded file.")
+            
+            # Process the file
+            with st.spinner("Creating Navigator Excel file..."):
+                excel_file = create_navigator_excel(uploaded_file)
+            
+            # Create download button
+            st.markdown(
+                create_download_link(excel_file.getvalue(), f"Navigator_{uploaded_file.name}"),
+                unsafe_allow_html=True
+            )
+            st.success("✅ Your Excel file with navigation has been created!")
+            
+            st.write("""
+            ### Usage Instructions:
+            1. Download the Excel file
+            2. Open it in Excel
+            3. On the Navigator sheet:
+               - Use the dropdown to select a sheet
+               - Click on sheet buttons for direct navigation
+               - View data preview of selected sheets
+            4. When you navigate to a sheet, it will become visible while others remain hidden
+            """)
+            
+        except Exception as e:
+            st.error(f"An error occurred: {str(e)}")
+            st.error("Please make sure your Excel file is not corrupted and try again.")
 
-if uploaded_file is not None:
-    try:
-        st.write("Processing your file...")
-        
-        # Create the dashboard Excel file
-        output = create_excel_with_dashboard(uploaded_file)
-        
-        # Provide download button
-        st.download_button(
-            label="Download Excel with Dashboard",
-            data=output,
-            file_name="dashboard_" + uploaded_file.name,
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
-        
-        st.success("Dashboard created successfully!")
-        
-        st.markdown("""
-        ### Instructions:
-        
-        1. Download the Excel file using the button above
-        2. Open the file in Excel
-        3. In the Dashboard sheet, you can:
-           - Use the dropdown to select a sheet
-           - Click on any sheet name in the list of buttons
-           - View data from the selected sheet directly in the dashboard
-        
-        The data preview shows up to 50 rows from each sheet. For complete data, you can navigate to the individual sheets.
-        
-        **No macros required!** This solution uses Excel's built-in formulas (INDIRECT and IF) to dynamically display data from different sheets.
-        
-        **How it works:** 
-        - When you select a sheet from the dropdown, the formulas update to show that sheet's data
-        - The buttons also update the dropdown when clicked
-        - The actual data sheets remain accessible for full data viewing
-        """)
-    except Exception as e:
-        st.error(f"An unexpected error occurred: {str(e)}")
-        st.info("Please check your Excel file and try again. Make sure it's a valid Excel file with at least one sheet.")
+if __name__ == "__main__":
+    main()
