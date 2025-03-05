@@ -4,6 +4,10 @@ from datetime import datetime
 import calendar
 import pandas as pd
 import base64
+from openpyxl.styles import (
+    Font, Alignment, Border, Side, 
+    PatternFill, NamedStyle, NumberFormat
+)
 
 def calculate_projected_usage(full_month_plan, input_date, month):
     """
@@ -55,10 +59,82 @@ def calculate_days_stock_available(current_stock, avg_consumption):
     Calculate days of stock available based on average consumption
     """
     try:
-        # Return 0 instead of infinity if avg_consumption is 0
         return current_stock / avg_consumption if avg_consumption != 0 else 0
     except (TypeError, ZeroDivisionError):
         return 0
+
+def style_excel(df, output_path):
+    """
+    Apply professional styling to the Excel file
+    """
+    # Create a Pandas Excel writer using openpyxl as the engine
+    writer = pd.ExcelWriter(output_path, engine='openpyxl')
+    
+    # Write the dataframe to the Excel file
+    df.to_excel(writer, index=False, sheet_name='Bag Report')
+    
+    # Get the workbook and worksheet
+    workbook = writer.book
+    worksheet = writer.sheets['Bag Report']
+    
+    # Define color palette
+    header_fill = PatternFill(start_color='1E4C7B', end_color='1E4C7B', fill_type='solid')
+    alternate_fill = PatternFill(start_color='F0F2F6', end_color='F0F2F6', fill_type='solid')
+    
+    # Define border style
+    border = Border(
+        left=Side(style='thin', color='4A90E2'),
+        right=Side(style='thin', color='4A90E2'),
+        top=Side(style='thin', color='4A90E2'),
+        bottom=Side(style='thin', color='4A90E2')
+    )
+    
+    # Style header
+    for cell in worksheet[1]:
+        cell.font = Font(bold=True, color='FFFFFF', name='Arial', size=12)
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+        cell.border = border
+    
+    # Adjust column widths and style data cells
+    for col in worksheet.columns:
+        max_length = 0
+        column = col[0].column_letter  # Get the column name
+        
+        for cell in col:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(cell.value)
+            except:
+                pass
+            
+            # Style data cells
+            if cell.row > 1:  # Skip header row
+                cell.alignment = Alignment(horizontal='center', vertical='center')
+                cell.border = border
+                
+                # Alternate row background
+                if cell.row % 2 == 0:
+                    cell.fill = alternate_fill
+    
+    # Adjust column widths
+    for col in worksheet.columns:
+        max_length = 0
+        column = col[0].column_letter
+        for cell in col:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        adjusted_width = (max_length + 2)
+        worksheet.column_dimensions[column].width = adjusted_width
+    
+    # Freeze top row
+    worksheet.freeze_panes = worksheet['A2']
+    
+    # Save the file
+    writer.close()
 
 def filter_and_rename_columns(input_file, merge_file, user_date):
     """
@@ -120,7 +196,7 @@ def filter_and_rename_columns(input_file, merge_file, user_date):
             header = [
                 "Material Description", 
                 "Code", 
-                "Unit of Issue", 
+                "Issue", 
                 "Opening Balance as on 01.03.2025", 
                 "Tomonth Receipt", 
                 f"Actual Usage (Till {user_date})", 
@@ -130,8 +206,8 @@ def filter_and_rename_columns(input_file, merge_file, user_date):
                 f"Actual Usage % (Till {user_date}) (Based on Planning)",
                 "Pro Rata Deviation",
                 "Average Consumption",
-                "No. of Days Stock Available (Based on TomonthReceipt)",
-                "No. of Days Stock Available (Based on Planning)"
+                "Days Stock (TomonthReceipt)",
+                "Days Stock (Planning)"
             ]
             continue
         
@@ -184,9 +260,13 @@ def filter_and_rename_columns(input_file, merge_file, user_date):
             days_stock_planning = 0
         new_row.append(int(days_stock_planning))
         
-        # Remove the first 9 letters (including space) from the Material Description column
+        # Remove the first 9 letters (including space) from the first two columns
         if isinstance(new_row[0], str) and len(new_row[0]) > 9:
             new_row[0] = new_row[0][9:]
+        
+        # Remove the first 9 letters (including space) from the third column (Issue)
+        if isinstance(new_row[2], str) and len(new_row[2]) > 9:
+            new_row[2] = new_row[2][9:]
         
         data_rows.append(new_row)
 
@@ -198,19 +278,21 @@ def get_download_link(df):
     """
     Create a download link for the DataFrame
     """
-    output = pd.ExcelWriter('output.xlsx', engine='openpyxl')
-    df.to_excel(output, index=False, sheet_name='Sheet1')
-    output.close()
+    output_path = 'bag_report.xlsx'
     
-    with open('output.xlsx', 'rb') as f:
+    # Style the Excel file
+    style_excel(df, output_path)
+    
+    # Read the file and create download link
+    with open(output_path, 'rb') as f:
         bytes = f.read()
     b64 = base64.b64encode(bytes).decode()
-    href = f'<a href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64}" download="bag_report.xlsx">Download Excel File</a>'
+    href = f'<a href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64}" download="bag_report.xlsx">Download Professional Excel Report</a>'
     return href
 
 def main():
     # Set page configuration
-    st.set_page_config(page_title="Bag Report", layout="wide")
+    st.set_page_config(page_title="Bag Report", layout="wide", page_icon="📊")
     
     # Custom CSS for professional styling
     st.markdown("""
@@ -219,48 +301,34 @@ def main():
         background-color: #f0f2f6;
     }
     .big-font {
-        font-size:20px !important;
+        font-size:24px !important;
         color: #1E4C7B;
         font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
     .sub-font {
-        font-size:16px !important;
+        font-size:18px !important;
         color: #4A90E2;
-    }
-    table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-    th {
-        background-color: #1E4C7B;
-        color: white;
-        font-weight: bold;
-        border: 1px solid #4A90E2;
-        padding: 8px;
-        text-align: left;
-    }
-    td {
-        border: 1px solid #4A90E2;
-        padding: 8px;
-        text-align: left;
+        font-style: italic;
     }
     </style>
     """, unsafe_allow_html=True)
 
     # Title and Introduction
-    st.markdown('<h1 style="color:#1E4C7B; text-align:center;">Bag Report</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 style="color:#1E4C7B; text-align:center; border-bottom: 3px solid #4A90E2; padding-bottom: 10px;">📊 Bag Consumption Report</h1>', unsafe_allow_html=True)
 
     # File Upload Section
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        input_file = st.file_uploader("Upload Input Excel File", type=['xlsx', 'xls'])
+        input_file = st.file_uploader("Upload Input Excel File", type=['xlsx', 'xls'], help="Select the input file for analysis")
     
     with col2:
-        merge_file = st.file_uploader("Upload Merge Excel File", type=['xlsx', 'xls'])
+        merge_file = st.file_uploader("Upload Merge Excel File", type=['xlsx', 'xls'], help="Select the merge file for additional data")
     
     with col3:
-        user_date = st.text_input("Enter Date (e.g., 04 Mar)", value="04 Mar")
+        user_date = st.text_input("Enter Date (e.g., 04 Mar)", value="04 Mar", help="Enter the date for report generation")
 
     # Process and Display Report
     if input_file and merge_file and user_date:
@@ -277,9 +345,8 @@ def main():
             
             # Create period and detailed title
             start_date = "01 Mar"
-            st.markdown(f'<p class="big-font">{user_date} Bag Report</p>', unsafe_allow_html=True)
-            st.markdown(f'<p class="sub-font">Period:- {start_date} to {user_date}</p>', unsafe_allow_html=True)
-            st.markdown('<p class="sub-font">Detailed Consumption Report</p>', unsafe_allow_html=True)
+            st.markdown(f'<p class="big-font">Consumption Analysis</p>', unsafe_allow_html=True)
+            st.markdown(f'<p class="sub-font">Period: {start_date} to {user_date}</p>', unsafe_allow_html=True)
             
             # Display DataFrame
             st.dataframe(df, use_container_width=True)
