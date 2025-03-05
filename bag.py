@@ -8,7 +8,145 @@ from openpyxl.styles import (
     Font, Alignment, Border, Side, 
     PatternFill, NamedStyle
 )
+import streamlit as st
+import openpyxl
+from datetime import datetime
+import calendar
+import pandas as pd
+import base64
+from openpyxl.styles import (
+    Font, Alignment, Border, Side, 
+    PatternFill, NamedStyle, Color
+)
+from openpyxl.formatting.rule import ColorScaleRule
+from openpyxl.utils import get_column_letter
 
+def style_excel(df, output_path):
+    """
+    Apply professional and aesthetic styling to the Excel file
+    """
+    # Create a Pandas Excel writer using openpyxl as the engine
+    writer = pd.ExcelWriter(output_path, engine='openpyxl')
+    
+    # Write the dataframe to the Excel file
+    df.to_excel(writer, index=False, sheet_name='Bag Consumption Report')
+    
+    # Get the workbook and worksheet
+    workbook = writer.book
+    worksheet = writer.sheets['Bag Consumption Report']
+    
+    # Sophisticated color palette
+    colors = {
+        'dark_blue': '1E4C7B',     # Deep navy blue
+        'light_blue': '4A90E2',    # Bright blue
+        'header_bg': '2C3E50',     # Dark grayish blue
+        'alternate_row': 'F0F8FF', # Alice Blue
+        'text_primary': '2C3E50',  # Dark text color
+        'text_secondary': '34495E' # Slightly lighter dark text
+    }
+    
+    # Define sophisticated border style
+    border = Border(
+        left=Side(style='thin', color=Color(rgb=colors['light_blue'])),
+        right=Side(style='thin', color=Color(rgb=colors['light_blue'])),
+        top=Side(style='thin', color=Color(rgb=colors['light_blue'])),
+        bottom=Side(style='thin', color=Color(rgb=colors['light_blue']))
+    )
+    
+    # Header styling
+    header_fill = PatternFill(
+        start_color=colors['header_bg'], 
+        end_color=colors['header_bg'], 
+        fill_type='solid'
+    )
+    
+    # Alternate row background
+    alternate_fill = PatternFill(
+        start_color=colors['alternate_row'], 
+        end_color=colors['alternate_row'], 
+        fill_type='solid'
+    )
+    
+    # Style header row
+    for cell in worksheet[1]:
+        cell.font = Font(
+            bold=True, 
+            color='FFFFFF', 
+            name='Calibri', 
+            size=12
+        )
+        cell.fill = header_fill
+        cell.alignment = Alignment(
+            horizontal='center', 
+            vertical='center', 
+            wrap_text=True
+        )
+        cell.border = border
+    
+    # Style data cells
+    for row in worksheet.iter_rows(min_row=2):
+        for cell in row:
+            # Center align all cells
+            cell.alignment = Alignment(
+                horizontal='center', 
+                vertical='center', 
+                wrap_text=True
+            )
+            cell.border = border
+            
+            # Alternate row background
+            if cell.row % 2 == 0:
+                cell.fill = alternate_fill
+    
+    # Conditional formatting for numeric columns
+    numeric_columns = [
+        'Actual Usage %', 
+        'Pro Rata Deviation', 
+        'Average Consumption', 
+        'Days Stock'
+    ]
+    
+    # Add color scale rules to highlight performance
+    for col_name in numeric_columns:
+        col_idx = df.columns.get_loc(col_name) + 1
+        col_letter = get_column_letter(col_idx + 1)
+        
+        color_scale_rule = ColorScaleRule(
+            start_type='min', 
+            start_color='FF0000',  # Red
+            end_type='max', 
+            end_color='00FF00'     # Green
+        )
+        worksheet.conditional_formatting.add(
+            f'{col_letter}2:{col_letter}{len(df)+1}', 
+            color_scale_rule
+        )
+    
+    # Adjust column widths dynamically
+    for col in worksheet.columns:
+        max_length = 0
+        column = col[0].column_letter
+        
+        for cell in col:
+            try:
+                cell_length = len(str(cell.value))
+                if cell_length > max_length:
+                    max_length = cell_length
+            except:
+                pass
+        
+        # Add some extra padding
+        adjusted_width = min(max_length + 3, 50)  # Cap at 50 for very long content
+        worksheet.column_dimensions[column].width = adjusted_width
+    
+    # Freeze top row and first column
+    worksheet.freeze_panes = worksheet['B2']
+    
+    # Add a title to the worksheet
+    worksheet.title = 'Bag Consumption Report'
+    
+    # Save the file
+    writer.close()
 def calculate_projected_usage(full_month_plan, input_date, month):
     """
     Calculate projected usage based on the input date and month
@@ -62,80 +200,6 @@ def calculate_days_stock_available(current_stock, avg_consumption):
         return current_stock / avg_consumption if avg_consumption != 0 else 0
     except (TypeError, ZeroDivisionError):
         return 0
-
-def style_excel(df, output_path):
-    """
-    Apply professional styling to the Excel file
-    """
-    # Create a Pandas Excel writer using openpyxl as the engine
-    writer = pd.ExcelWriter(output_path, engine='openpyxl')
-    
-    # Write the dataframe to the Excel file
-    df.to_excel(writer, index=False, sheet_name='Bag Report')
-    
-    # Get the workbook and worksheet
-    workbook = writer.book
-    worksheet = writer.sheets['Bag Report']
-    
-    # Define color palette
-    header_fill = PatternFill(start_color='1E4C7B', end_color='1E4C7B', fill_type='solid')
-    alternate_fill = PatternFill(start_color='F0F2F6', end_color='F0F2F6', fill_type='solid')
-    
-    # Define border style
-    border = Border(
-        left=Side(style='thin', color='4A90E2'),
-        right=Side(style='thin', color='4A90E2'),
-        top=Side(style='thin', color='4A90E2'),
-        bottom=Side(style='thin', color='4A90E2')
-    )
-    
-    # Style header
-    for cell in worksheet[1]:
-        cell.font = Font(bold=True, color='FFFFFF', name='Arial', size=12)
-        cell.fill = header_fill
-        cell.alignment = Alignment(horizontal='center', vertical='center')
-        cell.border = border
-    
-    # Adjust column widths and style data cells
-    for col in worksheet.columns:
-        max_length = 0
-        column = col[0].column_letter  # Get the column name
-        
-        for cell in col:
-            try:
-                if len(str(cell.value)) > max_length:
-                    max_length = len(cell.value)
-            except:
-                pass
-            
-            # Style data cells
-            if cell.row > 1:  # Skip header row
-                cell.alignment = Alignment(horizontal='center', vertical='center')
-                cell.border = border
-                
-                # Alternate row background
-                if cell.row % 2 == 0:
-                    cell.fill = alternate_fill
-    
-    # Adjust column widths
-    for col in worksheet.columns:
-        max_length = 0
-        column = col[0].column_letter
-        for cell in col:
-            try:
-                if len(str(cell.value)) > max_length:
-                    max_length = len(str(cell.value))
-            except:
-                pass
-        adjusted_width = (max_length + 2)
-        worksheet.column_dimensions[column].width = adjusted_width
-    
-    # Freeze top row
-    worksheet.freeze_panes = worksheet['A2']
-    
-    # Save the file
-    writer.close()
-
 def filter_and_rename_columns(input_file, merge_file, user_date):
     """
     Process Excel files and return a DataFrame with calculated columns
@@ -194,9 +258,9 @@ def filter_and_rename_columns(input_file, merge_file, user_date):
         # If first row (header), save the header
         if row_num == 1:
             header = [
-                "Material Description", 
-                "Code", 
-                "Issue", 
+                "Plant Name", 
+                "Brand Name", 
+                "Bag Name", 
                 "Opening Balance as on 01.03.2025", 
                 "Tomonth Receipt", 
                 f"Actual Usage (Till {user_date})", 
@@ -206,8 +270,8 @@ def filter_and_rename_columns(input_file, merge_file, user_date):
                 f"Actual Usage % (Till {user_date}) (Based on Planning)",
                 "Pro Rata Deviation",
                 "Average Consumption",
-                "Days Stock (TomonthReceipt)",
-                "Days Stock (Planning)"
+                "No. of Days Stock Left ( Based on TomonthReceipt)",
+                "No. of Days Stock Left (Based on Planning)"
             ]
             continue
         
