@@ -55,7 +55,8 @@ def calculate_days_stock_available(current_stock, avg_consumption):
     Calculate days of stock available based on average consumption
     """
     try:
-        return current_stock / avg_consumption if avg_consumption != 0 else float('inf')
+        # Return 0 instead of infinity if avg_consumption is 0
+        return current_stock / avg_consumption if avg_consumption != 0 else 0
     except (TypeError, ZeroDivisionError):
         return 0
 
@@ -167,7 +168,7 @@ def filter_and_rename_columns(input_file, merge_file, user_date):
         
         # Calculate Average Consumption
         average_consumption = calculate_average_consumption(actual_usage, user_date)
-        new_row.append(int(average_consumption))
+        new_row.append(int(average_consumption) if average_consumption is not None else 0)
         
         # Calculate Days Stock Available (Based on TomonthReceipt)
         days_stock_tomonth_receipt = calculate_days_stock_available(current_stock, average_consumption)
@@ -184,7 +185,7 @@ def filter_and_rename_columns(input_file, merge_file, user_date):
         new_row.append(int(days_stock_planning))
         
         # Remove the first 9 letters (including space) from the Material Description column
-        if len(new_row[0]) > 9:
+        if isinstance(new_row[0], str) and len(new_row[0]) > 9:
             new_row[0] = new_row[0][9:]
         
         data_rows.append(new_row)
