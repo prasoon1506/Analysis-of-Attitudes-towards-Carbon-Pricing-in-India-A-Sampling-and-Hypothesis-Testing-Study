@@ -21,6 +21,60 @@ from openpyxl.styles import (
 from openpyxl.formatting.rule import ColorScaleRule
 from openpyxl.utils import get_column_letter
 
+
+def calculate_projected_usage(full_month_plan, input_date, month):
+    """
+    Calculate projected usage based on the input date and month
+    """
+    _, total_days = calendar.monthrange(datetime.now().year, 
+        datetime.strptime(month, "%b").month)
+    
+    day = int(input_date.split()[0])
+    
+    projected_usage = (day / total_days) * full_month_plan
+    return projected_usage
+
+def calculate_actual_usage_percentage(actual_usage, full_month_plan):
+    """
+    Calculate actual usage percentage
+    """
+    try:
+        return (actual_usage / full_month_plan) * 100 if full_month_plan != 0 else 0
+    except (TypeError, ZeroDivisionError):
+        return 0
+
+def calculate_pro_rata_deviation(actual_usage_percentage, input_date, month):
+    """
+    Calculate pro-rata deviation
+    """
+    _, total_days = calendar.monthrange(datetime.now().year, 
+        datetime.strptime(month, "%b").month)
+    
+    day = int(input_date.split()[0])
+    
+    pro_rata_expectation = (day / total_days) * 100
+    
+    return actual_usage_percentage - pro_rata_expectation
+
+def calculate_average_consumption(actual_usage, input_date):
+    """
+    Calculate average daily consumption
+    """
+    day = int(input_date.split()[0])
+    
+    try:
+        return actual_usage / day if day != 0 else 0
+    except (TypeError, ZeroDivisionError):
+        return 0
+
+def calculate_days_stock_available(current_stock, avg_consumption):
+    """
+    Calculate days of stock available based on average consumption
+    """
+    try:
+        return current_stock / avg_consumption if avg_consumption != 0 else 0
+    except (TypeError, ZeroDivisionError):
+        return 0
 def style_excel(df, output_path):
     """
     Apply professional and aesthetic styling to the Excel file
@@ -147,59 +201,6 @@ def style_excel(df, output_path):
     
     # Save the file
     writer.close()
-def calculate_projected_usage(full_month_plan, input_date, month):
-    """
-    Calculate projected usage based on the input date and month
-    """
-    _, total_days = calendar.monthrange(datetime.now().year, 
-        datetime.strptime(month, "%b").month)
-    
-    day = int(input_date.split()[0])
-    
-    projected_usage = (day / total_days) * full_month_plan
-    return projected_usage
-
-def calculate_actual_usage_percentage(actual_usage, full_month_plan):
-    """
-    Calculate actual usage percentage
-    """
-    try:
-        return (actual_usage / full_month_plan) * 100 if full_month_plan != 0 else 0
-    except (TypeError, ZeroDivisionError):
-        return 0
-
-def calculate_pro_rata_deviation(actual_usage_percentage, input_date, month):
-    """
-    Calculate pro-rata deviation
-    """
-    _, total_days = calendar.monthrange(datetime.now().year, 
-        datetime.strptime(month, "%b").month)
-    
-    day = int(input_date.split()[0])
-    
-    pro_rata_expectation = (day / total_days) * 100
-    
-    return actual_usage_percentage - pro_rata_expectation
-
-def calculate_average_consumption(actual_usage, input_date):
-    """
-    Calculate average daily consumption
-    """
-    day = int(input_date.split()[0])
-    
-    try:
-        return actual_usage / day if day != 0 else 0
-    except (TypeError, ZeroDivisionError):
-        return 0
-
-def calculate_days_stock_available(current_stock, avg_consumption):
-    """
-    Calculate days of stock available based on average consumption
-    """
-    try:
-        return current_stock / avg_consumption if avg_consumption != 0 else 0
-    except (TypeError, ZeroDivisionError):
-        return 0
 def filter_and_rename_columns(input_file, merge_file, user_date):
     """
     Process Excel files and return a DataFrame with calculated columns
