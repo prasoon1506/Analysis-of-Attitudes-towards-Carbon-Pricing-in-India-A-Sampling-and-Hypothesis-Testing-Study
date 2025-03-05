@@ -6,7 +6,7 @@ import pandas as pd
 import base64
 from openpyxl.styles import (
     Font, Alignment, Border, Side, 
-    PatternFill, NamedStyle, NumberFormat
+    PatternFill, NamedStyle
 )
 
 def calculate_projected_usage(full_month_plan, input_date, month):
