@@ -153,28 +153,6 @@ def style_excel(df, output_path):
                 cell.fill = alternate_fill
     
     # Conditional formatting for numeric columns
-    numeric_columns = [
-        'Actual Usage %', 
-        'Pro Rata Deviation', 
-        'Average Consumption', 
-        'Days Stock'
-    ]
-    
-    # Add color scale rules to highlight performance
-    for col_name in numeric_columns:
-        col_idx = df.columns.get_loc(col_name) + 1
-        col_letter = get_column_letter(col_idx + 1)
-        
-        color_scale_rule = ColorScaleRule(
-            start_type='min', 
-            start_color='FF0000',  # Red
-            end_type='max', 
-            end_color='00FF00'     # Green
-        )
-        worksheet.conditional_formatting.add(
-            f'{col_letter}2:{col_letter}{len(df)+1}', 
-            color_scale_rule
-        )
     
     # Adjust column widths dynamically
     for col in worksheet.columns:
