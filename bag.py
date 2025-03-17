@@ -91,7 +91,6 @@ def filter_and_rename_columns(input_file, merge_file, user_date):
     input_day, input_month = user_date.split()
     _, total_days = calendar.monthrange(datetime.now().year, 
         datetime.strptime(input_month, "%b").month)
-    # Iterate over the rows in the original worksheet
     for row_num, row in enumerate(ws.iter_rows(min_row=1, max_row=ws.max_row), 1):
         new_row = []
         row_values = []
@@ -145,56 +144,28 @@ def get_download_link(df):
     return href
 def main():
     st.set_page_config(page_title="Bag Report", layout="wide", page_icon="📊")
-    st.markdown("""<style>.reportview-container {background-color: #f0f2f6;}.big-font {font-size:24px !important;color: #1E4C7B;font-weight: bold;text-transform: uppercase;letter-spacing: 1px;}
-    .sub-font {
-        font-size:18px !important;
-        color: #4A90E2;
-        font-style: italic;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-    # Title and Introduction
+    st.markdown("""<style>.reportview-container {background-color: #f0f2f6;}.big-font {font-size:24px !important;color: #1E4C7B;font-weight: bold;text-transform: uppercase;letter-spacing: 1px;}.sub-font {font-size:18px !important;color: #4A90E2;font-style: italic;}</style>""", unsafe_allow_html=True)
     st.markdown('<h1 style="color:#1E4C7B; text-align:center; border-bottom: 3px solid #4A90E2; padding-bottom: 10px;">📊 Bag Consumption Report</h1>', unsafe_allow_html=True)
-
-    # File Upload Section
     col1, col2, col3 = st.columns(3)
-    
     with col1:
         input_file = st.file_uploader("Upload Input Excel File", type=['xlsx', 'xls'], help="Select the input file for analysis")
-    
     with col2:
         merge_file = st.file_uploader("Upload Merge Excel File", type=['xlsx', 'xls'], help="Select the merge file for additional data")
-    
     with col3:
         user_date = st.text_input("Enter Date (e.g., 04 Mar)", value="04 Mar", help="Enter the date for report generation")
-
-    # Process and Display Report
     if input_file and merge_file and user_date:
         try:
-            # Save uploaded files temporarily
             with open("input_file.xlsx", "wb") as f:
                 f.write(input_file.getbuffer())
-            
             with open("merge_file.xlsx", "wb") as f:
                 f.write(merge_file.getbuffer())
-            
-            # Process the files
             df = filter_and_rename_columns("input_file.xlsx", "merge_file.xlsx", user_date)
-            
-            # Create period and detailed title
             start_date = "01 Mar"
             st.markdown(f'<p class="big-font">Consumption Analysis</p>', unsafe_allow_html=True)
             st.markdown(f'<p class="sub-font">Period: {start_date} to {user_date}</p>', unsafe_allow_html=True)
-            
-            # Display DataFrame
             st.dataframe(df, use_container_width=True)
-            
-            # Download Link
             st.markdown(get_download_link(df), unsafe_allow_html=True)
-        
         except Exception as e:
             st.error(f"An error occurred: {str(e)}")
-
 if __name__ == "__main__":
     main()
