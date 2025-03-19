@@ -19,7 +19,7 @@ class BagDemandForecaster:
             return pd.Series(decomposition.seasonal).mean()
         except:
             return 1.0
-    def _extrapolate_february(self, mar_partial_data):
+    def _extrapolate_march(self, mar_partial_data):
         days_in_mar = 31
         current_days = 18
         daily_rate = mar_partial_data / current_days
@@ -28,7 +28,7 @@ class BagDemandForecaster:
         recent_data = self.data.tail(window)
         return (recent_data['Usage'].iloc[-1] - recent_data['Usage'].iloc[0]) / window
     def generate_forecast(self, mar_partial_data):
-        mar_full = self._extrapolate_february(mar_partial_data)
+        mar_full = self._extrapolate_march(mar_partial_data)
         seasonal_indices = self._calculate_seasonal_indices()
         april_seasonal_factor = 1.0 if isinstance(seasonal_indices, float) else seasonal_indices.get(4, 1.0)
         try:
@@ -88,7 +88,7 @@ def main():
                 with col1:
                     st.metric("April 2025 Forecast", f"{forecast_results['point_forecast']:,.0f}")
                 with col2:
-                    st.metric("March 2025 (Projected)", f"{forecast_results['february_extrapolated']:,.0f}")
+                    st.metric("March 2025 (Projected)", f"{forecast_results['march_extrapolated']:,.0f}")
                 with col3:
                     prev_april = usage_df[usage_df['Date'].dt.strftime('%Y-%m') == '2024-04']['Usage'].iloc[0]
                     yoy_change = ((forecast_results['point_forecast'] - prev_april) / prev_april * 100)
