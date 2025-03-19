@@ -27,7 +27,7 @@ class BagDemandForecaster:
     def _get_recent_trend(self, window=6):
         recent_data = self.data.tail(window)
         return (recent_data['Usage'].iloc[-1] - recent_data['Usage'].iloc[0]) / window
-    def generate_forecast(self, feb_partial_data):
+    def generate_forecast(self, mar_partial_data):
         mar_full = self._extrapolate_february(mar_partial_data)
         seasonal_indices = self._calculate_seasonal_indices()
         april_seasonal_factor = 1.0 if isinstance(seasonal_indices, float) else seasonal_indices.get(4, 1.0)
