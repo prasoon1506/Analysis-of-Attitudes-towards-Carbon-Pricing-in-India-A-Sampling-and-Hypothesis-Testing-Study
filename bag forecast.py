@@ -96,7 +96,7 @@ def main():
                 fig = go.Figure()
                 fig.add_trace(go.Scatter(x=usage_df['Date'],y=usage_df['Usage'],name='Historical',line=dict(color='#2E86C1', width=2)))
                 mar_date = pd.to_datetime('2025-03-01')
-                fig.add_trace(go.Scatter(x=[feb_date],y=[forecast_results['march_extrapolated']],name='Mar Projection',mode='markers',marker=dict(color='orange', size=10, symbol='diamond')))
+                fig.add_trace(go.Scatter(x=[mar_date],y=[forecast_results['march_extrapolated']],name='Mar Projection',mode='markers',marker=dict(color='orange', size=10, symbol='diamond')))
                 april_date = pd.to_datetime('2025-04-01')
                 fig.add_trace(go.Scatter(x=[april_date],y=[forecast_results['point_forecast']],name='April Forecast',mode='markers',marker=dict(color='red', size=12, symbol='star')))
                 fig.add_trace(go.Scatter(x=[april_date, april_date],y=[forecast_results['lower_bound'],forecast_results['upper_bound']],name='95% Confidence',mode='lines',line=dict(color='rgba(255,0,0,0.2)', width=10)))
