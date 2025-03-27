@@ -101,7 +101,7 @@ def filter_and_rename_columns(input_file, merge_file, user_date):
                     row_values.append(str(cell.value).strip() if cell.value is not None else '')
         row_match_key = tuple(row_values)
         if row_num == 1:
-            header = ["Plant Name","Brand Name", "Bag Name", "Opening Balance as on 01.03.2025","Tomonth Receipt",f"Actual Usage (Till {user_date})","Current available stock","Full Month Plan",f"Projected Usage (Till {user_date})",f"Actual Usage % (Till {user_date}) (Based on Planning)","Pro Rata Deviation","Average Consumption","No. of Days Stock Left ( Based on TomonthReceipt)","No. of Days Stock Left (Based on Planning)"]
+            header = ["Plant Name","Brand Name", "Bag Name", "Opening Balance as on 01.03.2025","Tomonth Receipt",f"Actual Usage (Till {user_date})","Current available stock","Full Month Plan",f"Projected Usage (Till {user_date})",f"Actual Usage % (Till {user_date}) (Based on Planning)","Pro Rata Deviation","Average Consumption","No. of Days Stock Left (Based on Consumption)","No. of Days Stock Left (Based on Planning)"]
             continue
         full_month_plan = merge_data.get(row_match_key, "0")
         try:
