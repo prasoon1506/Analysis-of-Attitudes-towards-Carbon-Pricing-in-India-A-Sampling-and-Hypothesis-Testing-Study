@@ -8,46 +8,8 @@ import streamlit.components.v1 as components
 import io
 import warnings
 warnings.filterwarnings('ignore')
-
-st.set_page_config(
-    page_title="Discount Analytics Dashboard",
-    page_icon="💰",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-st.markdown("""
-<style>
-    /* Global Styles */
-    [data-testid="stSidebar"] {
-        background-color: #f8fafc;
-        border-right: 1px solid #e2e8f0;
-    }
-    
-    .stButton button {
-        background-color: #3b82f6;
-        color: white;
-        border-radius: 6px;
-        padding: 0.5rem 1rem;
-        border: none;
-        transition: all 0.2s;
-    }
-    
-    .stButton button:hover {
-        background-color: #2563eb;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-    
-    /* Ticker Animation */
-    @keyframes ticker {
-        0% { transform: translateX(100%); }
-        100% { transform: translateX(-100%); }
-    }
-    
-    .ticker-container {
-        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-        color: white;
-        padding: 16px;
-        overflow: hidden;
+st.set_page_config(page_title="Discount Analytics Dashboard",page_icon="💰",layout="wide",initial_sidebar_state="expanded")
+st.markdown("""<style>/* Global Styles */[data-testid="stSidebar"] {background-color: #f8fafc;border-right: 1px solid #e2e8f0;}.stButton button {background-color: #3b82f6;color: white;border-radius: 6px;padding: 0.5rem 1rem;border: none;transition: all 0.2s;}.stButton button:hover {background-color: #2563eb;box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);}/* Ticker Animation */@keyframes ticker {0% { transform: translateX(100%); }100% { transform: translateX(-100%); }}.ticker-container {background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);color: white;padding: 16px;overflow: hidden;
         white-space: nowrap;
         position: relative;
         margin-bottom: 24px;
