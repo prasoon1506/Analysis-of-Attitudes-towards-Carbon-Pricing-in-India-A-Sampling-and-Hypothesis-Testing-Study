@@ -20,6 +20,7 @@ def format_excel_file(input_file, output_file):
     red_fill = PatternFill(start_color='FFFF0000', end_color='FFFF0000', fill_type='solid') 
     green_fill = PatternFill(start_color='FF00FF00', end_color='FF00FF00', fill_type='solid') 
     column_pairs = [ ('G', 'H'), ('I', 'J'), ('K', 'L'), ('M', 'N') ] 
+    column_pairs = [ ('M', 'N'), ('Q', 'R'), ('S', 'T'), ('U', 'V') ] 
     for row in range(2, ws.max_row + 1):
         for col1, col2 in column_pairs: 
             cell1 = ws[f'{col1}{row}'] 
