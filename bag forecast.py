@@ -42,7 +42,7 @@ class BagDemandForecaster:
             y = self.data['Usage'].iloc[12:]
             rf_model.fit(X, y)
             april_features = pd.DataFrame({'Month': [4],'Year': [2025],'Lag1': [feb_full],'Lag12': [self.data['Usage'].iloc[-12]],'Trend': [len(self.data)]})
-            rf_forecast = rf_model.predict(march_features)[0]
+            rf_forecast = rf_model.predict(april_features)[0]
         except:
             rf_forecast = self.data['Usage'].mean() * april_seasonal_factor
         trend = self._get_recent_trend()
