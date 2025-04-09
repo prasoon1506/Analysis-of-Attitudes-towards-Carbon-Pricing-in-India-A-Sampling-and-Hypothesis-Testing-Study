@@ -75,8 +75,10 @@ def create_filters(df):
         selected_date = st.sidebar.date_input("Select Checkin Date", min_date, min_value=min_date, max_value=max_date)
         date_filter = (df['checkin date'].dt.date == selected_date)
     else:
+        # Calculate a default end date that won't exceed max_date
+        default_end_date = min(max_date, min_date + timedelta(days=3))
         date_range = st.sidebar.date_input("Select Date Range", 
-                                          [min_date, min_date + timedelta(days=7)],
+                                          [min_date, default_end_date],
                                           min_value=min_date, 
                                           max_value=max_date)
         
