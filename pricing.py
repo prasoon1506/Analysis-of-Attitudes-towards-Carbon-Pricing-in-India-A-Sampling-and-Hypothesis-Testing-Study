@@ -10,7 +10,8 @@ st.set_page_config(layout="wide", page_title="Dealer Price Analysis Dashboard")
 
 def load_data():
     """Load the uploaded dataset and perform initial preprocessing"""
-    uploaded_file = st.file_uploader("Upload your dataset (CSV or Excel)", type=["csv", "xlsx", "xls"])
+    st.sidebar.title("Data Upload")
+    uploaded_file = st.sidebar.file_uploader("Upload your dataset (CSV or Excel)", type=["csv", "xlsx", "xls"])
     
     if uploaded_file is not None:
         try:
@@ -56,8 +57,12 @@ def create_filters(df):
     """Create filter dropdowns based on the dataset"""
     st.sidebar.header("Filters")
     
+    # Make a copy of the dataframe to avoid warnings
+    df = df.copy()
+    
     # District filter
-    district_options = ['All'] + sorted(df['District: Name'].unique().tolist())
+    district_values = df['District: Name'].fillna('Unknown').unique().tolist()
+    district_options = ['All'] + sorted(district_values)
     selected_district = st.sidebar.selectbox("Select District", district_options)
     
     # Date range filter
@@ -83,11 +88,13 @@ def create_filters(df):
             date_filter = pd.Series(True, index=df.index)
     
     # Product Type filter
-    product_options = ['All'] + sorted(df['Product Type'].unique().tolist())
+    product_values = df['Product Type'].fillna('Unknown').unique().tolist()
+    product_options = ['All'] + sorted(product_values)
     selected_product = st.sidebar.selectbox("Select Product Type", product_options)
     
     # Brand filter
-    brand_options = ['All'] + sorted(df['Brand: Name'].unique().tolist())
+    brand_values = df['Brand: Name'].fillna('Unknown').unique().tolist()
+    brand_options = ['All'] + sorted(brand_values)
     selected_brand = st.sidebar.selectbox("Select Brand", brand_options)
     
     # Apply filters
