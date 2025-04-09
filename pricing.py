@@ -5,116 +5,69 @@ import plotly.express as px
 from datetime import datetime, timedelta
 import plotly.graph_objects as go
 from statistics import mode, median
-
 st.set_page_config(layout="wide", page_title="Dealer Price Analysis Dashboard")
-
 def load_data():
-    """Load the uploaded dataset and perform initial preprocessing"""
     st.sidebar.title("Data Upload")
     uploaded_file = st.sidebar.file_uploader("Upload your dataset (CSV or Excel)", type=["csv", "xlsx", "xls"])
-    
     if uploaded_file is not None:
         try:
-            # Determine file type and read accordingly
             if uploaded_file.name.endswith('.csv'):
                 df = pd.read_csv(uploaded_file)
             else:
                 df = pd.read_excel(uploaded_file)
-            
-            # Check if required columns exist
-            required_columns = [
-                'District: Name', 'checkin date', 'Product Type', 'Brand: Name',
-                'Account: Dealer Category', 'Whole Sale Price', 'Owner: Full Name'
-            ]
-            
+            required_columns = ['District: Name', 'checkin date', 'Product Type', 'Brand: Name','Account: Dealer Category', 'Whole Sale Price', 'Owner: Full Name']
             missing_columns = [col for col in required_columns if col not in df.columns]
             if missing_columns:
                 st.error(f"Missing required columns: {', '.join(missing_columns)}")
                 return None
-            
-            # Convert date column to datetime
             try:
                 df['checkin date'] = pd.to_datetime(df['checkin date'])
             except Exception as e:
                 st.error(f"Error converting 'checkin date' to datetime: {e}")
                 return None
-            
-            # Fill NaN in dealer category
             df['Account: Dealer Category'] = df['Account: Dealer Category'].fillna('NaN')
-            
-            # Ensure price column is numeric
             df['Whole Sale Price'] = pd.to_numeric(df['Whole Sale Price'], errors='coerce')
-            
             return df
-        
         except Exception as e:
             st.error(f"Error loading data: {e}")
             return None
-    
     return None
-
 def create_filters(df):
-    """Create filter dropdowns based on the dataset"""
     st.sidebar.header("Filters")
-    
-    # Make a copy of the dataframe to avoid warnings
     df = df.copy()
-    
-    # District filter
     district_values = df['District: Name'].fillna('Unknown').unique().tolist()
     district_options = ['All'] + sorted(district_values)
     selected_district = st.sidebar.selectbox("Select District", district_options)
-    
-    # Date range filter
     min_date = df['checkin date'].min().date()
     max_date = df['checkin date'].max().date()
-    
     date_selection_type = st.sidebar.radio("Date Selection", ["Single Date", "Date Range"])
-    
     if date_selection_type == "Single Date":
         selected_date = st.sidebar.date_input("Select Checkin Date", min_date, min_value=min_date, max_value=max_date)
         date_filter = (df['checkin date'].dt.date == selected_date)
     else:
-        # Calculate a default end date that won't exceed max_date
         default_end_date = min(max_date, min_date + timedelta(days=3))
-        date_range = st.sidebar.date_input("Select Date Range", 
-                                          [min_date, default_end_date],
-                                          min_value=min_date, 
-                                          max_value=max_date)
-        
+        date_range = st.sidebar.date_input("Select Date Range",[min_date, default_end_date],min_value=min_date,max_value=max_date)
         if len(date_range) == 2:
             start_date, end_date = date_range
             date_filter = (df['checkin date'].dt.date >= start_date) & (df['checkin date'].dt.date <= end_date)
         else:
             st.sidebar.warning("Please select both start and end dates")
             date_filter = pd.Series(True, index=df.index)
-    
-    # Product Type filter
     product_values = df['Product Type'].fillna('Unknown').unique().tolist()
     product_options = ['All'] + sorted(product_values)
     selected_product = st.sidebar.selectbox("Select Product Type", product_options)
-    
-    # Brand filter
     brand_values = df['Brand: Name'].fillna('Unknown').unique().tolist()
     brand_options = ['All'] + sorted(brand_values)
     selected_brand = st.sidebar.selectbox("Select Brand", brand_options)
-    
-    # Apply filters
     filtered_df = df.copy()
-    
     if selected_district != 'All':
         filtered_df = filtered_df[filtered_df['District: Name'] == selected_district]
-        
     filtered_df = filtered_df[date_filter]
-    
     if selected_product != 'All':
         filtered_df = filtered_df[filtered_df['Product Type'] == selected_product]
-        
     if selected_brand != 'All':
         filtered_df = filtered_df[filtered_df['Brand: Name'] == selected_brand]
-    
     return filtered_df
-
 def calculate_statistics(df):
     """Calculate statistics for each dealer category"""
     if df.empty:
