@@ -734,55 +734,30 @@ def price():
     return df
  def generate_wsp_comparison_report(company_wsp_df, competitive_brands_wsp=None):
     try:
-        region_order = ['GJ (Ahmedabad)', 'GJ (Surat)', 'RJ(Jaipur)', 'RJ(Udaipur)', 
-                       'HY (Gurgaon)', 'PB (Bhatinda)', 'Delhi', 'CG (Raipur)', 
-                       'ORR (Khorda)', 'ORR (Sambalpur)', 'UP (Gaziabad)', 'UK (Haridwar)', 
-                       'UK (Dehradun)', 'M.P.(East)[Balaghat]', 'M.P.(West)[Indore]', 
-                       'M.H.(East)[Nagpur Urban]']
-        
+        region_order = ['GJ (Ahmedabad)', 'GJ (Surat)', 'RJ(Jaipur)', 'RJ(Udaipur)', 'HY (Gurgaon)', 'PB (Bhatinda)', 'Delhi', 'CG (Raipur)', 'ORR (Khorda)', 'ORR (Sambalpur)', 'UP (Gaziabad)', 'UK (Haridwar)', 'UK (Dehradun)', 'M.P.(East)[Balaghat]', 'M.P.(West)[Indore]', 'M.H.(East)[Nagpur Urban]']
         buffer = io.BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=8, leftMargin=8, 
-                              topMargin=8, bottomMargin=8)
+        doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=8, leftMargin=8, topMargin=8, bottomMargin=8)
         styles = getSampleStyleSheet()
-        
-        # Custom styles
-        title_style = ParagraphStyle('TitleStyle', parent=styles['Title'], 
-                                   fontSize=20, textColor=colors.darkblue, 
-                                   alignment=TA_CENTER, spaceAfter=1)
-        region_style = ParagraphStyle('RegionStyle', parent=styles['Heading2'], 
-                                    textColor=colors.blue, spaceAfter=1, fontSize=12)
+        title_style = ParagraphStyle('TitleStyle', parent=styles['Title'],fontSize=20, textColor=colors.darkblue,alignment=TA_CENTER, spaceAfter=1)
+        region_style = ParagraphStyle('RegionStyle', parent=styles['Heading2'],textColor=colors.blue, spaceAfter=1, fontSize=12)
         normal_style = styles['Normal']
-        month_style = ParagraphStyle('MonthStyle', parent=styles['Heading3'], 
-                                   textColor=colors.green, spaceAfter=1)
-        
+        month_style = ParagraphStyle('MonthStyle', parent=styles['Heading3'],textColor=colors.green, spaceAfter=1)
         story = []
-        
-        # Report header
         story.append(Paragraph("WSP Comparison Report", title_style))
-        story.append(Paragraph("December 2024 - January 2025", 
-                             ParagraphStyle('SubtitleStyle', parent=styles['Normal'], 
-                                          fontSize=12, textColor=colors.red, 
-                                          alignment=TA_CENTER, spaceAfter=1)))
+        story.append(Paragraph("December 2024 - January 2025",ParagraphStyle('SubtitleStyle', parent=styles['Normal'], fontSize=12, textColor=colors.red,alignment=TA_CENTER, spaceAfter=1)))
         story.append(Spacer(1, 12))
-        
-        # Process each region
         for region in region_order:
             if region in ['UK (Dehradun)', 'UK (Haridwar)']:
                 continue
-                
             region_story = []
             region_story.append(Paragraph(f"{region}", region_style))
             region_story.append(Spacer(1, 6))
-            
-            # Company WSP data
             if company_wsp_df is not None and not company_wsp_df.empty:
                 region_story.append(Paragraph("JKLC WSP Progression:", month_style))
                 company_data = create_wsp_summary(company_wsp_df, region)
                 if company_data:
                     region_story.extend(company_data)
                     region_story.append(Spacer(1, 6))
-            
-            # Competitive brands WSP data
             if competitive_brands_wsp:
                 for brand, brand_wsp_df in competitive_brands_wsp.items():
                     region_story.append(Paragraph(f"{brand} WSP Progression:", month_style))
@@ -790,129 +765,75 @@ def price():
                     if competitor_data:
                         region_story.extend(competitor_data)
                         region_story.append(Spacer(1, 6))
-            
-            # Add comparison summary if both company and competitor data exist
             if company_wsp_df is not None and competitive_brands_wsp:
                 comparison_data = create_comparison_summary(company_wsp_df, competitive_brands_wsp, region)
                 if comparison_data:
                     region_story.extend(comparison_data)
-            
             story.append(KeepTogether(region_story))
             story.append(Paragraph("<pagebreak/>", styles['Normal']))
-        
         doc.build(story)
         buffer.seek(0)
         return buffer
-    
     except Exception as e:
         print(f"Error generating WSP comparison report: {e}")
         raise
-
  def create_wsp_summary(wsp_df, region):
     styles = getSampleStyleSheet()
     normal_style = styles['Normal']
-    summary_style = ParagraphStyle('SummaryStyle', parent=styles['Normal'], 
-                                 textColor=colors.brown, spaceAfter=0)
-    
+    summary_style = ParagraphStyle('SummaryStyle', parent=styles['Normal'],textColor=colors.brown, spaceAfter=0)
     region_wsp = wsp_df[wsp_df['Region(District)'] == region]
     if region_wsp.empty:
         return None
-        
     summary = []
-    
-    # December WSP calculation
-    dec_columns = ['D1-3', 'D4-6', 'D7-9', 'D10-12', 'D13-15', 'D16-18', 
-                  'D19-21', 'D22-24', 'D25-27', 'D28-30']
+    dec_columns = ['D1-3', 'D4-6', 'D7-9', 'D10-12', 'D13-15', 'D16-18','D19-21', 'D22-24', 'D25-27', 'D28-30']
     dec_values = region_wsp[dec_columns].values.flatten().tolist()
-    
-    # January WSP calculation
     jan_columns = ['D1-3 J', 'D4-6 J', 'D7-9 J','D10-12 J']
     jan_values = region_wsp[jan_columns].values.flatten().tolist()
-    
-    # Calculate changes
     dec_change = float(dec_values[-1]) - float(dec_values[0])
     jan_change = float(jan_values[-1]) - float(dec_values[-1])
     total_change = float(jan_values[-1]) - float(dec_values[0])
-    
-    # Add WSP values
     summary.append(Paragraph(f"December Start: Rs. {dec_values[0]:.0f}", normal_style))
     summary.append(Paragraph(f"December End: Rs. {dec_values[-1]:.0f}", normal_style))
     summary.append(Paragraph(f"January Latest: Rs. {jan_values[-1]:.0f}", normal_style))
-    
-    # Add changes
     summary.append(Paragraph(f"December Net Change: {dec_change:+.0f} Rs.", summary_style))
     summary.append(Paragraph(f"January Net Change: {jan_change:+.0f} Rs.", summary_style))
     summary.append(Paragraph(f"Total Net Change: {total_change:+.0f} Rs.", summary_style))
-    
     return summary
-
  def create_comparison_summary(company_wsp_df, competitive_brands_wsp, region):
     styles = getSampleStyleSheet()
-    comparison_style = ParagraphStyle('ComparisonStyle', parent=styles['Normal'], 
-                                    textColor=colors.blue, spaceAfter=0)
-    
+    comparison_style = ParagraphStyle('ComparisonStyle', parent=styles['Normal'],textColor=colors.blue, spaceAfter=0)
     summary = []
     summary.append(Spacer(1, 6))
     summary.append(Paragraph("Comparative Analysis:", comparison_style))
-    
     company_region_wsp = company_wsp_df[company_wsp_df['Region(District)'] == region]
     if company_region_wsp.empty:
         return None
-    
     company_dec_start = company_region_wsp['D1-3'].values[0]
-    
     for brand, brand_wsp_df in competitive_brands_wsp.items():
         competitor_region_wsp = brand_wsp_df[brand_wsp_df['Region(District)'] == region]
         if not competitor_region_wsp.empty:
             competitor_dec_start = competitor_region_wsp['D1-3'].values[0]
             difference = company_dec_start - competitor_dec_start
-            summary.append(Paragraph(
-                f"JKLC vs {brand} (December Start): {difference:+.0f} Rs.", 
-                comparison_style))
-    
+            summary.append(Paragraph(f"JKLC vs {brand} (December Start): {difference:+.0f} Rs.",comparison_style))
     return summary
  def download_wsp_comparison_report():
     st.subheader("WSP Comparison Report Generator")
-    
-    # Get company WSP data
     company_wsp_df = get_wsp_data()
-    
-    # Get competitive brands WSP data
     competitive_brands_wsp = get_competitive_brands_wsp_data()
-    
     if company_wsp_df is not None or competitive_brands_wsp is not None:
-        # Create a download button
         if st.button("Generate WSP Comparison Report"):
             try:
-                # Generate the report
                 report_buffer = generate_wsp_comparison_report(company_wsp_df, competitive_brands_wsp)
-                
-                # Create the download button
                 current_date = datetime.now().strftime("%d%b%Y")
-                st.download_button(
-                    label="📥 Download WSP Comparison Report",
-                    data=report_buffer,
-                    file_name=f"WSP_Comparison_Report_{current_date}.pdf",
-                    mime="application/pdf",
-                    key='download_wsp_report'
-                )
-                
+                st.download_button(label="📥 Download WSP Comparison Report",data=report_buffer,file_name=f"WSP_Comparison_Report_{current_date}.pdf",mime="application/pdf",key='download_wsp_report')
                 st.success("Report generated successfully! Click the download button above to save it.")
-                
             except Exception as e:
                 st.error(f"Error generating report: {e}")
     else:
         st.info("Please upload the WSP data files to generate the comparison report.")
  def main():
     st.title("📊 Price Tracker Analysis Tool")
-    st.markdown("""
-    ### Welcome to the Price Tracker Analysis Tool
-    
-    **Instructions:**
-    1. Upload your Excel price tracking file
-    2. Choose whether the file needs initial editing
-    3. Add new data, analyze regions, and download processed files
-    """)
+    st.markdown("""### Welcome to the Price Tracker Analysis Tool**Instructions:**1. Upload your Excel price tracking file2. Choose whether the file needs initial editing3. Add new data, analyze regions, and download processed files""")
     uploaded_file = st.file_uploader("Please upload the Price Tracker file", type=['xlsx'], help="Upload an Excel file containing price tracking data")
     if uploaded_file is not None:
         requires_editing = st.radio("Does this file require initial editing?", ["No", "Yes"],help="Select 'Yes' if the uploaded file needs preprocessing")
@@ -1380,23 +1301,12 @@ def price_input():
         """Parse pasted text into a list of owner names"""
         if not pasted_text:
             return []
-        # Split by newlines and clean up each name
         owners = [name.strip() for name in pasted_text.split('\n') if name.strip()]
         return owners
-
  def main():
         st.title('📊 Price Report Generator')
-        st.markdown("""
-        ### Upload Your Excel File
-        Please upload an Excel file containing the following columns:
-        - `Owner: Full Name`
-        - `Brand: Name`
-        - `checkin date`
-        """)
-        
-        uploaded_file = st.file_uploader("Choose an Excel file", type=['xlsx', 'xls'], 
-                                       help="Upload your price report Excel file")
-        
+        st.markdown("""### Upload Your Excel FilePlease upload an Excel file containing the following columns:- `Owner: Full Name`- `Brand: Name`- `checkin date`""")
+        uploaded_file = st.file_uploader("Choose an Excel file", type=['xlsx', 'xls'],help="Upload your price report Excel file")
         if uploaded_file is not None:
             try:
                 df = pd.read_excel(uploaded_file)
@@ -1404,48 +1314,22 @@ def price_input():
                 if not all(col in df.columns for col in required_columns):
                     st.error("Invalid file format. Please ensure your file contains the required columns.")
                     return
-                
                 st.sidebar.header('🔍 Select Owners')
-                
-                # Add text area for pasting owners
                 st.sidebar.subheader("Paste Owners")
-                pasted_owners = st.sidebar.text_area(
-                    "Paste owner names (one per line)",
-                    help="Copy and paste owner names from your Excel file, one name per line",
-                    height=150
-                )
-                
-                # Get all unique owners from the DataFrame
+                pasted_owners = st.sidebar.text_area("Paste owner names (one per line)",help="Copy and paste owner names from your Excel file, one name per line",height=150)
                 owners = sorted(df['Owner: Full Name'].astype(str).unique().tolist())
-                
-                # Parse pasted owners and find matches
                 if pasted_owners:
                     parsed_owners = parse_pasted_owners(pasted_owners)
-                    # Find valid owners from the pasted list
                     valid_owners = [owner for owner in parsed_owners if owner in owners]
                     invalid_owners = [owner for owner in parsed_owners if owner not in owners]
-                    
                     if invalid_owners:
                         st.sidebar.warning("Some pasted names were not found in the data:")
                         st.sidebar.write("\n".join(invalid_owners))
                 else:
                     valid_owners = []
-
-                # MultiSelect widget with pasted owners pre-selected
-                selected_owners = st.sidebar.multiselect(
-                    "Choose Regional Heads",
-                    options=owners,
-                    default=valid_owners if valid_owners else owners[:5],
-                    help="Select the regional heads for your report"
-                )
-                
+                selected_owners = st.sidebar.multiselect("Choose Regional Heads",options=owners,default=valid_owners if valid_owners else owners[:5],help="Select the regional heads for your report")
                 st.sidebar.markdown("---")
-                report_type = st.sidebar.radio(
-                    "Choose Report Type",
-                    ["Date-Based Report", "Owner-Based Report"],
-                    help="Select the type of report you want to generate"
-                )
-
+                report_type = st.sidebar.radio("Choose Report Type",["Date-Based Report", "Owner-Based Report"],help="Select the type of report you want to generate")
                 if st.sidebar.button('🚀 Generate Report', type='primary'):
                     if not selected_owners:
                         st.warning("Please select at least one owner.")
@@ -1456,27 +1340,16 @@ def price_input():
                                     filename = create_price_report(df, selected_owners)
                                     st.success(f"Date-Based Report Generated: {filename}")
                                     with open(filename, 'rb') as file:
-                                        st.download_button(
-                                            label="Download Date-Based Report",
-                                            data=file,
-                                            file_name=filename,
-                                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                                        )
+                                        st.download_button(label="Download Date-Based Report",data=file,file_name=filename,mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
                                 else:
                                     filename = create_price_report1(df, selected_owners)
                                     st.success(f"Owner-Based Report Generated: {filename}")
                                     with open(filename, 'rb') as file:
-                                        st.download_button(
-                                            label="Download Owner-Based Report",
-                                            data=file,
-                                            file_name=filename,
-                                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                                        )
+                                        st.download_button(label="Download Owner-Based Report",data=file,file_name=filename,mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
                             except Exception as e:
                                 st.error(f"An error occurred: {e}")
             except Exception as e:
                 st.error(f"Error processing the file: {e}")
-
  if __name__ == "__main__":
         main()
 def geo():
