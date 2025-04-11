@@ -4800,28 +4800,9 @@ def get_online_editor_url(file_extension):
         '.docx': 'https://www.office.com/launch/word?auth=2','.ppt': 'https://www.office.com/launch/powerpoint?auth=2','.pptx': 'https://www.office.com/launch/powerpoint?auth=2','.pdf': 'https://documentcloud.adobe.com/link/home/'}
     return extension_mapping.get(file_extension.lower(), 'https://www.google.com/drive/')
 def folder_menu():
-    st.markdown("""
-    <style>
-    .title {
-        font-size: 50px;
-        font-weight: bold;
-        color: #3366cc;
-        text-align: center;
-        padding: 20px;
-        border-radius: 10px;
-        background: linear-gradient(to right, #f0f8ff, #e6f3ff);
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        margin-bottom: 30px;
-        font-family: 'Arial', sans-serif;
-    }
-    .title span {
-        background: linear-gradient(45deg, #3366cc, #6699ff);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-    .file-box {
-        border: 1px solid #ddd;
-        padding: 15px;
+    st.markdown("""<style>.title {font-size: 50px;font-weight: bold;color: #3366cc;text-align: center;padding: 20px;border-radius: 10px;background: linear-gradient(to right, #f0f8ff, #e6f3ff);box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);margin-bottom: 30px;font-family: 'Arial', sans-serif;}
+    .title span {background: linear-gradient(45deg, #3366cc, #6699ff);-webkit-background-clip: text;-webkit-text-fill-color: transparent;}
+    .file-box {border: 1px solid #ddd;padding: 15px;
         margin: 15px 0;
         border-radius: 10px;
         background-color: #f9f9f9;
@@ -4863,11 +4844,7 @@ def folder_menu():
     </style>
     """, unsafe_allow_html=True)
     st.markdown('<div class="title"><span>📓 Advanced File Manager</span></div>', unsafe_allow_html=True)
-    lottie_urls = [
-        "https://assets9.lottiefiles.com/packages/lf20_3vbOcw.json",
-        "https://assets9.lottiefiles.com/packages/lf20_5lAtR7.json",
-        "https://assets1.lottiefiles.com/packages/lf20_4djadwfo.json",
-        "https://assets6.lottiefiles.com/packages/lf20_2a5yxpci.json" ]
+    lottie_urls = ["https://assets9.lottiefiles.com/packages/lf20_3vbOcw.json","https://assets9.lottiefiles.com/packages/lf20_5lAtR7.json","https://assets1.lottiefiles.com/packages/lf20_4djadwfo.json","https://assets6.lottiefiles.com/packages/lf20_2a5yxpci.json" ]
     lottie_json = None
     for url in lottie_urls:
         lottie_json = load_lottie_url(url)
@@ -4880,10 +4857,7 @@ def folder_menu():
         else:
            st.image("https://via.placeholder.com/200x200.png?text=File+Manager", use_column_width=True)
     with col2:
-        st.markdown("""
-        Welcome to the Advanced File Manager! 
-        Here you can upload, download, and manage your files with ease. 
-        Enjoy the smooth animations, user-friendly interface, and new features like file search and sorting.""")
+        st.markdown("""Welcome to the Advanced File Manager! Here you can upload, download, and manage your files with ease. Enjoy the smooth animations, user-friendly interface, and new features like file search and sorting.""")
     if not os.path.exists("uploaded_files"):
         os.makedirs("uploaded_files")
     st.markdown('<div class="upload-section">', unsafe_allow_html=True)
@@ -4968,16 +4942,9 @@ def folder_menu():
     st.markdown('</div>', unsafe_allow_html=True)
     st.markdown("---")
     st.subheader("📚 Fun File Fact")
-    fun_facts = ["The first computer virus was created in 1983 and was called the Elk Cloner.",
-        "The most common file extension in the world is .dll (Dynamic Link Library).",
-        "The largest file size theoretically possible in Windows is 16 exabytes minus 1 KB.",
-        "The PDF file format was invented by Adobe in 1993.",
-        "The first widely-used image format on the web was GIF, created in 1987.",
-        "John McCarthy,an American computer scientist, coined the term Artificial Intelligence in 1956.",
-        "About 90% of the World's Currency only exists on Computers.",
-        "MyDoom is the most expensive computer virus in history.",
-        "The original name of windows was Interface Manager.",
-        "The first microprocessor created by Intel was the 4004."]
+    fun_facts = ["The first computer virus was created in 1983 and was called the Elk Cloner.","The most common file extension in the world is .dll (Dynamic Link Library).","The largest file size theoretically possible in Windows is 16 exabytes minus 1 KB.",
+        "The PDF file format was invented by Adobe in 1993.","The first widely-used image format on the web was GIF, created in 1987.","John McCarthy,an American computer scientist, coined the term Artificial Intelligence in 1956.",
+        "About 90% of the World's Currency only exists on Computers.","MyDoom is the most expensive computer virus in history.","The original name of windows was Interface Manager.","The first microprocessor created by Intel was the 4004."]
     st.markdown(f"*{fun_facts[int(os.urandom(1)[0]) % len(fun_facts)]}*")
 def load_lottieurl(url: str):
     r = requests.get(url)
@@ -4986,49 +4953,8 @@ def load_lottieurl(url: str):
     return r.json()
 def sales_dashboard():
     st.title("Sales Dashboard")
-    st.markdown("""
-    <style>
-    .title {
-        font-size: 50px;
-        font-weight: bold;
-        color: #3366cc;
-        text-align: center;
-        padding: 20px;
-        border-radius: 10px;
-        background: linear-gradient(to right, #f0f8ff, #e6f3ff);
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        margin-bottom: 30px;
-        font-family: 'Arial', sans-serif;
-    }
-    .title span {
-        background: linear-gradient(45deg, #3366cc, #6699ff);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-    .section-box {
-        background-color: #f9f9f9;
-        border-radius: 10px;
-        padding: 20px;
-        margin-bottom: 20px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        transition: all 0.3s ease;
-    }
-    .section-box:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
-    }
-    .upload-section {
-        background-color: #e6f3ff;
-        padding: 20px;
-        border-radius: 10px;
-        margin-bottom: 20px;
-    }
-    .stDataFrame {
-        font-family: 'Arial', sans-serif;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-    lottie_url = "https://assets2.lottiefiles.com/packages/lf20_V9t630.json"  # New interesting animation
+    st.markdown("""<style>.title {font-size: 50px;font-weight: bold;color: #3366cc;text-align: center;padding: 20px;border-radius: 10px;background: linear-gradient(to right, #f0f8ff, #e6f3ff);box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);margin-bottom: 30px;font-family: 'Arial', sans-serif;}.title span {background: linear-gradient(45deg, #3366cc, #6699ff);-webkit-background-clip: text;-webkit-text-fill-color: transparent;}.section-box {background-color: #f9f9f9;border-radius: 10px;padding: 20px;margin-bottom: 20px;box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);transition: all 0.3s ease;}.section-box:hover {transform: translateY(-5px);box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);}.upload-section {background-color: #e6f3ff;padding: 20px;border-radius: 10px;margin-bottom: 20px;}.stDataFrame {font-family: 'Arial', sans-serif;}</style>""", unsafe_allow_html=True)
+    lottie_url = "https://assets2.lottiefiles.com/packages/lf20_V9t630.json"
     lottie_json = load_lottie_url(lottie_url)
     col1, col2 = st.columns([1, 2])
     with col1:
@@ -5128,13 +5054,9 @@ def display_data(df, selected_regions, selected_districts, selected_channels, sh
         st.subheader(f"{selected_channel} Sales Data")
         display_df = grouped_data[display_columns].copy()
         display_df.set_index('Region' if show_whole_region else 'Dist Name', inplace=True)
-        styled_df = display_df.style.format({
-            col: '{:,.0f}' if 'Growth' not in col else '{:.2f}%' for col in columns_to_display
-        }).applymap(color_growth, subset=[col for col in columns_to_display if 'Growth' in col])
+        styled_df = display_df.style.format({col: '{:,.0f}' if 'Growth' not in col else '{:.2f}%' for col in columns_to_display}).applymap(color_growth, subset=[col for col in columns_to_display if 'Growth' in col])
         st.dataframe(styled_df)
-        fig = go.Figure(data=[
-            go.Bar(name='FY 2023', x=grouped_data['Region' if show_whole_region else 'Dist Name'], y=grouped_data[f'FY 2023 till Aug{suffix}']),
-            go.Bar(name='FY 2024', x=grouped_data['Region' if show_whole_region else 'Dist Name'], y=grouped_data[f'FY 2024 till Aug{suffix}']),])
+        fig = go.Figure(data=[go.Bar(name='FY 2023', x=grouped_data['Region' if show_whole_region else 'Dist Name'], y=grouped_data[f'FY 2023 till Aug{suffix}']),go.Bar(name='FY 2024', x=grouped_data['Region' if show_whole_region else 'Dist Name'], y=grouped_data[f'FY 2024 till Aug{suffix}']),])
         fig.update_layout(barmode='group', title=f'{selected_channel} YTD Comparison')
         st.plotly_chart(fig)
         months = ['Apr', 'May', 'Jun', 'Jul', 'Aug']
@@ -5147,20 +5069,8 @@ def display_data(df, selected_regions, selected_districts, selected_channels, sh
                     y_values.append(grouped_data[column_name].sum())
                 else:
                     y_values.append(None)
-            fig_trend.add_trace(go.Scatter(
-                x=months, 
-                y=y_values, 
-                mode='lines+markers+text',
-                name=f'FY 20{year}',
-                text=[f'{y:,.0f}' if y is not None else '' for y in y_values],
-                textposition='top center'
-            ))
-        fig_trend.update_layout(
-            title=f'{selected_channel} Monthly Trends', 
-            xaxis_title='Month', 
-            yaxis_title='Sales',
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
-        )
+            fig_trend.add_trace(go.Scatter(x=months,y=y_values,mode='lines+markers+text',name=f'FY 20{year}',text=[f'{y:,.0f}' if y is not None else '' for y in y_values],textposition='top center'))
+        fig_trend.update_layout(title=f'{selected_channel} Monthly Trends',xaxis_title='Month',yaxis_title='Sales',legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
         st.plotly_chart(fig_trend)
 def load_lottieurl(url: str):
     try:
@@ -5174,12 +5084,7 @@ def normal():
  lottie_analysis = load_lottieurl("https://assets4.lottiefiles.com/packages/lf20_qp1q7mct.json")
  lottie_upload = load_lottieurl("https://assets9.lottiefiles.com/packages/lf20_ABViugg1T8.json")
  with st.sidebar:
-    selected = option_menu(
-        menu_title="Navigation",
-        options=["Home", "Product-Mix Analysis", "About"],
-        icons=["house", "graph-up", "info-circle"],
-        menu_icon="cast",
-        default_index=0,)
+    selected = option_menu(menu_title="Navigation",options=["Home", "Product-Mix Analysis", "About"],icons=["house", "graph-up", "info-circle"],menu_icon="cast",default_index=0,)
  def create_pdf_report(region, df, region_subset=None):
     buffer = BytesIO()
     c = canvas.Canvas(buffer, pagesize=letter)
@@ -5222,9 +5127,7 @@ def normal():
         c.drawImage(img, x, y, width, height)
     def draw_table(data, x, y, col_widths):
         table = Table(data, colWidths=col_widths)
-        table.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, 0), colors.grey),('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),('ALIGN', (0, 0), (-1, -1), 'CENTER'),('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 8),('BOTTOMPADDING', (0, 0), (-1, 0), 6),('BACKGROUND', (0, 1), (-1, -1), colors.beige),('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),('FONTSIZE', (0, 1), (-1, -1), 6), ('TOPPADDING', (0, 1), (-1, -1), 3),('BOTTOMPADDING', (0, 1), (-1, -1), 3),('GRID', (0, 0), (-1, -1), 1, colors.black)]))
+        table.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, 0), colors.grey),('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),('ALIGN', (0, 0), (-1, -1), 'CENTER'),('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),('FONTSIZE', (0, 0), (-1, 0), 8),('BOTTOMPADDING', (0, 0), (-1, 0), 6),('BACKGROUND', (0, 1), (-1, -1), colors.beige),('TEXTCOLOR', (0, 1), (-1, -1), colors.black),('ALIGN', (0, 0), (-1, -1), 'CENTER'),('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),('FONTSIZE', (0, 1), (-1, -1), 6), ('TOPPADDING', (0, 1), (-1, -1), 3),('BOTTOMPADDING', (0, 1), (-1, -1), 3),('GRID', (0, 0), (-1, -1), 1, colors.black)]))
         w, h = table.wrapOn(c, width, height)
         table.drawOn(c, x, y - h)
     def add_tutorial_page():
@@ -5420,9 +5323,7 @@ def normal():
         st.sidebar.header("Filter Options")
         region = st.sidebar.selectbox("Select Region", options=df['Region'].unique(), key="region_select")
         st.sidebar.subheader(f"Download Report for {region}")
-        download_choice = st.sidebar.radio(
-            "Choose report type:",
-            ('Full Region', 'Region Subset'))
+        download_choice = st.sidebar.radio("Choose report type:",('Full Region', 'Region Subset'))
         if download_choice == 'Full Region':
             if st.sidebar.button(f"Download Full Report for {region}"):
                 subset_df = df[(df['Region'] == region) & (df['Type'] != 'PPC Premium')]
