@@ -166,6 +166,11 @@ import pandas as pd
 import numpy as np
 from statistics import mode
 import streamlit as st
+import io
+import pandas as pd
+import numpy as np
+from statistics import mode
+import streamlit as st
 
 def generate_excel_report(df):
     st.subheader("Generate Professional Excel Report")
@@ -203,8 +208,8 @@ def generate_excel_report(df):
 
     output = io.BytesIO()
 
-    # Set up the Excel writer with the `nan_inf_to_errors` option to handle NaN/INF values
-    with pd.ExcelWriter(output, engine='xlsxwriter', options={'nan_inf_to_errors': True}) as writer:
+    # Set up the Excel writer (no 'options' argument)
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         for brand in selected_brands:
             brand_df = filtered_df[filtered_df['Brand: Name'] == brand]
             rows = []
@@ -283,6 +288,11 @@ def generate_excel_report(df):
 
             # Create DataFrame for the current brand
             brand_report_df = pd.DataFrame(rows)
+
+            # Replace NaN values with empty strings
+            brand_report_df = brand_report_df.fillna('')
+
+            # Write the DataFrame to the Excel file
             brand_report_df.to_excel(writer, sheet_name=brand, index=False)
 
             # Excel styling
@@ -327,6 +337,7 @@ def generate_excel_report(df):
 
     st.success("Excel report is ready.")
     st.download_button("Download Report as Excel", data=output.getvalue(), file_name="dealer_price_report.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
 
 def main():
     st.title("Test APP")
