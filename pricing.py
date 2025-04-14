@@ -146,6 +146,11 @@ import pandas as pd
 import numpy as np
 from statistics import mode
 import streamlit as st
+import io
+import pandas as pd
+import numpy as np
+from statistics import mode
+import streamlit as st
 
 def generate_excel_report(df):
     st.subheader("Generate Professional Excel Report")
@@ -280,6 +285,9 @@ def generate_excel_report(df):
             prev_district = None
             prev_officer = None
             row_start = 1
+            merged_district_rows = set()
+            merged_officer_rows = set()
+
             for row_num, row in enumerate(brand_report_df.values):
                 for col_num, value in enumerate(row):
                     col_name = brand_report_df.columns[col_num]
@@ -312,6 +320,7 @@ def generate_excel_report(df):
 
     st.success("Excel report is ready.")
     st.download_button("Download Report as Excel", data=output.getvalue(), file_name="dealer_price_report.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
 def main():
     st.title("Test APP")
     st.write("Upload your dataset to analyze dealer wholesale prices")
