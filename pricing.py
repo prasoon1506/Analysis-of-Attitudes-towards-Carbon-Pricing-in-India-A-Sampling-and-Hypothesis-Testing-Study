@@ -156,7 +156,6 @@ import pandas as pd
 import numpy as np
 from statistics import mode
 import streamlit as st
-
 def generate_excel_report(df):
     st.subheader("Generate Professional Excel Report")
 
@@ -238,36 +237,37 @@ def generate_excel_report(df):
                         row['Total Inputs'] = len(cat_df)
                         rows.append(row)
 
-                    # Overall row
-                    row = {'District': district, 'Officer': officer, 'Dealer Category': 'Overall'}
-                    for d in date_columns:
-                        day_data = officer_df[officer_df['checkin date'].dt.date == d]['Whole Sale Price']
-                        if len(day_data) == 1:
-                            row[d.strftime("%d-%b")] = day_data.iloc[0]
-                        elif len(day_data) == 2:
-                            if day_data.iloc[0] != day_data.iloc[1]:
-                                row[d.strftime("%d-%b")] = ', '.join(map(str, day_data))
-                            else:
-                                row[d.strftime("%d-%b")] = day_data.iloc[0]
-                        elif len(day_data) > 2:
-                            try:
-                                row[d.strftime("%d-%b")] = mode(day_data)
-                            except:
-                                row[d.strftime("%d-%b")] = np.nan
+                # Create an "Overall" row for the district
+                district_overall_row = {'District': district, 'Officer': 'Overall', 'Dealer Category': 'Overall'}
+                overall_df = district_df
+                for d in date_columns:
+                    day_data = overall_df[overall_df['checkin date'].dt.date == d]['Whole Sale Price']
+                    if len(day_data) == 1:
+                        district_overall_row[d.strftime("%d-%b")] = day_data.iloc[0]
+                    elif len(day_data) == 2:
+                        if day_data.iloc[0] != day_data.iloc[1]:
+                            district_overall_row[d.strftime("%d-%b")] = ', '.join(map(str, day_data))
                         else:
-                            row[d.strftime("%d-%b")] = np.nan
-
-                    full_data = officer_df.sort_values('checkin date')['Whole Sale Price'].dropna()
-                    if len(full_data) >= 2:
-                        row['Change'] = full_data.iloc[-1] - full_data.iloc[0] \
-                            if full_data.iloc[-1] != full_data.iloc[0] else 0
-                    elif len(full_data) == 1:
-                        row['Change'] = '-'
+                            district_overall_row[d.strftime("%d-%b")] = day_data.iloc[0]
+                    elif len(day_data) > 2:
+                        try:
+                            district_overall_row[d.strftime("%d-%b")] = mode(day_data)
+                        except:
+                            district_overall_row[d.strftime("%d-%b")] = np.nan
                     else:
-                        row['Change'] = np.nan
+                        district_overall_row[d.strftime("%d-%b")] = np.nan
 
-                    row['Total Inputs'] = len(officer_df)
-                    rows.append(row)
+                full_data = overall_df.sort_values('checkin date')['Whole Sale Price'].dropna()
+                if len(full_data) >= 2:
+                    district_overall_row['Change'] = full_data.iloc[-1] - full_data.iloc[0] \
+                        if full_data.iloc[-1] != full_data.iloc[0] else 0
+                elif len(full_data) == 1:
+                    district_overall_row['Change'] = '-'
+                else:
+                    district_overall_row['Change'] = np.nan
+
+                district_overall_row['Total Inputs'] = len(overall_df)
+                rows.append(district_overall_row)
 
             brand_report_df = pd.DataFrame(rows)
             brand_report_df.to_excel(writer, sheet_name=brand, index=False)
@@ -281,6 +281,7 @@ def generate_excel_report(df):
             number_format = workbook.add_format({'border': 1, 'align': 'center', 'num_format': '0.00'})
             change_format = workbook.add_format({'border': 1, 'align': 'center', 'bg_color': '#F4CCCC', 'bold': True})
             total_input_format = workbook.add_format({'border': 1, 'align': 'center', 'bg_color': '#FFEB9C'})
+            overall_format = workbook.add_format({'border': 1, 'align': 'center', 'bg_color': '#B6D7A8', 'bold': True})
 
             for col_num, value in enumerate(brand_report_df.columns):
                 worksheet.write(0, col_num, value, header_format)
@@ -288,9 +289,11 @@ def generate_excel_report(df):
             for row_num, row in enumerate(brand_report_df.values):
                 for col_num, value in enumerate(row):
                     col_name = brand_report_df.columns[col_num]
-                    if isinstance(value, (int, float)) and not pd.isna(value) and np.isfinite(value):
+                    # Apply different format to the "Overall" row
+                    if row['Officer'] == 'Overall':
+                        fmt = overall_format
+                    elif isinstance(value, (int, float)) and not pd.isna(value) and np.isfinite(value):
                         fmt = change_format if col_name == 'Change' else total_input_format if col_name == 'Total Inputs' else number_format
-                        worksheet.write(row_num + 1, col_num, value, fmt)
                     elif pd.isna(value):
                         worksheet.write(row_num + 1, col_num, '', cell_format)
                     else:
