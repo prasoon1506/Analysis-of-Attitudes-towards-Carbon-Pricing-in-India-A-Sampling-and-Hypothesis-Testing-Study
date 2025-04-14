@@ -141,6 +141,11 @@ import pandas as pd
 import numpy as np
 from statistics import mode
 import streamlit as st
+import io
+import pandas as pd
+import numpy as np
+from statistics import mode
+import streamlit as st
 
 def generate_excel_report(df):
     st.subheader("Generate Professional Excel Report")
@@ -263,7 +268,7 @@ def generate_excel_report(df):
 
             header_format = workbook.add_format({'bold': True, 'bg_color': '#D9EAD3', 'border': 1, 'align': 'center'})
             cell_format = workbook.add_format({'border': 1, 'align': 'center'})
-            number_format = workbook.add_format({'border': 1, 'align': 'center', 'num_format': '0'})
+            number_format = workbook.add_format({'border': 1, 'align': 'center', 'num_format': '0.00'})
             change_format = workbook.add_format({'border': 1, 'align': 'center', 'bg_color': '#F4CCCC', 'bold': True})
             total_input_format = workbook.add_format({'border': 1, 'align': 'center', 'bg_color': '#FFEB9C'})
 
@@ -274,6 +279,7 @@ def generate_excel_report(df):
             # Write data and merge cells
             prev_district = None
             prev_officer = None
+            row_start = 1
             for row_num, row in enumerate(brand_report_df.values):
                 for col_num, value in enumerate(row):
                     col_name = brand_report_df.columns[col_num]
@@ -282,7 +288,7 @@ def generate_excel_report(df):
                     if col_name == 'District' and value != prev_district:
                         worksheet.write(row_num + 1, col_num, value, cell_format)
                         if prev_district is not None:
-                            worksheet.merge_range(row_start, row_num, col_num, col_num, prev_district, cell_format)
+                            worksheet.merge_range(row_start, col_num, row_num, col_num, prev_district, cell_format)
                         prev_district = value
                         row_start = row_num + 1
 
@@ -290,7 +296,7 @@ def generate_excel_report(df):
                     elif col_name == 'Officer' and value != prev_officer:
                         worksheet.write(row_num + 1, col_num, value, cell_format)
                         if prev_officer is not None:
-                            worksheet.merge_range(row_start, row_num, col_num, col_num, prev_officer, cell_format)
+                            worksheet.merge_range(row_start, col_num, row_num, col_num, prev_officer, cell_format)
                         prev_officer = value
                         row_start = row_num + 1
 
@@ -306,7 +312,6 @@ def generate_excel_report(df):
 
     st.success("Excel report is ready.")
     st.download_button("Download Report as Excel", data=output.getvalue(), file_name="dealer_price_report.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-
 def main():
     st.title("Test APP")
     st.write("Upload your dataset to analyze dealer wholesale prices")
