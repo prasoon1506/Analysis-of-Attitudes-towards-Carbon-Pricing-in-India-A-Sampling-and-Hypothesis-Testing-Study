@@ -198,11 +198,12 @@ def main():
         filtered_df = create_filters(df)
         stats_df = calculate_statistics(filtered_df)
         display_interactive_table(stats_df, filtered_df)
+        generate_excel_report(filtered_df)
         if not filtered_df.empty:
             st.subheader("Download Filtered Data")
             csv = filtered_df.to_csv(index=False)
             st.download_button(label="Download as CSV",data=csv,file_name="filtered_price_data.csv",mime="text/csv")
-        generate_excel_report(filtered_df)
+
 
 if __name__ == "__main__":
     main()
