@@ -126,46 +126,48 @@ import numpy as np
 from statistics import mode
 import io
 
+import io
+import pandas as pd
+import numpy as np
+from statistics import mode
+import streamlit as st
 
 def generate_excel_report(df):
     st.subheader("Generate Professional Excel Report")
-    
-    # Allow user to select multiple districts for report generation with an "All" option
+
+    # Select districts
     all_districts = sorted(df['District: Name'].dropna().unique().tolist())
     selected_districts = st.multiselect("Select Districts to Include in Report", ["All"] + all_districts)
-    
+
     if not selected_districts:
         st.info("Please select at least one district.")
         return
-    
-    # If "All" is selected, include all districts
+
     if "All" in selected_districts:
         selected_districts = all_districts
 
-    # Allow user to select multiple brands for report generation
+    # Select brands
     all_brands = sorted(df['Brand: Name'].dropna().unique().tolist())
     selected_brands = st.multiselect("Select Brands to Include in Report", all_brands)
-    
+
     if not selected_brands:
         st.info("Please select at least one brand.")
         return
 
-    # Combine 'Shree' and 'Shree Cement' under a single name for reporting
+    # Combine 'Shree Cement' and 'Shree' under one
     df['Brand: Name'] = df['Brand: Name'].replace({'Shree Cement': 'Shree', 'Shree': 'Shree'})
 
-    # Filter data for the selected districts and brands
+    # Filter
     filtered_df = df[df['District: Name'].isin(selected_districts) & df['Brand: Name'].isin(selected_brands)].copy()
     filtered_df['Account: Dealer Category'] = filtered_df['Account: Dealer Category'].fillna('NaN')
     filtered_df['checkin date'] = pd.to_datetime(filtered_df['checkin date'])
-    
-    # Generate date range
+
     date_range = pd.date_range(filtered_df['checkin date'].min(), filtered_df['checkin date'].max())
     date_columns = [d.date() for d in date_range]
 
     output = io.BytesIO()
 
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        # For each selected brand, create a separate sheet
         for brand in selected_brands:
             brand_df = filtered_df[filtered_df['Brand: Name'] == brand]
             rows = []
@@ -181,109 +183,99 @@ def generate_excel_report(df):
                     for category in categories:
                         row = {'District': district, 'Officer': officer, 'Dealer Category': category}
                         cat_df = officer_df[officer_df['Account: Dealer Category'] == category]
-
-                        # For each date, calculate the modal price or show the two values if there are two
                         available_dates = sorted(cat_df['checkin date'].dt.date.unique())
+
                         for d in date_columns:
                             day_data = cat_df[cat_df['checkin date'].dt.date == d]['Whole Sale Price']
                             if len(day_data) == 1:
                                 row[d.strftime("%d-%b")] = day_data.iloc[0]
                             elif len(day_data) == 2:
-                                # If two prices exist, check if they are the same or different
                                 if day_data.iloc[0] != day_data.iloc[1]:
-                                    row[d.strftime("%d-%b")] = ', '.join(map(str, day_data))  # Write both if they are different
+                                    row[d.strftime("%d-%b")] = ', '.join(map(str, day_data))
                                 else:
-                                    row[d.strftime("%d-%b")] = day_data.iloc[0]  # Write only one if they are the same
+                                    row[d.strftime("%d-%b")] = day_data.iloc[0]
                             elif len(day_data) > 2:
                                 try:
-                                    row[d.strftime("%d-%b")] = mode(day_data)  # Calculate mode for more than two values
+                                    row[d.strftime("%d-%b")] = mode(day_data)
                                 except:
-                                    row[d.strftime("%d-%b")] = np.nan  # If mode can't be determined, leave as NaN
+                                    row[d.strftime("%d-%b")] = np.nan
                             else:
-                                row[d.strftime("%d-%b")] = np.nan  # If no data is available for this date, leave as NaN
+                                row[d.strftime("%d-%b")] = np.nan
 
-                        # Calculate the difference between the first and last available data
-                        first_available_data = cat_df[cat_df['checkin date'].dt.date == available_dates[0]]['Whole Sale Price']
-                        last_available_data = cat_df[cat_df['checkin date'].dt.date == available_dates[-1]]['Whole Sale Price']
-
-                        if not first_available_data.empty and not last_available_data.empty:
-                            row['Change'] = last_available_data.iloc[0] - first_available_data.iloc[0]
+                        first_val = cat_df.sort_values('checkin date')['Whole Sale Price'].dropna()
+                        if len(first_val) > 0:
+                            row['Change'] = first_val.iloc[-1] - first_val.iloc[0]
                         else:
-                            first_available_data = cat_df['Whole Sale Price'].min() if not cat_df[cat_df['checkin date'].dt.date == available_dates[0]].empty else np.nan
-                            last_available_data = cat_df['Whole Sale Price'].max() if not cat_df[cat_df['checkin date'].dt.date == available_dates[-1]].empty else np.nan
-                            row['Change'] = last_available_data - first_available_data if not (np.isnan(first_available_data) or np.isnan(last_available_data)) else np.nan
+                            row['Change'] = np.nan
 
-                        # Count the total number of inputs for each category by each officer
                         row['Total Inputs'] = len(cat_df)
-
                         rows.append(row)
 
-                    # Add overall row for the officer
+                    # Overall row
                     row = {'District': district, 'Officer': officer, 'Dealer Category': 'Overall'}
+                    available_dates = sorted(officer_df['checkin date'].dt.date.unique())
+
                     for d in date_columns:
                         day_data = officer_df[officer_df['checkin date'].dt.date == d]['Whole Sale Price']
                         if len(day_data) == 1:
                             row[d.strftime("%d-%b")] = day_data.iloc[0]
                         elif len(day_data) == 2:
-                            # If two prices exist, check if they are the same or different
                             if day_data.iloc[0] != day_data.iloc[1]:
-                                row[d.strftime("%d-%b")] = ', '.join(map(str, day_data))  # Write both if they are different
+                                row[d.strftime("%d-%b")] = ', '.join(map(str, day_data))
                             else:
-                                row[d.strftime("%d-%b")] = day_data.iloc[0]  # Write only one if they are the same
+                                row[d.strftime("%d-%b")] = day_data.iloc[0]
                         elif len(day_data) > 2:
                             try:
-                                row[d.strftime("%d-%b")] = mode(day_data)  # Calculate mode for more than two values
+                                row[d.strftime("%d-%b")] = mode(day_data)
                             except:
-                                row[d.strftime("%d-%b")] = np.nan  # If mode can't be determined, leave as NaN
+                                row[d.strftime("%d-%b")] = np.nan
                         else:
-                            row[d.strftime("%d-%b")] = np.nan  # If no data is available for this date, leave as NaN
+                            row[d.strftime("%d-%b")] = np.nan
 
-                    # **Correcting the overall change calculation**
-                    # Now ensure the overall change reflects the price difference correctly, even when first and last price are same
-                    first_available_data = officer_df['Whole Sale Price'].min()
-                    last_available_data = officer_df['Whole Sale Price'].max()
-
-                    if first_available_data == last_available_data:
-                        row['Change'] = 0  # If first and last are the same, change is 0
+                    full_data = officer_df.sort_values('checkin date')['Whole Sale Price'].dropna()
+                    if len(full_data) > 0:
+                        row['Change'] = full_data.iloc[-1] - full_data.iloc[0] if full_data.iloc[0] != full_data.iloc[-1] else 0
                     else:
-                        row['Change'] = last_available_data - first_available_data
+                        row['Change'] = np.nan
 
-                    # Count total inputs for the overall row (summation of inputs across categories)
-                    row['Total Inputs'] = officer_df.shape[0]
-
+                    row['Total Inputs'] = len(officer_df)
                     rows.append(row)
 
             brand_report_df = pd.DataFrame(rows)
-
-            # Write the brand-specific sheet to the Excel file
             brand_report_df.to_excel(writer, sheet_name=brand, index=False)
 
-            # Add formatting to the sheet
-            workbook  = writer.book
+            # === Styling ===
+            workbook = writer.book
             worksheet = writer.sheets[brand]
-            header_format = workbook.add_format({'bold': True, 'text_wrap': True, 'bg_color': '#D9EAD3', 'border': 1, 'align': 'center', 'valign': 'vcenter', 'font_size': 12})
-            cell_format = workbook.add_format({'border': 1, 'align': 'center', 'valign': 'vcenter'})
-            date_format = workbook.add_format({'border': 1, 'align': 'center', 'valign': 'vcenter', 'num_format': '0.00'})
-            change_format = workbook.add_format({'border': 1, 'align': 'center', 'valign': 'vcenter', 'bg_color': '#F4CCCC', 'bold': True})
-            total_inputs_format = workbook.add_format({'border': 1, 'align': 'center', 'valign': 'vcenter', 'bg_color': '#FFEB9C', 'bold': True})
 
-            # Format the header row
-            for col_num, value in enumerate(brand_report_df.columns.values):
+            header_format = workbook.add_format({'bold': True, 'bg_color': '#D9EAD3', 'border': 1, 'align': 'center'})
+            cell_format = workbook.add_format({'border': 1, 'align': 'center'})
+            number_format = workbook.add_format({'border': 1, 'align': 'center', 'num_format': '0.00'})
+            change_format = workbook.add_format({'border': 1, 'align': 'center', 'bg_color': '#F4CCCC', 'bold': True})
+            total_input_format = workbook.add_format({'border': 1, 'align': 'center', 'bg_color': '#FFEB9C'})
+
+            for col_num, value in enumerate(brand_report_df.columns):
                 worksheet.write(0, col_num, value, header_format)
 
-            # Apply formatting to the data
             for row_num, row in enumerate(brand_report_df.values):
                 for col_num, value in enumerate(row):
-                    if isinstance(value, (int, float)):
-                        worksheet.write(row_num + 1, col_num, value, date_format)
+                    if isinstance(value, (int, float)) and not pd.isna(value) and np.isfinite(value):
+                        if brand_report_df.columns[col_num] == 'Change':
+                            worksheet.write(row_num + 1, col_num, value, change_format)
+                        elif brand_report_df.columns[col_num] == 'Total Inputs':
+                            worksheet.write(row_num + 1, col_num, value, total_input_format)
+                        else:
+                            worksheet.write(row_num + 1, col_num, value, number_format)
+                    elif pd.isna(value):
+                        worksheet.write(row_num + 1, col_num, '', cell_format)
                     else:
-                        worksheet.write(row_num + 1, col_num, value, cell_format)
+                        worksheet.write(row_num + 1, col_num, str(value), cell_format)
 
-            # Freeze the header row
             worksheet.freeze_panes(1, 0)
 
     st.success("Excel report is ready.")
     st.download_button("Download Report as Excel", data=output.getvalue(), file_name="dealer_price_report.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
 def main():
     st.title("Test APP")
     st.write("Upload your dataset to analyze dealer wholesale prices")
