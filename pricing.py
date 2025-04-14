@@ -408,7 +408,7 @@ def generate_excel_report(df):
             # Define formats
             header_format = workbook.add_format({'bold': True, 'bg_color': '#D9EAD3', 'border': 1, 'align': 'center'})
             cell_format = workbook.add_format({'border': 1, 'align': 'center'})
-            number_format = workbook.add_format({'border': 1, 'align': 'center', 'num_format': '0.00'})
+            number_format = workbook.add_format({'border': 1, 'align': 'center', 'num_format': '0'})
             change_format = workbook.add_format({'border': 1, 'align': 'center', 'bg_color': '#F4CCCC', 'bold': True})
             total_input_format = workbook.add_format({'border': 1, 'align': 'center', 'bg_color': '#FFEB9C'})
             overall_format = workbook.add_format({'border': 1, 'align': 'center', 'bg_color': '#BDD7EE', 'bold': True})
