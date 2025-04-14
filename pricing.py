@@ -13,11 +13,8 @@ def load_data():
         try:
             if uploaded_file.name.endswith('.csv'):
                 df = pd.read_csv(uploaded_file)
-            elif uploaded_file.name.endswith('.xlsx') or uploaded_file.name.endswith('.xls'):
-                df = pd.read_excel(uploaded_file)
             else:
-                st.error("Unsupported file format. Please upload a CSV or Excel file.")
-                return None
+                df = pd.read_excel(uploaded_file)
             required_columns = ['District: Name', 'checkin date', 'Product Type', 'Brand: Name','Account: Dealer Category', 'Whole Sale Price', 'Owner: Full Name']
             missing_columns = [col for col in required_columns if col not in df.columns]
             if missing_columns:
@@ -84,7 +81,7 @@ def calculate_statistics(df):
             try:
                 modal_value = mode(prices)
             except:
-                modal_value = np.nan
+                modal_value = np.nan  # If no unique mode exists
             stat = {'Dealer Category': category,'Count': len(prices),'Minimum': prices.min(),'Maximum': prices.max(),'Average': prices.mean(),'Median': median(prices),'Mode': modal_value}
         else:
             stat = {'Dealer Category': category,'Count': 0,'Minimum': np.nan,'Maximum': np.nan,'Average': np.nan,'Median': np.nan,'Mode': np.nan}
@@ -125,6 +122,7 @@ def main():
     st.write("Upload your dataset to analyze dealer wholesale prices")
     df = load_data()
     if df is not None:
+        # Display dataset overview
         st.subheader("Dataset Overview")
         st.write(f"Total records: {len(df)}")
         st.write(f"Date range: {df['checkin date'].min().date()} to {df['checkin date'].max().date()}")
