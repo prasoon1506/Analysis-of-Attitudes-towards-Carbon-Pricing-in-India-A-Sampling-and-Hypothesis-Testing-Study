@@ -228,18 +228,8 @@ def generate_excel_report(df):
 
                         for d in date_columns:
                             day_data = cat_df[cat_df['checkin date'].dt.date == d]['Whole Sale Price']
-                            if len(day_data) == 1:
+                            if len(day_data) > 0:  # Ensure there is data for the day
                                 row[d.strftime("%d-%b")] = day_data.iloc[0]
-                            elif len(day_data) == 2:
-                                if day_data.iloc[0] != day_data.iloc[1]:
-                                    row[d.strftime("%d-%b")] = ', '.join(map(str, day_data))
-                                else:
-                                    row[d.strftime("%d-%b")] = day_data.iloc[0]
-                            elif len(day_data) > 2:
-                                try:
-                                    row[d.strftime("%d-%b")] = mode(day_data)
-                                except:
-                                    row[d.strftime("%d-%b")] = np.nan
                             else:
                                 row[d.strftime("%d-%b")] = np.nan
 
@@ -259,18 +249,8 @@ def generate_excel_report(df):
                 row = {'District': district, 'Officer': 'Overall', 'Dealer Category': 'Overall'}
                 for d in date_columns:
                     day_data = district_df[district_df['checkin date'].dt.date == d]['Whole Sale Price']
-                    if len(day_data) == 1:
+                    if len(day_data) > 0:  # Ensure there is data for the day
                         row[d.strftime("%d-%b")] = day_data.iloc[0]
-                    elif len(day_data) == 2:
-                        if day_data.iloc[0] != day_data.iloc[1]:
-                            row[d.strftime("%d-%b")] = ', '.join(map(str, day_data))
-                        else:
-                            row[d.strftime("%d-%b")] = day_data.iloc[0]
-                    elif len(day_data) > 2:
-                        try:
-                            row[d.strftime("%d-%b")] = mode(day_data)
-                        except:
-                            row[d.strftime("%d-%b")] = np.nan
                     else:
                         row[d.strftime("%d-%b")] = np.nan
 
