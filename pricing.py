@@ -207,6 +207,9 @@ def generate_excel_report(df):
     output = io.BytesIO()
 
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        # Create the workbook with the nan_inf_to_errors option to handle NaN and INF values
+        writer.book.nan_inf_to_errors = True
+        
         for brand in selected_brands:
             brand_df = filtered_df[filtered_df['Brand: Name'] == brand]
             rows = []
@@ -215,7 +218,6 @@ def generate_excel_report(df):
                 district_df = brand_df[brand_df['District: Name'] == district]
                 officers = sorted(district_df['Owner: Full Name'].dropna().unique().tolist())
 
-                # Process each officer in the district
                 for officer in officers:
                     officer_df = district_df[district_df['Owner: Full Name'] == officer]
                     categories = sorted(officer_df['Account: Dealer Category'].unique().tolist())
@@ -253,37 +255,36 @@ def generate_excel_report(df):
                         row['Total Inputs'] = len(cat_df)
                         rows.append(row)
 
-                # Add the "Overall" row for each district
-                overall_row = {'District': district, 'Officer': 'Overall', 'Dealer Category': 'Overall'}
-                overall_df = district_df
+                # Adding the "Overall" officer for the district
+                row = {'District': district, 'Officer': 'Overall', 'Dealer Category': 'Overall'}
                 for d in date_columns:
-                    day_data = overall_df[overall_df['checkin date'].dt.date == d]['Whole Sale Price']
+                    day_data = district_df[district_df['checkin date'].dt.date == d]['Whole Sale Price']
                     if len(day_data) == 1:
-                        overall_row[d.strftime("%d-%b")] = day_data.iloc[0]
+                        row[d.strftime("%d-%b")] = day_data.iloc[0]
                     elif len(day_data) == 2:
                         if day_data.iloc[0] != day_data.iloc[1]:
-                            overall_row[d.strftime("%d-%b")] = ', '.join(map(str, day_data))
+                            row[d.strftime("%d-%b")] = ', '.join(map(str, day_data))
                         else:
-                            overall_row[d.strftime("%d-%b")] = day_data.iloc[0]
+                            row[d.strftime("%d-%b")] = day_data.iloc[0]
                     elif len(day_data) > 2:
                         try:
-                            overall_row[d.strftime("%d-%b")] = mode(day_data)
+                            row[d.strftime("%d-%b")] = mode(day_data)
                         except:
-                            overall_row[d.strftime("%d-%b")] = np.nan
+                            row[d.strftime("%d-%b")] = np.nan
                     else:
-                        overall_row[d.strftime("%d-%b")] = np.nan
+                        row[d.strftime("%d-%b")] = np.nan
 
-                full_data = overall_df.sort_values('checkin date')['Whole Sale Price'].dropna()
+                full_data = district_df.sort_values('checkin date')['Whole Sale Price'].dropna()
                 if len(full_data) >= 2:
-                    overall_row['Change'] = full_data.iloc[-1] - full_data.iloc[0] \
+                    row['Change'] = full_data.iloc[-1] - full_data.iloc[0] \
                         if full_data.iloc[-1] != full_data.iloc[0] else 0
                 elif len(full_data) == 1:
-                    overall_row['Change'] = '-'
+                    row['Change'] = '-'
                 else:
-                    overall_row['Change'] = np.nan
+                    row['Change'] = np.nan
 
-                overall_row['Total Inputs'] = len(overall_df)
-                rows.append(overall_row)
+                row['Total Inputs'] = len(district_df)
+                rows.append(row)
 
             brand_report_df = pd.DataFrame(rows)
             brand_report_df.to_excel(writer, sheet_name=brand, index=False)
@@ -297,7 +298,7 @@ def generate_excel_report(df):
             number_format = workbook.add_format({'border': 1, 'align': 'center', 'num_format': '0.00'})
             change_format = workbook.add_format({'border': 1, 'align': 'center', 'bg_color': '#F4CCCC', 'bold': True})
             total_input_format = workbook.add_format({'border': 1, 'align': 'center', 'bg_color': '#FFEB9C'})
-            overall_format = workbook.add_format({'border': 1, 'align': 'center', 'bg_color': '#D3D3D3', 'bold': True})  # Beautiful color for overall row
+            overall_format = workbook.add_format({'border': 1, 'align': 'center', 'bg_color': '#D9D9D6', 'bold': True})  # Style for Overall rows
 
             for col_num, value in enumerate(brand_report_df.columns):
                 worksheet.write(0, col_num, value, header_format)
@@ -313,16 +314,17 @@ def generate_excel_report(df):
                     else:
                         worksheet.write(row_num + 1, col_num, str(value), cell_format)
 
-            # Highlight "Overall" rows with a specific format
-            for row_num, row in enumerate(brand_report_df.values):
-                if row[1] == 'Overall':  # Checking if it's the 'Overall' row for a district
-                    for col_num, value in enumerate(row):
-                        worksheet.write(row_num + 1, col_num, value, overall_format)
+            # Highlight the 'Overall' rows
+            overall_rows = [i + 1 for i, row in enumerate(brand_report_df.values) if row[1] == 'Overall']
+            for row_num in overall_rows:
+                for col_num, value in enumerate(brand_report_df.iloc[row_num].values):
+                    worksheet.write(row_num, col_num, value, overall_format)
 
             worksheet.freeze_panes(1, 0)
 
     st.success("Excel report is ready.")
     st.download_button("Download Report as Excel", data=output.getvalue(), file_name="dealer_price_report.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
 def main():
     st.title("Test APP")
     st.write("Upload your dataset to analyze dealer wholesale prices")
