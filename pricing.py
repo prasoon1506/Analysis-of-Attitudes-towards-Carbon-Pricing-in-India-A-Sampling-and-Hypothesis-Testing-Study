@@ -124,6 +124,12 @@ from collections import defaultdict
 import pandas as pd
 import numpy as np
 from statistics import mode
+import io
+from collections import defaultdict
+import pandas as pd
+import numpy as np
+from statistics import mode
+import streamlit as st
 
 def generate_excel_report(df):
     st.subheader("Generate Professional Excel Report")
@@ -138,8 +144,8 @@ def generate_excel_report(df):
     
     # Allow user to select multiple brands for report generation
     all_brands = sorted(df['Brand: Name'].dropna().unique().tolist())
-    selected_brands = st.multiselect("Select Brands to Include in Report", all_brands)
-
+    selected_brands = st.multiselect("Select Brands to Include in Report", all_brnds)
+    
     if not selected_brands:
         st.info("Please select at least one brand.")
         return
@@ -180,14 +186,18 @@ def generate_excel_report(df):
                             if len(day_data) == 1:
                                 row[d.strftime("%d-%b")] = day_data.iloc[0]
                             elif len(day_data) == 2:
-                                row[d.strftime("%d-%b")] = ', '.join(map(str, day_data))
+                                # If two prices exist, check if they are the same or different
+                                if day_data.iloc[0] != day_data.iloc[1]:
+                                    row[d.strftime("%d-%b")] = ', '.join(map(str, day_data))  # Write both if they are different
+                                else:
+                                    row[d.strftime("%d-%b")] = day_data.iloc[0]  # Write only one if they are the same
                             elif len(day_data) > 2:
                                 try:
-                                    row[d.strftime("%d-%b")] = mode(day_data)
+                                    row[d.strftime("%d-%b")] = mode(day_data)  # Calculate mode for more than two values
                                 except:
-                                    row[d.strftime("%d-%b")] = np.nan
+                                    row[d.strftime("%d-%b")] = np.nan  # If mode can't be determined, leave as NaN
                             else:
-                                row[d.strftime("%d-%b")] = np.nan
+                                row[d.strftime("%d-%b")] = np.nan  # If no data is available for this date, leave as NaN
 
                         # Calculate the difference between the first and last available data
                         first_available_data = cat_df[cat_df['checkin date'].dt.date == available_dates[0]]['Whole Sale Price']
@@ -209,14 +219,18 @@ def generate_excel_report(df):
                         if len(day_data) == 1:
                             row[d.strftime("%d-%b")] = day_data.iloc[0]
                         elif len(day_data) == 2:
-                            row[d.strftime("%d-%b")] = ', '.join(map(str, day_data))
+                            # If two prices exist, check if they are the same or different
+                            if day_data.iloc[0] != day_data.iloc[1]:
+                                row[d.strftime("%d-%b")] = ', '.join(map(str, day_data))  # Write both if they are different
+                            else:
+                                row[d.strftime("%d-%b")] = day_data.iloc[0]  # Write only one if they are the same
                         elif len(day_data) > 2:
                             try:
-                                row[d.strftime("%d-%b")] = mode(day_data)
+                                row[d.strftime("%d-%b")] = mode(day_data)  # Calculate mode for more than two values
                             except:
-                                row[d.strftime("%d-%b")] = np.nan
+                                row[d.strftime("%d-%b")] = np.nan  # If mode can't be determined, leave as NaN
                         else:
-                            row[d.strftime("%d-%b")] = np.nan
+                            row[d.strftime("%d-%b")] = np.nan  # If no data is available for this date, leave as NaN
 
                     # Calculate change for overall row
                     first_available_data = officer_df['Whole Sale Price'].min()
