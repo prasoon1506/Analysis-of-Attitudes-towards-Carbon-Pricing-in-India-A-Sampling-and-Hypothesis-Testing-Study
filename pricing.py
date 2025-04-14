@@ -151,6 +151,11 @@ import pandas as pd
 import numpy as np
 from statistics import mode
 import streamlit as st
+import io
+import pandas as pd
+import numpy as np
+from statistics import mode
+import streamlit as st
 
 def generate_excel_report(df):
     st.subheader("Generate Professional Excel Report")
@@ -277,38 +282,13 @@ def generate_excel_report(df):
             change_format = workbook.add_format({'border': 1, 'align': 'center', 'bg_color': '#F4CCCC', 'bold': True})
             total_input_format = workbook.add_format({'border': 1, 'align': 'center', 'bg_color': '#FFEB9C'})
 
-            # Write headers
             for col_num, value in enumerate(brand_report_df.columns):
                 worksheet.write(0, col_num, value, header_format)
-
-            # Write data and merge cells
-            prev_district = None
-            prev_officer = None
-            row_start = 1
-            merged_district_rows = set()
-            merged_officer_rows = set()
 
             for row_num, row in enumerate(brand_report_df.values):
                 for col_num, value in enumerate(row):
                     col_name = brand_report_df.columns[col_num]
-
-                    # Merging district cells
-                    if col_name == 'District' and value != prev_district:
-                        worksheet.write(row_num + 1, col_num, value, cell_format)
-                        if prev_district is not None:
-                            worksheet.merge_range(row_start, col_num, row_num, col_num, prev_district, cell_format)
-                        prev_district = value
-                        row_start = row_num + 1
-
-                    # Merging officer cells
-                    elif col_name == 'Officer' and value != prev_officer:
-                        worksheet.write(row_num + 1, col_num, value, cell_format)
-                        if prev_officer is not None:
-                            worksheet.merge_range(row_start, col_num, row_num, col_num, prev_officer, cell_format)
-                        prev_officer = value
-                        row_start = row_num + 1
-
-                    elif isinstance(value, (int, float)) and not pd.isna(value) and np.isfinite(value):
+                    if isinstance(value, (int, float)) and not pd.isna(value) and np.isfinite(value):
                         fmt = change_format if col_name == 'Change' else total_input_format if col_name == 'Total Inputs' else number_format
                         worksheet.write(row_num + 1, col_num, value, fmt)
                     elif pd.isna(value):
@@ -320,7 +300,6 @@ def generate_excel_report(df):
 
     st.success("Excel report is ready.")
     st.download_button("Download Report as Excel", data=output.getvalue(), file_name="dealer_price_report.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-
 def main():
     st.title("Test APP")
     st.write("Upload your dataset to analyze dealer wholesale prices")
