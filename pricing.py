@@ -125,28 +125,23 @@ import pandas as pd
 import numpy as np
 from statistics import mode
 import io
-from collections import defaultdict
-import pandas as pd
-import numpy as np
-from statistics import mode
-import streamlit as st
-import io
-import pandas as pd
-import numpy as np
-from statistics import mode
-import streamlit as st
+
 
 def generate_excel_report(df):
     st.subheader("Generate Professional Excel Report")
     
-    # Allow user to select multiple districts for report generation
+    # Allow user to select multiple districts for report generation with an "All" option
     all_districts = sorted(df['District: Name'].dropna().unique().tolist())
-    selected_districts = st.multiselect("Select Districts to Include in Report", all_districts)
+    selected_districts = st.multiselect("Select Districts to Include in Report", ["All"] + all_districts)
     
     if not selected_districts:
         st.info("Please select at least one district.")
         return
     
+    # If "All" is selected, include all districts
+    if "All" in selected_districts:
+        selected_districts = all_districts
+
     # Allow user to select multiple brands for report generation
     all_brands = sorted(df['Brand: Name'].dropna().unique().tolist())
     selected_brands = st.multiselect("Select Brands to Include in Report", all_brands)
@@ -243,10 +238,15 @@ def generate_excel_report(df):
                         else:
                             row[d.strftime("%d-%b")] = np.nan  # If no data is available for this date, leave as NaN
 
-                    # Calculate change for overall row
+                    # **Correcting the overall change calculation**
+                    # Now ensure the overall change reflects the price difference correctly, even when first and last price are same
                     first_available_data = officer_df['Whole Sale Price'].min()
                     last_available_data = officer_df['Whole Sale Price'].max()
-                    row['Change'] = last_available_data - first_available_data if not (np.isnan(first_available_data) or np.isnan(last_available_data)) else np.nan
+
+                    if first_available_data == last_available_data:
+                        row['Change'] = 0  # If first and last are the same, change is 0
+                    else:
+                        row['Change'] = last_available_data - first_available_data
 
                     # Count total inputs for the overall row (summation of inputs across categories)
                     row['Total Inputs'] = officer_df.shape[0]
@@ -258,9 +258,32 @@ def generate_excel_report(df):
             # Write the brand-specific sheet to the Excel file
             brand_report_df.to_excel(writer, sheet_name=brand, index=False)
 
+            # Add formatting to the sheet
+            workbook  = writer.book
+            worksheet = writer.sheets[brand]
+            header_format = workbook.add_format({'bold': True, 'text_wrap': True, 'bg_color': '#D9EAD3', 'border': 1, 'align': 'center', 'valign': 'vcenter', 'font_size': 12})
+            cell_format = workbook.add_format({'border': 1, 'align': 'center', 'valign': 'vcenter'})
+            date_format = workbook.add_format({'border': 1, 'align': 'center', 'valign': 'vcenter', 'num_format': '0.00'})
+            change_format = workbook.add_format({'border': 1, 'align': 'center', 'valign': 'vcenter', 'bg_color': '#F4CCCC', 'bold': True})
+            total_inputs_format = workbook.add_format({'border': 1, 'align': 'center', 'valign': 'vcenter', 'bg_color': '#FFEB9C', 'bold': True})
+
+            # Format the header row
+            for col_num, value in enumerate(brand_report_df.columns.values):
+                worksheet.write(0, col_num, value, header_format)
+
+            # Apply formatting to the data
+            for row_num, row in enumerate(brand_report_df.values):
+                for col_num, value in enumerate(row):
+                    if isinstance(value, (int, float)):
+                        worksheet.write(row_num + 1, col_num, value, date_format)
+                    else:
+                        worksheet.write(row_num + 1, col_num, value, cell_format)
+
+            # Freeze the header row
+            worksheet.freeze_panes(1, 0)
+
     st.success("Excel report is ready.")
     st.download_button("Download Report as Excel", data=output.getvalue(), file_name="dealer_price_report.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-
 def main():
     st.title("Test APP")
     st.write("Upload your dataset to analyze dealer wholesale prices")
