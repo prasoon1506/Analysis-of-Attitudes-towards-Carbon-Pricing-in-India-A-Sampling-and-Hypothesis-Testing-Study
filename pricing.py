@@ -118,7 +118,7 @@ def display_interactive_table(stats_df, filtered_df):
         else:
             st.info(f"No data available for '{selected_category}' category with the current filters")
 def main():
-    st.title("Wholesale Price Analysis Dashboard")
+    st.title("Test APP")
     st.write("Upload your dataset to analyze dealer wholesale prices")
     df = load_data()
     if df is not None:
