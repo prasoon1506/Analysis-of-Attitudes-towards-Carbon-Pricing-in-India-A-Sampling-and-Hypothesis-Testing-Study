@@ -119,94 +119,116 @@ def display_interactive_table(stats_df, filtered_df):
                 st.plotly_chart(fig, use_container_width=True)
         else:
             st.info(f"No data available for '{selected_category}' category with the current filters")
+import io
+from collections import defaultdict
+import pandas as pd
+import numpy as np
+from statistics import mode
+
 def generate_excel_report(df):
     st.subheader("Generate Professional Excel Report")
+    
+    # Allow user to select multiple districts for report generation
     all_districts = sorted(df['District: Name'].dropna().unique().tolist())
     selected_districts = st.multiselect("Select Districts to Include in Report", all_districts)
-
+    
     if not selected_districts:
         st.info("Please select at least one district.")
         return
+    
+    # Allow user to select multiple brands for report generation
+    all_brands = sorted(df['Brand: Name'].dropna().unique().tolist())
+    selected_brands = st.multiselect("Select Brands to Include in Report", all_brands)
 
-    filtered_df = df[df['District: Name'].isin(selected_districts)].copy()
+    if not selected_brands:
+        st.info("Please select at least one brand.")
+        return
+
+    # Filter data for the selected districts and brands
+    filtered_df = df[df['District: Name'].isin(selected_districts) & df['Brand: Name'].isin(selected_brands)].copy()
     filtered_df['Account: Dealer Category'] = filtered_df['Account: Dealer Category'].fillna('NaN')
     filtered_df['checkin date'] = pd.to_datetime(filtered_df['checkin date'])
+    
+    # Generate date range
     date_range = pd.date_range(filtered_df['checkin date'].min(), filtered_df['checkin date'].max())
     date_columns = [d.date() for d in date_range]
 
-    rows = []
-
-    for district in selected_districts:
-        district_df = filtered_df[filtered_df['District: Name'] == district]
-        officers = sorted(district_df['Owner: Full Name'].dropna().unique().tolist())
-
-        for officer in officers:
-            officer_df = district_df[district_df['Owner: Full Name'] == officer]
-            categories = sorted(officer_df['Account: Dealer Category'].unique().tolist())
-
-            for category in categories:
-                row = {'District': district, 'Officer': officer, 'Dealer Category': category}
-                cat_df = officer_df[officer_df['Account: Dealer Category'] == category]
-
-                # For each date, calculate the modal price or show the two values if there are two
-                available_dates = sorted(cat_df['checkin date'].dt.date.unique())
-                for d in date_columns:
-                    day_data = cat_df[cat_df['checkin date'].dt.date == d]['Whole Sale Price']
-                    if len(day_data) == 1:
-                        row[d.strftime("%d-%b")] = day_data.iloc[0]
-                    elif len(day_data) == 2:
-                        row[d.strftime("%d-%b")] = ', '.join(map(str, day_data))
-                    elif len(day_data) > 2:
-                        try:
-                            row[d.strftime("%d-%b")] = mode(day_data)
-                        except:
-                            row[d.strftime("%d-%b")] = np.nan
-                    else:
-                        row[d.strftime("%d-%b")] = np.nan
-
-                # Calculate the difference between the first and last available data
-                first_available_data = cat_df[cat_df['checkin date'].dt.date == available_dates[0]]['Whole Sale Price']
-                last_available_data = cat_df[cat_df['checkin date'].dt.date == available_dates[-1]]['Whole Sale Price']
-
-                # If data is missing for first or last day, calculate diff between first and last available data
-                if not first_available_data.empty and not last_available_data.empty:
-                    row['Change'] = last_available_data.iloc[0] - first_available_data.iloc[0]
-                else:
-                    # Calculate the diff between first and last available prices if both exist
-                    first_available_data = cat_df['Whole Sale Price'].min() if not cat_df[cat_df['checkin date'].dt.date == available_dates[0]].empty else np.nan
-                    last_available_data = cat_df['Whole Sale Price'].max() if not cat_df[cat_df['checkin date'].dt.date == available_dates[-1]].empty else np.nan
-                    row['Change'] = last_available_data - first_available_data if not (np.isnan(first_available_data) or np.isnan(last_available_data)) else np.nan
-
-                rows.append(row)
-
-            # Add overall row for the officer
-            row = {'District': district, 'Officer': officer, 'Dealer Category': 'Overall'}
-            for d in date_columns:
-                day_data = officer_df[officer_df['checkin date'].dt.date == d]['Whole Sale Price']
-                if len(day_data) == 1:
-                    row[d.strftime("%d-%b")] = day_data.iloc[0]
-                elif len(day_data) == 2:
-                    row[d.strftime("%d-%b")] = ', '.join(map(str, day_data))
-                elif len(day_data) > 2:
-                    try:
-                        row[d.strftime("%d-%b")] = mode(day_data)
-                    except:
-                        row[d.strftime("%d-%b")] = np.nan
-                else:
-                    row[d.strftime("%d-%b")] = np.nan
-
-            # Calculate change for overall row
-            first_available_data = officer_df['Whole Sale Price'].min()
-            last_available_data = officer_df['Whole Sale Price'].max()
-            row['Change'] = last_available_data - first_available_data if not (np.isnan(first_available_data) or np.isnan(last_available_data)) else np.nan
-            rows.append(row)
-
-    report_df = pd.DataFrame(rows)
-
-    # Export to Excel
     output = io.BytesIO()
+
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        report_df.to_excel(writer, sheet_name='Report', index=False)
+        # For each selected brand, create a separate sheet
+        for brand in selected_brands:
+            brand_df = filtered_df[filtered_df['Brand: Name'] == brand]
+            rows = []
+
+            for district in selected_districts:
+                district_df = brand_df[brand_df['District: Name'] == district]
+                officers = sorted(district_df['Owner: Full Name'].dropna().unique().tolist())
+
+                for officer in officers:
+                    officer_df = district_df[district_df['Owner: Full Name'] == officer]
+                    categories = sorted(officer_df['Account: Dealer Category'].unique().tolist())
+
+                    for category in categories:
+                        row = {'District': district, 'Officer': officer, 'Dealer Category': category}
+                        cat_df = officer_df[officer_df['Account: Dealer Category'] == category]
+
+                        # For each date, calculate the modal price or show the two values if there are two
+                        available_dates = sorted(cat_df['checkin date'].dt.date.unique())
+                        for d in date_columns:
+                            day_data = cat_df[cat_df['checkin date'].dt.date == d]['Whole Sale Price']
+                            if len(day_data) == 1:
+                                row[d.strftime("%d-%b")] = day_data.iloc[0]
+                            elif len(day_data) == 2:
+                                row[d.strftime("%d-%b")] = ', '.join(map(str, day_data))
+                            elif len(day_data) > 2:
+                                try:
+                                    row[d.strftime("%d-%b")] = mode(day_data)
+                                except:
+                                    row[d.strftime("%d-%b")] = np.nan
+                            else:
+                                row[d.strftime("%d-%b")] = np.nan
+
+                        # Calculate the difference between the first and last available data
+                        first_available_data = cat_df[cat_df['checkin date'].dt.date == available_dates[0]]['Whole Sale Price']
+                        last_available_data = cat_df[cat_df['checkin date'].dt.date == available_dates[-1]]['Whole Sale Price']
+
+                        if not first_available_data.empty and not last_available_data.empty:
+                            row['Change'] = last_available_data.iloc[0] - first_available_data.iloc[0]
+                        else:
+                            first_available_data = cat_df['Whole Sale Price'].min() if not cat_df[cat_df['checkin date'].dt.date == available_dates[0]].empty else np.nan
+                            last_available_data = cat_df['Whole Sale Price'].max() if not cat_df[cat_df['checkin date'].dt.date == available_dates[-1]].empty else np.nan
+                            row['Change'] = last_available_data - first_available_data if not (np.isnan(first_available_data) or np.isnan(last_available_data)) else np.nan
+
+                        rows.append(row)
+
+                    # Add overall row for the officer
+                    row = {'District': district, 'Officer': officer, 'Dealer Category': 'Overall'}
+                    for d in date_columns:
+                        day_data = officer_df[officer_df['checkin date'].dt.date == d]['Whole Sale Price']
+                        if len(day_data) == 1:
+                            row[d.strftime("%d-%b")] = day_data.iloc[0]
+                        elif len(day_data) == 2:
+                            row[d.strftime("%d-%b")] = ', '.join(map(str, day_data))
+                        elif len(day_data) > 2:
+                            try:
+                                row[d.strftime("%d-%b")] = mode(day_data)
+                            except:
+                                row[d.strftime("%d-%b")] = np.nan
+                        else:
+                            row[d.strftime("%d-%b")] = np.nan
+
+                    # Calculate change for overall row
+                    first_available_data = officer_df['Whole Sale Price'].min()
+                    last_available_data = officer_df['Whole Sale Price'].max()
+                    row['Change'] = last_available_data - first_available_data if not (np.isnan(first_available_data) or np.isnan(last_available_data)) else np.nan
+                    rows.append(row)
+
+            brand_report_df = pd.DataFrame(rows)
+
+            # Write the brand-specific sheet to the Excel file
+            brand_report_df.to_excel(writer, sheet_name=brand, index=False)
+
     st.success("Excel report is ready.")
     st.download_button("Download Report as Excel", data=output.getvalue(), file_name="dealer_price_report.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
