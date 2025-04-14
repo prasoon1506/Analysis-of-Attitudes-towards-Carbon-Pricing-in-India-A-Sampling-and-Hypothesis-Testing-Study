@@ -148,9 +148,15 @@ def generate_excel_report(df):
                 row = {'District': district, 'Officer': officer, 'Dealer Category': category}
                 cat_df = officer_df[officer_df['Account: Dealer Category'] == category]
 
+                # For each date, calculate the modal price or show the two values if there are two
+                available_dates = sorted(cat_df['checkin date'].dt.date.unique())
                 for d in date_columns:
                     day_data = cat_df[cat_df['checkin date'].dt.date == d]['Whole Sale Price']
-                    if not day_data.empty:
+                    if len(day_data) == 1:
+                        row[d.strftime("%d-%b")] = day_data.iloc[0]
+                    elif len(day_data) == 2:
+                        row[d.strftime("%d-%b")] = ', '.join(map(str, day_data))
+                    elif len(day_data) > 2:
                         try:
                             row[d.strftime("%d-%b")] = mode(day_data)
                         except:
@@ -158,16 +164,30 @@ def generate_excel_report(df):
                     else:
                         row[d.strftime("%d-%b")] = np.nan
 
-                first_day = date_columns[0].strftime("%d-%b")
-                last_day = date_columns[-1].strftime("%d-%b")
-                row['Change'] = (row.get(last_day, np.nan) or 0) - (row.get(first_day, np.nan) or 0)
+                # Calculate the difference between the first and last available data
+                first_available_data = cat_df[cat_df['checkin date'].dt.date == available_dates[0]]['Whole Sale Price']
+                last_available_data = cat_df[cat_df['checkin date'].dt.date == available_dates[-1]]['Whole Sale Price']
+
+                # If data is missing for first or last day, calculate diff between first and last available data
+                if not first_available_data.empty and not last_available_data.empty:
+                    row['Change'] = last_available_data.iloc[0] - first_available_data.iloc[0]
+                else:
+                    # Calculate the diff between first and last available prices if both exist
+                    first_available_data = cat_df['Whole Sale Price'].min() if not cat_df[cat_df['checkin date'].dt.date == available_dates[0]].empty else np.nan
+                    last_available_data = cat_df['Whole Sale Price'].max() if not cat_df[cat_df['checkin date'].dt.date == available_dates[-1]].empty else np.nan
+                    row['Change'] = last_available_data - first_available_data if not (np.isnan(first_available_data) or np.isnan(last_available_data)) else np.nan
+
                 rows.append(row)
 
-            # Add overall row
+            # Add overall row for the officer
             row = {'District': district, 'Officer': officer, 'Dealer Category': 'Overall'}
             for d in date_columns:
                 day_data = officer_df[officer_df['checkin date'].dt.date == d]['Whole Sale Price']
-                if not day_data.empty:
+                if len(day_data) == 1:
+                    row[d.strftime("%d-%b")] = day_data.iloc[0]
+                elif len(day_data) == 2:
+                    row[d.strftime("%d-%b")] = ', '.join(map(str, day_data))
+                elif len(day_data) > 2:
                     try:
                         row[d.strftime("%d-%b")] = mode(day_data)
                     except:
@@ -175,7 +195,10 @@ def generate_excel_report(df):
                 else:
                     row[d.strftime("%d-%b")] = np.nan
 
-            row['Change'] = (row.get(last_day, np.nan) or 0) - (row.get(first_day, np.nan) or 0)
+            # Calculate change for overall row
+            first_available_data = officer_df['Whole Sale Price'].min()
+            last_available_data = officer_df['Whole Sale Price'].max()
+            row['Change'] = last_available_data - first_available_data if not (np.isnan(first_available_data) or np.isnan(last_available_data)) else np.nan
             rows.append(row)
 
     report_df = pd.DataFrame(rows)
@@ -186,6 +209,7 @@ def generate_excel_report(df):
         report_df.to_excel(writer, sheet_name='Report', index=False)
     st.success("Excel report is ready.")
     st.download_button("Download Report as Excel", data=output.getvalue(), file_name="dealer_price_report.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
 def main():
     st.title("Test APP")
     st.write("Upload your dataset to analyze dealer wholesale prices")
