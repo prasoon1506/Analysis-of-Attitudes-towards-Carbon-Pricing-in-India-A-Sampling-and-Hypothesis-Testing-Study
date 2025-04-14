@@ -117,6 +117,73 @@ def display_interactive_table(stats_df, filtered_df):
                 st.plotly_chart(fig, use_container_width=True)
         else:
             st.info(f"No data available for '{selected_category}' category with the current filters")
+def generate_excel_report(df):
+    st.subheader("Generate Professional Excel Report")
+    all_districts = sorted(df['District: Name'].dropna().unique().tolist())
+    selected_districts = st.multiselect("Select Districts to Include in Report", all_districts)
+
+    if not selected_districts:
+        st.info("Please select at least one district.")
+        return
+
+    filtered_df = df[df['District: Name'].isin(selected_districts)].copy()
+    filtered_df['Account: Dealer Category'] = filtered_df['Account: Dealer Category'].fillna('NaN')
+    filtered_df['checkin date'] = pd.to_datetime(filtered_df['checkin date'])
+    date_range = pd.date_range(filtered_df['checkin date'].min(), filtered_df['checkin date'].max())
+    date_columns = [d.date() for d in date_range]
+
+    rows = []
+
+    for district in selected_districts:
+        district_df = filtered_df[filtered_df['District: Name'] == district]
+        officers = sorted(district_df['Owner: Full Name'].dropna().unique().tolist())
+
+        for officer in officers:
+            officer_df = district_df[district_df['Owner: Full Name'] == officer]
+            categories = sorted(officer_df['Account: Dealer Category'].unique().tolist())
+
+            for category in categories:
+                row = {'District': district, 'Officer': officer, 'Dealer Category': category}
+                cat_df = officer_df[officer_df['Account: Dealer Category'] == category]
+
+                for d in date_columns:
+                    day_data = cat_df[cat_df['checkin date'].dt.date == d]['Whole Sale Price']
+                    if not day_data.empty:
+                        try:
+                            row[d.strftime("%d-%b")] = mode(day_data)
+                        except:
+                            row[d.strftime("%d-%b")] = np.nan
+                    else:
+                        row[d.strftime("%d-%b")] = np.nan
+
+                first_day = date_columns[0].strftime("%d-%b")
+                last_day = date_columns[-1].strftime("%d-%b")
+                row['Change'] = (row.get(last_day, np.nan) or 0) - (row.get(first_day, np.nan) or 0)
+                rows.append(row)
+
+            # Add overall row
+            row = {'District': district, 'Officer': officer, 'Dealer Category': 'Overall'}
+            for d in date_columns:
+                day_data = officer_df[officer_df['checkin date'].dt.date == d]['Whole Sale Price']
+                if not day_data.empty:
+                    try:
+                        row[d.strftime("%d-%b")] = mode(day_data)
+                    except:
+                        row[d.strftime("%d-%b")] = np.nan
+                else:
+                    row[d.strftime("%d-%b")] = np.nan
+
+            row['Change'] = (row.get(last_day, np.nan) or 0) - (row.get(first_day, np.nan) or 0)
+            rows.append(row)
+
+    report_df = pd.DataFrame(rows)
+
+    # Export to Excel
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        report_df.to_excel(writer, sheet_name='Report', index=False)
+    st.success("Excel report is ready.")
+    st.download_button("Download Report as Excel", data=output.getvalue(), file_name="dealer_price_report.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 def main():
     st.title("Test APP")
     st.write("Upload your dataset to analyze dealer wholesale prices")
@@ -135,5 +202,7 @@ def main():
             st.subheader("Download Filtered Data")
             csv = filtered_df.to_csv(index=False)
             st.download_button(label="Download as CSV",data=csv,file_name="filtered_price_data.csv",mime="text/csv")
+        generate_excel_report(filtered_df)
+
 if __name__ == "__main__":
     main()
