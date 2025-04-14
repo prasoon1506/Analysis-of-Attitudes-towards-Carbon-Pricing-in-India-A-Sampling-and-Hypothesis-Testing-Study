@@ -131,6 +131,11 @@ import pandas as pd
 import numpy as np
 from statistics import mode
 import streamlit as st
+import io
+import pandas as pd
+import numpy as np
+from statistics import mode
+import streamlit as st
 
 def generate_excel_report(df):
     st.subheader("Generate Professional Excel Report")
@@ -154,13 +159,13 @@ def generate_excel_report(df):
         st.info("Please select at least one brand.")
         return
 
-    # Combine 'Shree Cement' and 'Shree' under one
-    df['Brand: Name'] = df['Brand: Name'].replace({'Shree Cement': 'Shree', 'Shree': 'Shree'})
+    # Combine 'Shree Cement' and 'Shree'
+    df['Brand: Name'] = df['Brand: Name'].replace({'Shree Cement': 'Shree'})
 
-    # Filter
+    # Filter data
+    df['Account: Dealer Category'] = df['Account: Dealer Category'].fillna('NaN')
+    df['checkin date'] = pd.to_datetime(df['checkin date'])
     filtered_df = df[df['District: Name'].isin(selected_districts) & df['Brand: Name'].isin(selected_brands)].copy()
-    filtered_df['Account: Dealer Category'] = filtered_df['Account: Dealer Category'].fillna('NaN')
-    filtered_df['checkin date'] = pd.to_datetime(filtered_df['checkin date'])
 
     date_range = pd.date_range(filtered_df['checkin date'].min(), filtered_df['checkin date'].max())
     date_columns = [d.date() for d in date_range]
@@ -183,7 +188,6 @@ def generate_excel_report(df):
                     for category in categories:
                         row = {'District': district, 'Officer': officer, 'Dealer Category': category}
                         cat_df = officer_df[officer_df['Account: Dealer Category'] == category]
-                        available_dates = sorted(cat_df['checkin date'].dt.date.unique())
 
                         for d in date_columns:
                             day_data = cat_df[cat_df['checkin date'].dt.date == d]['Whole Sale Price']
@@ -202,9 +206,12 @@ def generate_excel_report(df):
                             else:
                                 row[d.strftime("%d-%b")] = np.nan
 
-                        first_val = cat_df.sort_values('checkin date')['Whole Sale Price'].dropna()
-                        if len(first_val) > 0:
-                            row['Change'] = first_val.iloc[-1] - first_val.iloc[0]
+                        sorted_prices = cat_df.sort_values('checkin date')['Whole Sale Price'].dropna()
+                        if len(sorted_prices) >= 2:
+                            row['Change'] = sorted_prices.iloc[-1] - sorted_prices.iloc[0] \
+                                if sorted_prices.iloc[-1] != sorted_prices.iloc[0] else 0
+                        elif len(sorted_prices) == 1:
+                            row['Change'] = '-'  # Not enough data
                         else:
                             row['Change'] = np.nan
 
@@ -213,8 +220,6 @@ def generate_excel_report(df):
 
                     # Overall row
                     row = {'District': district, 'Officer': officer, 'Dealer Category': 'Overall'}
-                    available_dates = sorted(officer_df['checkin date'].dt.date.unique())
-
                     for d in date_columns:
                         day_data = officer_df[officer_df['checkin date'].dt.date == d]['Whole Sale Price']
                         if len(day_data) == 1:
@@ -233,8 +238,11 @@ def generate_excel_report(df):
                             row[d.strftime("%d-%b")] = np.nan
 
                     full_data = officer_df.sort_values('checkin date')['Whole Sale Price'].dropna()
-                    if len(full_data) > 0:
-                        row['Change'] = full_data.iloc[-1] - full_data.iloc[0] if full_data.iloc[0] != full_data.iloc[-1] else 0
+                    if len(full_data) >= 2:
+                        row['Change'] = full_data.iloc[-1] - full_data.iloc[0] \
+                            if full_data.iloc[-1] != full_data.iloc[0] else 0
+                    elif len(full_data) == 1:
+                        row['Change'] = '-'
                     else:
                         row['Change'] = np.nan
 
@@ -244,13 +252,13 @@ def generate_excel_report(df):
             brand_report_df = pd.DataFrame(rows)
             brand_report_df.to_excel(writer, sheet_name=brand, index=False)
 
-            # === Styling ===
+            # Excel styling
             workbook = writer.book
             worksheet = writer.sheets[brand]
 
             header_format = workbook.add_format({'bold': True, 'bg_color': '#D9EAD3', 'border': 1, 'align': 'center'})
             cell_format = workbook.add_format({'border': 1, 'align': 'center'})
-            number_format = workbook.add_format({'border': 1, 'align': 'center', 'num_format': '0.00'})
+            number_format = workbook.add_format({'border': 1, 'align': 'center', 'num_format': '0'})
             change_format = workbook.add_format({'border': 1, 'align': 'center', 'bg_color': '#F4CCCC', 'bold': True})
             total_input_format = workbook.add_format({'border': 1, 'align': 'center', 'bg_color': '#FFEB9C'})
 
@@ -259,13 +267,10 @@ def generate_excel_report(df):
 
             for row_num, row in enumerate(brand_report_df.values):
                 for col_num, value in enumerate(row):
+                    col_name = brand_report_df.columns[col_num]
                     if isinstance(value, (int, float)) and not pd.isna(value) and np.isfinite(value):
-                        if brand_report_df.columns[col_num] == 'Change':
-                            worksheet.write(row_num + 1, col_num, value, change_format)
-                        elif brand_report_df.columns[col_num] == 'Total Inputs':
-                            worksheet.write(row_num + 1, col_num, value, total_input_format)
-                        else:
-                            worksheet.write(row_num + 1, col_num, value, number_format)
+                        fmt = change_format if col_name == 'Change' else total_input_format if col_name == 'Total Inputs' else number_format
+                        worksheet.write(row_num + 1, col_num, value, fmt)
                     elif pd.isna(value):
                         worksheet.write(row_num + 1, col_num, '', cell_format)
                     else:
@@ -275,7 +280,6 @@ def generate_excel_report(df):
 
     st.success("Excel report is ready.")
     st.download_button("Download Report as Excel", data=output.getvalue(), file_name="dealer_price_report.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-
 def main():
     st.title("Test APP")
     st.write("Upload your dataset to analyze dealer wholesale prices")
