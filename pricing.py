@@ -130,6 +130,11 @@ import pandas as pd
 import numpy as np
 from statistics import mode
 import streamlit as st
+import io
+import pandas as pd
+import numpy as np
+from statistics import mode
+import streamlit as st
 
 def generate_excel_report(df):
     st.subheader("Generate Professional Excel Report")
@@ -144,11 +149,14 @@ def generate_excel_report(df):
     
     # Allow user to select multiple brands for report generation
     all_brands = sorted(df['Brand: Name'].dropna().unique().tolist())
-    selected_brands = st.multiselect("Select Brands to Include in Report", all_brnds)
+    selected_brands = st.multiselect("Select Brands to Include in Report", all_brands)
     
     if not selected_brands:
         st.info("Please select at least one brand.")
         return
+
+    # Combine 'Shree' and 'Shree Cement' under a single name for reporting
+    df['Brand: Name'] = df['Brand: Name'].replace({'Shree Cement': 'Shree', 'Shree': 'Shree'})
 
     # Filter data for the selected districts and brands
     filtered_df = df[df['District: Name'].isin(selected_districts) & df['Brand: Name'].isin(selected_brands)].copy()
@@ -210,6 +218,9 @@ def generate_excel_report(df):
                             last_available_data = cat_df['Whole Sale Price'].max() if not cat_df[cat_df['checkin date'].dt.date == available_dates[-1]].empty else np.nan
                             row['Change'] = last_available_data - first_available_data if not (np.isnan(first_available_data) or np.isnan(last_available_data)) else np.nan
 
+                        # Count the total number of inputs for each category by each officer
+                        row['Total Inputs'] = len(cat_df)
+
                         rows.append(row)
 
                     # Add overall row for the officer
@@ -236,6 +247,10 @@ def generate_excel_report(df):
                     first_available_data = officer_df['Whole Sale Price'].min()
                     last_available_data = officer_df['Whole Sale Price'].max()
                     row['Change'] = last_available_data - first_available_data if not (np.isnan(first_available_data) or np.isnan(last_available_data)) else np.nan
+
+                    # Count total inputs for the overall row (summation of inputs across categories)
+                    row['Total Inputs'] = officer_df.shape[0]
+
                     rows.append(row)
 
             brand_report_df = pd.DataFrame(rows)
