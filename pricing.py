@@ -161,6 +161,11 @@ import pandas as pd
 import numpy as np
 from statistics import mode
 import streamlit as st
+import io
+import pandas as pd
+import numpy as np
+from statistics import mode
+import streamlit as st
 
 def generate_excel_report(df):
     st.subheader("Generate Professional Excel Report")
@@ -198,7 +203,8 @@ def generate_excel_report(df):
 
     output = io.BytesIO()
 
-    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+    # Set up the Excel writer with the `nan_inf_to_errors` option to handle NaN/INF values
+    with pd.ExcelWriter(output, engine='xlsxwriter', options={'nan_inf_to_errors': True}) as writer:
         for brand in selected_brands:
             brand_df = filtered_df[filtered_df['Brand: Name'] == brand]
             rows = []
@@ -219,7 +225,7 @@ def generate_excel_report(df):
                         for d in date_columns:
                             day_data = cat_df[cat_df['checkin date'].dt.date == d]['Whole Sale Price']
                             if len(day_data) == 1:
-                                row[d.strftime("%d-%b")] = day_data.iloc[0]
+                                row[d.strftime("%d-%b")] = day_data.iloc[0] if not pd.isna(day_data.iloc[0]) else ''
                             elif len(day_data) == 2:
                                 if day_data.iloc[0] != day_data.iloc[1]:
                                     row[d.strftime("%d-%b")] = ', '.join(map(str, day_data))
@@ -229,20 +235,19 @@ def generate_excel_report(df):
                                 try:
                                     row[d.strftime("%d-%b")] = mode(day_data)
                                 except:
-                                    row[d.strftime("%d-%b")] = np.nan
+                                    row[d.strftime("%d-%b")] = ''
                             else:
-                                row[d.strftime("%d-%b")] = np.nan
-
+                                row[d.strftime("%d-%b")] = ''
+                        
                         # Calculate change and total inputs for each category
                         sorted_prices = cat_df.sort_values('checkin date')['Whole Sale Price'].dropna()
                         if len(sorted_prices) >= 2:
-                            row['Change'] = sorted_prices.iloc[-1] - sorted_prices.iloc[0] \
-                                if sorted_prices.iloc[-1] != sorted_prices.iloc[0] else 0
+                            row['Change'] = sorted_prices.iloc[-1] - sorted_prices.iloc[0] if sorted_prices.iloc[-1] != sorted_prices.iloc[0] else 0
                         elif len(sorted_prices) == 1:
-                            row['Change'] = '-'  # Not enough data
+                            row['Change'] = '-'
                         else:
-                            row['Change'] = np.nan
-
+                            row['Change'] = ''
+                        
                         row['Total Inputs'] = len(cat_df)
                         rows.append(row)
 
@@ -251,7 +256,7 @@ def generate_excel_report(df):
                     for d in date_columns:
                         day_data = officer_df[officer_df['checkin date'].dt.date == d]['Whole Sale Price']
                         if len(day_data) == 1:
-                            row[d.strftime("%d-%b")] = day_data.iloc[0]
+                            row[d.strftime("%d-%b")] = day_data.iloc[0] if not pd.isna(day_data.iloc[0]) else ''
                         elif len(day_data) == 2:
                             if day_data.iloc[0] != day_data.iloc[1]:
                                 row[d.strftime("%d-%b")] = ', '.join(map(str, day_data))
@@ -261,18 +266,17 @@ def generate_excel_report(df):
                             try:
                                 row[d.strftime("%d-%b")] = mode(day_data)
                             except:
-                                row[d.strftime("%d-%b")] = np.nan
+                                row[d.strftime("%d-%b")] = ''
                         else:
-                            row[d.strftime("%d-%b")] = np.nan
-
+                            row[d.strftime("%d-%b")] = ''
+                    
                     full_data = officer_df.sort_values('checkin date')['Whole Sale Price'].dropna()
                     if len(full_data) >= 2:
-                        row['Change'] = full_data.iloc[-1] - full_data.iloc[0] \
-                            if full_data.iloc[-1] != full_data.iloc[0] else 0
+                        row['Change'] = full_data.iloc[-1] - full_data.iloc[0] if full_data.iloc[-1] != full_data.iloc[0] else 0
                     elif len(full_data) == 1:
                         row['Change'] = '-'
                     else:
-                        row['Change'] = np.nan
+                        row['Change'] = ''
 
                     row['Total Inputs'] = len(officer_df)
                     rows.append(row)
