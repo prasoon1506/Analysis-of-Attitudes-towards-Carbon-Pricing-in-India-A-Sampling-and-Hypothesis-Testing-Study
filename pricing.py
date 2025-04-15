@@ -338,16 +338,33 @@ def generate_excel_report(df):
                                 row[d.strftime("%d-%b")] = np.nan
                         else:
                             row[d.strftime("%d-%b")] = np.nan
-                            
-                    sorted_prices = cat_df.sort_values('checkin date')['Whole Sale Price'].dropna()
-                    if len(sorted_prices) >= 2:
-                        change_value = sorted_prices.iloc[-1] - sorted_prices.iloc[0]
+                    
+                    # Calculate change for category across district
+                    # Group by date to find first and last prices
+                    date_price_pairs = []
+                    for d in sorted(cat_df['checkin date'].dt.date.unique()):
+                        day_data = cat_df[cat_df['checkin date'].dt.date == d]['Whole Sale Price'].dropna()
+                        if len(day_data) > 0:
+                            try:
+                                if len(day_data) > 1:
+                                    representative_price = mode(day_data)
+                                else:
+                                    representative_price = day_data.iloc[0]
+                                date_price_pairs.append((d, representative_price))
+                            except:
+                                continue
+                    
+                    if len(date_price_pairs) >= 2:
+                        date_price_pairs.sort()  # Sort by date
+                        first_price = date_price_pairs[0][1]
+                        last_price = date_price_pairs[-1][1]
+                        change_value = last_price - first_price
                         row['Change'] = int(change_value) if change_value != 0 else 0
-                    elif len(sorted_prices) == 1:
+                    elif len(date_price_pairs) == 1:
                         row['Change'] = '-'
                     else:
                         row['Change'] = np.nan
-                        
+                            
                     row['Total Inputs'] = len(cat_df)
                     rows.append(row)
                 
@@ -373,12 +390,28 @@ def generate_excel_report(df):
                             row[d.strftime("%d-%b")] = np.nan
                     else:
                         row[d.strftime("%d-%b")] = np.nan
-                        
-                full_data = district_df.sort_values('checkin date')['Whole Sale Price'].dropna()
-                if len(full_data) >= 2:
-                    change_value = full_data.iloc[-1] - full_data.iloc[0]
+                
+                # Improved change calculation for OVERALL district
+                date_price_pairs = []
+                for d in sorted(district_df['checkin date'].dt.date.unique()):
+                    day_data = district_df[district_df['checkin date'].dt.date == d]['Whole Sale Price'].dropna()
+                    if len(day_data) > 0:
+                        try:
+                            if len(day_data) > 1:
+                                representative_price = mode(day_data)
+                            else:
+                                representative_price = day_data.iloc[0]
+                            date_price_pairs.append((d, representative_price))
+                        except:
+                            continue
+                
+                if len(date_price_pairs) >= 2:
+                    date_price_pairs.sort()  # Sort by date
+                    first_price = date_price_pairs[0][1]
+                    last_price = date_price_pairs[-1][1]
+                    change_value = last_price - first_price
                     row['Change'] = int(change_value) if change_value != 0 else 0
-                elif len(full_data) == 1:
+                elif len(date_price_pairs) == 1:
                     row['Change'] = '-'
                 else:
                     row['Change'] = np.nan
@@ -511,6 +544,7 @@ def generate_excel_report(df):
         file_name="dealer_price_report.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
 def main():
     st.title("Dealer Price Analysis Dashboard")
     st.write("Upload your dataset to analyze dealer wholesale prices")
