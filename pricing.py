@@ -219,25 +219,37 @@ def generate_excel_report(df):
                 
                 for officer in officers:
                     officer_df = district_df[district_df['Owner: Full Name'] == officer]
-                    categories = sorted(officer_df['Account: Dealer Category'].unique().tolist())
+                    # Get categories but handle NaN separately
+                    all_categories = officer_df['Account: Dealer Category'].unique().tolist()
+                    standard_categories = [cat for cat in all_categories if cat != 'NaN']
+                    has_nan = 'NaN' in all_categories
+                    
+                    # Sort categories and put NaN at the end
+                    categories = sorted(standard_categories)
+                    if has_nan:
+                        categories.append('NaN')
                     
                     # Process each dealer category for this officer
                     for category in categories:
-                        row = {'District': district, 'Officer': officer, 'Dealer Category': category}
+                        display_category = '-' if category == 'NaN' else category
+                        row = {'District': district, 'Officer': officer, 'Dealer Category': display_category}
                         cat_df = officer_df[officer_df['Account: Dealer Category'] == category]
                         
                         for d in date_columns:
                             day_data = cat_df[cat_df['checkin date'].dt.date == d]['Whole Sale Price']
                             if len(day_data) == 1:
-                                row[d.strftime("%d-%b")] = day_data.iloc[0]
+                                row[d.strftime("%d-%b")] = int(day_data.iloc[0]) if not pd.isna(day_data.iloc[0]) else np.nan
                             elif len(day_data) == 2:
                                 if day_data.iloc[0] != day_data.iloc[1]:
-                                    row[d.strftime("%d-%b")] = ', '.join(map(str, day_data))
+                                    # Convert to integers and join without decimal points
+                                    int_values = [str(int(val)) if not pd.isna(val) else '' for val in day_data]
+                                    row[d.strftime("%d-%b")] = ', '.join(filter(None, int_values))
                                 else:
-                                    row[d.strftime("%d-%b")] = day_data.iloc[0]
+                                    row[d.strftime("%d-%b")] = int(day_data.iloc[0]) if not pd.isna(day_data.iloc[0]) else np.nan
                             elif len(day_data) > 2:
                                 try:
-                                    row[d.strftime("%d-%b")] = mode(day_data)
+                                    modal_value = mode(day_data)
+                                    row[d.strftime("%d-%b")] = int(modal_value) if not pd.isna(modal_value) else np.nan
                                 except:
                                     row[d.strftime("%d-%b")] = np.nan
                             else:
@@ -245,8 +257,8 @@ def generate_excel_report(df):
                                 
                         sorted_prices = cat_df.sort_values('checkin date')['Whole Sale Price'].dropna()
                         if len(sorted_prices) >= 2:
-                            row['Change'] = sorted_prices.iloc[-1] - sorted_prices.iloc[0] \
-                                if sorted_prices.iloc[-1] != sorted_prices.iloc[0] else 0
+                            change_value = sorted_prices.iloc[-1] - sorted_prices.iloc[0]
+                            row['Change'] = int(change_value) if change_value != 0 else 0
                         elif len(sorted_prices) == 1:
                             row['Change'] = '-'  # Not enough data
                         else:
@@ -255,22 +267,26 @@ def generate_excel_report(df):
                         row['Total Inputs'] = len(cat_df)
                         rows.append(row)
                     
-                    # Only add Overall line if officer has more than one dealer category
+                    # Only add Overall line if officer has more than one category
+                    # Single category entries are treated as Overall
                     if len(categories) > 1:
                         row = {'District': district, 'Officer': officer, 'Dealer Category': 'Overall'}
                         
                         for d in date_columns:
                             day_data = officer_df[officer_df['checkin date'].dt.date == d]['Whole Sale Price']
                             if len(day_data) == 1:
-                                row[d.strftime("%d-%b")] = day_data.iloc[0]
+                                row[d.strftime("%d-%b")] = int(day_data.iloc[0]) if not pd.isna(day_data.iloc[0]) else np.nan
                             elif len(day_data) == 2:
                                 if day_data.iloc[0] != day_data.iloc[1]:
-                                    row[d.strftime("%d-%b")] = ', '.join(map(str, day_data))
+                                    # Convert to integers and join without decimal points
+                                    int_values = [str(int(val)) if not pd.isna(val) else '' for val in day_data]
+                                    row[d.strftime("%d-%b")] = ', '.join(filter(None, int_values))
                                 else:
-                                    row[d.strftime("%d-%b")] = day_data.iloc[0]
+                                    row[d.strftime("%d-%b")] = int(day_data.iloc[0]) if not pd.isna(day_data.iloc[0]) else np.nan
                             elif len(day_data) > 2:
                                 try:
-                                    row[d.strftime("%d-%b")] = mode(day_data)
+                                    modal_value = mode(day_data)
+                                    row[d.strftime("%d-%b")] = int(modal_value) if not pd.isna(modal_value) else np.nan
                                 except:
                                     row[d.strftime("%d-%b")] = np.nan
                             else:
@@ -278,8 +294,8 @@ def generate_excel_report(df):
                                 
                         full_data = officer_df.sort_values('checkin date')['Whole Sale Price'].dropna()
                         if len(full_data) >= 2:
-                            row['Change'] = full_data.iloc[-1] - full_data.iloc[0] \
-                                if full_data.iloc[-1] != full_data.iloc[0] else 0
+                            change_value = full_data.iloc[-1] - full_data.iloc[0]
+                            row['Change'] = int(change_value) if change_value != 0 else 0
                         elif len(full_data) == 1:
                             row['Change'] = '-'
                         else:
@@ -289,23 +305,35 @@ def generate_excel_report(df):
                         rows.append(row)
                 
                 # Process each dealer category for OVERALL (across all officers)
-                categories = sorted(district_df['Account: Dealer Category'].unique().tolist())
+                all_categories = district_df['Account: Dealer Category'].unique().tolist()
+                standard_categories = [cat for cat in all_categories if cat != 'NaN']
+                has_nan = 'NaN' in all_categories
+                
+                # Sort categories and put NaN at the end
+                categories = sorted(standard_categories)
+                if has_nan:
+                    categories.append('NaN')
+                    
                 for category in categories:
-                    row = {'District': district, 'Officer': 'OVERALL', 'Dealer Category': category}
+                    display_category = '-' if category == 'NaN' else category
+                    row = {'District': district, 'Officer': 'OVERALL', 'Dealer Category': display_category}
                     cat_df = district_df[district_df['Account: Dealer Category'] == category]
                     
                     for d in date_columns:
                         day_data = cat_df[cat_df['checkin date'].dt.date == d]['Whole Sale Price']
                         if len(day_data) == 1:
-                            row[d.strftime("%d-%b")] = day_data.iloc[0]
+                            row[d.strftime("%d-%b")] = int(day_data.iloc[0]) if not pd.isna(day_data.iloc[0]) else np.nan
                         elif len(day_data) == 2:
                             if day_data.iloc[0] != day_data.iloc[1]:
-                                row[d.strftime("%d-%b")] = ', '.join(map(str, day_data))
+                                # Convert to integers and join without decimal points
+                                int_values = [str(int(val)) if not pd.isna(val) else '' for val in day_data]
+                                row[d.strftime("%d-%b")] = ', '.join(filter(None, int_values))
                             else:
-                                row[d.strftime("%d-%b")] = day_data.iloc[0]
+                                row[d.strftime("%d-%b")] = int(day_data.iloc[0]) if not pd.isna(day_data.iloc[0]) else np.nan
                         elif len(day_data) > 2:
                             try:
-                                row[d.strftime("%d-%b")] = mode(day_data)
+                                modal_value = mode(day_data)
+                                row[d.strftime("%d-%b")] = int(modal_value) if not pd.isna(modal_value) else np.nan
                             except:
                                 row[d.strftime("%d-%b")] = np.nan
                         else:
@@ -313,8 +341,8 @@ def generate_excel_report(df):
                             
                     sorted_prices = cat_df.sort_values('checkin date')['Whole Sale Price'].dropna()
                     if len(sorted_prices) >= 2:
-                        row['Change'] = sorted_prices.iloc[-1] - sorted_prices.iloc[0] \
-                            if sorted_prices.iloc[-1] != sorted_prices.iloc[0] else 0
+                        change_value = sorted_prices.iloc[-1] - sorted_prices.iloc[0]
+                        row['Change'] = int(change_value) if change_value != 0 else 0
                     elif len(sorted_prices) == 1:
                         row['Change'] = '-'
                     else:
@@ -329,15 +357,18 @@ def generate_excel_report(df):
                 for d in date_columns:
                     day_data = district_df[district_df['checkin date'].dt.date == d]['Whole Sale Price']
                     if len(day_data) == 1:
-                        row[d.strftime("%d-%b")] = day_data.iloc[0]
+                        row[d.strftime("%d-%b")] = int(day_data.iloc[0]) if not pd.isna(day_data.iloc[0]) else np.nan
                     elif len(day_data) == 2:
                         if day_data.iloc[0] != day_data.iloc[1]:
-                            row[d.strftime("%d-%b")] = ', '.join(map(str, day_data))
+                            # Convert to integers and join without decimal points
+                            int_values = [str(int(val)) if not pd.isna(val) else '' for val in day_data]
+                            row[d.strftime("%d-%b")] = ', '.join(filter(None, int_values))
                         else:
-                            row[d.strftime("%d-%b")] = day_data.iloc[0]
+                            row[d.strftime("%d-%b")] = int(day_data.iloc[0]) if not pd.isna(day_data.iloc[0]) else np.nan
                     elif len(day_data) > 2:
                         try:
-                            row[d.strftime("%d-%b")] = mode(day_data)
+                            modal_value = mode(day_data)
+                            row[d.strftime("%d-%b")] = int(modal_value) if not pd.isna(modal_value) else np.nan
                         except:
                             row[d.strftime("%d-%b")] = np.nan
                     else:
@@ -345,8 +376,8 @@ def generate_excel_report(df):
                         
                 full_data = district_df.sort_values('checkin date')['Whole Sale Price'].dropna()
                 if len(full_data) >= 2:
-                    row['Change'] = full_data.iloc[-1] - full_data.iloc[0] \
-                        if full_data.iloc[-1] != full_data.iloc[0] else 0
+                    change_value = full_data.iloc[-1] - full_data.iloc[0]
+                    row['Change'] = int(change_value) if change_value != 0 else 0
                 elif len(full_data) == 1:
                     row['Change'] = '-'
                 else:
@@ -374,17 +405,42 @@ def generate_excel_report(df):
             for col_num, value in enumerate(brand_report_df.columns):
                 worksheet.write(0, col_num, value, header_format)
             
+            # Create a dictionary to track officers and their category counts
+            officer_category_counts = {}
+            for index, row in enumerate(brand_report_df.values):
+                district = row[0]
+                officer = row[1]
+                category = row[2]
+                
+                # Skip OVERALL entries when counting
+                if officer != 'OVERALL':
+                    key = f"{district}_{officer}"
+                    if key not in officer_category_counts:
+                        officer_category_counts[key] = set()
+                    if category != 'Overall':  # Don't count Overall rows
+                        officer_category_counts[key].add(category)
+            
             # Write data with appropriate formatting
             for row_num, row in enumerate(brand_report_df.values):
-                is_overall_row = row[1] == 'OVERALL'
-                is_officer_overall = row[2] == 'Overall' and row[1] != 'OVERALL'
+                district = row[0]
+                officer = row[1]
+                category = row[2]
+                
+                # Determine if this is the only category for this officer (excluding Overall)
+                is_single_category = False
+                if officer != 'OVERALL':
+                    key = f"{district}_{officer}"
+                    is_single_category = len(officer_category_counts[key]) == 1 and category in officer_category_counts[key]
+                
+                is_overall_row = officer == 'OVERALL'
+                is_officer_overall = category == 'Overall' and officer != 'OVERALL'
                 
                 for col_num, value in enumerate(row):
                     col_name = brand_report_df.columns[col_num]
                     
                     if is_overall_row:
                         base_format = overall_format
-                    elif is_officer_overall:
+                    elif is_officer_overall or is_single_category:
                         base_format = officer_overall_format
                     elif col_name == 'Change' and isinstance(value, (int, float)) and not pd.isna(value) and np.isfinite(value):
                         base_format = change_format
@@ -455,7 +511,6 @@ def generate_excel_report(df):
         file_name="dealer_price_report.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-
 def main():
     st.title("Dealer Price Analysis Dashboard")
     st.write("Upload your dataset to analyze dealer wholesale prices")
