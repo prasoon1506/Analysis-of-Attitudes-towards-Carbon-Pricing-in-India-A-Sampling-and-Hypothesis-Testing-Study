@@ -319,7 +319,7 @@ def generate_excel_report(df):
                         row['Change'] = '-'
                     else:
                         row['Change'] = np.nan
-                        
+                    
                     row['Total Inputs'] = len(cat_df)
                     rows.append(row)
                 
