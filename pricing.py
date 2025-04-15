@@ -426,6 +426,50 @@ def generate_excel_report(df):
                     else:
                         worksheet.write(row_num + 1, col_num, value, base_format)
             
+            # Auto-fit column widths
+            for col_num, col_name in enumerate(brand_report_df.columns):
+                # Find the maximum width needed
+                max_len = len(str(col_name))
+                for row_num, row in enumerate(brand_report_df.values):
+                    if not pd.isna(row[col_num]):
+                        cell_len = len(str(row[col_num]))
+                        if cell_len > max_len:
+                            max_len = cell_len
+                # Add a buffer for better appearance
+                adjusted_width = max_len + 2
+                # Set the column width (max 50 chars to prevent excessive width)
+                worksheet.set_column(col_num, col_num, min(adjusted_width, 50))
+            
+            # Add filters to the header row
+            worksheet.autofilter(0, 0, len(brand_report_df), len(brand_report_df.columns) - 1)
+            
+            # Districts to be pre-selected in filter
+            focus_districts = [
+                "Z0605_Ahmadabad", "Z0616_Surat", "Z0703_Gurugram", "Z1226_Indore", 
+                "Z1230_Balaghat", "Z1329_Nagpur", "Z1804_Sambalpur", "Z1810_Khorda", 
+                "Z1909_Bathinda", "Z2013_Udaipur", "Z2020_Jaipur", "Z2405_Ghaziabad", 
+                "Z2470_Varanasi", "Z3001_East", "Z3505_Dehradun", "Z3506_Haridwar", 
+                "Z3406_Palamu", "Z3302_Raipur"
+            ]
+            
+            # Get districts present in this sheet
+            present_districts = brand_report_df['District'].unique().tolist()
+            
+            # Find which focused districts are present in this sheet
+            present_focus_districts = [d for d in focus_districts if d in present_districts]
+            
+            # If we have focus districts in this sheet, set up the filter
+            if present_focus_districts:
+                # Create filter criteria list - exclude non-focused districts
+                filter_criteria = []
+                for district in present_districts:
+                    if district not in present_focus_districts:
+                        filter_criteria.append(district)
+                
+                # Set the filter on the District column (first column, index 0)
+                if filter_criteria:
+                    worksheet.filter_column(0, f'x{" ".join(f"*{d}*" for d in filter_criteria)}')
+            
             worksheet.freeze_panes(1, 0)
     
     st.success("Excel report is ready.")
