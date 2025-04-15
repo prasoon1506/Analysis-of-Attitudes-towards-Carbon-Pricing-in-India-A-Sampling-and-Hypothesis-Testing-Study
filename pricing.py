@@ -6,88 +6,63 @@ from datetime import datetime, timedelta
 import plotly.graph_objects as go
 from statistics import mode, median
 import io
-
 st.set_page_config(layout="wide", page_title="Dealer Price Analysis Dashboard")
-
 def load_data():
     st.sidebar.title("Data Upload")
     uploaded_file = st.sidebar.file_uploader("Upload your dataset (CSV or Excel)", type=["csv", "xlsx", "xls"])
-    
     if uploaded_file is not None:
         try:
             if uploaded_file.name.endswith('.csv'):
                 df = pd.read_csv(uploaded_file)
             else:
                 df = pd.read_excel(uploaded_file)
-                
-            required_columns = ['District: Name', 'checkin date', 'Product Type', 'Brand: Name',
-                               'Account: Dealer Category', 'Whole Sale Price', 'Owner: Full Name']
+            required_columns = ['District: Name', 'checkin date', 'Product Type', 'Brand: Name','Account: Dealer Category', 'Whole Sale Price', 'Owner: Full Name']
             missing_columns = [col for col in required_columns if col not in df.columns]
-            
             if missing_columns:
                 st.error(f"Missing required columns: {', '.join(missing_columns)}")
                 return None
-                
             try:
                 df['checkin date'] = pd.to_datetime(df['checkin date'])
             except Exception as e:
                 st.error(f"Error converting 'checkin date' to datetime: {e}")
                 return None
-                
             df['Account: Dealer Category'] = df['Account: Dealer Category'].fillna('NaN')
             df['Whole Sale Price'] = pd.to_numeric(df['Whole Sale Price'], errors='coerce')
-            
             return df
         except Exception as e:
             st.error(f"Error loading data: {e}")
             return None
-    
     return None
-
 def create_filters(df):
     st.sidebar.header("Filters")
     df = df.copy()
-    
     district_values = df['District: Name'].fillna('Unknown').unique().tolist()
     district_options = ['All'] + sorted(district_values)
     selected_district = st.sidebar.selectbox("Select District", district_options)
-    
     min_date = df['checkin date'].min().date()
     max_date = df['checkin date'].max().date()
-    
     date_selection_type = st.sidebar.radio("Date Selection", ["Single Date", "Date Range"])
-    
     if date_selection_type == "Single Date":
-        selected_date = st.sidebar.date_input("Select Checkin Date", min_date,
-                                              min_value=min_date, max_value=max_date)
+        selected_date = st.sidebar.date_input("Select Checkin Date", min_date,min_value=min_date, max_value=max_date)
         date_filter = (df['checkin date'].dt.date == selected_date)
     else:
         default_end_date = min(max_date, min_date + timedelta(days=3))
-        date_range = st.sidebar.date_input("Select Date Range",
-                                         [min_date, default_end_date],
-                                         min_value=min_date,
-                                         max_value=max_date)
-        
+        date_range = st.sidebar.date_input("Select Date Range",[min_date, default_end_date],min_value=min_date,max_value=max_date)
         if len(date_range) == 2:
             start_date, end_date = date_range
             date_filter = (df['checkin date'].dt.date >= start_date) & (df['checkin date'].dt.date <= end_date)
         else:
             st.sidebar.warning("Please select both start and end dates")
             date_filter = pd.Series(True, index=df.index)
-    
     product_values = df['Product Type'].fillna('Unknown').unique().tolist()
     product_options = ['All'] + sorted(product_values)
     selected_product = st.sidebar.selectbox("Select Product Type", product_options)
-    
     brand_values = df['Brand: Name'].fillna('Unknown').unique().tolist()
     brand_options = ['All'] + sorted(brand_values)
     selected_brand = st.sidebar.selectbox("Select Brand", brand_options)
-    
     filtered_df = df.copy()
-    
     if selected_district != 'All':
         filtered_df = filtered_df[filtered_df['District: Name'] == selected_district]
-        
     filtered_df = filtered_df[date_filter]
     
     if selected_product != 'All':
@@ -380,10 +355,6 @@ def generate_excel_report(df):
                 row['Total Inputs'] = len(district_df)
                 rows.append(row)
             
-            # Skip creating a sheet if there's no data for this brand
-            if not rows:
-                continue
-                
             brand_report_df = pd.DataFrame(rows)
             brand_report_df.to_excel(writer, sheet_name=brand, index=False)
             
@@ -461,22 +432,26 @@ def generate_excel_report(df):
             # Find which focused districts are present in this sheet
             present_focus_districts = [d for d in focus_districts if d in present_districts]
             
-            # If we have focus districts in this sheet and non-focus districts to filter out
-            non_focus_districts = [d for d in present_districts if d not in present_focus_districts]
-            if present_focus_districts and non_focus_districts:
+            # If we have focus districts in this sheet, set up the filter
+            if present_focus_districts and len(present_focus_districts) < len(present_districts):
                 try:
-                    # Use a safer approach to set column filters
-                    # Create a simple filter expression that excludes non-focus districts
-                    filter_criteria = []
-                    for i, district in enumerate(non_focus_districts):
-                        filter_criteria.append(f"*{district}*")
+                    # Use the correct filter format for XlsxWriter
+                    # We want to show only focus districts by default
+                    # Create a criteria list with all non-focus districts to hide
+                    filter_criteria = {}
+                    for district in present_districts:
+                        if district in present_focus_districts:
+                            # Include focus districts (set to 1 to show)
+                            filter_criteria[district] = 1
+                        else:
+                            # Exclude non-focus districts (set to 0 to hide)
+                            filter_criteria[district] = 0
                     
-                    # Join with spaces to create the filter pattern
-                    filter_pattern = "x " + " ".join(filter_criteria)
-                    worksheet.filter_column(0, filter_pattern)
+                    # Apply the filter using proper XlsxWriter format
+                    worksheet.filter_column_list(0, list(filter_criteria.keys()), list(filter_criteria.values()))
                 except Exception as e:
-                    # If filtering fails, log it but continue without filtering
-                    st.warning(f"Could not apply district filter in Excel: {str(e)}")
+                    # If filtering fails, just log the error and continue without filter
+                    st.warning(f"Could not apply district filter: {str(e)}")
             
             worksheet.freeze_panes(1, 0)
     
@@ -487,7 +462,6 @@ def generate_excel_report(df):
         file_name="dealer_price_report.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-
 def main():
     st.title("Dealer Price Analysis Dashboard")
     st.write("Upload your dataset to analyze dealer wholesale prices")
