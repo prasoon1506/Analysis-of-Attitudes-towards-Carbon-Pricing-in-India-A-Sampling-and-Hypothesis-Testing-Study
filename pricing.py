@@ -202,7 +202,6 @@ def display_interactive_table(stats_df, filtered_df):
                 st.plotly_chart(fig, use_container_width=True)
         else:
             st.info(f"No data available for '{selected_category}' category with the current filters")
-
 def generate_excel_report(df):
     st.subheader("Generate Professional Excel Report")
     
@@ -381,6 +380,10 @@ def generate_excel_report(df):
                 row['Total Inputs'] = len(district_df)
                 rows.append(row)
             
+            # Skip creating a sheet if there's no data for this brand
+            if not rows:
+                continue
+                
             brand_report_df = pd.DataFrame(rows)
             brand_report_df.to_excel(writer, sheet_name=brand, index=False)
             
@@ -458,17 +461,22 @@ def generate_excel_report(df):
             # Find which focused districts are present in this sheet
             present_focus_districts = [d for d in focus_districts if d in present_districts]
             
-            # If we have focus districts in this sheet, set up the filter
-            if present_focus_districts:
-                # Create filter criteria list - exclude non-focused districts
-                filter_criteria = []
-                for district in present_districts:
-                    if district not in present_focus_districts:
-                        filter_criteria.append(district)
-                
-                # Set the filter on the District column (first column, index 0)
-                if filter_criteria:
-                    worksheet.filter_column(0, f'x{" ".join(f"*{d}*" for d in filter_criteria)}')
+            # If we have focus districts in this sheet and non-focus districts to filter out
+            non_focus_districts = [d for d in present_districts if d not in present_focus_districts]
+            if present_focus_districts and non_focus_districts:
+                try:
+                    # Use a safer approach to set column filters
+                    # Create a simple filter expression that excludes non-focus districts
+                    filter_criteria = []
+                    for i, district in enumerate(non_focus_districts):
+                        filter_criteria.append(f"*{district}*")
+                    
+                    # Join with spaces to create the filter pattern
+                    filter_pattern = "x " + " ".join(filter_criteria)
+                    worksheet.filter_column(0, filter_pattern)
+                except Exception as e:
+                    # If filtering fails, log it but continue without filtering
+                    st.warning(f"Could not apply district filter in Excel: {str(e)}")
             
             worksheet.freeze_panes(1, 0)
     
