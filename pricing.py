@@ -319,7 +319,7 @@ def generate_excel_report(df):
                         row['Change'] = '-'
                     else:
                         row['Change'] = np.nan
-                    
+                        
                     row['Total Inputs'] = len(cat_df)
                     rows.append(row)
                 
@@ -435,20 +435,13 @@ def generate_excel_report(df):
             # If we have focus districts in this sheet, set up the filter
             if present_focus_districts and len(present_focus_districts) < len(present_districts):
                 try:
-                    # Use the correct filter format for XlsxWriter
-                    # We want to show only focus districts by default
-                    # Create a criteria list with all non-focus districts to hide
-                    filter_criteria = {}
-                    for district in present_districts:
-                        if district in present_focus_districts:
-                            # Include focus districts (set to 1 to show)
-                            filter_criteria[district] = 1
-                        else:
-                            # Exclude non-focus districts (set to 0 to hide)
-                            filter_criteria[district] = 0
+                    # Create a list of only the focus districts to show
+                    filter_items = []
+                    for district in present_focus_districts:
+                        filter_items.append(district)
                     
-                    # Apply the filter using proper XlsxWriter format
-                    worksheet.filter_column_list(0, list(filter_criteria.keys()), list(filter_criteria.values()))
+                    # Apply the filter to show only selected districts
+                    worksheet.filter_column_list(0, filter_items)
                 except Exception as e:
                     # If filtering fails, just log the error and continue without filter
                     st.warning(f"Could not apply district filter: {str(e)}")
@@ -462,6 +455,7 @@ def generate_excel_report(df):
         file_name="dealer_price_report.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
 def main():
     st.title("Dealer Price Analysis Dashboard")
     st.write("Upload your dataset to analyze dealer wholesale prices")
