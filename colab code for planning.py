@@ -238,3 +238,224 @@ def create_forecast(file_path):
     display(plant_dropdown, bag_dropdown, forecast_button)
 
 create_forecast('your_excel_file.xlsx')
+def generate_all_forecasts(df):
+    """
+    Generate forecasts for all plant-bag combinations and return as a DataFrame
+    """
+    all_forecasts = []
+    total_combinations = sum(len(df[df['Cement Plant Sname'] == plant]['MAKTX'].unique()) 
+                           for plant in df['Cement Plant Sname'].unique())
+    current_combination = 0
+    
+    for plant in sorted(df['Cement Plant Sname'].unique()):
+        for bag in sorted(df[df['Cement Plant Sname'] == plant]['MAKTX'].unique()):
+            current_combination += 1
+            print(f"Processing combination {current_combination}/{total_combinations}: {plant} - {bag}")
+            
+            try:
+                # Process data for current plant-bag combination
+                usage_df = process_data(df, plant, bag)
+                
+                # Get February 2025 data
+                apr_2025_data = usage_df[
+                    usage_df['Date'].dt.strftime('%Y-%m') == '2025-04'
+                ]['Usage'].iloc[0]
+                
+                # Generate forecast
+                forecaster = BagDemandForecaster(usage_df)
+                forecast_results = forecaster.generate_forecast(apr_2025_data)
+                
+                # Get previous March data for YoY comparison
+                prev_may = usage_df[
+                    usage_df['Date'].dt.strftime('%Y-%m') == '2024-05'
+                ]['Usage'].iloc[0]
+                
+                # Calculate YoY change
+                yoy_change = ((forecast_results['point_forecast'] - prev_may) / 
+                            prev_may * 100)
+                
+                # Append results to list
+                all_forecasts.append({
+                    'Plant': plant,
+                    'Bag': bag,
+                    'May 2025 Forecast': forecast_results['point_forecast'],
+                    'April 2025 Projected': forecast_results['february_extrapolated'],
+                    'Year-over-Year Change (%)': yoy_change,
+                    'Holt-Winters Forecast': forecast_results['individual_forecasts']['holt_winters'],
+                    'Random Forest Forecast': forecast_results['individual_forecasts']['random_forest'],
+                    'Trend-Based Forecast': forecast_results['individual_forecasts']['trend_based'],
+                    'Confidence Interval Lower': forecast_results['lower_bound'],
+                    'Confidence Interval Upper': forecast_results['upper_bound'],
+                    'Previous May (2025)': prev_may
+                })
+            except Exception as e:
+                print(f"Error processing {plant} - {bag}: {str(e)}")
+                continue
+    
+    return pd.DataFrame(all_forecasts)
+
+def export_forecasts_to_excel(df, output_filename='bag_demand_forecasts.xlsx'):
+    """
+    Generate and export all forecasts to an Excel file
+    """
+    print("Generating forecasts for all plant-bag combinations...")
+    forecasts_df = generate_all_forecasts(df)
+    
+    # Create Excel writer
+    writer = pd.ExcelWriter(output_filename, engine='xlsxwriter')
+    
+    # Write the main forecasts sheet
+    forecasts_df.to_excel(writer, sheet_name='Forecasts', index=False)
+    
+    # Get the workbook and the forecasts worksheet
+    workbook = writer.book
+    worksheet = writer.sheets['Forecasts']
+    
+    # Add formats
+    header_format = workbook.add_format({
+        'bold': True,
+        'text_wrap': True,
+        'valign': 'top',
+        'bg_color': '#D9E1F2',
+        'border': 1
+    })
+    
+    number_format = workbook.add_format({
+        'num_format': '#,##0',
+        'border': 1
+    })
+    
+    percent_format = workbook.add_format({
+        'num_format': '0.0%',
+        'border': 1
+    })
+    
+    # Apply formats
+    for col_num, value in enumerate(forecasts_df.columns.values):
+        worksheet.write(0, col_num, value, header_format)
+        
+        # Set column width based on maximum length of column content
+        max_length = max(
+            forecasts_df[value].astype(str).apply(len).max(),
+            len(value)
+        )
+        worksheet.set_column(col_num, col_num, max_length + 2)
+        
+        # Apply number format to numeric columns
+        if 'Forecast' in value or 'Previous' in value or 'Confidence' in value:
+            worksheet.set_column(col_num, col_num, None, number_format)
+        elif 'Change' in value:
+            worksheet.set_column(col_num, col_num, None, percent_format)
+    
+    # Add a summary sheet
+    summary_data = {
+        'Metric': [
+            'Total Plants',
+            'Total Bags',
+            'Average May 2025 Forecast',
+            'Total May 2025 Forecast',
+            'Average Year-over-Year Change'
+        ],
+        'Value': [
+            len(forecasts_df['Plant'].unique()),
+            len(forecasts_df),
+            forecasts_df['May 2025 Forecast'].mean(),
+            forecasts_df['May 2025 Forecast'].sum(),
+            forecasts_df['Year-over-Year Change (%)'].mean()
+        ]
+    }
+    
+    summary_df = pd.DataFrame(summary_data)
+    summary_df.to_excel(writer, sheet_name='Summary', index=False)
+    
+    # Format summary sheet
+    summary_sheet = writer.sheets['Summary']
+    summary_sheet.set_column('A:A', 30)
+    summary_sheet.set_column('B:B', 15)
+    
+    # Save the file
+    writer.close()
+    print(f"\nForecasts have been exported to {output_filename}")
+    return output_filename
+
+def create_forecast(file_path):
+    """
+    Main function to create interactive forecast visualization and export options
+    """
+    # Load data
+    df = pd.read_excel(file_path)
+    df = df.iloc[:, 1:]  # Remove first column if it's an index
+    
+    # Create export button
+    export_button = widgets.Button(description='Export All Forecasts')
+    
+    # Create dropdown for plant selection
+    plants = sorted(df['Cement Plant Sname'].unique())
+    plant_dropdown = widgets.Dropdown(
+        options=plants,
+        description='Plant:',
+        style={'description_width': 'initial'}
+    )
+    
+    def update_bag_dropdown(*args):
+        plant_bags = sorted(df[df['Cement Plant Sname'] == plant_dropdown.value]['MAKTX'].unique())
+        bag_dropdown.options = plant_bags
+    
+    # Create dropdown for bag selection
+    initial_plant_bags = sorted(df[df['Cement Plant Sname'] == plants[0]]['MAKTX'].unique())
+    bag_dropdown = widgets.Dropdown(
+        options=initial_plant_bags,
+        description='Bag:',
+        style={'description_width': 'initial'}
+    )
+    
+    # Create forecast button
+    forecast_button = widgets.Button(description='Generate Forecast')
+    
+    def on_forecast_button_clicked(b):
+        clear_output(wait=True)
+        display(plant_dropdown, bag_dropdown, forecast_button, export_button)
+        
+        usage_df = process_data(df, plant_dropdown.value, bag_dropdown.value)
+        
+        # Get February 2025 data
+        apr_2025_data = usage_df[
+            usage_df['Date'].dt.strftime('%Y-%m') == '2025-04'
+        ]['Usage'].iloc[0]
+        
+        # Generate forecast
+        forecaster = BagDemandForecaster(usage_df)
+        forecast_results = forecaster.generate_forecast(apr_2025_data)
+        
+        # Get previous March data for YoY comparison
+        prev_may = usage_df[
+            usage_df['Date'].dt.strftime('%Y-%m') == '2024-05'
+        ]['Usage'].iloc[0]
+        
+        # Display results
+        plot_forecast(usage_df, forecast_results)
+        display_metrics(forecast_results, prev_march)
+    
+    def on_export_button_clicked(b):
+        clear_output(wait=True)
+        display(plant_dropdown, bag_dropdown, forecast_button, export_button)
+        
+        print("Starting export process...")
+        output_filename = export_forecasts_to_excel(df)
+        
+        # For Google Colab, add download link
+        try:
+            from google.colab import files
+            files.download(output_filename)
+        except:
+            print("File saved locally. If you're running this in Colab, the download should start automatically.")
+    
+    # Connect the callbacks
+    plant_dropdown.observe(update_bag_dropdown, 'value')
+    forecast_button.on_click(on_forecast_button_clicked)
+    export_button.on_click(on_export_button_clicked)
+    
+    # Display the widgets
+    display(plant_dropdown, bag_dropdown, forecast_button, export_button)
+
+create_forecast('your_excel_file.xlsx')
