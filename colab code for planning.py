@@ -177,59 +177,30 @@ def create_forecast(file_path):
         plant_bags = sorted(df[df['Cement Plant Sname'] == plant_dropdown.value]['MAKTX'].unique())
         bag_dropdown.options = plant_bags
     initial_plant_bags = sorted(df[df['Cement Plant Sname'] == plants[0]]['MAKTX'].unique())
-    bag_dropdown = widgets.Dropdown(
-        options=initial_plant_bags,
-        description='Bag:',
-        style={'description_width': 'initial'}
-    )
-    
-    # Create forecast button
+    bag_dropdown = widgets.Dropdown(options=initial_plant_bags,description='Bag:',style={'description_width': 'initial'})
     forecast_button = widgets.Button(description='Generate Forecast')
-    
     def on_forecast_button_clicked(b):
         clear_output(wait=True)
         display(plant_dropdown, bag_dropdown, forecast_button, export_button)
-        
         usage_df = process_data(df, plant_dropdown.value, bag_dropdown.value)
-        
-        # Get February 2025 data
-        apr_2025_data = usage_df[
-            usage_df['Date'].dt.strftime('%Y-%m') == '2025-04'
-        ]['Usage'].iloc[0]
-        
-        # Generate forecast
+        apr_2025_data = usage_df[usage_df['Date'].dt.strftime('%Y-%m') == '2025-04']['Usage'].iloc[0]
         forecaster = BagDemandForecaster(usage_df)
         forecast_results = forecaster.generate_forecast(apr_2025_data)
-        
-        # Get previous March data for YoY comparison
-        prev_may = usage_df[
-            usage_df['Date'].dt.strftime('%Y-%m') == '2024-05'
-        ]['Usage'].iloc[0]
-        
-        # Display results
+        prev_may = usage_df[usage_df['Date'].dt.strftime('%Y-%m') == '2024-05']['Usage'].iloc[0]
         plot_forecast(usage_df, forecast_results)
         display_metrics(forecast_results, prev_may)
-    
     def on_export_button_clicked(b):
         clear_output(wait=True)
         display(plant_dropdown, bag_dropdown, forecast_button, export_button)
-        
         print("Starting export process...")
         output_filename = export_forecasts_to_excel(df)
-        
-        # For Google Colab, add download link
         try:
             from google.colab import files
             files.download(output_filename)
         except:
             print("File saved locally. If you're running this in Colab, the download should start automatically.")
-    
-    # Connect the callbacks
     plant_dropdown.observe(update_bag_dropdown, 'value')
     forecast_button.on_click(on_forecast_button_clicked)
     export_button.on_click(on_export_button_clicked)
-    
-    # Display the widgets
     display(plant_dropdown, bag_dropdown, forecast_button, export_button)
-
 create_forecast('your_excel_file.xlsx')
