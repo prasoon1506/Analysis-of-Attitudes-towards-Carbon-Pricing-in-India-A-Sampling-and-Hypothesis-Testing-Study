@@ -174,21 +174,11 @@ def main():
     st.title("Excel Sheet Navigator Creator")
     st.write("""## Upload your Excel fileThis tool will create a new Excel file with a navigation dashboard that allows you to:- See all available sheets in your workbook- View data previews from each sheet- Navigate between sheets easily""")
     uploaded_file = st.file_uploader("Choose an Excel file", type=["xlsx", "xls"])
-    
     if uploaded_file is not None:
-        # Display file info
         file_details = {"Filename": uploaded_file.name, "File size": f"{uploaded_file.size/1024:.1f} KB"}
         st.write(file_details)
-        
         st.write("### Select your preferred solution:")
-        
-        solution_type = st.radio(
-            "Choose a navigation approach:",
-            ["Simple Navigation (No Macros)", 
-             "Advanced Navigation (Requires One-Time Macro Setup)",
-             "Basic Index Sheet"]
-        )
-        
+        solution_type = st.radio("Choose a navigation approach:",["Simple Navigation (No Macros)","Advanced Navigation (Requires One-Time Macro Setup)","Basic Index Sheet"])
         if st.button("Generate Excel File"):
             try:
                 with st.spinner("Creating Excel file..."):
@@ -196,44 +186,20 @@ def main():
                         excel_file = create_no_macro_solution(uploaded_file)
                         download_filename = f"Navigator_{uploaded_file.name}"
                         solution_description = """
-                        ### Simple Navigation
-                        - Click on sheet names to navigate directly to those sheets
-                        - Use Excel's sheet tabs to return to the Dashboard
-                        - No macros required, but sheets won't be automatically hidden
-                        """
-                    
+                        ### Simple Navigation- Click on sheet names to navigate directly to those sheets- Use Excel's sheet tabs to return to the Dashboard- No macros required, but sheets won't be automatically hidden"""
                     elif solution_type == "Advanced Navigation (Requires One-Time Macro Setup)":
                         excel_file = create_navigator_excel(uploaded_file)
                         download_filename = f"MacroNavigator_{uploaded_file.name}"
-                        solution_description = """
-                        ### Advanced Navigation (One-Time Macro Setup)
-                        - Follow the instructions in the Dashboard sheet to set up the macro
-                        - Select sheets from the dropdown and run the macro (Alt+F8 → ViewSheet → Run)
-                        - This solution provides full hide/show functionality
-                        """
-                    
-                    else:  # Basic Index Sheet
+                        solution_description = """### Advanced Navigation (One-Time Macro Setup)- Follow the instructions in the Dashboard sheet to set up the macro- Select sheets from the dropdown and run the macro (Alt+F8 → ViewSheet → Run)- This solution provides full hide/show functionality"""
+                    else:
                         excel_file = create_alternative_solution(uploaded_file)
                         download_filename = f"Index_{uploaded_file.name}"
-                        solution_description = """
-                        ### Basic Index Sheet
-                        - Simple index of all sheets in your workbook
-                        - Use Excel's built-in unhide functionality to view sheets
-                        - Minimal approach with no hyperlinks or macros
-                        """
-                
-                # Create download button
-                st.markdown(
-                    create_download_link(excel_file.getvalue(), download_filename),
-                    unsafe_allow_html=True
-                )
+                        solution_description = """### Basic Index Sheet- Simple index of all sheets in your workbook- Use Excel's built-in unhide functionality to view sheets- Minimal approach with no hyperlinks or macros"""
+                st.markdown(create_download_link(excel_file.getvalue(), download_filename),unsafe_allow_html=True)
                 st.success("✅ Your Excel file has been created!")
-                
                 st.markdown(solution_description)
-                
             except Exception as e:
                 st.error(f"An error occurred: {str(e)}")
                 st.error("Please make sure your Excel file is not corrupted and try again.")
-
 if __name__ == "__main__":
     main()
