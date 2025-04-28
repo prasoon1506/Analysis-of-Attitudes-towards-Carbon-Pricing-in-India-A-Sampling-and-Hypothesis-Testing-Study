@@ -692,6 +692,29 @@ if uploaded_file:
                     ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
                     ('FONTSIZE', (0, 1), (-1, -1), 8),
                 ]))
+                elements.append(stability_table)
+                elements.append(Spacer(1, 0.25*inch))
+                elements.append(Paragraph("Product-level Analysis", subtitle_style))
+                elements.append(Paragraph(f"Neural Network performs better for {nn_better_count} products", normal_style))
+                elements.append(Paragraph(f"Ensemble Algorithm performs better for {ensemble_better_count} products", normal_style))
+                elements.append(Paragraph(f"Equal performance for {equal_count} products", normal_style))
+                elements.append(Spacer(1, 0.25*inch))
+                elements.append(Paragraph("Value-weighted Analysis", subtitle_style))
+                elements.append(Paragraph(f"Total Weighted Error - Neural Network: {total_weighted_nn:.2f}%", normal_style))
+                elements.append(Paragraph(f"Total Weighted Error - Ensemble Algorithm: {total_weighted_ensemble:.2f}%", normal_style))
+                elements.append(Paragraph(f"Value-weighted Winner: {winner_value_weighted}", normal_style))
+                elements.append(Spacer(1, 0.5*inch))
+                elements.append(Paragraph("Conclusion", subtitle_style))
+                if winner == winner_value_weighted:
+                   conclusion_text = f"Both overall metric analysis and value-weighted analysis indicate that {winner} is the superior model for predicting cement bag consumption."
+                else:
+                   conclusion_text = f"While overall metric analysis favors {winner}, value-weighted analysis favors {winner_value_weighted}. This suggests that model selection may depend on whether accuracy across all products or accuracy weighted by consumption volume is more important for the business."
+    
+                elements.append(Paragraph(conclusion_text, normal_style))
+               doc.build(elements)
+               pdf_data = buffer.getvalue()
+               buffer.close()
+               return pdf_data
             if st.button("Generate PDF Report"):
               with st.spinner("Generating PDF report... This may take a moment."):
                try:
