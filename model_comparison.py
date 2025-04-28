@@ -20,17 +20,11 @@ from reportlab.pdfgen import canvas
 from PIL import Image as PILImage
 from io import BytesIO
 import matplotlib
-matplotlib.use('Agg')  # Required for saving plots without GUI
-
-# Set style for all visualizations
+matplotlib.use('Agg')
 plt.style.use('seaborn-v0_8-whitegrid')
 sns.set_palette("viridis")
 sns.set_context("talk")
-
-# Configure the page
 st.set_page_config(layout="wide", page_title="Cement Consumption Model Comparison")
-
-# Custom CSS to make it more professional
 st.markdown("""
 <style>
     .main {
@@ -56,128 +50,56 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
-
-# Title and description
 st.title("Cement Bag Consumption Model Comparison Dashboard")
-st.markdown("""
-    <div style="background-color: #f0f5ff; padding: 15px; border-radius: 10px; border-left: 5px solid #3498db;">
-        <h3 style="margin-top: 0;">Model Comparison</h3>
-        <p><strong>Model 1:</strong> Neural Network Algorithm</p>
-        <p><strong>Model 2:</strong> Ensemble Algorithm (Holt-Winters + Trend-Based + Random-Forest)</p>
-        <p>This dashboard provides a comprehensive comparison between these two prediction models for cement bag consumption against actual values for March.</p>
-    </div>
-""", unsafe_allow_html=True)
-
-# Function to calculate metrics
+st.markdown("""<div style="background-color: #f0f5ff; padding: 15px; border-radius: 10px; border-left: 5px solid #3498db;"><h3 style="margin-top: 0;">Model Comparison</h3><p><strong>Model 1:</strong> Neural Network Algorithm</p><p><strong>Model 2:</strong> Ensemble Algorithm (Holt-Winters + Trend-Based + Random-Forest)</p><p>This dashboard provides a comprehensive comparison between these two prediction models for cement bag consumption against actual values for March.</p></div>""", unsafe_allow_html=True)
 def calculate_metrics(actual, predicted):
-    """Calculate various performance metrics comparing actual vs predicted values"""
     mae = mean_absolute_error(actual, predicted)
     mse = mean_squared_error(actual, predicted)
     rmse = np.sqrt(mse)
-    
-    # Calculate MAPE (handle division by zero)
     mape = np.mean(np.abs((actual - predicted) / np.maximum(np.ones(len(actual)), actual))) * 100
-    
-    # Calculate weighted MAPE (weighted by consumption volume)
     wmape = np.sum(np.abs(actual - predicted)) / np.sum(np.maximum(np.ones(len(actual)), actual)) * 100
-    
-    # Calculate R² score
     r2 = r2_score(actual, predicted)
-    
-    # Calculate correlation coefficients
     pearson_corr, _ = pearsonr(actual, predicted)
     spearman_corr, _ = spearmanr(actual, predicted)
-    
-    # Calculate percentage error for each point
     percent_errors = np.abs((actual - predicted) / np.maximum(np.ones(len(actual)), actual)) * 100
-    
-    # Calculate additional metrics
     under_predictions = np.sum(predicted < actual)
     over_predictions = np.sum(predicted > actual)
     perfect_predictions = np.sum(predicted == actual)
-    
-    # Calculate percentage of predictions within various error thresholds
     within_1_percent = np.sum(percent_errors <= 1)
     within_1_percent_ratio = within_1_percent / len(actual) * 100
-    
     within_3_percent = np.sum(percent_errors <= 3)
     within_3_percent_ratio = within_3_percent / len(actual) * 100
-    
     within_5_percent = np.sum(percent_errors <= 5)
     within_5_percent_ratio = within_5_percent / len(actual) * 100
-    
     within_10_percent = np.sum(percent_errors <= 10)
     within_10_percent_ratio = within_10_percent / len(actual) * 100
-    
-    # Calculate absolute total deviation
     total_actual = np.sum(actual)
     total_predicted = np.sum(predicted)
     abs_total_deviation = abs(total_actual - total_predicted)
     total_deviation_percent = (abs_total_deviation / total_actual) * 100 if total_actual > 0 else 0
-    
-    # Calculate bias (positive means overestimation, negative means underestimation)
     bias = np.mean(predicted - actual)
     bias_percent = (bias / np.mean(actual)) * 100 if np.mean(actual) > 0 else 0
-    
-    # Calculate tracking signal (sum of errors / MAD)
     sum_errors = np.sum(predicted - actual)
     mad = np.mean(np.abs(predicted - actual))
     tracking_signal = sum_errors / mad if mad > 0 else 0
-    
-    return {
-        'MAE': mae,
-        'MSE': mse,
-        'RMSE': rmse,
-        'MAPE': mape,
-        'WMAPE': wmape,  # Weighted MAPE
-        'R²': r2,
-        'Pearson Correlation': pearson_corr,
-        'Spearman Correlation': spearman_corr,
-        'Under Predictions': under_predictions,
-        'Over Predictions': over_predictions,
-        'Perfect Predictions': perfect_predictions,
-        'Within 1% Error (%)': within_1_percent_ratio,
-        'Within 3% Error (%)': within_3_percent_ratio,
-        'Within 5% Error (%)': within_5_percent_ratio,
-        'Within 10% Error (%)': within_10_percent_ratio,
-        'Total Deviation (%)': total_deviation_percent,
-        'Bias': bias,
-        'Bias (%)': bias_percent,
-        'Tracking Signal': tracking_signal,
-        'Percent Errors': percent_errors
-    }
-
-# File uploader
+    return {'MAE': mae,'MSE': mse,'RMSE': rmse,'MAPE': mape,'WMAPE': wmape,'R²': r2,'Pearson Correlation': pearson_corr,'Spearman Correlation': spearman_corr,'Under Predictions': under_predictions,'Over Predictions': over_predictions,'Perfect Predictions': perfect_predictions,'Within 1% Error (%)': within_1_percent_ratio,'Within 3% Error (%)': within_3_percent_ratio,'Within 5% Error (%)': within_5_percent_ratio,'Within 10% Error (%)': within_10_percent_ratio,'Total Deviation (%)': total_deviation_percent,'Bias': bias,'Bias (%)': bias_percent,'Tracking Signal': tracking_signal,'Percent Errors': percent_errors}
 st.subheader("Upload Excel File")
 uploaded_file = st.file_uploader("Upload your Excel file with cement bag data", type=["xlsx", "xls"])
-
 if uploaded_file:
-    # Read the Excel file
     try:
         df = pd.read_excel(uploaded_file)
-        
-        # Display the raw data
         with st.expander("Raw Data Preview"):
             st.dataframe(df)
-        
-        # Check if all required columns are present
         required_columns = ["Bag Plus Plant", "Mar-Actual", "Mar Pred1", "Mar Pred2"]
         if all(col in df.columns for col in required_columns):
             # Create new columns for errors and percentage errors
             df['Error_Model1'] = df['Mar-Actual'] - df['Mar Pred1']
             df['Error_Model2'] = df['Mar-Actual'] - df['Mar Pred2']
-            
             df['Error_Percent_Model1'] = np.abs(df['Error_Model1'] / np.maximum(np.ones(len(df)), df['Mar-Actual'])) * 100
             df['Error_Percent_Model2'] = np.abs(df['Error_Model2'] / np.maximum(np.ones(len(df)), df['Mar-Actual'])) * 100
-            
-            # Calculate metrics
             metrics_model1 = calculate_metrics(df['Mar-Actual'], df['Mar Pred1'])
             metrics_model2 = calculate_metrics(df['Mar-Actual'], df['Mar Pred2'])
-            
-            # Create columns for dashboard layout
             col1, col2 = st.columns(2)
-            
-            # Summary statistics
             with col1:
                 st.subheader("Model 1 Performance Metrics")
                 st.markdown('<div class="metric-card">', unsafe_allow_html=True)
@@ -186,7 +108,6 @@ if uploaded_file:
                         if isinstance(value, (int, float)):
                             st.metric(metric, f"{value:.4f}" if value < 100 else f"{value:.2f}")
                 st.markdown('</div>', unsafe_allow_html=True)
-            
             with col2:
                 st.subheader("Model 2 Performance Metrics")
                 st.markdown('<div class="metric-card">', unsafe_allow_html=True)
@@ -195,18 +116,8 @@ if uploaded_file:
                         if isinstance(value, (int, float)):
                             st.metric(metric, f"{value:.4f}" if value < 100 else f"{value:.2f}")
                 st.markdown('</div>', unsafe_allow_html=True)
-            
-            # Model Comparison Summary
             st.subheader("Model Comparison Summary")
-            
-            # Create a comparison dataframe
-            comparison_df = pd.DataFrame({
-                'Metric': [k for k in metrics_model1.keys() if k != 'Percent Errors'],
-                'Model 1': [metrics_model1[k] for k in metrics_model1.keys() if k != 'Percent Errors'],
-                'Model 2': [metrics_model2[k] for k in metrics_model1.keys() if k != 'Percent Errors']
-            })
-            
-            # Add a "Better Model" column
+            comparison_df = pd.DataFrame({'Metric': [k for k in metrics_model1.keys() if k != 'Percent Errors'],'Model 1': [metrics_model1[k] for k in metrics_model1.keys() if k != 'Percent Errors'],'Model 2': [metrics_model2[k] for k in metrics_model1.keys() if k != 'Percent Errors']})
             better_model = []
             for metric in comparison_df['Metric']:
                 if metric in ['R²', 'Correlation', 'Perfect Predictions', 'Within 5% Error (%)', 'Within 10% Error (%)']:
@@ -218,100 +129,38 @@ if uploaded_file:
                     else:
                         better_model.append("Equal")
                 else:
-                    # Lower is better
                     if metrics_model1[metric] < metrics_model2[metric]:
                         better_model.append("Model 1")
                     elif metrics_model2[metric] < metrics_model1[metric]:
                         better_model.append("Model 2")
                     else:
                         better_model.append("Equal")
-            
             comparison_df['Better Model'] = better_model
-            
-            # Display comparison table
-            st.dataframe(comparison_df.style.apply(lambda x: ['background-color: #d4f1dd' if v == "Model 1" 
-                                                    else 'background-color: #d1e7f0' if v == "Model 2" 
-                                                    else '' for v in x], subset=['Better Model']))
-            
-            # Overall winner
+            st.dataframe(comparison_df.style.apply(lambda x: ['background-color: #d4f1dd' if v == "Model 1" else 'background-color: #d1e7f0' if v == "Model 2" else '' for v in x], subset=['Better Model']))
             model1_wins = sum(1 for model in better_model if model == "Model 1")
             model2_wins = sum(1 for model in better_model if model == "Model 2")
             equal_metrics = sum(1 for model in better_model if model == "Equal")
-            
             winner = "Model 1" if model1_wins > model2_wins else "Model 2" if model2_wins > model1_wins else "Both models perform equally"
-            
-            st.markdown(f"""
-            <div class="metric-card">
-                <h3>Overall Winner: <span class="highlight">{winner}</span></h3>
-                <p>Model 1 better in {model1_wins} metrics</p>
-                <p>Model 2 better in {model2_wins} metrics</p>
-                <p>Equal performance in {equal_metrics} metrics</p>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # Visualization Section
+            st.markdown(f"""<div class="metric-card"><h3>Overall Winner: <span class="highlight">{winner}</span></h3><p>Model 1 better in {model1_wins} metrics</p><p>Model 2 better in {model2_wins} metrics</p><p>Equal performance in {equal_metrics} metrics</p></div>""", unsafe_allow_html=True)
             st.header("Visualizations")
-            
-            # 1. Actual vs Predicted Comparison
             st.subheader("Actual vs Predicted Values")
-            
-            # Create a melted dataframe for Plotly
-            df_melted = pd.melt(df, id_vars=['Bag Plus Plant'], value_vars=['Mar-Actual', 'Mar Pred1', 'Mar Pred2'],
-                                var_name='Measurement Type', value_name='Value')
-            
-            fig = px.bar(df_melted, x='Bag Plus Plant', y='Value', color='Measurement Type', barmode='group',
-                        color_discrete_map={'Mar-Actual': '#2ecc71', 'Mar Pred1': '#3498db', 'Mar Pred2': '#9b59b6'},
-                        title='Comparison of Actual vs Predicted Consumption by Cement Bag Type')
-            
-            fig.update_layout(xaxis_title='Cement Bag Type', yaxis_title='Consumption',
-                            legend_title='Data Type', template='plotly_white')
-            
-            # Rotate x-axis labels if there are many cement bag types
+            df_melted = pd.melt(df, id_vars=['Bag Plus Plant'], value_vars=['Mar-Actual', 'Mar Pred1', 'Mar Pred2'],var_name='Measurement Type', value_name='Value')
+            fig = px.bar(df_melted, x='Bag Plus Plant', y='Value', color='Measurement Type', barmode='group',color_discrete_map={'Mar-Actual': '#2ecc71', 'Mar Pred1': '#3498db', 'Mar Pred2': '#9b59b6'},title='Comparison of Actual vs Predicted Consumption by Cement Bag Type')
+            fig.update_layout(xaxis_title='Cement Bag Type', yaxis_title='Consumption',legend_title='Data Type', template='plotly_white')
             if len(df) > 5:
                 fig.update_layout(xaxis_tickangle=-45)
-                
             st.plotly_chart(fig, use_container_width=True)
-            
-            # 2. Error Analysis
             st.subheader("Error Analysis")
-            
-            # Create subplots for error distribution
             error_fig = make_subplots(rows=1, cols=2, subplot_titles=("Model 1 Error Distribution", "Model 2 Error Distribution"))
-            
-            # Model 1 error histogram
-            error_fig.add_trace(
-                go.Histogram(x=df['Error_Model1'], name='Model 1 Error', marker_color='#3498db'),
-                row=1, col=1
-            )
-            
-            # Model 2 error histogram
-            error_fig.add_trace(
-                go.Histogram(x=df['Error_Model2'], name='Model 2 Error', marker_color='#9b59b6'),
-                row=1, col=2
-            )
-            
-            error_fig.update_layout(height=500, title_text="Error Distribution Comparison",
-                                    template='plotly_white')
-            
+            error_fig.add_trace(go.Histogram(x=df['Error_Model1'], name='Model 1 Error', marker_color='#3498db'),row=1, col=1)
+            error_fig.add_trace(go.Histogram(x=df['Error_Model2'], name='Model 2 Error', marker_color='#9b59b6'),row=1, col=2)
+            error_fig.update_layout(height=500, title_text="Error Distribution Comparison",template='plotly_white')
             st.plotly_chart(error_fig, use_container_width=True)
-            
-            # 3. Scatter plots of Actual vs Predicted
-            scatter_fig = make_subplots(rows=1, cols=2, subplot_titles=("Model 1: Actual vs Predicted", "Model 2: Actual vs Predicted"),
-                                        specs=[[{"type": "scatter"}, {"type": "scatter"}]])
-            
-            # Add identity line (perfect prediction)
+            scatter_fig = make_subplots(rows=1, cols=2, subplot_titles=("Model 1: Actual vs Predicted", "Model 2: Actual vs Predicted"),specs=[[{"type": "scatter"}, {"type": "scatter"}]])
             max_val = max(df['Mar-Actual'].max(), df['Mar Pred1'].max(), df['Mar Pred2'].max())
             min_val = min(df['Mar-Actual'].min(), df['Mar Pred1'].min(), df['Mar Pred2'].min())
-            
-            # Add identity line to both subplots
             for col in [1, 2]:
-                scatter_fig.add_trace(
-                    go.Scatter(x=[min_val, max_val], y=[min_val, max_val], mode='lines', name='Perfect Prediction',
-                              line=dict(color='rgba(0,0,0,0.5)', dash='dash'), showlegend=col==1),
-                    row=1, col=col
-                )
-            
-            # Model 1 scatter plot
+                scatter_fig.add_trace(go.Scatter(x=[min_val, max_val], y=[min_val, max_val], mode='lines', name='Perfect Prediction',line=dict(color='rgba(0,0,0,0.5)', dash='dash'), showlegend=col==1),row=1, col=col)
             scatter_fig.add_trace(
                 go.Scatter(x=df['Mar-Actual'], y=df['Mar Pred1'], mode='markers', name='Model 1',
                           marker=dict(color='#3498db', size=10)),
@@ -843,7 +692,18 @@ if uploaded_file:
                     ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
                     ('FONTSIZE', (0, 1), (-1, -1), 8),
                 ]))
-                
+            if st.button("Generate PDF Report"):
+              with st.spinner("Generating PDF report... This may take a moment."):
+               try:
+                pdf_data = create_pdf_report()
+                st.download_button(
+                label="⬇️ Download PDF Report",
+                data=pdf_data,
+                file_name="cement_model_comparison_report.pdf",
+                mime="application/pdf")
+                st.success("PDF generated successfully! Click the download button above to save it.")
+               except Exception as e:
+                st.error(f"Error generating PDF: {str(e)}")    
             
         else:
             st.error(f"Required columns not found. Please ensure your Excel file has these columns: {', '.join(required_columns)}")
