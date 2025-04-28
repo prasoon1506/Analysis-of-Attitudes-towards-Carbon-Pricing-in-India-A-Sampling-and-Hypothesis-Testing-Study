@@ -356,7 +356,6 @@ if uploaded_file:
                 elements.append(Paragraph(f"Total Weighted Error - Ensemble Algorithm: {total_weighted_ensemble:.2f}%", normal_style))
                 elements.append(Paragraph(f"Value-weighted Winner: {winner_value_weighted}", normal_style))
                 elements.append(Spacer(1, 0.5*inch))
-                elements.append(Paragraph("Conclusion", subtitle_style))
                 doc.build(elements)
                 pdf_data = buffer.getvalue()
                 buffer.close()
