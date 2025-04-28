@@ -161,256 +161,79 @@ if uploaded_file:
             min_val = min(df['Mar-Actual'].min(), df['Mar Pred1'].min(), df['Mar Pred2'].min())
             for col in [1, 2]:
                 scatter_fig.add_trace(go.Scatter(x=[min_val, max_val], y=[min_val, max_val], mode='lines', name='Perfect Prediction',line=dict(color='rgba(0,0,0,0.5)', dash='dash'), showlegend=col==1),row=1, col=col)
-            scatter_fig.add_trace(
-                go.Scatter(x=df['Mar-Actual'], y=df['Mar Pred1'], mode='markers', name='Model 1',
-                          marker=dict(color='#3498db', size=10)),
-                row=1, col=1
-            )
-            
-            # Model 2 scatter plot
-            scatter_fig.add_trace(
-                go.Scatter(x=df['Mar-Actual'], y=df['Mar Pred2'], mode='markers', name='Model 2',
-                          marker=dict(color='#9b59b6', size=10)),
-                row=1, col=2
-            )
-            
-            scatter_fig.update_layout(height=500, title_text="Actual vs Predicted Scatter Plots",
-                                    xaxis_title="Actual Values", yaxis_title="Predicted Values",
-                                    xaxis2_title="Actual Values", yaxis2_title="Predicted Values",
-                                    template='plotly_white')
-            
+            scatter_fig.add_trace(go.Scatter(x=df['Mar-Actual'], y=df['Mar Pred1'], mode='markers', name='Model 1',marker=dict(color='#3498db', size=10)),row=1, col=1)
+            scatter_fig.add_trace(go.Scatter(x=df['Mar-Actual'], y=df['Mar Pred2'], mode='markers', name='Model 2',marker=dict(color='#9b59b6', size=10)),row=1, col=2)
+            scatter_fig.update_layout(height=500, title_text="Actual vs Predicted Scatter Plots",xaxis_title="Actual Values", yaxis_title="Predicted Values",xaxis2_title="Actual Values", yaxis2_title="Predicted Values",template='plotly_white')
             st.plotly_chart(scatter_fig, use_container_width=True)
-            
-            # 4. Percentage Error by Cement Bag Type
             st.subheader("Percentage Error by Cement Bag Type")
-            
-            percent_error_df = pd.DataFrame({
-                'Bag Plus Plant': df['Bag Plus Plant'],
-                'Model 1 Error (%)': df['Error_Percent_Model1'],
-                'Model 2 Error (%)': df['Error_Percent_Model2']
-            })
-            
-            percent_error_melted = pd.melt(percent_error_df, id_vars=['Bag Plus Plant'], 
-                                        value_vars=['Model 1 Error (%)', 'Model 2 Error (%)'],
-                                        var_name='Model', value_name='Percentage Error')
-            
-            percent_fig = px.bar(percent_error_melted, x='Bag Plus Plant', y='Percentage Error', color='Model',
-                                barmode='group', title='Percentage Error Comparison by Cement Bag Type',
-                                color_discrete_map={'Model 1 Error (%)': '#3498db', 'Model 2 Error (%)': '#9b59b6'})
-            
-            percent_fig.update_layout(xaxis_title='Cement Bag Type', yaxis_title='Percentage Error (%)',
-                                    legend_title='Model', template='plotly_white')
-            
+            percent_error_df = pd.DataFrame({'Bag Plus Plant': df['Bag Plus Plant'],'Model 1 Error (%)': df['Error_Percent_Model1'],'Model 2 Error (%)': df['Error_Percent_Model2']})
+            percent_error_melted = pd.melt(percent_error_df, id_vars=['Bag Plus Plant'],value_vars=['Model 1 Error (%)', 'Model 2 Error (%)'],var_name='Model', value_name='Percentage Error')
+            percent_fig = px.bar(percent_error_melted, x='Bag Plus Plant', y='Percentage Error', color='Model',barmode='group', title='Percentage Error Comparison by Cement Bag Type',color_discrete_map={'Model 1 Error (%)': '#3498db', 'Model 2 Error (%)': '#9b59b6'}) 
+            percent_fig.update_layout(xaxis_title='Cement Bag Type', yaxis_title='Percentage Error (%)',legend_title='Model', template='plotly_white')
             if len(df) > 5:
                 percent_fig.update_layout(xaxis_tickangle=-45)
-                
             st.plotly_chart(percent_fig, use_container_width=True)
-            
-            # 5. Cumulative Error Analysis
             st.subheader("Cumulative Error Analysis")
-            
-            # Sort dataframes by actual consumption
             df_sorted = df.sort_values('Mar-Actual')
-            
-            # Calculate cumulative sums
             df_sorted['Cumulative_Actual'] = df_sorted['Mar-Actual'].cumsum()
             df_sorted['Cumulative_Pred1'] = df_sorted['Mar Pred1'].cumsum()
             df_sorted['Cumulative_Pred2'] = df_sorted['Mar Pred2'].cumsum()
-            
-            # Calculate cumulative errors
             df_sorted['Cumulative_Error_Model1'] = df_sorted['Cumulative_Actual'] - df_sorted['Cumulative_Pred1']
             df_sorted['Cumulative_Error_Model2'] = df_sorted['Cumulative_Actual'] - df_sorted['Cumulative_Pred2']
-            
-            # Create the figure
             cum_fig = go.Figure()
-            
-            cum_fig.add_trace(go.Scatter(x=df_sorted['Bag Plus Plant'], y=df_sorted['Cumulative_Error_Model1'], 
-                                        mode='lines+markers', name='Model 1 Cumulative Error',
-                                        line=dict(color='#3498db', width=2)))
-            
-            cum_fig.add_trace(go.Scatter(x=df_sorted['Bag Plus Plant'], y=df_sorted['Cumulative_Error_Model2'], 
-                                        mode='lines+markers', name='Model 2 Cumulative Error',
-                                        line=dict(color='#9b59b6', width=2)))
-            
-            # Add horizontal line at y=0
+            cum_fig.add_trace(go.Scatter(x=df_sorted['Bag Plus Plant'], y=df_sorted['Cumulative_Error_Model1'],mode='lines+markers', name='Model 1 Cumulative Error',line=dict(color='#3498db', width=2)))  
+            cum_fig.add_trace(go.Scatter(x=df_sorted['Bag Plus Plant'], y=df_sorted['Cumulative_Error_Model2'], mode='lines+markers', name='Model 2 Cumulative Error',line=dict(color='#9b59b6', width=2)))
             cum_fig.add_hline(y=0, line_width=1, line_dash="dash", line_color="black")
-            
-            cum_fig.update_layout(title='Cumulative Error Analysis', xaxis_title='Cement Bag Type (Sorted by Actual Consumption)',
-                                yaxis_title='Cumulative Error', template='plotly_white')
-            
+            cum_fig.update_layout(title='Cumulative Error Analysis', xaxis_title='Cement Bag Type (Sorted by Actual Consumption)',yaxis_title='Cumulative Error', template='plotly_white')
             if len(df) > 5:
                 cum_fig.update_layout(xaxis_tickangle=-45)
-                
             st.plotly_chart(cum_fig, use_container_width=True)
-            
-            # 6. Radar Chart for Model Comparison
             st.subheader("Radar Chart: Model Performance Comparison")
-            
-            # Select metrics for radar chart (normalize them for better visualization)
             radar_metrics = ['MAE', 'RMSE', 'MAPE', 'R²', 'Within 5% Error (%)', 'Within 10% Error (%)']
-            
-            # Create a dataframe for radar chart
-            radar_df = pd.DataFrame({
-                'Metric': radar_metrics,
-                'Model 1': [metrics_model1[m] for m in radar_metrics],
-                'Model 2': [metrics_model2[m] for m in radar_metrics]
-            })
-            
-            # Normalize metrics (invert for metrics where lower is better)
+            radar_df = pd.DataFrame({'Metric': radar_metrics,'Model 1': [metrics_model1[m] for m in radar_metrics],'Model 2': [metrics_model2[m] for m in radar_metrics]})
             for metric in radar_metrics:
                 if metric in ['R²', 'Within 5% Error (%)', 'Within 10% Error (%)']:
-                    # Higher is better - normalize to 0-1 range
-                    max_val = max(radar_df.loc[radar_df['Metric'] == metric, 'Model 1'].iloc[0],
-                                radar_df.loc[radar_df['Metric'] == metric, 'Model 2'].iloc[0])
-                    
+                    max_val = max(radar_df.loc[radar_df['Metric'] == metric, 'Model 1'].iloc[0],radar_df.loc[radar_df['Metric'] == metric, 'Model 2'].iloc[0])
                     if max_val != 0:
                         radar_df.loc[radar_df['Metric'] == metric, 'Model 1'] = radar_df.loc[radar_df['Metric'] == metric, 'Model 1'].iloc[0] / max_val
                         radar_df.loc[radar_df['Metric'] == metric, 'Model 2'] = radar_df.loc[radar_df['Metric'] == metric, 'Model 2'].iloc[0] / max_val
                 else:
-                    # Lower is better - invert and normalize to 0-1 range
-                    max_val = max(radar_df.loc[radar_df['Metric'] == metric, 'Model 1'].iloc[0],
-                                radar_df.loc[radar_df['Metric'] == metric, 'Model 2'].iloc[0])
-                    
+                    max_val = max(radar_df.loc[radar_df['Metric'] == metric, 'Model 1'].iloc[0],radar_df.loc[radar_df['Metric'] == metric, 'Model 2'].iloc[0])
                     if max_val != 0:
                         radar_df.loc[radar_df['Metric'] == metric, 'Model 1'] = 1 - (radar_df.loc[radar_df['Metric'] == metric, 'Model 1'].iloc[0] / max_val)
                         radar_df.loc[radar_df['Metric'] == metric, 'Model 2'] = 1 - (radar_df.loc[radar_df['Metric'] == metric, 'Model 2'].iloc[0] / max_val)
-            
-            # Create radar chart
             radar_fig = go.Figure()
-            
-            radar_fig.add_trace(go.Scatterpolar(
-                r=radar_df['Model 1'].values,
-                theta=radar_df['Metric'].values,
-                fill='toself',
-                name='Model 1',
-                line_color='#3498db'
-            ))
-            
-            radar_fig.add_trace(go.Scatterpolar(
-                r=radar_df['Model 2'].values,
-                theta=radar_df['Metric'].values,
-                fill='toself',
-                name='Model 2',
-                line_color='#9b59b6'
-            ))
-            
-            radar_fig.update_layout(
-                polar=dict(
-                    radialaxis=dict(
-                        visible=True,
-                        range=[0, 1]
-                    )),
-                showlegend=True,
-                title='Model Performance Radar Chart (Higher is Better for All Metrics)',
-                template='plotly_white'
-            )
-            
+            radar_fig.add_trace(go.Scatterpolar(r=radar_df['Model 1'].values,theta=radar_df['Metric'].values,fill='toself',name='Model 1',line_color='#3498db'))
+            radar_fig.add_trace(go.Scatterpolar(r=radar_df['Model 2'].values,theta=radar_df['Metric'].values,fill='toself',name='Model 2',line_color='#9b59b6'))
+            radar_fig.update_layout(polar=dict(radialaxis=dict(visible=True,range=[0, 1])),showlegend=True,title='Model Performance Radar Chart (Higher is Better for All Metrics)',template='plotly_white')
             st.plotly_chart(radar_fig, use_container_width=True)
-            
-            # Add additional visualizations and analysis sections
-            
-            # 7. Prediction Accuracy Heat Map
             st.subheader("Prediction Accuracy Heat Map")
-            
-            # Calculate percentage errors for heatmap
-            heatmap_data = pd.DataFrame({
-                'Bag Plus Plant': df['Bag Plus Plant'],
-                'Neural Network Error (%)': df['Error_Percent_Model1'],
-                'Ensemble Algorithm Error (%)': df['Error_Percent_Model2']
-            })
-            
-            # Create a pivot table for the heatmap
+            heatmap_data = pd.DataFrame({'Bag Plus Plant': df['Bag Plus Plant'],'Neural Network Error (%)': df['Error_Percent_Model1'],'Ensemble Algorithm Error (%)': df['Error_Percent_Model2']})
             heatmap_pivot = heatmap_data.set_index('Bag Plus Plant')
-            
-            # Create plotly heatmap
-            heatmap_fig = px.imshow(
-                heatmap_pivot.T,
-                text_auto='.1f',
-                aspect="auto",
-                color_continuous_scale='RdYlGn_r',  # Red for high error, green for low error
-                title='Prediction Error Heat Map (%)',
-                labels=dict(x="Cement Bag Type", y="Model", color="Error (%)")
-            )
-            
+            heatmap_fig = px.imshow(heatmap_pivot.T,text_auto='.1f',aspect="auto",color_continuous_scale='RdYlGn_r',title='Prediction Error Heat Map (%)',labels=dict(x="Cement Bag Type", y="Model", color="Error (%)"))
             heatmap_fig.update_layout(height=400, template='plotly_white')
-            
             if len(df) > 5:
                 heatmap_fig.update_layout(xaxis_tickangle=-45)
-                
             st.plotly_chart(heatmap_fig, use_container_width=True)
-            
-            # 8. Error Trend Analysis for High Volume Products
             st.subheader("Error Trend Analysis for High Volume Products")
-            
-            # Sort by actual consumption and get top products (or all if small dataset)
             top_products = min(5, len(df))
             top_df = df.sort_values('Mar-Actual', ascending=False).head(top_products)
-            
-            # Create figure with secondary y-axis
             trend_fig = make_subplots(specs=[[{"secondary_y": True}]])
-            
-            # Add bars for actual consumption
-            trend_fig.add_trace(
-                go.Bar(x=top_df['Bag Plus Plant'], y=top_df['Mar-Actual'], name='Actual Consumption', 
-                      marker_color='rgba(46, 204, 113, 0.7)'),
-                secondary_y=False,
-            )
-            
-            # Add lines for errors
-            trend_fig.add_trace(
-                go.Scatter(x=top_df['Bag Plus Plant'], y=top_df['Error_Percent_Model1'], 
-                          mode='lines+markers', name='Neural Network Error (%)',
-                          line=dict(color='#3498db', width=2)),
-                secondary_y=True,
-            )
-            
-            trend_fig.add_trace(
-                go.Scatter(x=top_df['Bag Plus Plant'], y=top_df['Error_Percent_Model2'], 
-                          mode='lines+markers', name='Ensemble Error (%)',
-                          line=dict(color='#9b59b6', width=2)),
-                secondary_y=True,
-            )
-            
-            # Update layout
-            trend_fig.update_layout(
-                title_text="High Volume Products: Actual Consumption vs Error Percentage",
-                template='plotly_white',
-                barmode='group'
-            )
-            
+            trend_fig.add_trace(go.Bar(x=top_df['Bag Plus Plant'], y=top_df['Mar-Actual'], name='Actual Consumption',marker_color='rgba(46, 204, 113, 0.7)'),secondary_y=False,)
+            trend_fig.add_trace(go.Scatter(x=top_df['Bag Plus Plant'], y=top_df['Error_Percent_Model1'],mode='lines+markers', name='Neural Network Error (%)',line=dict(color='#3498db', width=2)),secondary_y=True,)
+            trend_fig.add_trace(go.Scatter(x=top_df['Bag Plus Plant'], y=top_df['Error_Percent_Model2'], mode='lines+markers', name='Ensemble Error (%)',line=dict(color='#9b59b6', width=2)),secondary_y=True,)
+            trend_fig.update_layout(title_text="High Volume Products: Actual Consumption vs Error Percentage",template='plotly_white',barmode='group')
             trend_fig.update_yaxes(title_text="Actual Consumption", secondary_y=False)
             trend_fig.update_yaxes(title_text="Error Percentage (%)", secondary_y=True)
-            
             st.plotly_chart(trend_fig, use_container_width=True)
-            
-            # 9. Model Stability Analysis
             st.subheader("Model Stability Analysis")
-            
-            # Calculate standard deviation of errors for each model
             model1_std = np.std(df['Error_Percent_Model1'])
             model2_std = np.std(df['Error_Percent_Model2'])
-            
-            # Calculate interquartile range for each model
             model1_q75, model1_q25 = np.percentile(df['Error_Percent_Model1'], [75, 25])
             model2_q75, model2_q25 = np.percentile(df['Error_Percent_Model2'], [75, 25])
             model1_iqr = model1_q75 - model1_q25
             model2_iqr = model2_q75 - model2_q25
-            
-            # Create stability metrics dataframe
-            stability_data = pd.DataFrame({
-                'Metric': ['Standard Deviation of Errors (%)', 'Interquartile Range (IQR) of Errors (%)', 
-                         'Maximum Error (%)', 'Minimum Error (%)', 'Range of Errors (%)'],
-                'Neural Network': [model1_std, model1_iqr, 
-                                 df['Error_Percent_Model1'].max(), 
-                                 df['Error_Percent_Model1'].min(),
-                                 df['Error_Percent_Model1'].max() - df['Error_Percent_Model1'].min()],
-                'Ensemble Algorithm': [model2_std, model2_iqr,
-                                    df['Error_Percent_Model2'].max(), 
-                                    df['Error_Percent_Model2'].min(),
-                                    df['Error_Percent_Model2'].max() - df['Error_Percent_Model2'].min()]
-            })
-            
-            # Add a "Better Model" column for stability metrics (lower is better for all of these)
+            stability_data = pd.DataFrame({'Metric': ['Standard Deviation of Errors (%)', 'Interquartile Range (IQR) of Errors (%)','Maximum Error (%)', 'Minimum Error (%)', 'Range of Errors (%)'],'Neural Network': [model1_std, model1_iqr, df['Error_Percent_Model1'].max(), df['Error_Percent_Model1'].min(),df['Error_Percent_Model1'].max() - df['Error_Percent_Model1'].min()],'Ensemble Algorithm': [model2_std, model2_iqr,df['Error_Percent_Model2'].max(), df['Error_Percent_Model2'].min(),df['Error_Percent_Model2'].max() - df['Error_Percent_Model2'].min()]})
             stability_better = []
             for i in range(len(stability_data)):
                 if stability_data['Neural Network'].iloc[i] < stability_data['Ensemble Algorithm'].iloc[i]:
@@ -419,48 +242,18 @@ if uploaded_file:
                     stability_better.append("Ensemble Algorithm")
                 else:
                     stability_better.append("Equal")
-                    
             stability_data['Better Model'] = stability_better
-            
-            # Display the stability metrics table
             st.write("Model Stability Metrics (Lower is Better):")
-            st.dataframe(stability_data.style.apply(lambda x: ['background-color: #d4f1dd' if v == "Neural Network" 
-                                                 else 'background-color: #d1e7f0' if v == "Ensemble Algorithm" 
-                                                 else '' for v in x], subset=['Better Model']))
-            
-            # 10. Box plot of error distributions
+            st.dataframe(stability_data.style.apply(lambda x: ['background-color: #d4f1dd' if v == "Neural Network" else 'background-color: #d1e7f0' if v == "Ensemble Algorithm" else '' for v in x], subset=['Better Model']))
             st.subheader("Error Distribution Box Plot")
-            
-            box_data = pd.DataFrame({
-                'Neural Network': df['Error_Percent_Model1'],
-                'Ensemble Algorithm': df['Error_Percent_Model2']
-            })
-            
+            box_data = pd.DataFrame({'Neural Network': df['Error_Percent_Model1'],'Ensemble Algorithm': df['Error_Percent_Model2']})
             box_melted = pd.melt(box_data, var_name='Model', value_name='Percentage Error')
-            
-            box_fig = px.box(box_melted, x='Model', y='Percentage Error', 
-                           color='Model', 
-                           color_discrete_map={'Neural Network': '#3498db', 'Ensemble Algorithm': '#9b59b6'},
-                           title='Error Distribution Comparison',
-                           points="all")  # Show all points
-            
-            box_fig.update_traces(quartilemethod="exclusive")  # Show whiskers at 2.5% and 97.5%
+            box_fig = px.box(box_melted, x='Model', y='Percentage Error',color='Model',color_discrete_map={'Neural Network': '#3498db', 'Ensemble Algorithm': '#9b59b6'},title='Error Distribution Comparison',points="all")
+            box_fig.update_traces(quartilemethod="exclusive")
             box_fig.update_layout(template='plotly_white')
-            
             st.plotly_chart(box_fig, use_container_width=True)
-            
-            # 11. Product-level analysis
             st.subheader("Product-level Analysis")
-            
-            # Create a table showing which model performs better for each cement bag type
-            product_analysis = pd.DataFrame({
-                'Bag Plus Plant': df['Bag Plus Plant'],
-                'Actual Consumption': df['Mar-Actual'],
-                'Neural Network Error (%)': df['Error_Percent_Model1'],
-                'Ensemble Error (%)': df['Error_Percent_Model2']
-            })
-            
-            # Determine which model is better for each product
+            product_analysis = pd.DataFrame({'Bag Plus Plant': df['Bag Plus Plant'],'Actual Consumption': df['Mar-Actual'],'Neural Network Error (%)': df['Error_Percent_Model1'],'Ensemble Error (%)': df['Error_Percent_Model2']})
             better_model_list = []
             for i in range(len(product_analysis)):
                 if product_analysis['Neural Network Error (%)'].iloc[i] < product_analysis['Ensemble Error (%)'].iloc[i]:
@@ -469,98 +262,44 @@ if uploaded_file:
                     better_model_list.append("Ensemble")
                 else:
                     better_model_list.append("Equal")
-                    
             product_analysis['Better Model'] = better_model_list
-            
-            # Count the number of products where each model performs better
             nn_better_count = sum(1 for model in better_model_list if model == "Neural Network")
             ensemble_better_count = sum(1 for model in better_model_list if model == "Ensemble")
             equal_count = sum(1 for model in better_model_list if model == "Equal")
-            
-            # Display product analysis
             st.write("Analysis by Product:")
-            st.dataframe(product_analysis.style.apply(lambda x: ['background-color: #d4f1dd' if v == "Neural Network" 
-                                                   else 'background-color: #d1e7f0' if v == "Ensemble" 
-                                                   else '' for v in x], subset=['Better Model']))
-            
-            # Create pie chart for better model by product count
+            st.dataframe(product_analysis.style.apply(lambda x: ['background-color: #d4f1dd' if v == "Neural Network" else 'background-color: #d1e7f0' if v == "Ensemble" else '' for v in x], subset=['Better Model']))
             labels = ['Neural Network Better', 'Ensemble Better', 'Equal Performance']
             values = [nn_better_count, ensemble_better_count, equal_count]
             pie_colors = ['#3498db', '#9b59b6', '#95a5a6']
-            
             pie_fig = go.Figure(data=[go.Pie(labels=labels, values=values, hole=.4, marker_colors=pie_colors)])
             pie_fig.update_layout(title_text='Better Model by Product Count')
-            
             st.plotly_chart(pie_fig, use_container_width=True)
-            
-            # 12. Value-weighted analysis (by consumption volume)
             st.subheader("Value-weighted Analysis")
-            
-            # Calculate value-weighted performance (products with higher consumption have higher weight)
-            weighted_performance = pd.DataFrame({
-                'Bag Plus Plant': df['Bag Plus Plant'],
-                'Actual Consumption': df['Mar-Actual'],
-                'Weight (% of Total)': df['Mar-Actual'] / df['Mar-Actual'].sum() * 100,
-                'Neural Network Error (%)': df['Error_Percent_Model1'],
-                'Ensemble Error (%)': df['Error_Percent_Model2'],
-                'Weighted NN Error': df['Error_Percent_Model1'] * df['Mar-Actual'] / df['Mar-Actual'].sum(),
-                'Weighted Ensemble Error': df['Error_Percent_Model2'] * df['Mar-Actual'] / df['Mar-Actual'].sum()
-            })
-            
-            # Calculate total weighted error
+            weighted_performance = pd.DataFrame({'Bag Plus Plant': df['Bag Plus Plant'],'Actual Consumption': df['Mar-Actual'],'Weight (% of Total)': df['Mar-Actual'] / df['Mar-Actual'].sum() * 100,'Neural Network Error (%)': df['Error_Percent_Model1'],'Ensemble Error (%)': df['Error_Percent_Model2'],'Weighted NN Error': df['Error_Percent_Model1'] * df['Mar-Actual'] / df['Mar-Actual'].sum(),'Weighted Ensemble Error': df['Error_Percent_Model2'] * df['Mar-Actual'] / df['Mar-Actual'].sum()})
             total_weighted_nn = weighted_performance['Weighted NN Error'].sum()
             total_weighted_ensemble = weighted_performance['Weighted Ensemble Error'].sum()
-            
-            # Display value-weighted analysis
             st.write("Value-weighted Error Analysis (Higher volume products have more weight):")
-            st.dataframe(weighted_performance[['Bag Plus Plant', 'Actual Consumption', 'Weight (% of Total)', 
-                                             'Neural Network Error (%)', 'Ensemble Error (%)']].style.background_gradient(
-                                                cmap='RdYlGn_r', subset=['Neural Network Error (%)', 'Ensemble Error (%)']))
-            
-            # Display total weighted error
+            st.dataframe(weighted_performance[['Bag Plus Plant', 'Actual Consumption', 'Weight (% of Total)','Neural Network Error (%)', 'Ensemble Error (%)']].style.background_gradient(cmap='RdYlGn_r', subset=['Neural Network Error (%)', 'Ensemble Error (%)']))
             weighted_col1, weighted_col2 = st.columns(2)
             with weighted_col1:
                 st.metric("Total Weighted Error - Neural Network", f"{total_weighted_nn:.2f}%")
-            
             with weighted_col2:
                 st.metric("Total Weighted Error - Ensemble Algorithm", f"{total_weighted_ensemble:.2f}%")
-                
             winner_value_weighted = "Neural Network" if total_weighted_nn < total_weighted_ensemble else "Ensemble Algorithm"
             st.info(f"Value-weighted Winner: **{winner_value_weighted}**")
-            
-            # 13. Download analysis as Excel
             st.header("Download Reports")
             st.subheader("Download Analysis Results as Excel")
-            
-            # Create a BytesIO object
             output = io.BytesIO()
-            
-            # Create an Excel writer using the BytesIO object
             with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                # Write original data
                 df.to_excel(writer, sheet_name='Original Data', index=False)
-                
-                # Write metrics comparison
                 comparison_df.to_excel(writer, sheet_name='Metrics Comparison', index=False)
-                
-                # Write stability metrics
                 stability_data.to_excel(writer, sheet_name='Stability Analysis', index=False)
-                
-                # Write product-level analysis
                 product_analysis.to_excel(writer, sheet_name='Product Analysis', index=False)
-                
-                # Write value-weighted analysis
                 weighted_performance.to_excel(writer, sheet_name='Value-weighted Analysis', index=False)
-                
-                # Format the excel file
                 workbook = writer.book
-                
-                # Format Metrics Comparison sheet
                 worksheet = writer.sheets['Metrics Comparison']
                 better_format = workbook.add_format({'bg_color': '#d4f1dd'})
                 worse_format = workbook.add_format({'bg_color': '#f8d7da'})
-                
-                # Apply formats based on better model
                 for row_num, model in enumerate(better_model, start=1):
                     if model == 'Model 1':
                         worksheet.conditional_format(row_num, 1, row_num, 1, {'type': 'no_blanks', 'format': better_format})
@@ -568,130 +307,43 @@ if uploaded_file:
                     elif model == 'Model 2':
                         worksheet.conditional_format(row_num, 1, row_num, 1, {'type': 'no_blanks', 'format': worse_format})
                         worksheet.conditional_format(row_num, 2, row_num, 2, {'type': 'no_blanks', 'format': better_format})
-            
-            # Get the value of the BytesIO buffer
             excel_data = output.getvalue()
-            
-            # Provide download button
-            st.download_button(
-                label="Download Analysis as Excel",
-                data=excel_data,
-                file_name="cement_model_comparison_analysis.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
-            
-            # PDF Report Generation
+            st.download_button(label="Download Analysis as Excel",data=excel_data,file_name="cement_model_comparison_analysis.xlsx",mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
             st.subheader("Download Professional PDF Report")
-            
             def create_pdf_report():
-                """Create a PDF report with all analysis and visualizations"""
                 buffer = BytesIO()
                 doc = SimpleDocTemplate(buffer, pagesize=A4)
                 styles = getSampleStyleSheet()
-                
-                # Create custom styles
-                title_style = ParagraphStyle(
-                    'TitleStyle',
-                    parent=styles['Heading1'],
-                    fontSize=16,
-                    alignment=1,
-                    spaceAfter=12
-                )
-                
-                subtitle_style = ParagraphStyle(
-                    'SubtitleStyle',
-                    parent=styles['Heading2'],
-                    fontSize=14,
-                    spaceAfter=10
-                )
-                
+                title_style = ParagraphStyle('TitleStyle',parent=styles['Heading1'],fontSize=16,alignment=1,spaceAfter=12)
+                subtitle_style = ParagraphStyle('SubtitleStyle',parent=styles['Heading2'],fontSize=14,spaceAfter=10)
                 normal_style = styles['Normal']
-                
-                # Create the content elements list
                 elements = []
-                
-                # Add title
                 elements.append(Paragraph("Cement Bag Consumption Model Comparison Report", title_style))
                 elements.append(Spacer(1, 0.25*inch))
-                
-                # Add introduction
                 elements.append(Paragraph("Model Comparison", subtitle_style))
                 elements.append(Paragraph("<strong>Model 1:</strong> Neural Network Algorithm", normal_style))
                 elements.append(Paragraph("<strong>Model 2:</strong> Ensemble Algorithm (Holt-Winters + Trend-Based + Random-Forest)", normal_style))
                 elements.append(Paragraph("This report provides a comprehensive comparison between these two prediction models for cement bag consumption against actual values for March.", normal_style))
                 elements.append(Spacer(1, 0.25*inch))
-                
-                # Add summary statistics
                 elements.append(Paragraph("Performance Summary", subtitle_style))
-                
-                # Create summary table data
                 summary_data = [['Metric', 'Neural Network', 'Ensemble Algorithm', 'Better Model']]
                 for index, row in comparison_df.iterrows():
-                    summary_data.append([
-                        row['Metric'],
-                        f"{row['Model 1']:.4f}" if isinstance(row['Model 1'], float) else str(row['Model 1']),
-                        f"{row['Model 2']:.4f}" if isinstance(row['Model 2'], float) else str(row['Model 2']),
-                        row['Better Model']
-                    ])
-                
-                # Create summary table
+                    summary_data.append([row['Metric'],f"{row['Model 1']:.4f}" if isinstance(row['Model 1'], float) else str(row['Model 1']),f"{row['Model 2']:.4f}" if isinstance(row['Model 2'], float) else str(row['Model 2']),row['Better Model']])
                 summary_table = Table(summary_data, repeatRows=1)
-                summary_table.setStyle(TableStyle([
-                    ('BACKGROUND', (0, 0), (-1, 0), colors.lightblue),
-                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                    ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-                    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                    ('FONTSIZE', (0, 0), (-1, 0), 10),
-                    ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
-                    ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-                    ('BACKGROUND', (3, 1), (3, -1), colors.whitesmoke),
-                    ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                    ('ALIGN', (1, 1), (2, -1), 'CENTER'),
-                    ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                    ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-                    ('FONTSIZE', (0, 1), (-1, -1), 8),
-                ]))
-                
+                summary_table.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, 0), colors.lightblue),('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),('ALIGN', (0, 0), (-1, 0), 'CENTER'),('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),('FONTSIZE', (0, 0), (-1, 0), 10),('BOTTOMPADDING', (0, 0), (-1, 0), 8),('BACKGROUND', (0, 1), (-1, -1), colors.beige),('BACKGROUND', (3, 1), (3, -1), colors.whitesmoke),('GRID', (0, 0), (-1, -1), 1, colors.black),('ALIGN', (1, 1), (2, -1), 'CENTER'),('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),('FONTSIZE', (0, 1), (-1, -1), 8),]))
                 elements.append(summary_table)
                 elements.append(Spacer(1, 0.25*inch))
-                
-                # Add overall winner
                 elements.append(Paragraph(f"Overall Winner: {winner}", subtitle_style))
                 elements.append(Paragraph(f"Neural Network better in {model1_wins} metrics", normal_style))
                 elements.append(Paragraph(f"Ensemble Algorithm better in {model2_wins} metrics", normal_style))
                 elements.append(Paragraph(f"Equal performance in {equal_metrics} metrics", normal_style))
                 elements.append(Spacer(1, 0.25*inch))
-                
-                # Add stability analysis
                 elements.append(Paragraph("Model Stability Analysis", subtitle_style))
-                
-                # Create stability table data
                 stability_table_data = [['Metric', 'Neural Network', 'Ensemble Algorithm', 'Better Model']]
                 for index, row in stability_data.iterrows():
-                    stability_table_data.append([
-                        row['Metric'],
-                        f"{row['Neural Network']:.4f}" if isinstance(row['Neural Network'], float) else str(row['Neural Network']),
-                        f"{row['Ensemble Algorithm']:.4f}" if isinstance(row['Ensemble Algorithm'], float) else str(row['Ensemble Algorithm']),
-                        row['Better Model']
-                    ])
-                
-                # Create stability table
+                    stability_table_data.append([row['Metric'],f"{row['Neural Network']:.4f}" if isinstance(row['Neural Network'], float) else str(row['Neural Network']),f"{row['Ensemble Algorithm']:.4f}" if isinstance(row['Ensemble Algorithm'], float) else str(row['Ensemble Algorithm']),row['Better Model']])
                 stability_table = Table(stability_table_data, repeatRows=1)
-                stability_table.setStyle(TableStyle([
-                    ('BACKGROUND', (0, 0), (-1, 0), colors.lightblue),
-                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                    ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-                    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                    ('FONTSIZE', (0, 0), (-1, 0), 10),
-                    ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
-                    ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-                    ('BACKGROUND', (3, 1), (3, -1), colors.whitesmoke),
-                    ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                    ('ALIGN', (1, 1), (2, -1), 'CENTER'),
-                    ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                    ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-                    ('FONTSIZE', (0, 1), (-1, -1), 8),
-                ]))
+                stability_table.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, 0), colors.lightblue),('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),('ALIGN', (0, 0), (-1, 0), 'CENTER'),('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),('FONTSIZE', (0, 0), (-1, 0), 10),('BOTTOMPADDING', (0, 0), (-1, 0), 8),('BACKGROUND', (0, 1), (-1, -1), colors.beige),('BACKGROUND', (3, 1), (3, -1), colors.whitesmoke),('GRID', (0, 0), (-1, -1), 1, colors.black),('ALIGN', (1, 1), (2, -1), 'CENTER'),('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),('FONTSIZE', (0, 1), (-1, -1), 8),]))
                 elements.append(stability_table)
                 elements.append(Spacer(1, 0.25*inch))
                 elements.append(Paragraph("Product-level Analysis", subtitle_style))
@@ -705,12 +357,6 @@ if uploaded_file:
                 elements.append(Paragraph(f"Value-weighted Winner: {winner_value_weighted}", normal_style))
                 elements.append(Spacer(1, 0.5*inch))
                 elements.append(Paragraph("Conclusion", subtitle_style))
-                if winner == winner_value_weighted:
-                   conclusion_text = f"Both overall metric analysis and value-weighted analysis indicate that {winner} is the superior model for predicting cement bag consumption."
-                else:
-                   conclusion_text = f"While overall metric analysis favors {winner}, value-weighted analysis favors {winner_value_weighted}. This suggests that model selection may depend on whether accuracy across all products or accuracy weighted by consumption volume is more important for the business."
-    
-                elements.append(Paragraph(conclusion_text, normal_style))
                 doc.build(elements)
                 pdf_data = buffer.getvalue()
                 buffer.close()
@@ -727,30 +373,13 @@ if uploaded_file:
                 st.success("PDF generated successfully! Click the download button above to save it.")
                except Exception as e:
                 st.error(f"Error generating PDF: {str(e)}")    
-            
         else:
             st.error(f"Required columns not found. Please ensure your Excel file has these columns: {', '.join(required_columns)}")
-    
     except Exception as e:
         st.error(f"Error processing the file: {str(e)}")
 else:
-    # Display a sample template when no file is uploaded
     st.info("Please upload an Excel file with the following columns: 'Bag Plus Plant', 'Mar-Actual', 'Mar Pred1', 'Mar Pred2'")
-    
-    # Show sample data structure
-    sample_df = pd.DataFrame({
-        'Bag Plus Plant': ['Cement Type A - Plant 1', 'Cement Type B - Plant 2', 'Cement Type C - Plant 1'],
-        'Mar-Actual': [1500, 2000, 1200],
-        'Mar Pred1': [1450, 2100, 1250],
-        'Mar Pred2': [1530, 1950, 1180]
-    })
-    
+    sample_df = pd.DataFrame({'Bag Plus Plant': ['Cement Type A - Plant 1', 'Cement Type B - Plant 2', 'Cement Type C - Plant 1'],'Mar-Actual': [1500, 2000, 1200],'Mar Pred1': [1450, 2100, 1250],'Mar Pred2': [1530, 1950, 1180]})
     st.write("Sample data structure:")
     st.dataframe(sample_df)
-
-# Add footer
-st.markdown("""
-<div style="text-align: center; margin-top: 40px; padding: 20px; background-color: #f8f9fa; border-radius: 5px;">
-    <p style="color: #7f8c8d;">Cement Consumption Model Comparison Dashboard</p>
-</div>
-""", unsafe_allow_html=True)
+st.markdown("""<div style="text-align: center; margin-top: 40px; padding: 20px; background-color: #f8f9fa; border-radius: 5px;"><p style="color: #7f8c8d;">Cement Consumption Model Comparison Dashboard</p></div>""", unsafe_allow_html=True)
