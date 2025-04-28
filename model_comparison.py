@@ -10,16 +10,10 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
 import io
-
-# Set style for all visualizations
 plt.style.use('seaborn-v0_8-whitegrid')
 sns.set_palette("viridis")
 sns.set_context("talk")
-
-# Configure the page
 st.set_page_config(layout="wide", page_title="Cement Consumption Model Comparison")
-
-# Custom CSS to make it more professional
 st.markdown("""
 <style>
     .main {
@@ -45,36 +39,19 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
-
-# Title and description
 st.title("Cement Bag Consumption Model Comparison Dashboard")
 st.markdown("This dashboard provides a comprehensive comparison between two prediction models for cement bag consumption against actual values for March.")
-
-# Function to calculate metrics
 def calculate_metrics(actual, predicted):
-    """Calculate various performance metrics comparing actual vs predicted values"""
     mae = mean_absolute_error(actual, predicted)
     mse = mean_squared_error(actual, predicted)
     rmse = np.sqrt(mse)
-    
-    # Calculate MAPE (handle division by zero)
     mape = np.mean(np.abs((actual - predicted) / np.maximum(np.ones(len(actual)), actual))) * 100
-    
-    # Calculate R² score
     r2 = r2_score(actual, predicted)
-    
-    # Calculate correlation coefficient
     corr, _ = pearsonr(actual, predicted)
-    
-    # Calculate percentage error for each point
     percent_errors = np.abs((actual - predicted) / np.maximum(np.ones(len(actual)), actual)) * 100
-    
-    # Calculate additional metrics
     under_predictions = np.sum(predicted < actual)
     over_predictions = np.sum(predicted > actual)
     perfect_predictions = np.sum(predicted == actual)
-    
-    # Calculate percentage of predictions within 5% error
     within_5_percent = np.sum(percent_errors <= 5)
     within_5_percent_ratio = within_5_percent / len(actual) * 100
     
