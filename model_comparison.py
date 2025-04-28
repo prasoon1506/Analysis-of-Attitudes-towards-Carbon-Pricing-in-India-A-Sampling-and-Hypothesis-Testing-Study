@@ -830,7 +830,7 @@ if uploaded_file:
                 stability_table = Table(stability_table_data, repeatRows=1)
                 stability_table.setStyle(TableStyle([
                     ('BACKGROUND', (0, 0), (-1, 0), colors.lightblue),
-                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),]
+                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),])
                 
             
         else:
