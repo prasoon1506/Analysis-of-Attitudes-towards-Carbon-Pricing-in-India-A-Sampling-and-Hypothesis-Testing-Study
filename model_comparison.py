@@ -711,10 +711,10 @@ if uploaded_file:
                    conclusion_text = f"While overall metric analysis favors {winner}, value-weighted analysis favors {winner_value_weighted}. This suggests that model selection may depend on whether accuracy across all products or accuracy weighted by consumption volume is more important for the business."
     
                 elements.append(Paragraph(conclusion_text, normal_style))
-               doc.build(elements)
-               pdf_data = buffer.getvalue()
-               buffer.close()
-               return pdf_data
+                doc.build(elements)
+                pdf_data = buffer.getvalue()
+                buffer.close()
+                return pdf_data
             if st.button("Generate PDF Report"):
               with st.spinner("Generating PDF report... This may take a moment."):
                try:
