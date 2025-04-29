@@ -311,6 +311,7 @@ if uploaded_file:
             st.download_button(label="Download Analysis as Excel",data=excel_data,file_name="cement_model_comparison_analysis.xlsx",mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
             st.subheader("Download Professional PDF Report")
             def create_pdf_report():
+                from reportlab.lib import colors
                 buffer = BytesIO()
                 doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=0.5*inch, bottomMargin=0.5*inch, leftMargin=0.5*inch, rightMargin=0.5*inch)
                 styles = getSampleStyleSheet()
