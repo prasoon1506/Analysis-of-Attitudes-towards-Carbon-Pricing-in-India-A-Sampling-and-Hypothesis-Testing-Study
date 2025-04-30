@@ -380,7 +380,7 @@ if uploaded_file:
                     if model == "Model 1":
                         summary_table.setStyle(TableStyle([('BACKGROUND', (3, i), (3, i), colors.lightgreen)]))
                     elif model == "Model 2":
-                        summary_table.setStyle(TableStyle([('BACKGROUND', (3, i), (3, i), colors.lightblue)]))
+                        summary_table.setStyle(TableStyle([('BACKGROUND', (3, i), (3, i), colors.blue)]))
                 
                 elements.append(summary_table)
                 elements.append(Spacer(1, 0.25*inch))
@@ -525,7 +525,7 @@ if uploaded_file:
                     if model == "Neural Network":
                         stability_table.setStyle(TableStyle([('BACKGROUND', (3, i), (3, i), colors.lightgreen)]))
                     elif model == "Ensemble Algorithm":
-                        stability_table.setStyle(TableStyle([('BACKGROUND', (3, i), (3, i), colors.lightblue)]))
+                        stability_table.setStyle(TableStyle([('BACKGROUND', (3, i), (3, i), colors.blue)]))
                 
                 elements.append(stability_table)
                 elements.append(Spacer(1, 0.25*inch))
