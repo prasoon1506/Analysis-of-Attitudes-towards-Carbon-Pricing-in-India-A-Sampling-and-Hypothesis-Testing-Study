@@ -25,31 +25,7 @@ plt.style.use('seaborn-v0_8-whitegrid')
 sns.set_palette("viridis")
 sns.set_context("talk")
 st.set_page_config(layout="wide", page_title="Cement Consumption Model Comparison")
-st.markdown("""
-<style>
-    .main {
-        background-color: #f8f9fa;
-    }
-    h1, h2, h3 {
-        color: #2c3e50;
-    }
-    .stButton>button {
-        background-color: #3498db;
-        color: white;
-    }
-    .metric-card {
-        background-color: white;
-        border-radius: 5px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        padding: 20px;
-        margin: 10px 0;
-    }
-    .highlight {
-        font-weight: bold;
-        color: #27ae60;
-    }
-</style>
-""", unsafe_allow_html=True)
+st.markdown("""<style>.main {background-color: #f8f9fa;}h1, h2, h3 {color: #2c3e50;}.stButton>button {background-color: #3498db;color: white;}.metric-card {background-color: white;border-radius: 5px;box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);padding: 20px;margin: 10px 0;}.highlight {font-weight: bold;color: #27ae60;}</style>""", unsafe_allow_html=True)
 st.title("Cement Bag Consumption Model Comparison Dashboard")
 st.markdown("""<div style="background-color: #f0f5ff; padding: 15px; border-radius: 10px; border-left: 5px solid #3498db;"><h3 style="margin-top: 0;">Model Comparison</h3><p><strong>Model 1:</strong> Neural Network Algorithm</p><p><strong>Model 2:</strong> Ensemble Algorithm (Holt-Winters + Trend-Based + Random-Forest)</p><p>This dashboard provides a comprehensive comparison between these two prediction models for cement bag consumption against actual values for March.</p></div>""", unsafe_allow_html=True)
 def calculate_metrics(actual, predicted):
@@ -322,16 +298,12 @@ if uploaded_file:
                 import numpy as np
                 import pandas as pd
                 import seaborn as sns
-                
-                # Ensure proper matplotlib color definitions
-                # Convert rgba string to proper matplotlib format
                 def fix_color(color_str):
                     if isinstance(color_str, str) and color_str.startswith('rgba'):
                         # Extract the rgba values
                         rgba_values = color_str.strip('rgba()').split(',')
                         return tuple(float(x.strip()) for x in rgba_values)
                     return color_str
-                
                 buffer = BytesIO()
                 doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=0.5*inch, bottomMargin=0.5*inch, leftMargin=0.5*inch, rightMargin=0.5*inch)
                 styles = getSampleStyleSheet()
@@ -339,8 +311,6 @@ if uploaded_file:
                 subtitle_style = ParagraphStyle('SubtitleStyle',parent=styles['Heading2'],fontSize=14,spaceAfter=10)
                 normal_style = styles['Normal']
                 elements = []
-                
-                # Add title and basic information
                 elements.append(Paragraph("Cement Bag Consumption Model Comparison Report", title_style))
                 elements.append(Spacer(1, 0.25*inch))
                 elements.append(Paragraph(f"Report Date: {pd.Timestamp.now().strftime('%B %d, %Y')}", normal_style))
@@ -350,38 +320,19 @@ if uploaded_file:
                 elements.append(Paragraph("<strong>Model 2:</strong> Ensemble Algorithm (Holt-Winters + Trend-Based + Random-Forest)", normal_style))
                 elements.append(Paragraph("This report provides a comprehensive comparison between these two prediction models for cement bag consumption against actual values for March.", normal_style))
                 elements.append(PageBreak())
-                
-                # Performance Metrics Summary
                 elements.append(Paragraph("Performance Metrics Summary", subtitle_style))
                 summary_data = [['Metric', 'Neural Network', 'Ensemble Algorithm', 'Better Model']]
                 for index, row in comparison_df.iterrows():
                     metric_value1 = f"{row['Model 1']:.4f}" if isinstance(row['Model 1'], float) and abs(row['Model 1']) < 100 else f"{row['Model 1']:.2f}" if isinstance(row['Model 1'], float) else str(row['Model 1'])
                     metric_value2 = f"{row['Model 2']:.4f}" if isinstance(row['Model 2'], float) and abs(row['Model 2']) < 100 else f"{row['Model 2']:.2f}" if isinstance(row['Model 2'], float) else str(row['Model 2'])
                     summary_data.append([row['Metric'], metric_value1, metric_value2, row['Better Model']])
-                
                 summary_table = Table(summary_data, repeatRows=1, colWidths=[2.2*inch, 1.5*inch, 1.5*inch, 1.3*inch])
-                summary_table.setStyle(TableStyle([
-                    ('BACKGROUND', (0, 0), (-1, 0), '#87CEFA'),  # #87CEFA for lightblue
-                    ('TEXTCOLOR', (0, 0), (-1, 0), '#F5F5F5'),   # #F5F5F5 for whitesmoke
-                    ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-                    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                    ('FONTSIZE', (0, 0), (-1, 0), 10),
-                    ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
-                    ('BACKGROUND', (0, 1), (-1, -1), '#F5F5DC'),  # #F5F5DC for beige
-                    ('GRID', (0, 0), (-1, -1), 1, '#000000'),     # #000000 for black
-                    ('ALIGN', (1, 1), (2, -1), 'CENTER'),
-                    ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                    ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-                    ('FONTSIZE', (0, 1), (-1, -1), 8),
-                ]))
-                
-                # Highlight better model in table
+                summary_table.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, 0), '#87CEFA'),('TEXTCOLOR', (0, 0), (-1, 0), '#F5F5F5'),('ALIGN', (0, 0), (-1, 0), 'CENTER'),('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),('FONTSIZE', (0, 0), (-1, 0), 10),('BOTTOMPADDING', (0, 0), (-1, 0), 8),('BACKGROUND', (0, 1), (-1, -1), '#F5F5DC'),('GRID', (0, 0), (-1, -1), 1, '#000000'),('ALIGN', (1, 1), (2, -1), 'CENTER'),('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),('FONTSIZE', (0, 1), (-1, -1), 8),]))
                 for i, model in enumerate(better_model, start=1):
                     if model == "Model 1":
-                        summary_table.setStyle(TableStyle([('BACKGROUND', (3, i), (3, i), '#90EE90')]))  # #90EE90 for lightgreen
+                        summary_table.setStyle(TableStyle([('BACKGROUND', (3, i), (3, i), '#90EE90')]))
                     elif model == "Model 2":
-                        summary_table.setStyle(TableStyle([('BACKGROUND', (3, i), (3, i), '#87CEFA')]))  # #87CEFA for lightblue
-                
+                        summary_table.setStyle(TableStyle([('BACKGROUND', (3, i), (3, i), '#87CEFA')]))
                 elements.append(summary_table)
                 elements.append(Spacer(1, 0.25*inch))
                 elements.append(Paragraph(f"Overall Winner: {winner}", subtitle_style))
@@ -390,14 +341,10 @@ if uploaded_file:
                 elements.append(Paragraph(f"Equal performance in {equal_metrics} metrics", normal_style))
                 elements.append(Spacer(1, 0.25*inch))
                 elements.append(PageBreak())
-                
-                # Actual vs Predicted Values Visualization
                 elements.append(Paragraph("Actual vs Predicted Values Visualization", subtitle_style))
                 plt.figure(figsize=(10, 6))
                 bar_width = 0.25
                 x = np.arange(len(df['Bag Plus Plant']))
-                
-                # Fix colors to use matplotlib-compatible format
                 plt.bar(x - bar_width, df['Mar-Actual'], width=bar_width, label='Actual', color='#2ecc71')
                 plt.bar(x, df['Mar Pred1'], width=bar_width, label='Neural Network', color='#3498db')
                 plt.bar(x + bar_width, df['Mar Pred2'], width=bar_width, label='Ensemble', color='#9b59b6')
@@ -407,7 +354,6 @@ if uploaded_file:
                 plt.xticks(x, df['Bag Plus Plant'], rotation=45, ha='right')
                 plt.legend()
                 plt.tight_layout()
-                
                 img_buffer = BytesIO()
                 plt.savefig(img_buffer, format='png', dpi=150)
                 img_buffer.seek(0)
@@ -418,8 +364,6 @@ if uploaded_file:
                 elements.append(Image(img_buffer, width=7*inch, height=7*inch*aspect))
                 elements.append(Spacer(1, 0.25*inch))
                 elements.append(PageBreak())
-                
-                # Error Analysis
                 elements.append(Paragraph("Error Analysis", subtitle_style))
                 plt.figure(figsize=(10, 5))
                 plt.subplot(1, 2, 1)
@@ -433,7 +377,6 @@ if uploaded_file:
                 plt.xlabel('Error')
                 plt.ylabel('Frequency')
                 plt.tight_layout()
-                
                 img_buffer = BytesIO()
                 plt.savefig(img_buffer, format='png', dpi=150)
                 img_buffer.seek(0)
@@ -443,8 +386,6 @@ if uploaded_file:
                 aspect = height / width
                 elements.append(Image(img_buffer, width=7*inch, height=7*inch*aspect))
                 elements.append(Spacer(1, 0.25*inch))
-                
-                # Actual vs Predicted scatter plots
                 plt.figure(figsize=(10, 5))
                 max_val = max(df['Mar-Actual'].max(), df['Mar Pred1'].max(), df['Mar Pred2'].max())
                 min_val = min(df['Mar-Actual'].min(), df['Mar Pred1'].min(), df['Mar Pred2'].min())
@@ -461,7 +402,6 @@ if uploaded_file:
                 plt.xlabel('Actual Values')
                 plt.ylabel('Predicted Values')
                 plt.tight_layout()
-                
                 img_buffer = BytesIO()
                 plt.savefig(img_buffer, format='png', dpi=150)
                 img_buffer.seek(0)
@@ -471,8 +411,6 @@ if uploaded_file:
                 aspect = height / width
                 elements.append(Image(img_buffer, width=7*inch, height=7*inch*aspect))
                 elements.append(PageBreak())
-                
-                # Percentage Error by Cement Bag Type
                 elements.append(Paragraph("Percentage Error by Cement Bag Type", subtitle_style))
                 plt.figure(figsize=(10, 6))
                 x = np.arange(len(df['Bag Plus Plant']))
@@ -484,7 +422,6 @@ if uploaded_file:
                 plt.xticks(x, df['Bag Plus Plant'], rotation=45, ha='right')
                 plt.legend()
                 plt.tight_layout()
-                
                 img_buffer = BytesIO()
                 plt.savefig(img_buffer, format='png', dpi=150)
                 img_buffer.seek(0)
@@ -495,42 +432,21 @@ if uploaded_file:
                 elements.append(Image(img_buffer, width=7*inch, height=7*inch*aspect))
                 elements.append(Spacer(1, 0.25*inch))
                 elements.append(PageBreak())
-                
-                # Model Stability Analysis
                 elements.append(Paragraph("Model Stability Analysis", subtitle_style))
                 stability_table_data = [['Metric', 'Neural Network', 'Ensemble Algorithm', 'Better Model']]
                 for index, row in stability_data.iterrows():
                     value1 = f"{row['Neural Network']:.4f}" if isinstance(row['Neural Network'], float) and abs(row['Neural Network']) < 100 else f"{row['Neural Network']:.2f}" if isinstance(row['Neural Network'], float) else str(row['Neural Network'])
                     value2 = f"{row['Ensemble Algorithm']:.4f}" if isinstance(row['Ensemble Algorithm'], float) and abs(row['Ensemble Algorithm']) < 100 else f"{row['Ensemble Algorithm']:.2f}" if isinstance(row['Ensemble Algorithm'], float) else str(row['Ensemble Algorithm'])
                     stability_table_data.append([row['Metric'], value1, value2, row['Better Model']])
-                
                 stability_table = Table(stability_table_data, repeatRows=1, colWidths=[2.2*inch, 1.5*inch, 1.5*inch, 1.3*inch])
-                stability_table.setStyle(TableStyle([
-                    ('BACKGROUND', (0, 0), (-1, 0), '#87CEFA'),  # #87CEFA for lightblue
-                    ('TEXTCOLOR', (0, 0), (-1, 0), '#F5F5F5'),   # #F5F5F5 for whitesmoke
-                    ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-                    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                    ('FONTSIZE', (0, 0), (-1, 0), 10),
-                    ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
-                    ('BACKGROUND', (0, 1), (-1, -1), '#F5F5DC'),  # #F5F5DC for beige
-                    ('GRID', (0, 0), (-1, -1), 1, '#000000'),     # #000000 for black
-                    ('ALIGN', (1, 1), (2, -1), 'CENTER'),
-                    ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                    ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-                    ('FONTSIZE', (0, 1), (-1, -1), 8),
-                ]))
-                
-                # Highlight better model in stability table
+                stability_table.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, 0), '#87CEFA'),('TEXTCOLOR', (0, 0), (-1, 0), '#F5F5F5'),('ALIGN', (0, 0), (-1, 0), 'CENTER'),('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),('FONTSIZE', (0, 0), (-1, 0), 10),('BOTTOMPADDING', (0, 0), (-1, 0), 8),('BACKGROUND', (0, 1), (-1, -1), '#F5F5DC'),('GRID', (0, 0), (-1, -1), 1, '#000000'),('ALIGN', (1, 1), (2, -1), 'CENTER'),('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),('FONTSIZE', (0, 1), (-1, -1), 8),]))
                 for i, model in enumerate(stability_better, start=1):
                     if model == "Neural Network":
-                        stability_table.setStyle(TableStyle([('BACKGROUND', (3, i), (3, i), '#90EE90')]))  # #90EE90 for lightgreen
+                        stability_table.setStyle(TableStyle([('BACKGROUND', (3, i), (3, i), '#90EE90')]))
                     elif model == "Ensemble Algorithm":
-                        stability_table.setStyle(TableStyle([('BACKGROUND', (3, i), (3, i), '#87CEFA')]))  # #87CEFA for lightblue
-                
+                        stability_table.setStyle(TableStyle([('BACKGROUND', (3, i), (3, i), '#87CEFA')]))
                 elements.append(stability_table)
                 elements.append(Spacer(1, 0.25*inch))
-                
-                # Error Distribution Box Plot
                 elements.append(Paragraph("Error Distribution Box Plot", subtitle_style))
                 plt.figure(figsize=(10, 6))
                 box_data = [df['Error_Percent_Model1'], df['Error_Percent_Model2']]
@@ -538,13 +454,10 @@ if uploaded_file:
                 plt.title('Error Distribution Comparison')
                 plt.ylabel('Percentage Error (%)')
                 plt.grid(True, linestyle='--', alpha=0.7)
-                
-                # Use fixed colors for scatter points
                 model_colors = ['#3498db', '#9b59b6']
                 for i, data in enumerate([df['Error_Percent_Model1'], df['Error_Percent_Model2']]):
                     x = np.random.normal(i+1, 0.04, size=len(data))
                     plt.scatter(x, data, alpha=0.5, s=20, color=model_colors[i])
-                
                 plt.tight_layout()
                 img_buffer = BytesIO()
                 plt.savefig(img_buffer, format='png', dpi=150)
@@ -555,8 +468,6 @@ if uploaded_file:
                 aspect = height / width
                 elements.append(Image(img_buffer, width=7*inch, height=7*inch*aspect))
                 elements.append(PageBreak())
-                
-                # Cumulative Error Analysis
                 elements.append(Paragraph("Cumulative Error Analysis", subtitle_style))
                 plt.figure(figsize=(10, 6))
                 plt.plot(df_sorted['Bag Plus Plant'], df_sorted['Cumulative_Error_Model1'], 'o-', color='#3498db', linewidth=2, label='Neural Network Cumulative Error')
@@ -569,7 +480,6 @@ if uploaded_file:
                 plt.legend()
                 plt.grid(True, linestyle='--', alpha=0.4)
                 plt.tight_layout()
-                
                 img_buffer = BytesIO()
                 plt.savefig(img_buffer, format='png', dpi=150)
                 img_buffer.seek(0)
@@ -580,58 +490,38 @@ if uploaded_file:
                 elements.append(Image(img_buffer, width=7*inch, height=7*inch*aspect))
                 elements.append(Spacer(1, 0.25*inch))
                 elements.append(PageBreak())
-                
-                # Radar Chart: Model Performance Comparison
                 elements.append(Paragraph("Radar Chart: Model Performance Comparison", subtitle_style))
                 radar_metrics = ['MAE', 'RMSE', 'MAPE', 'R²', 'Within 5% Error (%)', 'Within 10% Error (%)']
-                radar_df = pd.DataFrame({
-                    'Metric': radar_metrics,
-                    'Model 1': [metrics_model1[m] for m in radar_metrics],
-                    'Model 2': [metrics_model2[m] for m in radar_metrics]
-                })
-                
-                # Normalize radar chart metrics
+                radar_df = pd.DataFrame({'Metric': radar_metrics,'Model 1': [metrics_model1[m] for m in radar_metrics],'Model 2': [metrics_model2[m] for m in radar_metrics]})
                 for metric in radar_metrics:
                     if metric in ['R²', 'Within 5% Error (%)', 'Within 10% Error (%)']:
-                        max_val = max(
-                            radar_df.loc[radar_df['Metric'] == metric, 'Model 1'].iloc[0],
-                            radar_df.loc[radar_df['Metric'] == metric, 'Model 2'].iloc[0]
-                        )
+                        max_val = max(radar_df.loc[radar_df['Metric'] == metric, 'Model 1'].iloc[0],radar_df.loc[radar_df['Metric'] == metric, 'Model 2'].iloc[0])
                         if max_val != 0:
                             radar_df.loc[radar_df['Metric'] == metric, 'Model 1'] = radar_df.loc[radar_df['Metric'] == metric, 'Model 1'].iloc[0] / max_val
                             radar_df.loc[radar_df['Metric'] == metric, 'Model 2'] = radar_df.loc[radar_df['Metric'] == metric, 'Model 2'].iloc[0] / max_val
                     else:
-                        max_val = max(
-                            radar_df.loc[radar_df['Metric'] == metric, 'Model 1'].iloc[0],
-                            radar_df.loc[radar_df['Metric'] == metric, 'Model 2'].iloc[0]
-                        )
+                        max_val = max(radar_df.loc[radar_df['Metric'] == metric, 'Model 1'].iloc[0],radar_df.loc[radar_df['Metric'] == metric, 'Model 2'].iloc[0])
                         if max_val != 0:
                             radar_df.loc[radar_df['Metric'] == metric, 'Model 1'] = 1 - (radar_df.loc[radar_df['Metric'] == metric, 'Model 1'].iloc[0] / max_val)
                             radar_df.loc[radar_df['Metric'] == metric, 'Model 2'] = 1 - (radar_df.loc[radar_df['Metric'] == metric, 'Model 2'].iloc[0] / max_val)
-                
                 model1_values = radar_df['Model 1'].values
                 model2_values = radar_df['Model 2'].values
                 categories = radar_df['Metric'].values
                 angles = np.linspace(0, 2*np.pi, len(categories), endpoint=False).tolist()
                 angles += angles[:1]
-                
                 fig, ax = plt.subplots(figsize=(10, 10), subplot_kw=dict(polar=True))
                 plt.xticks(angles[:-1], categories, size=12)
-                
                 model1_values = np.append(model1_values, model1_values[0])
                 model2_values = np.append(model2_values, model2_values[0])
                 angles = np.array(angles)
-                
                 ax.plot(angles, model1_values, 'o-', linewidth=2, label='Neural Network', color='#3498db')
                 ax.fill(angles, model1_values, alpha=0.25, color='#3498db')
                 ax.plot(angles, model2_values, 'o-', linewidth=2, label='Ensemble', color='#9b59b6')
                 ax.fill(angles, model2_values, alpha=0.25, color='#9b59b6')
-                
                 ax.set_thetagrids(angles[:-1] * 180/np.pi, categories)
                 ax.set_ylim(0, 1)
                 ax.set_title('Model Performance Radar Chart\n(Higher is Better for All Metrics)', size=15)
                 ax.legend(loc='upper right', bbox_to_anchor=(0.1, 0.1))
-                
                 img_buffer = BytesIO()
                 plt.savefig(img_buffer, format='png', dpi=150)
                 img_buffer.seek(0)
@@ -641,24 +531,15 @@ if uploaded_file:
                 aspect = height / width
                 elements.append(Image(img_buffer, width=7*inch, height=7*inch*aspect))
                 elements.append(PageBreak())
-                
-                # Prediction Accuracy Heat Map
                 elements.append(Paragraph("Prediction Accuracy Heat Map", subtitle_style))
                 plt.figure(figsize=(10, 6))
-                heatmap_data = pd.DataFrame({
-                    'Bag Plus Plant': df['Bag Plus Plant'],
-                    'Neural Network Error (%)': df['Error_Percent_Model1'],
-                    'Ensemble Algorithm Error (%)': df['Error_Percent_Model2']
-                })
+                heatmap_data = pd.DataFrame({'Bag Plus Plant': df['Bag Plus Plant'],'Neural Network Error (%)': df['Error_Percent_Model1'],'Ensemble Algorithm Error (%)': df['Error_Percent_Model2']})
                 heatmap_pivot = heatmap_data.set_index('Bag Plus Plant')
-                
-                # Use standard colormap instead of reversed one (RdYlGn_r)
                 sns.heatmap(heatmap_pivot.T, annot=True, cmap='RdYlGn', fmt='.1f', cbar_kws={'label': 'Error (%)'})
                 plt.title('Prediction Error Heat Map (%)')
                 plt.xlabel('Cement Bag Type')
                 plt.ylabel('Model')
                 plt.tight_layout()
-                
                 img_buffer = BytesIO()
                 plt.savefig(img_buffer, format='png', dpi=150)
                 img_buffer.seek(0)
@@ -669,31 +550,24 @@ if uploaded_file:
                 elements.append(Image(img_buffer, width=7*inch, height=7*inch*aspect))
                 elements.append(Spacer(1, 0.25*inch))
                 elements.append(PageBreak())
-                
-                # Error Trend Analysis for High Volume Products
                 elements.append(Paragraph("Error Trend Analysis for High Volume Products", subtitle_style))
                 top_products = min(5, len(df))
                 top_df = df.sort_values('Mar-Actual', ascending=False).head(top_products)
                 fig, ax1 = plt.subplots(figsize=(10, 6))
-                
-                # Fix RGBA color definitions
                 bar_positions = np.arange(len(top_df['Bag Plus Plant']))
                 bars = ax1.bar(bar_positions, top_df['Mar-Actual'], color='#2ecc71', alpha=0.7, label='Actual Consumption')
                 ax1.set_xlabel('Cement Bag Type')
                 ax1.set_ylabel('Actual Consumption')
                 ax1.set_title('High Volume Products: Actual Consumption vs Error Percentage')
-                
                 ax2 = ax1.twinx()
                 ax2.plot(bar_positions, top_df['Error_Percent_Model1'], 'o-', color='#3498db', linewidth=2, label='Neural Network Error (%)')
                 ax2.plot(bar_positions, top_df['Error_Percent_Model2'], 'o-', color='#9b59b6', linewidth=2, label='Ensemble Error (%)')
                 ax2.set_ylabel('Error Percentage (%)')
-                
                 plt.xticks(bar_positions, top_df['Bag Plus Plant'], rotation=45, ha='right')
                 lines1, labels1 = ax1.get_legend_handles_labels()
                 lines2, labels2 = ax2.get_legend_handles_labels()
                 ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper right')
                 plt.tight_layout()
-                
                 img_buffer = BytesIO()
                 plt.savefig(img_buffer, format='png', dpi=150)
                 img_buffer.seek(0)
@@ -703,14 +577,11 @@ if uploaded_file:
                 aspect = height / width
                 elements.append(Image(img_buffer, width=7*inch, height=7*inch*aspect))
                 elements.append(PageBreak())
-                
-                # Product-level Analysis
                 elements.append(Paragraph("Product-level Analysis", subtitle_style))
                 elements.append(Paragraph(f"Neural Network performs better for {nn_better_count} products", normal_style))
                 elements.append(Paragraph(f"Ensemble Algorithm performs better for {ensemble_better_count} products", normal_style))
                 elements.append(Paragraph(f"Equal performance for {equal_count} products", normal_style))
                 elements.append(Spacer(1, 0.25*inch))
-                
                 plt.figure(figsize=(8, 8))
                 labels = ['Neural Network Better', 'Ensemble Better', 'Equal Performance']
                 values = [nn_better_count, ensemble_better_count, equal_count]
@@ -718,7 +589,6 @@ if uploaded_file:
                 plt.pie(values, labels=labels, colors=colors, autopct='%1.1f%%', startangle=140, shadow=True)
                 plt.axis('equal')
                 plt.title('Better Model by Product Count')
-                
                 img_buffer = BytesIO()
                 plt.savefig(img_buffer, format='png', dpi=150)
                 img_buffer.seek(0)
@@ -728,54 +598,26 @@ if uploaded_file:
                 aspect = height / width
                 elements.append(Image(img_buffer, width=5*inch, height=5*inch*aspect))
                 elements.append(PageBreak())
-                
-                # Value-weighted Analysis
                 elements.append(Paragraph("Value-weighted Analysis", subtitle_style))
                 weighted_df = weighted_performance[['Bag Plus Plant', 'Actual Consumption', 'Weight (% of Total)','Neural Network Error (%)', 'Ensemble Error (%)']]
-                max_rows = min(10, len(weighted_df))  # Limit to 10 rows for PDF
-                
+                max_rows = min(10, len(weighted_df))
                 weighted_table_data = [weighted_df.columns.tolist()]
                 for _, row in weighted_df.iloc[:max_rows].iterrows():
-                    formatted_row = [
-                        row['Bag Plus Plant'],
-                        f"{row['Actual Consumption']:.0f}",
-                        f"{row['Weight (% of Total)']:.2f}%",
-                        f"{row['Neural Network Error (%)']:.2f}%",
-                        f"{row['Ensemble Error (%)']:.2f}%"
-                    ]
+                    formatted_row = [row['Bag Plus Plant'],f"{row['Actual Consumption']:.0f}",f"{row['Weight (% of Total)']:.2f}%",f"{row['Neural Network Error (%)']:.2f}%",f"{row['Ensemble Error (%)']:.2f}%"]
                     weighted_table_data.append(formatted_row)
-                
                 if len(weighted_df) > max_rows:
                     weighted_table_data.append(["... and more rows", "", "", "", ""])
-                
                 weighted_table = Table(weighted_table_data, repeatRows=1)
-                weighted_table.setStyle(TableStyle([
-                    ('BACKGROUND', (0, 0), (-1, 0), '#87CEFA'),  # #87CEFA for lightblue
-                    ('TEXTCOLOR', (0, 0), (-1, 0), '#F5F5F5'),   # #F5F5F5 for whitesmoke
-                    ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-                    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                    ('FONTSIZE', (0, 0), (-1, 0), 10),
-                    ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
-                    ('BACKGROUND', (0, 1), (-1, -1), '#F5F5DC'),  # #F5F5DC for beige
-                    ('GRID', (0, 0), (-1, -1), 1, '#000000'),     # #000000 for black
-                    ('ALIGN', (1, 1), (-1, -1), 'CENTER'),
-                    ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                    ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-                    ('FONTSIZE', (0, 1), (-1, -1), 8),
-                ]))
-                
+                weighted_table.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, 0), '#87CEFA'),('TEXTCOLOR', (0, 0), (-1, 0), '#F5F5F5'),('ALIGN', (0, 0), (-1, 0), 'CENTER'),('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),('FONTSIZE', (0, 0), (-1, 0), 10),('BOTTOMPADDING', (0, 0), (-1, 0), 8),('BACKGROUND', (0, 1), (-1, -1), '#F5F5DC'),('GRID', (0, 0), (-1, -1), 1, '#000000'),('ALIGN', (1, 1), (-1, -1), 'CENTER'),('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),('FONTSIZE', (0, 1), (-1, -1), 8),]))
                 elements.append(weighted_table)
                 elements.append(Spacer(1, 0.25*inch))
                 elements.append(Paragraph(f"Total Weighted Error - Neural Network: {total_weighted_nn:.2f}%", normal_style))
                 elements.append(Paragraph(f"Total Weighted Error - Ensemble Algorithm: {total_weighted_ensemble:.2f}%", normal_style))
                 elements.append(Paragraph(f"Value-weighted Winner: {winner_value_weighted}", normal_style))
-                
-                # Build the PDF
                 doc.build(elements)
                 pdf_data = buffer.getvalue()
                 buffer.close()
                 return pdf_data
-            
             if st.button("Generate PDF Report"):
               with st.spinner("Generating PDF report... This may take a moment."):
                try:
