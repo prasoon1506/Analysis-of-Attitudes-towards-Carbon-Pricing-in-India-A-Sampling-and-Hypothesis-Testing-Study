@@ -506,7 +506,7 @@ if uploaded_file:
                 
                 stability_table = Table(stability_table_data, repeatRows=1, colWidths=[2.2*inch, 1.5*inch, 1.5*inch, 1.3*inch])
                 stability_table.setStyle(TableStyle([
-                    ('BACKGROUND', (0, 0), (-1, 0), colors.lightblue),
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.blue),
                     ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
                     ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
                     ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
