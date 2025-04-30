@@ -361,14 +361,14 @@ if uploaded_file:
                 
                 summary_table = Table(summary_data, repeatRows=1, colWidths=[2.2*inch, 1.5*inch, 1.5*inch, 1.3*inch])
                 summary_table.setStyle(TableStyle([
-                    ('BACKGROUND', (0, 0), (-1, 0)),
-                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                    ('BACKGROUND', (0, 0), (-1, 0), '#87CEFA'),  # #87CEFA for lightblue
+                    ('TEXTCOLOR', (0, 0), (-1, 0), '#F5F5F5'),   # #F5F5F5 for whitesmoke
                     ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
                     ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
                     ('FONTSIZE', (0, 0), (-1, 0), 10),
                     ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
-                    ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-                    ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                    ('BACKGROUND', (0, 1), (-1, -1), '#F5F5DC'),  # #F5F5DC for beige
+                    ('GRID', (0, 0), (-1, -1), 1, '#000000'),     # #000000 for black
                     ('ALIGN', (1, 1), (2, -1), 'CENTER'),
                     ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
                     ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
@@ -378,9 +378,9 @@ if uploaded_file:
                 # Highlight better model in table
                 for i, model in enumerate(better_model, start=1):
                     if model == "Model 1":
-                        summary_table.setStyle(TableStyle([('BACKGROUND', (3, i), (3, i), colors.lightgreen)]))
+                        summary_table.setStyle(TableStyle([('BACKGROUND', (3, i), (3, i), '#90EE90')]))  # #90EE90 for lightgreen
                     elif model == "Model 2":
-                        summary_table.setStyle(TableStyle([('BACKGROUND', (3, i), (3, i))]))
+                        summary_table.setStyle(TableStyle([('BACKGROUND', (3, i), (3, i), '#87CEFA')]))  # #87CEFA for lightblue
                 
                 elements.append(summary_table)
                 elements.append(Spacer(1, 0.25*inch))
@@ -506,14 +506,14 @@ if uploaded_file:
                 
                 stability_table = Table(stability_table_data, repeatRows=1, colWidths=[2.2*inch, 1.5*inch, 1.5*inch, 1.3*inch])
                 stability_table.setStyle(TableStyle([
-                    ('BACKGROUND', (0, 0), (-1, 0)),
-                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                    ('BACKGROUND', (0, 0), (-1, 0), '#87CEFA'),  # #87CEFA for lightblue
+                    ('TEXTCOLOR', (0, 0), (-1, 0), '#F5F5F5'),   # #F5F5F5 for whitesmoke
                     ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
                     ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
                     ('FONTSIZE', (0, 0), (-1, 0), 10),
                     ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
-                    ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-                    ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                    ('BACKGROUND', (0, 1), (-1, -1), '#F5F5DC'),  # #F5F5DC for beige
+                    ('GRID', (0, 0), (-1, -1), 1, '#000000'),     # #000000 for black
                     ('ALIGN', (1, 1), (2, -1), 'CENTER'),
                     ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
                     ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
@@ -523,9 +523,9 @@ if uploaded_file:
                 # Highlight better model in stability table
                 for i, model in enumerate(stability_better, start=1):
                     if model == "Neural Network":
-                        stability_table.setStyle(TableStyle([('BACKGROUND', (3, i), (3, i), colors.lightgreen)]))
+                        stability_table.setStyle(TableStyle([('BACKGROUND', (3, i), (3, i), '#90EE90')]))  # #90EE90 for lightgreen
                     elif model == "Ensemble Algorithm":
-                        stability_table.setStyle(TableStyle([('BACKGROUND', (3, i), (3, i))]))
+                        stability_table.setStyle(TableStyle([('BACKGROUND', (3, i), (3, i), '#87CEFA')]))  # #87CEFA for lightblue
                 
                 elements.append(stability_table)
                 elements.append(Spacer(1, 0.25*inch))
@@ -561,7 +561,7 @@ if uploaded_file:
                 plt.figure(figsize=(10, 6))
                 plt.plot(df_sorted['Bag Plus Plant'], df_sorted['Cumulative_Error_Model1'], 'o-', color='#3498db', linewidth=2, label='Neural Network Cumulative Error')
                 plt.plot(df_sorted['Bag Plus Plant'], df_sorted['Cumulative_Error_Model2'], 'o-', color='#9b59b6', linewidth=2, label='Ensemble Cumulative Error')
-                plt.axhline(y=0, color='black', linestyle='--', alpha=0.7)
+                plt.axhline(y=0, color='#000000', linestyle='--', alpha=0.7)  # #000000 for black
                 plt.title('Cumulative Error Analysis')
                 plt.xlabel('Cement Bag Type (Sorted by Actual Consumption)')
                 plt.ylabel('Cumulative Error')
@@ -750,14 +750,14 @@ if uploaded_file:
                 
                 weighted_table = Table(weighted_table_data, repeatRows=1)
                 weighted_table.setStyle(TableStyle([
-                    ('BACKGROUND', (0, 0), (-1, 0)),
-                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                    ('BACKGROUND', (0, 0), (-1, 0), '#87CEFA'),  # #87CEFA for lightblue
+                    ('TEXTCOLOR', (0, 0), (-1, 0), '#F5F5F5'),   # #F5F5F5 for whitesmoke
                     ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
                     ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
                     ('FONTSIZE', (0, 0), (-1, 0), 10),
                     ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
-                    ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-                    ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                    ('BACKGROUND', (0, 1), (-1, -1), '#F5F5DC'),  # #F5F5DC for beige
+                    ('GRID', (0, 0), (-1, -1), 1, '#000000'),     # #000000 for black
                     ('ALIGN', (1, 1), (-1, -1), 'CENTER'),
                     ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
                     ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
