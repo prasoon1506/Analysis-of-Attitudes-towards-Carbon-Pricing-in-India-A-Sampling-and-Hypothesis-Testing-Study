@@ -361,7 +361,7 @@ if uploaded_file:
                 
                 summary_table = Table(summary_data, repeatRows=1, colWidths=[2.2*inch, 1.5*inch, 1.5*inch, 1.3*inch])
                 summary_table.setStyle(TableStyle([
-                    ('BACKGROUND', (0, 0), (-1, 0), colors.lightblue),
+                    ('BACKGROUND', (0, 0), (-1, 0)),
                     ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
                     ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
                     ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
@@ -380,7 +380,7 @@ if uploaded_file:
                     if model == "Model 1":
                         summary_table.setStyle(TableStyle([('BACKGROUND', (3, i), (3, i), colors.lightgreen)]))
                     elif model == "Model 2":
-                        summary_table.setStyle(TableStyle([('BACKGROUND', (3, i), (3, i), colors.blue)]))
+                        summary_table.setStyle(TableStyle([('BACKGROUND', (3, i), (3, i))]))
                 
                 elements.append(summary_table)
                 elements.append(Spacer(1, 0.25*inch))
@@ -506,7 +506,7 @@ if uploaded_file:
                 
                 stability_table = Table(stability_table_data, repeatRows=1, colWidths=[2.2*inch, 1.5*inch, 1.5*inch, 1.3*inch])
                 stability_table.setStyle(TableStyle([
-                    ('BACKGROUND', (0, 0), (-1, 0), colors.blue),
+                    ('BACKGROUND', (0, 0), (-1, 0)),
                     ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
                     ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
                     ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
@@ -525,7 +525,7 @@ if uploaded_file:
                     if model == "Neural Network":
                         stability_table.setStyle(TableStyle([('BACKGROUND', (3, i), (3, i), colors.lightgreen)]))
                     elif model == "Ensemble Algorithm":
-                        stability_table.setStyle(TableStyle([('BACKGROUND', (3, i), (3, i), colors.blue)]))
+                        stability_table.setStyle(TableStyle([('BACKGROUND', (3, i), (3, i))]))
                 
                 elements.append(stability_table)
                 elements.append(Spacer(1, 0.25*inch))
@@ -750,7 +750,7 @@ if uploaded_file:
                 
                 weighted_table = Table(weighted_table_data, repeatRows=1)
                 weighted_table.setStyle(TableStyle([
-                    ('BACKGROUND', (0, 0), (-1, 0), colors.blue),
+                    ('BACKGROUND', (0, 0), (-1, 0)),
                     ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
                     ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
                     ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
