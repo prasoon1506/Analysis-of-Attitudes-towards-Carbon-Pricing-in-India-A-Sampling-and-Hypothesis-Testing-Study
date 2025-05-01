@@ -68,7 +68,6 @@ if uploaded_file:
             st.dataframe(df)
         required_columns = ["Bag Plus Plant", "Mar-Actual", "Mar Pred1", "Mar Pred2"]
         if all(col in df.columns for col in required_columns):
-            # Create new columns for errors and percentage errors
             df['Error_Model1'] = df['Mar-Actual'] - df['Mar Pred1']
             df['Error_Model2'] = df['Mar-Actual'] - df['Mar Pred2']
             df['Error_Percent_Model1'] = np.abs(df['Error_Model1'] / np.maximum(np.ones(len(df)), df['Mar-Actual'])) * 100
@@ -300,7 +299,6 @@ if uploaded_file:
                 import seaborn as sns
                 def fix_color(color_str):
                     if isinstance(color_str, str) and color_str.startswith('rgba'):
-                        # Extract the rgba values
                         rgba_values = color_str.strip('rgba()').split(',')
                         return tuple(float(x.strip()) for x in rgba_values)
                     return color_str
@@ -622,11 +620,7 @@ if uploaded_file:
               with st.spinner("Generating PDF report... This may take a moment."):
                try:
                 pdf_data = create_pdf_report()
-                st.download_button(
-                label="⬇️ Download PDF Report",
-                data=pdf_data,
-                file_name="cement_model_comparison_report.pdf",
-                mime="application/pdf")
+                st.download_button(label="⬇️ Download PDF Report",data=pdf_data,file_name="cement_model_comparison_report.pdf",mime="application/pdf")
                 st.success("PDF generated successfully! Click the download button above to save it.")
                except Exception as e:
                 st.error(f"Error generating PDF: {str(e)}")    
