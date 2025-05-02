@@ -284,7 +284,6 @@ if uploaded_file:
                         worksheet.conditional_format(row_num, 2, row_num, 2, {'type': 'no_blanks', 'format': better_format})
             excel_data = output.getvalue()
             st.download_button(label="Download Analysis as Excel",data=excel_data,file_name="cement_model_comparison_analysis.xlsx",mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-            st.subheader("Download Professional PDF Report")
         else:
             st.error(f"Required columns not found. Please ensure your Excel file has these columns: {', '.join(required_columns)}")
     except Exception as e:
