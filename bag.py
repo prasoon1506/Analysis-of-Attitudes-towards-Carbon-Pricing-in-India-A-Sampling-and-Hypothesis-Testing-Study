@@ -101,7 +101,7 @@ def filter_and_rename_columns(input_file, merge_file, user_date):
                     row_values.append(str(cell.value).strip() if cell.value is not None else '')
         row_match_key = tuple(row_values)
         if row_num == 1:
-            header = ["Plant Name","Brand Name", "Bag Name", "Opening Balance as on 01.04.2025","Tomonth Receipt",f"Actual Usage (Till {user_date})","Current available stock","Full Month Plan",f"Projected Usage (Till {user_date})",f"Actual Usage % (Till {user_date}) (Based on Planning)","Pro Rata Deviation","Average Consumption","No. of Days Stock Left (Based on Consumption)","No. of Days Stock Left (Based on Planning)"]
+            header = ["Plant Name","Brand Name", "Bag Name", "Opening Balance as on 01.05.2025","Tomonth Receipt",f"Actual Usage (Till {user_date})","Current available stock","Full Month Plan",f"Projected Usage (Till {user_date})",f"Actual Usage % (Till {user_date}) (Based on Planning)","Pro Rata Deviation","Average Consumption","No. of Days Stock Left (Based on Consumption)","No. of Days Stock Left (Based on Planning)"]
             continue
         full_month_plan = merge_data.get(row_match_key, "0")
         try:
@@ -152,7 +152,7 @@ def main():
     with col2:
         merge_file = st.file_uploader("Upload Merge Excel File", type=['xlsx', 'xls'], help="Select the merge file for additional data")
     with col3:
-        user_date = st.text_input("Enter Date (e.g., 01 Apr)", value="01 Apr", help="Enter the date for report generation")
+        user_date = st.text_input("Enter Date (e.g., 01 May)", value="01 May", help="Enter the date for report generation")
     if input_file and merge_file and user_date:
         try:
             with open("input_file.xlsx", "wb") as f:
@@ -160,7 +160,7 @@ def main():
             with open("merge_file.xlsx", "wb") as f:
                 f.write(merge_file.getbuffer())
             df = filter_and_rename_columns("input_file.xlsx", "merge_file.xlsx", user_date)
-            start_date = "01 Apr"
+            start_date = "01 May"
             st.markdown(f'<p class="big-font">Consumption Analysis</p>', unsafe_allow_html=True)
             st.markdown(f'<p class="sub-font">Period: {start_date} to {user_date}</p>', unsafe_allow_html=True)
             st.dataframe(df, use_container_width=True)
