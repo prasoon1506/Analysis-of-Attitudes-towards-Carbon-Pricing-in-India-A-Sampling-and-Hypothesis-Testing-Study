@@ -76,30 +76,13 @@ def main():
                     buf = io.BytesIO()
                     fig.savefig(buf, format='png', dpi=300, bbox_inches='tight')
                     buf.seek(0)
-                    st.download_button(
-                        label=f"Download {month.capitalize()} Plot",
-                        data=buf,
-                        file_name=f'market_share_{selected_state}_{month}.png',
-                        mime='image/png',
-                        key=f"download_{month}"  # Unique key for each button
-                    )
+                    st.download_button(label=f"Download {month.capitalize()} Plot",data=buf,file_name=f'market_share_{selected_state}_{month}.png',mime='image/png',key=f"download_{month}")
                 st.markdown("---")
-        
         elif uploaded_file:
             st.info("👈 Select state and months from the sidebar to view analysis")
         else:
             st.info("👈 Upload an Excel file from the sidebar to begin analysis")
-    
-    # Footer
     st.markdown("---")
-    st.markdown(
-        """
-        <div style='text-align: center'>
-            <p>Built with ❤️ using Streamlit</p>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
+    st.markdown("""<div style='text-align: center'><p>Built with ❤️ using Streamlit</p></div>""",unsafe_allow_html=True)
 if __name__ == "__main__":
     main()
