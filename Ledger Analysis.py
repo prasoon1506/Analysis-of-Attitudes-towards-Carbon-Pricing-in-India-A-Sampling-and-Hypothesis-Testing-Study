@@ -1,7 +1,7 @@
-# streamlit_app.py
+# streamlit_app.py 
 # pip install streamlit pdfplumber pandas openpyxl numpy
 
-import io, re
+import io, re, os
 from datetime import datetime
 import numpy as np
 import pandas as pd
@@ -95,14 +95,17 @@ def monthly_ppc(df_sales, df_credit):
     ppc["ym"]=ppc["date"].dt.to_period("M").astype(str)
     agg=ppc.groupby("ym",as_index=False).agg(qty=("qty_mt","sum"), debit=("debit","sum"))
     agg["price_bag"]=agg.apply(lambda r: weighted_price(r["debit"],r["qty"]), axis=1)
+
     if not df_credit.empty:
         df_credit=df_credit.copy()
         df_credit["ym"]=df_credit["date"].dt.to_period("M").astype(str)
         cn=df_credit.groupby("ym",as_index=False).agg(credit_note=("credit","sum"))
     else:
         cn=pd.DataFrame({"ym":[],"credit_note":[]})
+
     out=agg.merge(cn,on="ym",how="left").fillna({"credit_note":0.0})
     out=out.rename(columns={"ym":"Year/Month","qty":"QTY(MT) [PPC]","price_bag":"Price/Bag","credit_note":"Discount"})
+
     # Grand total
     total_qty=out["QTY(MT) [PPC]"].sum(); total_debit=agg["debit"].sum()
     price=weighted_price(total_debit,total_qty)
@@ -110,7 +113,7 @@ def monthly_ppc(df_sales, df_credit):
     return pd.concat([out,grand],ignore_index=True)
 
 # ---------------- Excel Export ----------------
-def export_excel(report_df, all_qty, company_name="JKS", region="Jodhpur", period="Apr'24–Mar'25"):
+def export_excel(report_df, all_qty, company_name="JKS", region="Unknown", period="Apr'24–Mar'25"):
     wb = Workbook()
     ws = wb.active
     ws.title = "Report"
@@ -157,7 +160,7 @@ def export_excel(report_df, all_qty, company_name="JKS", region="Jodhpur", perio
     ws[f"A{start}"] = "Total Qty(All products combined)"
     ws[f"B{start}"] = all_qty
     ws[f"C{start}"] = "Discount/Bag"
-    ws[f"D{start}"] = round(report_df["Discount"].sum()/all_qty,2) if all_qty else 0
+    ws[f"D{start}"] = round(report_df["Discount"].sum()/(all_qty*20),2) if all_qty else 0
     ws[f"A{start}"].font = bold; ws[f"C{start}"].font = bold
 
     ws[f"C{start+2}"] = "NOD"
@@ -183,6 +186,8 @@ files=st.file_uploader("Upload ledger PDFs", type="pdf", accept_multiple_files=T
 if files:
     all_sales, all_cn=[],[]
     for f in files:
+        fname=os.path.splitext(f.name)[0]
+        region=fname   # use file name as district/region
         lines=extract_lines(f.read())
         all_sales.append(parse_sales(lines))
         all_cn.append(parse_credit_notes(lines))
@@ -193,8 +198,13 @@ if files:
     report=monthly_ppc(df_sales, df_credit)
     all_qty=df_sales["qty_mt"].sum()
 
+    # dynamic period
+    start_m=df_sales["date"].min().strftime("%b'%y")
+    end_m=df_sales["date"].max().strftime("%b'%y")
+    period=f"{start_m}–{end_m}"
+
     st.dataframe(report.style.format({"QTY(MT) [PPC]":"{:,.2f}","Price/Bag":"₹{:,.2f}","Discount":"₹{:,.0f}"}),use_container_width=True)
 
     # Excel export
-    excel_bytes=export_excel(report, all_qty, company_name="JKS", region="Jodhpur", period="Apr'24–Mar'25")
-    st.download_button("📥 Download Excel Report", data=excel_bytes, file_name="jks_report.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    excel_bytes=export_excel(report, all_qty, company_name="JKS", region=region, period=period)
+    st.download_button("📥 Download Excel Report", data=excel_bytes, file_name=f"{region}_jks_report.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
