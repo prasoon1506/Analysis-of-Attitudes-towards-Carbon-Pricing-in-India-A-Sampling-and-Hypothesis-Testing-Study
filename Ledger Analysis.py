@@ -11,7 +11,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils.dataframe import dataframe_to_rows
 
-# ---------------- Patterns ----------------
+# ---------------- Regex Patterns ----------------
 NUM_RE = re.compile(r'(?<![A-Za-z])[+-]?\d{1,3}(?:,\d{3})*(?:\.\d+)?')
 DATE_AT_START = re.compile(r'^\d{2}\.\d{2}\.\d{4}')
 CREDIT_INCLUDE = re.compile(r'(?:/DG/|RQDBN|CREDIT\s*NOTE)', re.IGNORECASE)
@@ -21,7 +21,6 @@ SALES_RE = re.compile(
     r'(?P<qty>\d+(?:\.\d+)?)\s+'
     r'(?P<rate>\d{1,3}(?:,\d{3})*(?:\.\d+)?)\s+'
     r'(?P<debit>\d{1,3}(?:,\d{3})*(?:\.\d{2}))'
-    r'(?:\s+(?P<credit>\d{1,3}(?:,\d{3})*(?:\.\d{2})))?'
 )
 
 # ---------------- Utils ----------------
@@ -53,7 +52,7 @@ def parse_sales(lines):
     for ln in lines:
         m=SALES_RE.search(ln)
         if not m: continue
-        dt=_dt(m.group("date")); 
+        dt=_dt(m.group("date"))
         if not dt: continue
         rows.append(dict(
             date=dt,
@@ -86,23 +85,36 @@ def weighted_price(debit, qty_mt):
 
 # ---------------- Reporting ----------------
 def monthly_ppc(df_sales, df_credit):
+    """Build monthly PPC summary only"""
     ppc=df_sales[df_sales["product"]=="PPC"].copy()
     if ppc.empty: return pd.DataFrame()
     ppc["ym"]=ppc["date"].dt.to_period("M").astype(str)
+
+    # Aggregate PPC sales
     agg=ppc.groupby("ym",as_index=False).agg(qty=("qty_mt","sum"), debit=("debit","sum"))
     agg["Price/Bag"]=agg.apply(lambda r: weighted_price(r["debit"],r["qty"]), axis=1)
+
+    # Credit notes per month
     if not df_credit.empty:
         df_credit=df_credit.copy()
         df_credit["ym"]=df_credit["date"].dt.to_period("M").astype(str)
         cn=df_credit.groupby("ym",as_index=False).agg(Discount=("credit","sum"))
     else:
         cn=pd.DataFrame({"ym":[],"Discount":[]})
+
     out=agg.merge(cn,on="ym",how="left").fillna({"Discount":0.0})
     out=out.rename(columns={"ym":"Year/Month","qty":"QTY(MT) [PPC]"})
-    # Grand total
-    total_qty=out["QTY(MT) [PPC]"].sum(); total_debit=agg["debit"].sum()
+    
+    # Grand total row
+    total_qty=out["QTY(MT) [PPC]"].sum()
+    total_debit=agg["debit"].sum()
     price=weighted_price(total_debit,total_qty)
-    grand=pd.DataFrame([{"Year/Month":"Grand Total","QTY(MT) [PPC]":total_qty,"Price/Bag":price,"Discount":out["Discount"].sum()}])
+    grand=pd.DataFrame([{
+        "Year/Month":"Grand Total",
+        "QTY(MT) [PPC]":total_qty,
+        "Price/Bag":price,
+        "Discount":out["Discount"].sum()
+    }])
     return pd.concat([out,grand],ignore_index=True)
 
 # ---------------- Excel Export ----------------
@@ -117,7 +129,8 @@ def export_excel(report_df, all_qty, district, period, company="JKS"):
     right = Alignment(horizontal="right")
     yellow = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
     blue = PatternFill(start_color="92D050", end_color="92D050", fill_type="solid")
-    border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
+    border = Border(left=Side(style='thin'), right=Side(style='thin'),
+                    top=Side(style='thin'), bottom=Side(style='thin'))
 
     # title
     ws.merge_cells("A1:D1")
@@ -133,7 +146,7 @@ def export_excel(report_df, all_qty, district, period, company="JKS"):
         ws[f"{c}2"].alignment = center
         ws[f"{c}2"].border = border
 
-    # data
+    # data rows
     for r in dataframe_to_rows(report_df, index=False, header=False):
         ws.append(r)
     for row in ws.iter_rows(min_row=3, max_row=2+len(report_df), min_col=1, max_col=4):
@@ -141,7 +154,7 @@ def export_excel(report_df, all_qty, district, period, company="JKS"):
             cell.border = border
             cell.alignment = right if cell.column>1 else center
 
-    # highlight totals
+    # highlight grand total
     for r in range(3, 3+len(report_df)):
         if "Grand" in str(ws[f"A{r}"].value):
             for c in "ABCD":
@@ -151,7 +164,7 @@ def export_excel(report_df, all_qty, district, period, company="JKS"):
     # summary section
     start = 4+len(report_df)
     ws[f"A{start}"] = "Total Qty(All products combined)"
-    ws[f"B{start}"] = all_qty
+    ws[f"B{start}"] = all_qty  # <- FIXED: uses total qty of all cement types
     ws[f"C{start}"] = "Discount/Bag"
     ws[f"D{start}"] = round(report_df["Discount"].sum()/(all_qty*20),2) if all_qty else 0
     ws[f"A{start}"].font = bold; ws[f"C{start}"].font = bold
@@ -189,6 +202,8 @@ if files:
         st.error("No PPC sales found."); st.stop()
 
     report=monthly_ppc(df_sales, df_credit)
+
+    # FIXED: all_qty = total qty of ALL products, not just PPC
     all_qty=df_sales["qty_mt"].sum()
 
     # Detect period from min/max date
@@ -196,8 +211,15 @@ if files:
     period=f"{min_date.strftime('%b\'%y')}–{max_date.strftime('%b\'%y')}"
 
     st.subheader(f"Report for {district} ({period})")
-    st.dataframe(report.style.format({"QTY(MT) [PPC]":"{:,.2f}","Price/Bag":"₹{:,.2f}","Discount":"₹{:,.0f}"}),use_container_width=True)
+    st.dataframe(report.style.format({
+        "QTY(MT) [PPC]":"{:,.2f}",
+        "Price/Bag":"₹{:,.2f}",
+        "Discount":"₹{:,.0f}"
+    }),use_container_width=True)
 
     # Excel export
     excel_bytes=export_excel(report, all_qty, district, period, company="JKS")
-    st.download_button("📥 Download Excel Report", data=excel_bytes, file_name=f"report_{district}.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    st.download_button("📥 Download Excel Report",
+                       data=excel_bytes,
+                       file_name=f"report_{district}.xlsx",
+                       mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
