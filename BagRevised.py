@@ -140,7 +140,7 @@ def style_excel_with_formulas(workbook, worksheet):
         fill_type='solid'
     )
     
-    # Style headers
+    # Style headers with text wrapping
     for cell in worksheet[1]:
         cell.font = Font(bold=True, color='FFFFFF', name='Aptos Narrow', size=12)
         cell.fill = header_fill
@@ -165,19 +165,28 @@ def style_excel_with_formulas(workbook, worksheet):
             elif col_idx in [10, 11]:  # Percentage columns (Actual Usage % and Pro Rata Deviation)
                 cell.number_format = '0%'
     
-    # Auto-adjust column widths
+    # Auto-adjust column widths (reduced for wrapped headers)
     for col in worksheet.columns:
         max_length = 0
         column = col[0].column_letter
         for cell in col:
             try:
-                cell_length = len(str(cell.value))
+                # For header row, consider wrapped text
+                if cell.row == 1:
+                    lines = str(cell.value).split('\n') if cell.value else ['']
+                    cell_length = max(len(line) for line in lines)
+                else:
+                    cell_length = len(str(cell.value)) if cell.value else 0
                 if cell_length > max_length:
                     max_length = cell_length
             except:
                 pass
-        adjusted_width = min(max_length + 3, 50)
+        # Reduce width for better appearance with wrapped headers
+        adjusted_width = min(max_length + 2, 25)  # Reduced max width
         worksheet.column_dimensions[column].width = adjusted_width
+    
+    # Set header row height for better wrapped text display
+    worksheet.row_dimensions[1].height = 60
     
     # Freeze panes
     worksheet.freeze_panes = worksheet['B2']
@@ -216,7 +225,7 @@ def style_excel(df, output_path):
         fill_type='solid'
     )
     
-    # Style headers
+    # Style headers with text wrapping
     for cell in worksheet[1]:
         cell.font = Font(bold=True, color='FFFFFF', name='Aptos Narrow', size=12)
         cell.fill = header_fill
@@ -238,19 +247,28 @@ def style_excel(df, output_path):
             elif col_idx in [10, 11]:  # Percentage columns (Actual Usage % and Pro Rata Deviation)
                 cell.number_format = '0%'
     
-    # Auto-adjust column widths
+    # Auto-adjust column widths (reduced for wrapped headers)
     for col in worksheet.columns:
         max_length = 0
         column = col[0].column_letter
         for cell in col:
             try:
-                cell_length = len(str(cell.value))
+                # For header row, consider wrapped text
+                if cell.row == 1:
+                    lines = str(cell.value).split('\n') if cell.value else ['']
+                    cell_length = max(len(line) for line in lines)
+                else:
+                    cell_length = len(str(cell.value)) if cell.value else 0
                 if cell_length > max_length:
                     max_length = cell_length
             except:
                 pass
-        adjusted_width = min(max_length + 3, 50)
+        # Reduce width for better appearance with wrapped headers
+        adjusted_width = min(max_length + 2, 25)  # Reduced max width
         worksheet.column_dimensions[column].width = adjusted_width
+    
+    # Set header row height for better wrapped text display
+    worksheet.row_dimensions[1].height = 60
     
     worksheet.freeze_panes = worksheet['B2']
     worksheet.title = 'Bag Consumption Report'
@@ -294,20 +312,20 @@ def filter_and_rename_columns(input_file, merge_file, user_date):
         
         if row_num == 1:
             header = [
-                "Plant Name",
-                "Brand Name", 
-                "Bag Name", 
-                "Opening Balance as on 01.09.2025",
-                "Tomonth Receipt",
-                f"Actual Usage (Till {user_date})",
-                "Current available stock",
-                "Full Month Plan",
-                f"Projected Usage (Till {user_date})",
-                f"Actual Usage % (Till {user_date}) (Based on Planning)",
-                "Pro Rata Deviation",
-                "Average Consumption",
-                "No. of Days Stock Left (Based on Consumption)",
-                "No. of Days Stock Left (Based on Planning)"
+                "Plant\nName",
+                "Brand\nName", 
+                "Bag\nName", 
+                "Opening Balance\nas on 01.09.2025",
+                "Tomonth\nReceipt",
+                f"Actual Usage\n(Till {user_date})",
+                "Current\navailable stock",
+                "Full Month\nPlan",
+                f"Projected Usage\n(Till {user_date})",
+                f"Actual Usage %\n(Till {user_date})\n(Based on Planning)",
+                "Pro Rata\nDeviation",
+                "Average\nConsumption",
+                "No. of Days\nStock Left\n(Based on Consumption)",
+                "No. of Days\nStock Left\n(Based on Planning)"
             ]
             continue
         
@@ -351,6 +369,10 @@ def filter_and_rename_columns(input_file, merge_file, user_date):
             new_row[0] = new_row[0][9:]
         if isinstance(new_row[2], str) and len(new_row[2]) > 9:
             new_row[2] = new_row[2][9:]
+        
+        # Skip rows where Plant Name is "Totals" (case insensitive)
+        if isinstance(new_row[0], str) and new_row[0].lower().strip() == "totals":
+            continue
         
         data_rows.append(new_row)
     
