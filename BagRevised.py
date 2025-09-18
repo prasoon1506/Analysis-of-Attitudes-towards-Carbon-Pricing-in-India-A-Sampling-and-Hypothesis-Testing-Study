@@ -7,7 +7,11 @@ import base64
 from openpyxl.styles import (Font, Alignment, Border, Side, PatternFill, NamedStyle, Color)
 from openpyxl.formatting.rule import ColorScaleRule
 from openpyxl.utils import get_column_letter
+import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
+# Keep all existing functions unchanged
 def calculate_projected_usage(full_month_plan, input_date, month):
     _, total_days = calendar.monthrange(datetime.now().year, datetime.strptime(month, "%b").month)
     day = int(input_date.split()[0])
@@ -393,88 +397,551 @@ def get_download_link(df, user_date, use_formulas=True):
     href = f'<a href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64}" download="bag_report.xlsx">Download Professional Excel Report with Formulas</a>'
     return href
 
-def main():
-    st.set_page_config(page_title="Bag Report", layout="wide", page_icon="📊")
+def create_dashboard_charts(df):
+    """Create beautiful charts for dashboard"""
+    if df.empty:
+        return None, None, None
     
+    # Chart 1: Stock Status Overview
+    fig1 = go.Figure()
+    
+    # Extract numeric values for plotting
+    current_stock = df.iloc[:, 6].astype(float)
+    actual_usage = df.iloc[:, 5].astype(float)
+    plant_names = df.iloc[:, 0].astype(str)
+    
+    fig1.add_trace(go.Bar(
+        name='Current Stock',
+        x=plant_names[:10],  # Limit to first 10 for readability
+        y=current_stock[:10],
+        marker_color='rgba(74, 144, 226, 0.8)',
+        hovertemplate='<b>%{x}</b><br>Current Stock: %{y}<extra></extra>'
+    ))
+    
+    fig1.add_trace(go.Bar(
+        name='Actual Usage',
+        x=plant_names[:10],
+        y=actual_usage[:10],
+        marker_color='rgba(255, 99, 132, 0.8)',
+        hovertemplate='<b>%{x}</b><br>Actual Usage: %{y}<extra></extra>'
+    ))
+    
+    fig1.update_layout(
+        title={
+            'text': '📊 Stock vs Usage Analysis',
+            'x': 0.5,
+            'font': {'size': 20, 'color': '#1E4C7B'}
+        },
+        barmode='group',
+        xaxis_title='Plant Names',
+        yaxis_title='Quantity',
+        plot_bgcolor='rgba(248, 249, 250, 0.8)',
+        paper_bgcolor='white',
+        font=dict(family="Arial", size=12),
+        height=400,
+        xaxis={'tickangle': 45}
+    )
+    
+    # Chart 2: Usage Efficiency Gauge
+    avg_usage_percent = df.iloc[:, 9].astype(float).mean()
+    
+    fig2 = go.Figure(go.Indicator(
+        mode = "gauge+number+delta",
+        value = avg_usage_percent,
+        domain = {'x': [0, 1], 'y': [0, 1]},
+        title = {'text': "Overall Usage Efficiency %", 'font': {'size': 20, 'color': '#1E4C7B'}},
+        delta = {'reference': 100},
+        gauge = {
+            'axis': {'range': [None, 100]},
+            'bar': {'color': "#1E4C7B"},
+            'steps': [
+                {'range': [0, 50], 'color': "#FFE4E1"},
+                {'range': [50, 80], 'color': "#B0E0E6"},
+                {'range': [80, 100], 'color': "#98FB98"}
+            ],
+            'threshold': {
+                'line': {'color': "red", 'width': 4},
+                'thickness': 0.75,
+                'value': 90
+            }
+        }
+    ))
+    
+    fig2.update_layout(
+        height=400,
+        paper_bgcolor='white',
+        font=dict(family="Arial", size=12)
+    )
+    
+    # Chart 3: Days Stock Left Distribution
+    days_stock_consumption = df.iloc[:, 12].astype(float)
+    
+    fig3 = go.Figure(data=[go.Histogram(
+        x=days_stock_consumption,
+        nbinsx=20,
+        marker_color='rgba(74, 144, 226, 0.7)',
+        hovertemplate='Days: %{x}<br>Count: %{y}<extra></extra>'
+    )])
+    
+    fig3.update_layout(
+        title={
+            'text': '📈 Days Stock Left Distribution',
+            'x': 0.5,
+            'font': {'size': 20, 'color': '#1E4C7B'}
+        },
+        xaxis_title='Days Stock Left',
+        yaxis_title='Number of Items',
+        plot_bgcolor='rgba(248, 249, 250, 0.8)',
+        paper_bgcolor='white',
+        font=dict(family="Arial", size=12),
+        height=400
+    )
+    
+    return fig1, fig2, fig3
+
+def main():
+    st.set_page_config(
+        page_title="Advanced Bag Report Analytics", 
+        layout="wide", 
+        page_icon="📊",
+        initial_sidebar_state="expanded"
+    )
+    
+    # Advanced CSS styling
     st.markdown("""
     <style>
-    .reportview-container {
-        background-color: #f0f2f6;
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+    
+    .main-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        animation: slideDown 0.8s ease-out;
     }
-    .big-font {
-        font-size:24px !important;
-        color: #1E4C7B;
+    
+    .main-title {
+        color: white;
+        font-family: 'Poppins', sans-serif;
+        font-size: 3rem;
+        font-weight: 700;
+        margin: 0;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .main-subtitle {
+        color: rgba(255,255,255,0.9);
+        font-family: 'Poppins', sans-serif;
+        font-size: 1.2rem;
+        font-weight: 300;
+        margin: 0.5rem 0 0 0;
+    }
+    
+    .upload-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        border-left: 4px solid #667eea;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        margin-bottom: 1rem;
+    }
+    
+    .upload-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+    }
+    
+    .metric-card {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        padding: 1.5rem;
+        border-radius: 15px;
+        color: white;
+        text-align: center;
+        margin-bottom: 1rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .metric-title {
+        font-family: 'Poppins', sans-serif;
+        font-size: 0.9rem;
+        font-weight: 400;
+        opacity: 0.9;
+        margin-bottom: 0.5rem;
+    }
+    
+    .metric-value {
+        font-family: 'Poppins', sans-serif;
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0;
+    }
+    
+    .feature-toggle {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        padding: 1rem;
+        border-radius: 10px;
+        margin: 1rem 0;
+    }
+    
+    .status-good {
+        color: #28a745;
         font-weight: bold;
-        text-transform: uppercase;
-        letter-spacing: 1px;
     }
-    .sub-font {
-        font-size:18px !important;
-        color: #4A90E2;
-        font-style: italic;
+    
+    .status-warning {
+        color: #ffc107;
+        font-weight: bold;
+    }
+    
+    .status-danger {
+        color: #dc3545;
+        font-weight: bold;
+    }
+    
+    .download-button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 25px;
+        text-decoration: none;
+        font-weight: bold;
+        display: inline-block;
+        margin: 1rem 0;
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        transition: all 0.3s ease;
+    }
+    
+    .download-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 7px 20px rgba(102, 126, 234, 0.6);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .formula-section {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin-top: 2rem;
+        color: white;
+    }
+    
+    .stSelectbox > div > div {
+        border-radius: 10px;
+    }
+    
+    .stTextInput > div > div {
+        border-radius: 10px;
+    }
+    
+    .stFileUploader > div {
+        border-radius: 10px;
+    }
+    
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .sidebar .sidebar-content {
+        background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .reportview-container .main .block-container {
+        padding-top: 2rem;
     }
     </style>
     """, unsafe_allow_html=True)
     
-    st.markdown('<h1 style="color:#1E4C7B; text-align:center; border-bottom: 3px solid #4A90E2; padding-bottom: 10px;">📊 Bag Consumption Report</h1>', unsafe_allow_html=True)
+    # Main header
+    st.markdown("""
+    <div class="main-header">
+        <h1 class="main-title">🚀 Advanced Bag Report Analytics</h1>
+        <p class="main-subtitle">Professional consumption analysis with real-time insights</p>
+    </div>
+    """, unsafe_allow_html=True)
     
-    col1, col2, col3 = st.columns(3)
+    # Sidebar for controls
+    with st.sidebar:
+        st.markdown("## ⚙️ Configuration Panel")
+        
+        # File upload section
+        st.markdown("### 📁 Data Sources")
+        input_file = st.file_uploader(
+            "📊 Input Excel File", 
+            type=['xlsx', 'xls'], 
+            help="Upload your main consumption data file"
+        )
+        
+        merge_file = st.file_uploader(
+            "🔗 Merge Excel File", 
+            type=['xlsx', 'xls'], 
+            help="Upload the file containing additional planning data"
+        )
+        
+        st.markdown("### 📅 Analysis Parameters")
+        user_date = st.text_input(
+            "📆 Report Date", 
+            value="01 Sep", 
+            help="Enter date in format: DD MMM (e.g., 15 Sep)"
+        )
+        
+        st.markdown("### ⚡ Advanced Options")
+        use_formulas = st.toggle(
+            "Include Excel Formulas", 
+            value=True,
+            help="Toggle to include/exclude Excel formulas in the report"
+        )
+        
+        if use_formulas:
+            st.success("✅ Formulas will be embedded")
+        else:
+            st.info("📊 Values only mode")
     
-    with col1:
-        input_file = st.file_uploader("Upload Input Excel File", type=['xlsx', 'xls'], help="Select the input file for analysis")
-    
-    with col2:
-        merge_file = st.file_uploader("Upload Merge Excel File", type=['xlsx', 'xls'], help="Select the merge file for additional data")
-    
-    with col3:
-        user_date = st.text_input("Enter Date (e.g., 01 Sep)", value="01 Sep", help="Enter the date for report generation")
-    
-    # Add option for formula inclusion
-    st.markdown("---")
-    use_formulas = st.checkbox("Include Excel Formulas in Report", value=True, help="When checked, formulas will be visible when clicking on calculated cells in Excel")
-    
-    if use_formulas:
-        st.info("✅ Formulas will be included - you can see and copy formulas by clicking on calculated cells in Excel")
-    else:
-        st.warning("⚠️ Only calculated values will be included - formulas won't be visible")
-    
+    # Main content area
     if input_file and merge_file and user_date:
         try:
+            # Save uploaded files
             with open("input_file.xlsx", "wb") as f:
                 f.write(input_file.getbuffer())
             with open("merge_file.xlsx", "wb") as f:
                 f.write(merge_file.getbuffer())
             
-            df = filter_and_rename_columns("input_file.xlsx", "merge_file.xlsx", user_date)
+            # Process data
+            with st.spinner('🔄 Processing your data...'):
+                df = filter_and_rename_columns("input_file.xlsx", "merge_file.xlsx", user_date)
+            
+            # Success message
+            st.success('✅ Data processed successfully!')
+            
+            # Key metrics section
+            col1, col2, col3, col4 = st.columns(4)
+            
+            with col1:
+                total_items = len(df)
+                st.markdown(f"""
+                <div class="metric-card">
+                    <div class="metric-title">Total Items</div>
+                    <div class="metric-value">{total_items}</div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col2:
+                total_stock = df.iloc[:, 6].astype(float).sum()
+                st.markdown(f"""
+                <div class="metric-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                    <div class="metric-title">Total Current Stock</div>
+                    <div class="metric-value">{total_stock:,.0f}</div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col3:
+                total_usage = df.iloc[:, 5].astype(float).sum()
+                st.markdown(f"""
+                <div class="metric-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                    <div class="metric-title">Total Usage</div>
+                    <div class="metric-value">{total_usage:,.0f}</div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col4:
+                avg_efficiency = df.iloc[:, 9].astype(float).mean()
+                st.markdown(f"""
+                <div class="metric-card" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">
+                    <div class="metric-title">Avg Efficiency</div>
+                    <div class="metric-value">{avg_efficiency:.1f}%</div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            # Dashboard Charts Section
+            st.markdown("## 📈 Interactive Analytics Dashboard")
+            
+            chart1, chart2, chart3 = create_dashboard_charts(df)
+            
+            if chart1 and chart2 and chart3:
+                tab1, tab2, tab3 = st.tabs(["📊 Stock Analysis", "⚡ Efficiency Gauge", "📈 Distribution"])
+                
+                with tab1:
+                    st.plotly_chart(chart1, use_container_width=True)
+                    
+                with tab2:
+                    col1, col2 = st.columns([1, 1])
+                    with col1:
+                        st.plotly_chart(chart2, use_container_width=True)
+                    with col2:
+                        st.markdown("### 🎯 Performance Insights")
+                        if avg_efficiency >= 80:
+                            st.markdown('<p class="status-good">🟢 Excellent performance! Usage is well-aligned with planning.</p>', unsafe_allow_html=True)
+                        elif avg_efficiency >= 60:
+                            st.markdown('<p class="status-warning">🟡 Good performance with room for improvement.</p>', unsafe_allow_html=True)
+                        else:
+                            st.markdown('<p class="status-danger">🔴 Performance needs attention. Consider reviewing planning.</p>', unsafe_allow_html=True)
+                        
+                        # Additional metrics
+                        low_stock_items = len(df[df.iloc[:, 12].astype(float) < 7])
+                        st.metric("Items with <7 days stock", low_stock_items)
+                        
+                        high_usage_items = len(df[df.iloc[:, 9].astype(float) > 100])
+                        st.metric("Over-consuming items", high_usage_items)
+                
+                with tab3:
+                    st.plotly_chart(chart3, use_container_width=True)
+            
+            # Data table section
+            st.markdown("## 📋 Detailed Report")
+            
+            # Filter options
+            col1, col2 = st.columns(2)
+            with col1:
+                filter_option = st.selectbox(
+                    "🔍 Filter by status:",
+                    ["All Items", "Low Stock (<7 days)", "Over-consuming (>100%)", "Under-consuming (<50%)"]
+                )
+            
+            with col2:
+                sort_option = st.selectbox(
+                    "📊 Sort by:",
+                    ["Plant Name", "Current Stock", "Usage %", "Days Left"]
+                )
+            
+            # Apply filters
+            filtered_df = df.copy()
+            if filter_option == "Low Stock (<7 days)":
+                filtered_df = df[df.iloc[:, 12].astype(float) < 7]
+            elif filter_option == "Over-consuming (>100%)":
+                filtered_df = df[df.iloc[:, 9].astype(float) > 100]
+            elif filter_option == "Under-consuming (<50%)":
+                filtered_df = df[df.iloc[:, 9].astype(float) < 50]
+            
+            # Apply sorting
+            if sort_option == "Current Stock":
+                filtered_df = filtered_df.sort_values(filtered_df.columns[6], ascending=False)
+            elif sort_option == "Usage %":
+                filtered_df = filtered_df.sort_values(filtered_df.columns[9], ascending=False)
+            elif sort_option == "Days Left":
+                filtered_df = filtered_df.sort_values(filtered_df.columns[12], ascending=True)
+            
+            # Display filtered data
+            st.dataframe(
+                filtered_df,
+                use_container_width=True,
+                height=400
+            )
+            
+            st.markdown(f"**Showing {len(filtered_df)} of {len(df)} items**")
+            
+            # Download section
+            st.markdown("## 📥 Export Report")
             
             start_date = "01 Sep"
-            st.markdown(f'<p class="big-font">Consumption Analysis</p>', unsafe_allow_html=True)
-            st.markdown(f'<p class="sub-font">Period: {start_date} to {user_date}</p>', unsafe_allow_html=True)
+            col1, col2 = st.columns(2)
             
-            st.dataframe(df, use_container_width=True)
+            with col1:
+                st.markdown(f"""
+                <div class="upload-card">
+                    <h4>📊 Analysis Period</h4>
+                    <p><strong>From:</strong> {start_date}</p>
+                    <p><strong>To:</strong> {user_date}</p>
+                    <p><strong>Formula Mode:</strong> {'Enabled' if use_formulas else 'Disabled'}</p>
+                </div>
+                """, unsafe_allow_html=True)
             
-            st.markdown(get_download_link(df, user_date, use_formulas), unsafe_allow_html=True)
+            with col2:
+                download_link = get_download_link(df, user_date, use_formulas)
+                st.markdown(f"""
+                <div class="upload-card">
+                    <h4>💾 Download Options</h4>
+                    {download_link}
+                </div>
+                """, unsafe_allow_html=True)
             
+            # Formula documentation (if enabled)
             if use_formulas:
-                st.markdown("### Formula Details")
-                st.markdown("""
-                **The following formulas are used in the calculated columns:**
-                
-                - **Projected Usage**: `=ROUND((Day/Total_Days) * Full_Month_Plan, 0)` (No decimals)
-                - **Actual Usage %**: `=IF(Full_Month_Plan=0, 0, Actual_Usage/Full_Month_Plan)` (Percentage format - displays as %)
-                - **Pro Rata Deviation**: `=Actual_Usage% - (Day/Total_Days)` (Percentage format - displays as %)
-                - **Average Consumption**: `=ROUND(IF(Day=0, 0, Actual_Usage/Day), 0)` (No decimals)
-                - **Days Stock Left (Consumption)**: `=ROUND(IF(Avg_Consumption=0, 0, Current_Stock/Avg_Consumption), 0)` (No decimals)
-                - **Days Stock Left (Planning)**: `=ROUND(IF(Avg_Consumption=0, 0, (Opening_Balance+Full_Month_Plan-Actual_Usage)/Avg_Consumption), 0)` (No decimals)
-                
-                **Formatting Applied:**
-                - **Font**: Entire report uses Aptos Narrow font
-                - **Numbers**: All numeric values display without decimal points
-                - **Percentages**: Columns 10 & 11 show values in percentage format (e.g., 45% instead of 0.45)
-                """)
+                with st.expander("🧮 Formula Documentation", expanded=False):
+                    st.markdown("""
+                    <div class="formula-section">
+                        <h3>📚 Excel Formula Reference</h3>
+                        <p>The following formulas are embedded in your Excel report:</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    formula_data = {
+                        "Column": [
+                            "Projected Usage",
+                            "Actual Usage %", 
+                            "Pro Rata Deviation",
+                            "Average Consumption",
+                            "Days Stock Left (Consumption)",
+                            "Days Stock Left (Planning)"
+                        ],
+                        "Formula": [
+                            "=ROUND((Day/Total_Days) * Full_Month_Plan, 0)",
+                            "=IF(Full_Month_Plan=0, 0, Actual_Usage/Full_Month_Plan)",
+                            "=Actual_Usage% - (Day/Total_Days)",
+                            "=ROUND(IF(Day=0, 0, Actual_Usage/Day), 0)",
+                            "=ROUND(IF(Avg_Consumption=0, 0, Current_Stock/Avg_Consumption), 0)",
+                            "=ROUND(IF(Avg_Consumption=0, 0, (Opening_Balance+Full_Month_Plan-Actual_Usage)/Avg_Consumption), 0)"
+                        ],
+                        "Format": [
+                            "Number (no decimals)",
+                            "Percentage",
+                            "Percentage", 
+                            "Number (no decimals)",
+                            "Number (no decimals)",
+                            "Number (no decimals)"
+                        ]
+                    }
+                    
+                    formula_df = pd.DataFrame(formula_data)
+                    st.dataframe(formula_df, use_container_width=True)
+                    
+                    st.info("💡 **Tip:** Click on any calculated cell in Excel to view and copy the formula!")
             
         except Exception as e:
-            st.error(f"An error occurred: {str(e)}")
+            st.error(f"❌ An error occurred while processing your data: {str(e)}")
+            st.info("💡 Please check your file formats and try again.")
+    
+    else:
+        # Welcome screen when no files are uploaded
+        st.markdown("""
+        <div class="upload-card">
+            <h2>🎯 Welcome to Advanced Bag Report Analytics</h2>
+            <p>Get started by uploading your files using the sidebar controls.</p>
+            
+            <h3>✨ Features:</h3>
+            <ul>
+                <li>📊 Interactive charts and visualizations</li>
+                <li>🔍 Advanced filtering and sorting options</li>
+                <li>📈 Real-time performance metrics</li>
+                <li>🧮 Excel formulas for transparency</li>
+                <li>💾 Professional report generation</li>
+                <li>🎨 Beautiful and responsive design</li>
+            </ul>
+            
+            <h3>📋 Required Files:</h3>
+            <ol>
+                <li><strong>Input Excel File:</strong> Your main consumption data</li>
+                <li><strong>Merge Excel File:</strong> Additional planning information</li>
+            </ol>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Sample data preview
+        with st.expander("📖 Sample Data Format", expanded=False):
+            st.markdown("""
+            ### Expected Input File Structure:
+            | Plant Name | Brand Name | Bag Name | Opening Balance | ... |
+            |------------|------------|----------|-----------------|-----|
+            | Plant ABC  | Brand X    | Bag 1    | 1000           | ... |
+            
+            ### Expected Merge File Structure:
+            | Plant Name | Brand Name | Bag Name | Full Month Plan |
+            |------------|------------|----------|-----------------|
+            | Plant ABC  | Brand X    | Bag 1    | 500            |
+            """)
 
 if __name__ == "__main__":
     main()
