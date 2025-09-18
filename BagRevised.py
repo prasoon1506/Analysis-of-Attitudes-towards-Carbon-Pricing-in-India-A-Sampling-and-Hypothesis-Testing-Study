@@ -57,42 +57,52 @@ def write_formulas_to_excel(df, output_path, user_date):
     headers = df.columns.tolist()
     for col, header in enumerate(headers, 1):
         cell = ws.cell(row=1, column=col, value=header)
+        # Apply Aptos Narrow font to headers
+        cell.font = Font(bold=True, color='FFFFFF', name='Aptos Narrow', size=12)
     
     # Write data with formulas for calculated columns
     for row_idx, (index, row) in enumerate(df.iterrows(), 2):
         # Write basic data columns (A to H)
         for col in range(1, 9):  # Columns A-H
-            ws.cell(row=row_idx, column=col, value=row.iloc[col-1])
+            cell = ws.cell(row=row_idx, column=col, value=row.iloc[col-1])
+            # Apply Aptos Narrow font to all cells
+            cell.font = Font(name='Aptos Narrow', size=11)
         
         # Column I: Projected Usage (Till date) = (Day/Total_Days) * Full_Month_Plan
-        # Formula: =(day/total_days)*H{row}
-        projected_formula = f"=({day}/{total_days})*H{row_idx}"
-        ws.cell(row=row_idx, column=9, value=projected_formula)
+        # Formula: =ROUND((day/total_days)*H{row},0)
+        projected_formula = f"=ROUND(({day}/{total_days})*H{row_idx},0)"
+        cell = ws.cell(row=row_idx, column=9, value=projected_formula)
+        cell.font = Font(name='Aptos Narrow', size=11)
         
         # Column J: Actual Usage % = (Actual_Usage/Full_Month_Plan)*100
-        # Formula: =IF(H{row}=0,0,(F{row}/H{row})*100)
-        usage_percent_formula = f"=IF(H{row_idx}=0,0,(F{row_idx}/H{row_idx})*100)"
-        ws.cell(row=row_idx, column=10, value=usage_percent_formula)
+        # Formula: =IF(H{row}=0,0,(F{row}/H{row}))
+        usage_percent_formula = f"=IF(H{row_idx}=0,0,(F{row_idx}/H{row_idx}))"
+        cell = ws.cell(row=row_idx, column=10, value=usage_percent_formula)
+        cell.font = Font(name='Aptos Narrow', size=11)
         
         # Column K: Pro Rata Deviation = Actual_Usage% - Pro_Rata_Expectation%
-        # Formula: =J{row}-({day}/{total_days})*100
-        pro_rata_formula = f"=J{row_idx}-({day}/{total_days})*100"
-        ws.cell(row=row_idx, column=11, value=pro_rata_formula)
+        # Formula: =J{row}-({day}/{total_days})
+        pro_rata_formula = f"=J{row_idx}-({day}/{total_days})"
+        cell = ws.cell(row=row_idx, column=11, value=pro_rata_formula)
+        cell.font = Font(name='Aptos Narrow', size=11)
         
         # Column L: Average Consumption = Actual_Usage/Day
-        # Formula: =IF({day}=0,0,F{row}/{day})
-        avg_consumption_formula = f"=IF({day}=0,0,F{row_idx}/{day})"
-        ws.cell(row=row_idx, column=12, value=avg_consumption_formula)
+        # Formula: =ROUND(IF({day}=0,0,F{row}/{day}),0)
+        avg_consumption_formula = f"=ROUND(IF({day}=0,0,F{row_idx}/{day}),0)"
+        cell = ws.cell(row=row_idx, column=12, value=avg_consumption_formula)
+        cell.font = Font(name='Aptos Narrow', size=11)
         
         # Column M: Days Stock Left (Based on Consumption) = Current_Stock/Average_Consumption
-        # Formula: =IF(L{row}=0,0,G{row}/L{row})
-        days_stock_consumption_formula = f"=IF(L{row_idx}=0,0,G{row_idx}/L{row_idx})"
-        ws.cell(row=row_idx, column=13, value=days_stock_consumption_formula)
+        # Formula: =ROUND(IF(L{row}=0,0,G{row}/L{row}),0)
+        days_stock_consumption_formula = f"=ROUND(IF(L{row_idx}=0,0,G{row_idx}/L{row_idx}),0)"
+        cell = ws.cell(row=row_idx, column=13, value=days_stock_consumption_formula)
+        cell.font = Font(name='Aptos Narrow', size=11)
         
         # Column N: Days Stock Left (Based on Planning) = (Opening_Balance + Full_Month_Plan - Actual_Usage)/Average_Consumption
-        # Formula: =IF(L{row}=0,0,(D{row}+H{row}-F{row})/L{row})
-        days_stock_planning_formula = f"=IF(L{row_idx}=0,0,(D{row_idx}+H{row_idx}-F{row_idx})/L{row_idx})"
-        ws.cell(row=row_idx, column=14, value=days_stock_planning_formula)
+        # Formula: =ROUND(IF(L{row}=0,0,(D{row}+H{row}-F{row})/L{row}),0)
+        days_stock_planning_formula = f"=ROUND(IF(L{row_idx}=0,0,(D{row_idx}+H{row_idx}-F{row_idx})/L{row_idx}),0)"
+        cell = ws.cell(row=row_idx, column=14, value=days_stock_planning_formula)
+        cell.font = Font(name='Aptos Narrow', size=11)
     
     # Apply styling
     style_excel_with_formulas(wb, ws)
@@ -132,18 +142,28 @@ def style_excel_with_formulas(workbook, worksheet):
     
     # Style headers
     for cell in worksheet[1]:
-        cell.font = Font(bold=True, color='FFFFFF', name='Calibri', size=12)
+        cell.font = Font(bold=True, color='FFFFFF', name='Aptos Narrow', size=12)
         cell.fill = header_fill
         cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
         cell.border = border
     
     # Style data rows
     for row in worksheet.iter_rows(min_row=2):
-        for cell in row:
+        for col_idx, cell in enumerate(row, 1):
+            # Ensure all cells have Aptos Narrow font
+            if cell.font.name != 'Aptos Narrow':
+                cell.font = Font(name='Aptos Narrow', size=11)
+            
             cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
             cell.border = border
             if cell.row % 2 == 0:
                 cell.fill = alternate_fill
+            
+            # Apply number formatting - no decimals for all numbers
+            if col_idx in [4, 5, 6, 7, 8, 9, 12, 13, 14]:  # All number columns without decimals
+                cell.number_format = '0'
+            elif col_idx in [10, 11]:  # Percentage columns (Actual Usage % and Pro Rata Deviation)
+                cell.number_format = '0%'
     
     # Auto-adjust column widths
     for col in worksheet.columns:
@@ -196,19 +216,29 @@ def style_excel(df, output_path):
         fill_type='solid'
     )
     
+    # Style headers
     for cell in worksheet[1]:
-        cell.font = Font(bold=True, color='FFFFFF', name='Calibri', size=12)
+        cell.font = Font(bold=True, color='FFFFFF', name='Aptos Narrow', size=12)
         cell.fill = header_fill
         cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
         cell.border = border
     
+    # Style data rows
     for row in worksheet.iter_rows(min_row=2):
-        for cell in row:
+        for col_idx, cell in enumerate(row, 1):
+            cell.font = Font(name='Aptos Narrow', size=11)
             cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
             cell.border = border
             if cell.row % 2 == 0:
                 cell.fill = alternate_fill
+            
+            # Apply number formatting
+            if col_idx in [4, 5, 6, 7, 9, 12, 13, 14]:  # Number columns without decimals
+                cell.number_format = '0'
+            elif col_idx in [10, 11]:  # Percentage columns (Actual Usage % and Pro Rata Deviation)
+                cell.number_format = '0%'
     
+    # Auto-adjust column widths
     for col in worksheet.columns:
         max_length = 0
         column = col[0].column_letter
@@ -408,12 +438,17 @@ def main():
                 st.markdown("""
                 **The following formulas are used in the calculated columns:**
                 
-                - **Projected Usage**: `=(Day/Total_Days) * Full_Month_Plan`
-                - **Actual Usage %**: `=IF(Full_Month_Plan=0, 0, (Actual_Usage/Full_Month_Plan)*100)`
-                - **Pro Rata Deviation**: `=Actual_Usage% - (Day/Total_Days)*100`
-                - **Average Consumption**: `=IF(Day=0, 0, Actual_Usage/Day)`
-                - **Days Stock Left (Consumption)**: `=IF(Avg_Consumption=0, 0, Current_Stock/Avg_Consumption)`
-                - **Days Stock Left (Planning)**: `=IF(Avg_Consumption=0, 0, (Opening_Balance+Full_Month_Plan-Actual_Usage)/Avg_Consumption)`
+                - **Projected Usage**: `=ROUND((Day/Total_Days) * Full_Month_Plan, 0)` (No decimals)
+                - **Actual Usage %**: `=IF(Full_Month_Plan=0, 0, Actual_Usage/Full_Month_Plan)` (Percentage format - displays as %)
+                - **Pro Rata Deviation**: `=Actual_Usage% - (Day/Total_Days)` (Percentage format - displays as %)
+                - **Average Consumption**: `=ROUND(IF(Day=0, 0, Actual_Usage/Day), 0)` (No decimals)
+                - **Days Stock Left (Consumption)**: `=ROUND(IF(Avg_Consumption=0, 0, Current_Stock/Avg_Consumption), 0)` (No decimals)
+                - **Days Stock Left (Planning)**: `=ROUND(IF(Avg_Consumption=0, 0, (Opening_Balance+Full_Month_Plan-Actual_Usage)/Avg_Consumption), 0)` (No decimals)
+                
+                **Formatting Applied:**
+                - **Font**: Entire report uses Aptos Narrow font
+                - **Numbers**: All numeric values display without decimal points
+                - **Percentages**: Columns 10 & 11 show values in percentage format (e.g., 45% instead of 0.45)
                 """)
             
         except Exception as e:
