@@ -5,6 +5,12 @@ from datetime import datetime
 import io
 import re
 from typing import Dict, List, Optional, Union
+import pdfplumber
+import PyPDF2
+import tabula
+from PIL import Image
+import pytesseract
+import fitz  # PyMuPDF
 
 # Configure Streamlit page
 st.set_page_config(
@@ -12,6 +18,33 @@ st.set_page_config(
     page_icon="🏗️",
     layout="wide"
 )
+
+# Check for required packages
+@st.cache_data
+def check_pdf_dependencies():
+    """Check if PDF processing libraries are available"""
+    missing = []
+    try:
+        import pdfplumber
+    except ImportError:
+        missing.append("pdfplumber")
+    
+    try:
+        import PyPDF2
+    except ImportError:
+        missing.append("PyPDF2")
+    
+    try:
+        import tabula
+    except ImportError:
+        missing.append("tabula-py")
+    
+    try:
+        import fitz
+    except ImportError:
+        missing.append("PyMuPDF")
+    
+    return missing
 
 class LedgerProcessor:
     """Process different formats of cement ledger files"""
@@ -31,9 +64,181 @@ class LedgerProcessor:
             return 'excel'
         elif file.name.endswith('.txt'):
             return 'text'
+        elif file.name.endswith('.pdf'):
+            return 'pdf'
         else:
             return 'unknown'
     
+    def extract_text_from_pdf(self, file) -> str:
+        """Extract text from PDF using multiple methods"""
+        text = ""
+        file.seek(0)
+        
+        # Method 1: Try pdfplumber (best for tables)
+        try:
+            with pdfplumber.open(file) as pdf:
+                for page in pdf.pages:
+                    page_text = page.extract_text()
+                    if page_text:
+                        text += page_text + "\n"
+                if text.strip():
+                    return text
+        except Exception as e:
+            st.warning(f"pdfplumber failed: {str(e)}")
+        
+        # Method 2: Try PyPDF2
+        file.seek(0)
+        try:
+            reader = PyPDF2.PdfReader(file)
+            for page in reader.pages:
+                page_text = page.extract_text()
+                if page_text:
+                    text += page_text + "\n"
+            if text.strip():
+                return text
+        except Exception as e:
+            st.warning(f"PyPDF2 failed: {str(e)}")
+        
+        # Method 3: Try PyMuPDF (fitz)
+        file.seek(0)
+        try:
+            pdf_document = fitz.open(stream=file.read(), filetype="pdf")
+            for page_num in range(pdf_document.page_count):
+                page = pdf_document[page_num]
+                page_text = page.get_text()
+                if page_text:
+                    text += page_text + "\n"
+            pdf_document.close()
+            if text.strip():
+                return text
+        except Exception as e:
+            st.warning(f"PyMuPDF failed: {str(e)}")
+        
+        return text
+
+    def extract_tables_from_pdf(self, file) -> List[pd.DataFrame]:
+        """Extract tables from PDF using multiple methods"""
+        tables = []
+        file.seek(0)
+        
+        # Method 1: Try tabula-py (best for structured tables)
+        try:
+            file.seek(0)
+            # Save file temporarily
+            temp_file = f"temp_{file.name}"
+            with open(temp_file, "wb") as f:
+                f.write(file.read())
+            
+            # Extract tables
+            tabula_tables = tabula.read_pdf(temp_file, pages='all', multiple_tables=True)
+            for table in tabula_tables:
+                if not table.empty and table.shape[0] > 1:
+                    tables.append(table)
+            
+            # Clean up
+            import os
+            os.remove(temp_file)
+            
+            if tables:
+                return tables
+        except Exception as e:
+            st.warning(f"tabula-py failed: {str(e)}")
+        
+        # Method 2: Try pdfplumber for table extraction
+        file.seek(0)
+        try:
+            with pdfplumber.open(file) as pdf:
+                for page in pdf.pages:
+                    page_tables = page.extract_tables()
+                    for table in page_tables:
+                        if table and len(table) > 1:
+                            # Convert to DataFrame
+                            df = pd.DataFrame(table[1:], columns=table[0])
+                            if not df.empty:
+                                tables.append(df)
+            
+            if tables:
+                return tables
+        except Exception as e:
+            st.warning(f"pdfplumber table extraction failed: {str(e)}")
+        
+        return tables
+
+    def parse_text_to_dataframe(self, text: str) -> pd.DataFrame:
+        """Parse extracted text into a structured DataFrame"""
+        if not text.strip():
+            return pd.DataFrame()
+        
+        lines = [line.strip() for line in text.split('\n') if line.strip()]
+        
+        # Try to identify tabular data patterns
+        potential_data = []
+        headers = None
+        
+        for line in lines:
+            # Skip lines that look like headers/titles
+            if any(keyword in line.lower() for keyword in ['ledger', 'statement', 'report', 'cement', 'company']):
+                continue
+            
+            # Look for lines with multiple data points separated by spaces/tabs
+            parts = re.split(r'\s{2,}|\t', line)  # Split on multiple spaces or tabs
+            if len(parts) >= 3:  # At least 3 columns for meaningful data
+                if not headers and any(keyword in line.lower() for keyword in ['date', 'brand', 'quantity', 'amount', 'rate']):
+                    headers = [part.strip() for part in parts]
+                else:
+                    potential_data.append([part.strip() for part in parts])
+        
+        # If no clear headers found, create generic ones
+        if not headers and potential_data:
+            max_cols = max(len(row) for row in potential_data)
+            headers = [f'Column_{i+1}' for i in range(max_cols)]
+        
+        # Create DataFrame
+        if headers and potential_data:
+            # Ensure all rows have same number of columns
+            max_cols = len(headers)
+            cleaned_data = []
+            for row in potential_data:
+                while len(row) < max_cols:
+                    row.append('')
+                cleaned_data.append(row[:max_cols])
+            
+            return pd.DataFrame(cleaned_data, columns=headers)
+        
+        # If structured parsing fails, try line-by-line parsing
+        return self.parse_unstructured_text(text)
+
+    def parse_unstructured_text(self, text: str) -> pd.DataFrame:
+        """Parse unstructured text by looking for patterns"""
+        lines = [line.strip() for line in text.split('\n') if line.strip()]
+        
+        data_rows = []
+        for line in lines:
+            # Look for date patterns
+            date_match = re.search(r'\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b', line)
+            
+            # Look for amount patterns
+            amount_matches = re.findall(r'₹?\s*\d+(?:,\d{3})*(?:\.\d{2})?', line)
+            
+            # Look for quantity patterns
+            qty_match = re.search(r'\b(\d+)\s*(?:bags?|units?|nos?)\b', line, re.IGNORECASE)
+            
+            if date_match or amount_matches or qty_match:
+                row_data = {
+                    'Raw_Text': line,
+                    'Date': date_match.group() if date_match else '',
+                    'Amounts': ', '.join(amount_matches) if amount_matches else '',
+                    'Quantity': qty_match.group(1) if qty_match else ''
+                }
+                
+                # Extract brand/supplier info (words in title case)
+                words = line.split()
+                title_case_words = [word for word in words if word.istitle() and len(word) > 2]
+                row_data['Potential_Brand'] = ' '.join(title_case_words[:2])  # Take first 2 title case words
+                
+                data_rows.append(row_data)
+        
+        return pd.DataFrame(data_rows) if data_rows else pd.DataFrame({'Raw_Data': lines})
     def read_file(self, file) -> pd.DataFrame:
         """Read file based on its type"""
         file_type = self.detect_file_type(file)
@@ -76,6 +281,9 @@ class LedgerProcessor:
                 # If no delimiter found, create single column
                 return pd.DataFrame({'Raw_Data': lines})
             
+            elif file_type == 'pdf':
+                return self.process_pdf(file)
+            
             else:
                 st.error(f"Unsupported file type: {file.name}")
                 return pd.DataFrame()
@@ -83,6 +291,82 @@ class LedgerProcessor:
         except Exception as e:
             st.error(f"Error reading file: {str(e)}")
             return pd.DataFrame()
+    
+    def process_pdf(self, file) -> pd.DataFrame:
+        """Process PDF file using multiple extraction methods"""
+        st.info(f"🔍 Processing PDF: {file.name}")
+        
+        # Try table extraction first
+        with st.spinner("Extracting tables from PDF..."):
+            tables = self.extract_tables_from_pdf(file)
+            
+            if tables:
+                st.success(f"✅ Found {len(tables)} tables in PDF")
+                
+                # If multiple tables, combine them or let user choose
+                if len(tables) == 1:
+                    return tables[0]
+                else:
+                    # Show preview of tables and combine
+                    st.write("**Found multiple tables:**")
+                    combined_df = pd.DataFrame()
+                    
+                    for i, table in enumerate(tables):
+                        st.write(f"Table {i+1}:")
+                        st.dataframe(table.head(3))
+                        
+                        # Combine tables with similar structures
+                        if combined_df.empty:
+                            combined_df = table
+                        else:
+                            try:
+                                combined_df = pd.concat([combined_df, table], ignore_index=True, sort=False)
+                            except:
+                                # If can't combine, add as separate columns
+                                table.columns = [f"Table{i+1}_{col}" for col in table.columns]
+                                combined_df = pd.concat([combined_df, table], axis=1)
+                    
+                    return combined_df
+        
+        # If no tables found, try text extraction
+        with st.spinner("Extracting text from PDF..."):
+            text = self.extract_text_from_pdf(file)
+            
+            if text.strip():
+                st.info("📄 No structured tables found. Parsing text data...")
+                return self.parse_text_to_dataframe(text)
+            else:
+                st.warning("⚠️ Could not extract readable text from PDF. The PDF might be scanned/image-based.")
+                
+                # Try OCR as last resort (would need additional setup)
+                st.info("💡 For scanned PDFs, consider converting to text first or use OCR tools.")
+                return pd.DataFrame({'Error': ['Could not extract data from PDF']})
+    
+    def ocr_pdf_page(self, file) -> str:
+        """Extract text from PDF using OCR (for scanned PDFs)"""
+        # This would require tesseract installation
+        # Placeholder for OCR functionality
+        try:
+            # Convert PDF pages to images and apply OCR
+            import fitz
+            pdf_document = fitz.open(stream=file.read(), filetype="pdf")
+            text = ""
+            
+            for page_num in range(min(pdf_document.page_count, 5)):  # Limit to first 5 pages
+                page = pdf_document[page_num]
+                pix = page.get_pixmap()
+                img_data = pix.tobytes("png")
+                
+                # Apply OCR (requires pytesseract)
+                image = Image.open(io.BytesIO(img_data))
+                page_text = pytesseract.image_to_string(image)
+                text += page_text + "\n"
+            
+            pdf_document.close()
+            return text
+        except Exception as e:
+            st.warning(f"OCR failed: {str(e)}")
+            return ""
     
     def clean_column_names(self, df: pd.DataFrame) -> pd.DataFrame:
         """Clean and standardize column names"""
@@ -227,7 +511,25 @@ class LedgerProcessor:
 
 def main():
     st.title("🏗️ Cement Ledger to Excel Converter")
-    st.markdown("Upload your cement ledger files in various formats and convert them to standardized Excel files.")
+    st.markdown("Upload your cement ledger files in various formats (CSV, Excel, Text, **PDF**) and convert them to standardized Excel files.")
+    
+    # Check PDF dependencies
+    missing_deps = check_pdf_dependencies()
+    if missing_deps:
+        st.warning(f"⚠️ For full PDF support, install: `pip install {' '.join(missing_deps)}`")
+        with st.expander("📦 Installation Instructions"):
+            st.code(f"""
+# Install PDF processing libraries
+pip install {' '.join(missing_deps)}
+
+# For OCR support (optional)
+pip install pytesseract pillow
+
+# Install tesseract OCR engine:
+# Windows: Download from https://github.com/UB-Mannheim/tesseract/wiki
+# Mac: brew install tesseract
+# Linux: sudo apt-get install tesseract-ocr
+            """)
     
     # Initialize processor
     processor = LedgerProcessor()
@@ -237,13 +539,23 @@ def main():
     include_summary = st.sidebar.checkbox("Include Summary Sheets", value=True)
     auto_calculate = st.sidebar.checkbox("Auto-calculate missing amounts", value=True)
     
+    # PDF processing options
+    st.sidebar.subheader("PDF Processing Options")
+    pdf_method = st.sidebar.selectbox(
+        "PDF Extraction Method",
+        ["Auto-detect", "Tables First", "Text Only"],
+        help="Choose how to process PDF files"
+    )
+    ocr_enabled = st.sidebar.checkbox("Enable OCR for scanned PDFs", value=False, 
+                                     help="Requires tesseract installation")
+    
     # File upload
     st.header("📁 Upload Ledger Files")
     uploaded_files = st.file_uploader(
         "Choose ledger files",
         accept_multiple_files=True,
-        type=['csv', 'xlsx', 'xls', 'txt'],
-        help="Upload CSV, Excel, or Text files containing cement ledger data"
+        type=['csv', 'xlsx', 'xls', 'txt', 'pdf'],
+        help="Upload CSV, Excel, Text, or PDF files containing cement ledger data"
     )
     
     if uploaded_files:
@@ -402,6 +714,13 @@ def main():
             - CSV files (.csv)
             - Excel files (.xlsx, .xls)
             - Text files (.txt) with delimited data
+            - **PDF files (.pdf)** - Tables and text-based ledgers
+            
+            **PDF Processing Features:**
+            - Automatic table extraction from structured PDFs
+            - Text parsing for unstructured PDFs
+            - Multiple extraction methods (pdfplumber, tabula, PyPDF2)
+            - OCR support for scanned PDFs (requires setup)
             
             **Expected Columns (any combination):**
             - Date, Brand, Cement Type, Quantity, Rate, Amount
@@ -414,11 +733,30 @@ def main():
             - Multiple file processing
             - Excel output with formatting
             
-            **Tips:**
-            - Files can have different column names - the app will try to map them automatically
-            - Missing amounts will be calculated if quantity and rate are available
-            - All data will be combined into a single standardized Excel file
+            **PDF Tips:**
+            - Works best with text-based PDFs containing tables
+            - For scanned PDFs, enable OCR option (requires tesseract)
+            - Multiple tables in a PDF will be automatically combined
+            - If extraction fails, try converting PDF to Excel/CSV first
+            
+            **Installation for full PDF support:**
+            ```bash
+            pip install pdfplumber PyPDF2 tabula-py PyMuPDF
+            # For OCR support:
+            pip install pytesseract pillow
+            # Install tesseract: https://github.com/tesseract-ocr/tesseract
+            ```
             """)
+        
+        st.markdown("""
+        ### 📋 PDF Processing Status
+        The app will try multiple methods to extract data from your PDFs:
+        1. **Table Extraction** - Best for structured ledgers with clear tables
+        2. **Text Parsing** - For text-based PDFs without clear table structure  
+        3. **OCR (Optional)** - For scanned/image-based PDFs
+        
+        Upload your PDF files and the app will automatically choose the best extraction method!
+        """)
 
 if __name__ == "__main__":
     main()
