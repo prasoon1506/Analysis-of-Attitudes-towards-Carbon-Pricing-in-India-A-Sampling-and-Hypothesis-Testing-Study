@@ -72,3 +72,4 @@ catboost
 twilio
 kaleido
 pdfplumber
+tabula
