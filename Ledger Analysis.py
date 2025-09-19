@@ -1,149 +1,424 @@
-import io, re
-from datetime import datetime
-import numpy as np
-import pandas as pd
-import pdfplumber
 import streamlit as st
-from openpyxl import Workbook
-from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
-from openpyxl.utils.dataframe import dataframe_to_rows
-NUM_RE = re.compile(r'(?<![A-Za-z])[+-]?\d{1,3}(?:,\d{3})*(?:\.\d+)?')
-DATE_AT_START = re.compile(r'^\d{2}\.\d{2}\.\d{4}')
-CREDIT_INCLUDE = re.compile(r'(?:/DG/|RQDBN|CREDIT\s*NOTE)', re.IGNORECASE)
-CREDIT_EXCLUDE = re.compile(r'(?:PIF|COLL|BANK|NEFT|RTGS|UPI|CASH|/DZ/|ADJUST)', re.IGNORECASE)
-SALES_RE = re.compile(r'(?P<date>\d{2}\.\d{2}\.\d{4}).*?Sales of-(?P<ctype>[A-Za-z0-9 /+\-&]+?)\s+'r'(?P<qty>\d+(?:\.\d+)?)\s+'r'(?P<rate>\d{1,3}(?:,\d{3})*(?:\.\d+)?)\s+'r'(?P<debit>\d{1,3}(?:,\d{3})*(?:\.\d{2}))')
-def _to_float(s: str):
-    if not s: return None
-    try: return float(s.replace(",", "").strip())
-    except: return None
-def _dt(s: str):
-    try: return datetime.strptime(s, "%d.%m.%Y")
-    except: return None
-def _norm_product(raw: str) -> str:
-    t = (raw or "").upper()
-    if "PPC" in t: return "PPC"
-    return "OTHER"
-def extract_lines(file_bytes: bytes):
-    lines=[]
-    with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
-        for p in pdf.pages:
-            txt=p.extract_text(x_tolerance=1) or ""
-            for ln in txt.splitlines():
-                lines.append(" ".join(ln.split()))
-    return lines
-def parse_sales(lines):
-    rows=[]
-    for ln in lines:
-        m=SALES_RE.search(ln)
-        if not m: continue
-        dt=_dt(m.group("date"))
-        if not dt: continue
-        rows.append(dict(date=dt,product=_norm_product(m.group("ctype")),qty_mt=_to_float(m.group("qty")),debit=_to_float(m.group("debit"))))
-    df=pd.DataFrame(rows)
-    if not df.empty: df=df.sort_values("date").reset_index(drop=True)
-    return df
-def parse_credit_notes(lines):
-    rows=[]
-    for ln in lines:
-        if not DATE_AT_START.match(ln): continue
-        if CREDIT_EXCLUDE.search(ln): continue
-        if not CREDIT_INCLUDE.search(ln): continue
-        nums=NUM_RE.findall(ln)
-        if len(nums)<2: continue
-        floats=[_to_float(x) for x in nums if _to_float(x) is not None]
-        if len(floats)<2: continue
-        amt=floats[-2]   # credit column
-        dt=_dt(ln[:10])
-        if dt and amt is not None:
-            rows.append(dict(date=dt, credit=amt))
-    return pd.DataFrame(rows)
-def weighted_price(debit, qty_mt): 
-    return debit/(qty_mt*20.0) if qty_mt else np.nan
-def monthly_ppc(df_sales, df_credit):
-    ppc=df_sales[df_sales["product"]=="PPC"].copy()
-    if ppc.empty: return pd.DataFrame()
-    ppc["ym"]=ppc["date"].dt.to_period("M").astype(str)
-    agg=ppc.groupby("ym",as_index=False).agg(qty=("qty_mt","sum"), debit=("debit","sum"))
-    agg["Price/Bag"]=agg.apply(lambda r: weighted_price(r["debit"],r["qty"]), axis=1)
-    if not df_credit.empty:
-        df_credit=df_credit.copy()
-        df_credit["ym"]=df_credit["date"].dt.to_period("M").astype(str)
-        cn=df_credit.groupby("ym",as_index=False).agg(Discount=("credit","sum"))
+import pandas as pd
+import numpy as np
+from datetime import datetime
+import io
+import re
+from typing import Dict, List, Optional, Union
+
+# Configure Streamlit page
+st.set_page_config(
+    page_title="Cement Ledger to Excel Converter",
+    page_icon="🏗️",
+    layout="wide"
+)
+
+class LedgerProcessor:
+    """Process different formats of cement ledger files"""
+    
+    def __init__(self):
+        self.standard_columns = [
+            'Date', 'Brand', 'Cement_Type', 'Quantity_Bags', 
+            'Rate_Per_Bag', 'Total_Amount', 'Supplier', 
+            'Invoice_Number', 'Vehicle_Number', 'Remarks'
+        ]
+    
+    def detect_file_type(self, file) -> str:
+        """Detect the type of uploaded file"""
+        if file.name.endswith('.csv'):
+            return 'csv'
+        elif file.name.endswith(('.xlsx', '.xls')):
+            return 'excel'
+        elif file.name.endswith('.txt'):
+            return 'text'
+        else:
+            return 'unknown'
+    
+    def read_file(self, file) -> pd.DataFrame:
+        """Read file based on its type"""
+        file_type = self.detect_file_type(file)
+        
+        try:
+            if file_type == 'csv':
+                # Try different encodings and separators
+                encodings = ['utf-8', 'latin-1', 'cp1252']
+                separators = [',', ';', '\t', '|']
+                
+                for encoding in encodings:
+                    for sep in separators:
+                        try:
+                            file.seek(0)
+                            df = pd.read_csv(file, encoding=encoding, sep=sep)
+                            if len(df.columns) > 1:  # Valid CSV found
+                                return df
+                        except:
+                            continue
+                
+                # If all fails, try basic read
+                file.seek(0)
+                return pd.read_csv(file)
+                
+            elif file_type == 'excel':
+                return pd.read_excel(file, sheet_name=0)
+                
+            elif file_type == 'text':
+                # For text files, try to parse as delimited
+                content = file.read().decode('utf-8')
+                lines = content.strip().split('\n')
+                
+                # Try to detect delimiter
+                delimiters = ['\t', '|', ',', ';', ' ']
+                for delimiter in delimiters:
+                    if delimiter in lines[0]:
+                        data = [line.split(delimiter) for line in lines]
+                        return pd.DataFrame(data[1:], columns=data[0])
+                
+                # If no delimiter found, create single column
+                return pd.DataFrame({'Raw_Data': lines})
+            
+            else:
+                st.error(f"Unsupported file type: {file.name}")
+                return pd.DataFrame()
+                
+        except Exception as e:
+            st.error(f"Error reading file: {str(e)}")
+            return pd.DataFrame()
+    
+    def clean_column_names(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Clean and standardize column names"""
+        df_clean = df.copy()
+        
+        # Remove extra whitespace and special characters
+        df_clean.columns = df_clean.columns.str.strip().str.replace(r'[^\w\s]', '', regex=True)
+        
+        # Common column mappings
+        column_mappings = {
+            # Date columns
+            'date': 'Date', 'dt': 'Date', 'transaction_date': 'Date',
+            'entry_date': 'Date', 'purchase_date': 'Date',
+            
+            # Brand columns
+            'brand': 'Brand', 'cement_brand': 'Brand', 'manufacturer': 'Brand',
+            'company': 'Brand', 'brand_name': 'Brand',
+            
+            # Type columns
+            'type': 'Cement_Type', 'cement_type': 'Cement_Type', 'grade': 'Cement_Type',
+            'category': 'Cement_Type', 'specification': 'Cement_Type',
+            
+            # Quantity columns
+            'quantity': 'Quantity_Bags', 'qty': 'Quantity_Bags', 'bags': 'Quantity_Bags',
+            'no_of_bags': 'Quantity_Bags', 'units': 'Quantity_Bags',
+            
+            # Rate columns
+            'rate': 'Rate_Per_Bag', 'price': 'Rate_Per_Bag', 'unit_price': 'Rate_Per_Bag',
+            'cost_per_bag': 'Rate_Per_Bag', 'rate_per_unit': 'Rate_Per_Bag',
+            
+            # Amount columns
+            'amount': 'Total_Amount', 'total': 'Total_Amount', 'value': 'Total_Amount',
+            'total_cost': 'Total_Amount', 'total_value': 'Total_Amount',
+            
+            # Supplier columns
+            'supplier': 'Supplier', 'vendor': 'Supplier', 'dealer': 'Supplier',
+            'seller': 'Supplier', 'party': 'Supplier',
+            
+            # Invoice columns
+            'invoice': 'Invoice_Number', 'bill_no': 'Invoice_Number', 'receipt_no': 'Invoice_Number',
+            'invoice_no': 'Invoice_Number', 'bill_number': 'Invoice_Number',
+            
+            # Vehicle columns
+            'vehicle': 'Vehicle_Number', 'truck_no': 'Vehicle_Number', 'transport': 'Vehicle_Number',
+            'vehicle_no': 'Vehicle_Number', 'lorry_no': 'Vehicle_Number',
+            
+            # Remarks columns
+            'remarks': 'Remarks', 'notes': 'Remarks', 'comment': 'Remarks',
+            'description': 'Remarks', 'memo': 'Remarks'
+        }
+        
+        # Apply mappings (case insensitive)
+        new_columns = []
+        for col in df_clean.columns:
+            mapped = False
+            for key, value in column_mappings.items():
+                if key.lower() in col.lower():
+                    new_columns.append(value)
+                    mapped = True
+                    break
+            if not mapped:
+                new_columns.append(col)
+        
+        df_clean.columns = new_columns
+        return df_clean
+    
+    def standardize_data(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Standardize data formats and add missing columns"""
+        df_std = df.copy()
+        
+        # Ensure all standard columns exist
+        for col in self.standard_columns:
+            if col not in df_std.columns:
+                df_std[col] = np.nan
+        
+        # Clean and format data
+        try:
+            # Date formatting
+            if 'Date' in df_std.columns:
+                df_std['Date'] = pd.to_datetime(df_std['Date'], errors='coerce')
+            
+            # Numeric formatting
+            numeric_columns = ['Quantity_Bags', 'Rate_Per_Bag', 'Total_Amount']
+            for col in numeric_columns:
+                if col in df_std.columns:
+                    # Remove currency symbols and convert to numeric
+                    df_std[col] = df_std[col].astype(str).str.replace(r'[₹,\s]', '', regex=True)
+                    df_std[col] = pd.to_numeric(df_std[col], errors='coerce')
+            
+            # Calculate Total_Amount if missing
+            if df_std['Total_Amount'].isna().all() and not df_std['Quantity_Bags'].isna().all() and not df_std['Rate_Per_Bag'].isna().all():
+                df_std['Total_Amount'] = df_std['Quantity_Bags'] * df_std['Rate_Per_Bag']
+            
+            # Clean text columns
+            text_columns = ['Brand', 'Cement_Type', 'Supplier', 'Invoice_Number', 'Vehicle_Number', 'Remarks']
+            for col in text_columns:
+                if col in df_std.columns:
+                    df_std[col] = df_std[col].astype(str).str.strip()
+                    df_std[col] = df_std[col].replace('nan', np.nan)
+        
+        except Exception as e:
+            st.warning(f"Some data standardization issues: {str(e)}")
+        
+        # Reorder columns
+        column_order = [col for col in self.standard_columns if col in df_std.columns]
+        other_columns = [col for col in df_std.columns if col not in self.standard_columns]
+        df_std = df_std[column_order + other_columns]
+        
+        return df_std
+    
+    def add_summary_sheet(self, df: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        """Create summary statistics"""
+        summary_data = {}
+        
+        # Brand-wise summary
+        if not df.empty:
+            brand_summary = df.groupby('Brand').agg({
+                'Quantity_Bags': 'sum',
+                'Total_Amount': 'sum',
+                'Date': ['min', 'max'],
+                'Invoice_Number': 'count'
+            }).round(2)
+            
+            brand_summary.columns = ['Total_Bags', 'Total_Amount', 'First_Date', 'Last_Date', 'Transaction_Count']
+            summary_data['Brand_Summary'] = brand_summary.reset_index()
+            
+            # Monthly summary
+            if 'Date' in df.columns and not df['Date'].isna().all():
+                df_monthly = df.copy()
+                df_monthly['Month_Year'] = df_monthly['Date'].dt.to_period('M').astype(str)
+                monthly_summary = df_monthly.groupby('Month_Year').agg({
+                    'Quantity_Bags': 'sum',
+                    'Total_Amount': 'sum',
+                    'Brand': 'nunique',
+                    'Invoice_Number': 'count'
+                }).round(2)
+                
+                monthly_summary.columns = ['Total_Bags', 'Total_Amount', 'Unique_Brands', 'Transaction_Count']
+                summary_data['Monthly_Summary'] = monthly_summary.reset_index()
+        
+        return summary_data
+
+def main():
+    st.title("🏗️ Cement Ledger to Excel Converter")
+    st.markdown("Upload your cement ledger files in various formats and convert them to standardized Excel files.")
+    
+    # Initialize processor
+    processor = LedgerProcessor()
+    
+    # Sidebar for options
+    st.sidebar.header("Options")
+    include_summary = st.sidebar.checkbox("Include Summary Sheets", value=True)
+    auto_calculate = st.sidebar.checkbox("Auto-calculate missing amounts", value=True)
+    
+    # File upload
+    st.header("📁 Upload Ledger Files")
+    uploaded_files = st.file_uploader(
+        "Choose ledger files",
+        accept_multiple_files=True,
+        type=['csv', 'xlsx', 'xls', 'txt'],
+        help="Upload CSV, Excel, or Text files containing cement ledger data"
+    )
+    
+    if uploaded_files:
+        # Process each file
+        all_data = []
+        file_summaries = []
+        
+        for file in uploaded_files:
+            st.subheader(f"Processing: {file.name}")
+            
+            with st.spinner(f"Reading {file.name}..."):
+                # Read file
+                df_raw = processor.read_file(file)
+                
+                if df_raw.empty:
+                    st.error(f"Could not read {file.name}")
+                    continue
+                
+                # Show raw data preview
+                with st.expander(f"Raw Data Preview - {file.name}"):
+                    st.dataframe(df_raw.head(10))
+                    st.info(f"Shape: {df_raw.shape[0]} rows, {df_raw.shape[1]} columns")
+                
+                # Clean and standardize
+                df_clean = processor.clean_column_names(df_raw)
+                df_standard = processor.standardize_data(df_clean)
+                
+                # Show processed data preview
+                with st.expander(f"Processed Data Preview - {file.name}"):
+                    st.dataframe(df_standard.head(10))
+                    
+                    # Show data quality info
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("Total Records", len(df_standard))
+                    with col2:
+                        st.metric("Complete Records", len(df_standard.dropna()))
+                    with col3:
+                        total_amount = df_standard['Total_Amount'].sum() if 'Total_Amount' in df_standard.columns else 0
+                        st.metric("Total Amount", f"₹{total_amount:,.2f}")
+                
+                # Add file identifier
+                df_standard['Source_File'] = file.name
+                all_data.append(df_standard)
+                
+                file_summaries.append({
+                    'File': file.name,
+                    'Records': len(df_standard),
+                    'Brands': df_standard['Brand'].nunique() if 'Brand' in df_standard.columns else 0,
+                    'Total_Amount': df_standard['Total_Amount'].sum() if 'Total_Amount' in df_standard.columns else 0
+                })
+        
+        if all_data:
+            # Combine all data
+            combined_df = pd.concat(all_data, ignore_index=True, sort=False)
+            
+            # Show combined summary
+            st.header("📊 Combined Data Summary")
+            summary_df = pd.DataFrame(file_summaries)
+            st.dataframe(summary_df)
+            
+            # Show overall metrics
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric("Total Files", len(uploaded_files))
+            with col2:
+                st.metric("Total Records", len(combined_df))
+            with col3:
+                st.metric("Unique Brands", combined_df['Brand'].nunique() if 'Brand' in combined_df.columns else 0)
+            with col4:
+                total_value = combined_df['Total_Amount'].sum() if 'Total_Amount' in combined_df.columns else 0
+                st.metric("Total Value", f"₹{total_value:,.2f}")
+            
+            # Show final data preview
+            st.header("📋 Final Standardized Data")
+            st.dataframe(combined_df)
+            
+            # Prepare Excel file
+            st.header("💾 Download Excel File")
+            
+            # Create Excel buffer
+            excel_buffer = io.BytesIO()
+            
+            with pd.ExcelWriter(excel_buffer, engine='xlsxwriter') as writer:
+                # Write main data
+                combined_df.to_excel(writer, sheet_name='Cement_Ledger', index=False)
+                
+                # Add summary sheets if requested
+                if include_summary:
+                    summary_data = processor.add_summary_sheet(combined_df)
+                    for sheet_name, summary_df in summary_data.items():
+                        summary_df.to_excel(writer, sheet_name=sheet_name, index=False)
+                
+                # Add file summary
+                summary_df.to_excel(writer, sheet_name='File_Summary', index=False)
+                
+                # Format the Excel file
+                workbook = writer.book
+                worksheet = writer.sheets['Cement_Ledger']
+                
+                # Add formatting
+                header_format = workbook.add_format({
+                    'bold': True,
+                    'text_wrap': True,
+                    'valign': 'top',
+                    'fg_color': '#D7E4BC',
+                    'border': 1
+                })
+                
+                # Write headers with formatting
+                for col_num, value in enumerate(combined_df.columns.values):
+                    worksheet.write(0, col_num, value, header_format)
+                
+                # Auto-adjust column widths
+                for column in combined_df:
+                    column_width = max(combined_df[column].astype(str).map(len).max(), len(column))
+                    col_idx = combined_df.columns.get_loc(column)
+                    worksheet.set_column(col_idx, col_idx, min(column_width + 2, 50))
+            
+            excel_buffer.seek(0)
+            
+            # Generate filename
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"cement_ledger_converted_{timestamp}.xlsx"
+            
+            # Download button
+            st.download_button(
+                label="📥 Download Excel File",
+                data=excel_buffer,
+                file_name=filename,
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                help="Click to download the standardized Excel file"
+            )
+            
+            st.success(f"✅ Successfully processed {len(uploaded_files)} files with {len(combined_df)} total records!")
+            
+            # Show data quality report
+            with st.expander("📈 Data Quality Report"):
+                st.write("**Missing Data Analysis:**")
+                missing_data = combined_df.isnull().sum()
+                missing_percent = (missing_data / len(combined_df)) * 100
+                quality_df = pd.DataFrame({
+                    'Column': missing_data.index,
+                    'Missing_Count': missing_data.values,
+                    'Missing_Percentage': missing_percent.values
+                }).round(2)
+                st.dataframe(quality_df)
+    
     else:
-        cn=pd.DataFrame({"ym":[],"Discount":[]})
-    out=agg.merge(cn,on="ym",how="left").fillna({"Discount":0.0})
-    out=out.rename(columns={"ym":"Year/Month","qty":"QTY(MT) [PPC]"})
-    total_qty=out["QTY(MT) [PPC]"].sum()
-    total_debit=agg["debit"].sum()
-    price=weighted_price(total_debit,total_qty)
-    grand=pd.DataFrame([{"Year/Month":"Grand Total","QTY(MT) [PPC]":total_qty,"Price/Bag":price,"Discount":out["Discount"].sum()}])
-    return pd.concat([out,grand],ignore_index=True)
-def export_excel(report_df, all_qty, district, period, company="JKS"):
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "Report"
-    bold = Font(bold=True)
-    center = Alignment(horizontal="center", vertical="center")
-    right = Alignment(horizontal="right")
-    yellow = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
-    blue = PatternFill(start_color="92D050", end_color="92D050", fill_type="solid")
-    border = Border(left=Side(style='thin'), right=Side(style='thin'),top=Side(style='thin'), bottom=Side(style='thin'))
-    ws.merge_cells("A1:D1")
-    ws["A1"] = f"{company}\n{district}({period})"
-    ws["A1"].font = Font(bold=True, size=12)
-    ws["A1"].alignment = center
-    headers = ["Year/Month", "QTY(MT) [PPC]", "Price/Bag", "Discount"]
-    ws.append(headers)
-    for c in "ABCD":
-        ws[f"{c}2"].font = bold
-        ws[f"{c}2"].alignment = center
-        ws[f"{c}2"].border = border
-    for r in dataframe_to_rows(report_df, index=False, header=False):
-        ws.append(r)
-    for row in ws.iter_rows(min_row=3, max_row=2+len(report_df), min_col=1, max_col=4):
-        for cell in row:
-            cell.border = border
-            cell.alignment = right if cell.column>1 else center
-    for r in range(3, 3+len(report_df)):
-        if "Grand" in str(ws[f"A{r}"].value):
-            for c in "ABCD":
-                ws[f"{c}{r}"].fill = yellow
-                ws[f"{c}{r}"].font = bold
-    start = 4+len(report_df)
-    ws[f"A{start}"] = "Total Qty(All products combined)"
-    ws[f"B{start}"] = all_qty  # <- FIXED: uses total qty of all cement types
-    ws[f"C{start}"] = "Discount/Bag"
-    ws[f"D{start}"] = round(report_df["Discount"].sum()/(all_qty*20),2) if all_qty else 0
-    ws[f"A{start}"].font = bold; ws[f"C{start}"].font = bold
-    ws[f"C{start+2}"] = "NOD"
-    ws[f"D{start+2}"] = round(report_df["Price/Bag"].iloc[-1],2)
-    ws[f"C{start+2}"].fill = blue; ws[f"D{start+2}"].fill = blue
-    ws[f"C{start+3}"] = f"{company}-Wonder"
-    ws[f"D{start+3}"] = "Diff"
-    ws[f"C{start+3}"].fill = blue; ws[f"D{start+3}"].fill = blue
-    for col in ["A","B","C","D"]:
-        ws.column_dimensions[col].width = 22
-    bio = io.BytesIO()
-    wb.save(bio)
-    return bio.getvalue()
-st.title("📊 PPC Ledger Monthly Report with Excel Export")
-files=st.file_uploader("Upload ledger PDFs", type="pdf", accept_multiple_files=True)
-district=st.text_input("District Name", "Jodhpur")
-if files:
-    all_sales, all_cn=[],[]
-    for f in files:
-        lines=extract_lines(f.read())
-        all_sales.append(parse_sales(lines))
-        all_cn.append(parse_credit_notes(lines))
-    df_sales=pd.concat(all_sales,ignore_index=True) if all_sales else pd.DataFrame()
-    df_credit=pd.concat(all_cn,ignore_index=True) if all_cn else pd.DataFrame()
-    if df_sales.empty: 
-        st.error("No PPC sales found."); st.stop()
-    report=monthly_ppc(df_sales, df_credit)
-    all_qty=df_sales["qty_mt"].sum()
-    min_date,max_date=df_sales["date"].min(),df_sales["date"].max()
-    period=f"{min_date.strftime('%b\'%y')}–{max_date.strftime('%b\'%y')}"
-    st.subheader(f"Report for {district} ({period})")
-    st.dataframe(report.style.format({"QTY(MT) [PPC]":"{:,.2f}","Price/Bag":"₹{:,.2f}","Discount":"₹{:,.0f}"}),use_container_width=True)
-    excel_bytes=export_excel(report, all_qty, district, period, company="JKS")
-    st.download_button("📥 Download Excel Report",data=excel_bytes,file_name=f"report_{district}.xlsx",mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        # Show instructions
+        st.info("👆 Please upload your ledger files to get started.")
+        
+        with st.expander("📖 Supported File Formats & Instructions"):
+            st.markdown("""
+            **Supported Formats:**
+            - CSV files (.csv)
+            - Excel files (.xlsx, .xls)
+            - Text files (.txt) with delimited data
+            
+            **Expected Columns (any combination):**
+            - Date, Brand, Cement Type, Quantity, Rate, Amount
+            - Supplier, Invoice Number, Vehicle Number, Remarks
+            
+            **Features:**
+            - Automatic column mapping and standardization
+            - Data validation and cleaning
+            - Summary statistics generation
+            - Multiple file processing
+            - Excel output with formatting
+            
+            **Tips:**
+            - Files can have different column names - the app will try to map them automatically
+            - Missing amounts will be calculated if quantity and rate are available
+            - All data will be combined into a single standardized Excel file
+            """)
+
+if __name__ == "__main__":
+    main()
