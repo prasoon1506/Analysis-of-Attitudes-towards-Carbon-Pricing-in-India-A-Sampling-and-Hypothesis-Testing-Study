@@ -19,11 +19,19 @@ try:
 except ImportError:
     PYPDF2_AVAILABLE = False
 
+# Fixed tabula-py import
 try:
-    import tabula
+    from tabula import read_pdf
     TABULA_AVAILABLE = True
+    TABULA_READ_PDF = read_pdf
 except ImportError:
-    TABULA_AVAILABLE = False
+    try:
+        import tabula
+        TABULA_AVAILABLE = True
+        TABULA_READ_PDF = tabula.read_pdf if hasattr(tabula, 'read_pdf') else None
+    except (ImportError, AttributeError):
+        TABULA_AVAILABLE = False
+        TABULA_READ_PDF = None
 
 try:
     import fitz  # PyMuPDF
@@ -52,12 +60,21 @@ def check_pdf_dependencies():
     available = {
         'pdfplumber': PDFPLUMBER_AVAILABLE,
         'PyPDF2': PYPDF2_AVAILABLE,
-        'tabula-py': TABULA_AVAILABLE,
+        'tabula-py': TABULA_AVAILABLE and TABULA_READ_PDF is not None,
         'PyMuPDF': FITZ_AVAILABLE,
         'OCR (pytesseract)': OCR_AVAILABLE
     }
     
-    missing = [name for name, avail in available.items() if not avail]
+    missing = []
+    for name, avail in available.items():
+        if not avail:
+            if name == 'tabula-py':
+                missing.append('tabula-py')
+            elif name == 'OCR (pytesseract)':
+                missing.append('pytesseract pillow')
+            else:
+                missing.append(name.lower().replace('pymupdf', 'PyMuPDF'))
+    
     return available, missing
 
 class LedgerProcessor:
@@ -142,7 +159,7 @@ class LedgerProcessor:
         file.seek(0)
         
         # Method 1: Try tabula-py (best for structured tables)
-        if TABULA_AVAILABLE:
+        if TABULA_AVAILABLE and TABULA_READ_PDF is not None:
             try:
                 file.seek(0)
                 # Create temporary file for tabula
@@ -153,20 +170,25 @@ class LedgerProcessor:
                     temp_file.write(file.read())
                     temp_file_path = temp_file.name
                 
-                # Extract tables using tabula
-                tabula_tables = tabula.read_pdf(
+                # Extract tables using tabula - CORRECTED
+                tabula_tables = TABULA_READ_PDF(
                     temp_file_path, 
                     pages='all', 
                     multiple_tables=True,
-                    pandas_options={'header': 0}
+                    pandas_options={'header': 0},
+                    silent=True  # Suppress java output
                 )
                 
                 # Clean up temporary file
                 os.unlink(temp_file_path)
                 
+                # Process extracted tables
                 for table in tabula_tables:
-                    if not table.empty and table.shape[0] > 1:
-                        tables.append(table)
+                    if isinstance(table, pd.DataFrame) and not table.empty and table.shape[0] > 1:
+                        # Clean the table
+                        table = table.dropna(how='all').dropna(axis=1, how='all')
+                        if not table.empty:
+                            tables.append(table)
                 
                 if tables:
                     st.success(f"✅ Tabula extracted {len(tables)} tables")
@@ -278,6 +300,7 @@ class LedgerProcessor:
                 data_rows.append(row_data)
         
         return pd.DataFrame(data_rows) if data_rows else pd.DataFrame({'Raw_Data': lines})
+
     def read_file(self, file) -> pd.DataFrame:
         """Read file based on its type"""
         file_type = self.detect_file_type(file)
@@ -595,7 +618,7 @@ def main():
         with st.expander("📦 Installation Instructions"):
             st.code(f"""
 # Install missing PDF processing libraries
-pip install {' '.join(missing_deps).replace('tabula-py', 'tabula-py').replace('OCR (pytesseract)', 'pytesseract pillow')}
+pip install {' '.join(missing_deps)}
 
 # For OCR support (optional - for scanned PDFs):
 pip install pytesseract pillow
@@ -604,6 +627,11 @@ pip install pytesseract pillow
 # Windows: Download from https://github.com/UB-Mannheim/tesseract/wiki
 # Mac: brew install tesseract
 # Linux: sudo apt-get install tesseract-ocr
+
+# Install Java (required for tabula-py):
+# Windows: Download from Oracle or use 'choco install openjdk'
+# Mac: brew install openjdk
+# Linux: sudo apt-get install default-jdk
             """)
         
         # Show current capabilities
