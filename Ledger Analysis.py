@@ -5,44 +5,60 @@ from datetime import datetime
 import io
 import re
 from typing import Dict, List, Optional, Union
-import pdfplumber
-import PyPDF2
-import tabula
-from PIL import Image
-import pytesseract
-import fitz  # PyMuPDF
+
+# PDF processing imports with error handling
+try:
+    import pdfplumber
+    PDFPLUMBER_AVAILABLE = True
+except ImportError:
+    PDFPLUMBER_AVAILABLE = False
+
+try:
+    import PyPDF2
+    PYPDF2_AVAILABLE = True
+except ImportError:
+    PYPDF2_AVAILABLE = False
+
+try:
+    import tabula
+    TABULA_AVAILABLE = True
+except ImportError:
+    TABULA_AVAILABLE = False
+
+try:
+    import fitz  # PyMuPDF
+    FITZ_AVAILABLE = True
+except ImportError:
+    FITZ_AVAILABLE = False
+
+try:
+    from PIL import Image
+    import pytesseract
+    OCR_AVAILABLE = True
+except ImportError:
+    OCR_AVAILABLE = False
 
 # Configure Streamlit page
 st.set_page_config(
-    page_title="Cement Ledger to Excel Converter",layout="wide"
+    page_title="Cement Ledger to Excel Converter",
+    page_icon="🏗️",
+    layout="wide"
 )
 
 # Check for required packages
 @st.cache_data
 def check_pdf_dependencies():
     """Check if PDF processing libraries are available"""
-    missing = []
-    try:
-        import pdfplumber
-    except ImportError:
-        missing.append("pdfplumber")
+    available = {
+        'pdfplumber': PDFPLUMBER_AVAILABLE,
+        'PyPDF2': PYPDF2_AVAILABLE,
+        'tabula-py': TABULA_AVAILABLE,
+        'PyMuPDF': FITZ_AVAILABLE,
+        'OCR (pytesseract)': OCR_AVAILABLE
+    }
     
-    try:
-        import PyPDF2
-    except ImportError:
-        missing.append("PyPDF2")
-    
-    try:
-        import tabula
-    except ImportError:
-        missing.append("tabula-py")
-    
-    try:
-        import fitz
-    except ImportError:
-        missing.append("PyMuPDF")
-    
-    return missing
+    missing = [name for name, avail in available.items() if not avail]
+    return available, missing
 
 class LedgerProcessor:
     """Process different formats of cement ledger files"""
@@ -73,44 +89,50 @@ class LedgerProcessor:
         file.seek(0)
         
         # Method 1: Try pdfplumber (best for tables)
-        try:
-            with pdfplumber.open(file) as pdf:
-                for page in pdf.pages:
+        if PDFPLUMBER_AVAILABLE:
+            try:
+                with pdfplumber.open(file) as pdf:
+                    for page in pdf.pages:
+                        page_text = page.extract_text()
+                        if page_text:
+                            text += page_text + "\n"
+                    if text.strip():
+                        st.success("✅ PDFPlumber text extraction successful")
+                        return text
+            except Exception as e:
+                st.warning(f"PDFPlumber text extraction failed: {str(e)}")
+        
+        # Method 2: Try PyPDF2
+        if PYPDF2_AVAILABLE:
+            file.seek(0)
+            try:
+                reader = PyPDF2.PdfReader(file)
+                for page in reader.pages:
                     page_text = page.extract_text()
                     if page_text:
                         text += page_text + "\n"
                 if text.strip():
+                    st.success("✅ PyPDF2 text extraction successful")
                     return text
-        except Exception as e:
-            st.warning(f"pdfplumber failed: {str(e)}")
-        
-        # Method 2: Try PyPDF2
-        file.seek(0)
-        try:
-            reader = PyPDF2.PdfReader(file)
-            for page in reader.pages:
-                page_text = page.extract_text()
-                if page_text:
-                    text += page_text + "\n"
-            if text.strip():
-                return text
-        except Exception as e:
-            st.warning(f"PyPDF2 failed: {str(e)}")
+            except Exception as e:
+                st.warning(f"PyPDF2 failed: {str(e)}")
         
         # Method 3: Try PyMuPDF (fitz)
-        file.seek(0)
-        try:
-            pdf_document = fitz.open(stream=file.read(), filetype="pdf")
-            for page_num in range(pdf_document.page_count):
-                page = pdf_document[page_num]
-                page_text = page.get_text()
-                if page_text:
-                    text += page_text + "\n"
-            pdf_document.close()
-            if text.strip():
-                return text
-        except Exception as e:
-            st.warning(f"PyMuPDF failed: {str(e)}")
+        if FITZ_AVAILABLE:
+            file.seek(0)
+            try:
+                pdf_document = fitz.open(stream=file.read(), filetype="pdf")
+                for page_num in range(pdf_document.page_count):
+                    page = pdf_document[page_num]
+                    page_text = page.get_text()
+                    if page_text:
+                        text += page_text + "\n"
+                pdf_document.close()
+                if text.strip():
+                    st.success("✅ PyMuPDF text extraction successful")
+                    return text
+            except Exception as e:
+                st.warning(f"PyMuPDF failed: {str(e)}")
         
         return text
 
@@ -120,45 +142,64 @@ class LedgerProcessor:
         file.seek(0)
         
         # Method 1: Try tabula-py (best for structured tables)
-        try:
-            file.seek(0)
-            # Save file temporarily
-            temp_file = f"temp_{file.name}"
-            with open(temp_file, "wb") as f:
-                f.write(file.read())
-            
-            # Extract tables
-            tabula_tables = tabula.read_pdf(temp_file, pages='all', multiple_tables=True)
-            for table in tabula_tables:
-                if not table.empty and table.shape[0] > 1:
-                    tables.append(table)
-            
-            # Clean up
-            import os
-            os.remove(temp_file)
-            
-            if tables:
-                return tables
-        except Exception as e:
-            st.warning(f"tabula-py failed: {str(e)}")
+        if TABULA_AVAILABLE:
+            try:
+                file.seek(0)
+                # Create temporary file for tabula
+                import tempfile
+                import os
+                
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
+                    temp_file.write(file.read())
+                    temp_file_path = temp_file.name
+                
+                # Extract tables using tabula
+                tabula_tables = tabula.read_pdf(
+                    temp_file_path, 
+                    pages='all', 
+                    multiple_tables=True,
+                    pandas_options={'header': 0}
+                )
+                
+                # Clean up temporary file
+                os.unlink(temp_file_path)
+                
+                for table in tabula_tables:
+                    if not table.empty and table.shape[0] > 1:
+                        tables.append(table)
+                
+                if tables:
+                    st.success(f"✅ Tabula extracted {len(tables)} tables")
+                    return tables
+                    
+            except Exception as e:
+                st.warning(f"Tabula-py extraction failed: {str(e)}")
         
         # Method 2: Try pdfplumber for table extraction
-        file.seek(0)
-        try:
-            with pdfplumber.open(file) as pdf:
-                for page in pdf.pages:
-                    page_tables = page.extract_tables()
-                    for table in page_tables:
-                        if table and len(table) > 1:
-                            # Convert to DataFrame
-                            df = pd.DataFrame(table[1:], columns=table[0])
-                            if not df.empty:
-                                tables.append(df)
-            
-            if tables:
-                return tables
-        except Exception as e:
-            st.warning(f"pdfplumber table extraction failed: {str(e)}")
+        if PDFPLUMBER_AVAILABLE:
+            file.seek(0)
+            try:
+                with pdfplumber.open(file) as pdf:
+                    for page_num, page in enumerate(pdf.pages):
+                        page_tables = page.extract_tables()
+                        for table_num, table in enumerate(page_tables):
+                            if table and len(table) > 1:
+                                # Convert to DataFrame
+                                try:
+                                    df = pd.DataFrame(table[1:], columns=table[0])
+                                    # Clean empty columns and rows
+                                    df = df.dropna(how='all').dropna(axis=1, how='all')
+                                    if not df.empty:
+                                        tables.append(df)
+                                except Exception as e:
+                                    st.warning(f"Error processing table {table_num+1} from page {page_num+1}: {str(e)}")
+                
+                if tables:
+                    st.success(f"✅ PDFPlumber extracted {len(tables)} tables")
+                    return tables
+                    
+            except Exception as e:
+                st.warning(f"PDFPlumber table extraction failed: {str(e)}")
         
         return tables
 
@@ -294,6 +335,11 @@ class LedgerProcessor:
         """Process PDF file using multiple extraction methods"""
         st.info(f"🔍 Processing PDF: {file.name}")
         
+        # Check if any PDF libraries are available
+        if not any([PDFPLUMBER_AVAILABLE, PYPDF2_AVAILABLE, TABULA_AVAILABLE, FITZ_AVAILABLE]):
+            st.error("❌ No PDF processing libraries available. Please install: pip install pdfplumber PyPDF2 tabula-py PyMuPDF")
+            return pd.DataFrame({'Error': ['No PDF processing libraries available']})
+        
         # Try table extraction first
         with st.spinner("Extracting tables from PDF..."):
             tables = self.extract_tables_from_pdf(file)
@@ -310,8 +356,8 @@ class LedgerProcessor:
                     combined_df = pd.DataFrame()
                     
                     for i, table in enumerate(tables):
-                        st.write(f"Table {i+1}:")
-                        st.dataframe(table.head(3))
+                        with st.expander(f"Table {i+1} Preview"):
+                            st.dataframe(table.head(3))
                         
                         # Combine tables with similar structures
                         if combined_df.empty:
@@ -334,37 +380,58 @@ class LedgerProcessor:
                 st.info("📄 No structured tables found. Parsing text data...")
                 return self.parse_text_to_dataframe(text)
             else:
-                st.warning("⚠️ Could not extract readable text from PDF. The PDF might be scanned/image-based.")
+                st.warning("⚠️ Could not extract readable text from PDF.")
                 
-                # Try OCR as last resort (would need additional setup)
-                st.info("💡 For scanned PDFs, consider converting to text first or use OCR tools.")
+                # Try OCR if enabled and available
+                if OCR_AVAILABLE:
+                    st.info("🔍 Attempting OCR extraction...")
+                    ocr_text = self.ocr_pdf_page(file)
+                    if ocr_text.strip():
+                        return self.parse_text_to_dataframe(ocr_text)
+                
+                st.error("❌ Could not extract data from PDF. The PDF might be:")
+                st.write("- Scanned/image-based (try enabling OCR)")
+                st.write("- Password protected")
+                st.write("- Corrupted or in an unsupported format")
+                st.write("💡 Try converting the PDF to Excel/CSV manually first")
+                
                 return pd.DataFrame({'Error': ['Could not extract data from PDF']})
     
     def ocr_pdf_page(self, file) -> str:
         """Extract text from PDF using OCR (for scanned PDFs)"""
-        # This would require tesseract installation
-        # Placeholder for OCR functionality
+        if not OCR_AVAILABLE:
+            st.warning("OCR libraries not available. Install: pip install pytesseract pillow")
+            return ""
+        
         try:
             # Convert PDF pages to images and apply OCR
-            import fitz
-            pdf_document = fitz.open(stream=file.read(), filetype="pdf")
-            text = ""
-            
-            for page_num in range(min(pdf_document.page_count, 5)):  # Limit to first 5 pages
-                page = pdf_document[page_num]
-                pix = page.get_pixmap()
-                img_data = pix.tobytes("png")
+            if FITZ_AVAILABLE:
+                file.seek(0)
+                pdf_document = fitz.open(stream=file.read(), filetype="pdf")
+                text = ""
                 
-                # Apply OCR (requires pytesseract)
-                image = Image.open(io.BytesIO(img_data))
-                page_text = pytesseract.image_to_string(image)
-                text += page_text + "\n"
-            
-            pdf_document.close()
-            return text
+                for page_num in range(min(pdf_document.page_count, 3)):  # Limit to first 3 pages
+                    page = pdf_document[page_num]
+                    pix = page.get_pixmap()
+                    img_data = pix.tobytes("png")
+                    
+                    # Apply OCR
+                    image = Image.open(io.BytesIO(img_data))
+                    page_text = pytesseract.image_to_string(image)
+                    text += page_text + "\n"
+                
+                pdf_document.close()
+                
+                if text.strip():
+                    st.success("✅ OCR extraction successful")
+                    return text
+            else:
+                st.warning("PyMuPDF not available for OCR. Install: pip install PyMuPDF")
+                
         except Exception as e:
             st.warning(f"OCR failed: {str(e)}")
-            return ""
+        
+        return ""
     
     def clean_column_names(self, df: pd.DataFrame) -> pd.DataFrame:
         """Clean and standardize column names"""
@@ -512,15 +579,25 @@ def main():
     st.markdown("Upload your cement ledger files in various formats (CSV, Excel, Text, **PDF**) and convert them to standardized Excel files.")
     
     # Check PDF dependencies
-    missing_deps = check_pdf_dependencies()
+    available_libs, missing_deps = check_pdf_dependencies()
+    
+    # Show available libraries status
+    if any(available_libs.values()):
+        st.sidebar.success("📚 Available PDF Libraries:")
+        for lib, status in available_libs.items():
+            if status:
+                st.sidebar.success(f"✅ {lib}")
+            else:
+                st.sidebar.error(f"❌ {lib}")
+    
     if missing_deps:
-        st.warning(f"⚠️ For full PDF support, install: `pip install {' '.join(missing_deps)}`")
+        st.warning(f"⚠️ For enhanced PDF support, install missing libraries")
         with st.expander("📦 Installation Instructions"):
             st.code(f"""
-# Install PDF processing libraries
-pip install {' '.join(missing_deps)}
+# Install missing PDF processing libraries
+pip install {' '.join(missing_deps).replace('tabula-py', 'tabula-py').replace('OCR (pytesseract)', 'pytesseract pillow')}
 
-# For OCR support (optional)
+# For OCR support (optional - for scanned PDFs):
 pip install pytesseract pillow
 
 # Install tesseract OCR engine:
@@ -528,6 +605,9 @@ pip install pytesseract pillow
 # Mac: brew install tesseract
 # Linux: sudo apt-get install tesseract-ocr
             """)
+        
+        # Show current capabilities
+        st.info(f"✅ Currently available: {', '.join([lib for lib, avail in available_libs.items() if avail]) or 'Basic file processing only'}")
     
     # Initialize processor
     processor = LedgerProcessor()
