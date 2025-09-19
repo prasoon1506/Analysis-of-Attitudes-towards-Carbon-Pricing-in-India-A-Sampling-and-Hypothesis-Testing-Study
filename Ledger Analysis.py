@@ -14,9 +14,7 @@ import fitz  # PyMuPDF
 
 # Configure Streamlit page
 st.set_page_config(
-    page_title="Cement Ledger to Excel Converter",
-    page_icon="🏗️",
-    layout="wide"
+    page_title="Cement Ledger to Excel Converter",layout="wide"
 )
 
 # Check for required packages
