@@ -384,8 +384,8 @@ def main():
         st.markdown("### 📅 Analysis Parameters")
         user_date = st.text_input(
             "📆 Report Date", 
-            value="01 Oct", 
-            help="Enter date in format: DD MMM (e.g., 15 Oct)"
+            value="01 Nov", 
+            help="Enter date in format: DD MMM (e.g., 15 Nov)"
         )
         
         st.markdown("### ⚡ Advanced Options")
@@ -535,7 +535,7 @@ def main():
             # Download section
             st.markdown("## 📥 Export Report")
             
-            start_date = "01 Oct"
+            start_date = "01 Nov"
             col1, col2 = st.columns(2)
             
             with col1:
